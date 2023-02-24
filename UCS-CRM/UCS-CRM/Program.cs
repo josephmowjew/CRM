@@ -1,17 +1,42 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Pomelo.EntityFrameworkCore.MySql.Infrastructure;
+using UCS_CRM.Core.Models;
 using UCS_CRM.Data;
+
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
-var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
-builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseSqlServer(connectionString));
+//var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
+//builder.Services.AddDbContext<ApplicationDbContext>(options =>
+//    options.UseSqlServer(connectionString));
+
+var provider = builder.Configuration["ServerSettings:ServerName"];
+string mySqlConnectionStr = builder.Configuration.GetConnectionString("MySqlConnection");
+
+builder.Services.AddDbContext<ApplicationDbContext>(
+options => _ = provider switch
+{
+    "MySQL" => options.UseMySql(mySqlConnectionStr, ServerVersion.AutoDetect(mySqlConnectionStr),
+ b => b.SchemaBehavior(MySqlSchemaBehavior.Ignore)),
+
+    // "SqlServer" => options.UseSqlServer(
+    //     Configuration.GetConnectionString("DefaultConnection")),
+
+    _ => throw new Exception($"Unsupported provider: {provider}")
+});
+
 builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 
-builder.Services.AddDefaultIdentity<IdentityUser>(options => options.SignIn.RequireConfirmedAccount = true)
-    .AddEntityFrameworkStores<ApplicationDbContext>();
+builder.Services.AddIdentity<ApplicationUser,IdentityRole>(options =>
+{
+    options.SignIn.RequireConfirmedEmail = true;
+    options.Password.RequireNonAlphanumeric = true;
+})  .AddEntityFrameworkStores<ApplicationDbContext>()
+    .AddDefaultUI()
+    .AddDefaultTokenProviders();
+
 builder.Services.AddControllersWithViews();
 
 var app = builder.Build();
