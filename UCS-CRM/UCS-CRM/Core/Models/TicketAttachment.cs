@@ -6,7 +6,7 @@ namespace UCS_CRM.Core.Models
     {
         public int Id { get; set; }
 
-        [StringLength(maximumLength:255)
+        [StringLength(maximumLength:255)]
         [Required]
         public string FileName { get; set; }
         [Required]
