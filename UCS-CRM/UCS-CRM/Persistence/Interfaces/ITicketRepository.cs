@@ -9,5 +9,6 @@ namespace UCS_CRM.Persistence.Interfaces
         Task<List<Ticket>> GetTickets();
         Task<AccountType> GetSingleAccountTypeAsync(int id);
         void Remove(Ticket ticket);
+        Task<int> TotalCount();
     }
 }

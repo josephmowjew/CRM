@@ -9,5 +9,6 @@ namespace UCS_CRM.Persistence.Interfaces
         Task<List<MemberAccount>> GetMemberAccounts(int memberId);
         Task<MemberAccount> GetMemberAccountAsync(int id);
         void Remove(MemberAccount memberAccount);
+        Task<int> TotalCount();
     }
 }

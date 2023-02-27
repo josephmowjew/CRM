@@ -9,5 +9,6 @@ namespace UCS_CRM.Persistence.Interfaces
         Task<List<State>> GetStates();
         Task<State> GetStateAsync(int id);
         void Remove(State state);
+        Task<int> TotalCount();
     }
 }

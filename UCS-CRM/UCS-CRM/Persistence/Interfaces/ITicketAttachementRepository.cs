@@ -9,5 +9,6 @@ namespace UCS_CRM.Persistence.Interfaces
         Task<List<TicketAttachment>> GetTicketAttachmentsAsync(int ticketId);
         Task<TicketAttachment> GetTicketAttachmentAsync(int id);
         void Remove(TicketAttachment ticketAttachment);
+        Task<int> TotalCount();
     }
 }

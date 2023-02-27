@@ -9,5 +9,6 @@ namespace UCS_CRM.Persistence.Interfaces
         Task<List<TicketPriority>> GetTicketPriorities();
         Task<TicketPriority> GetTicketPriorityAsync(int id);
         void Remove(TicketPriority ticketPriority);
+        Task<int> TotalCount();
     }
 }

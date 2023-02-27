@@ -10,5 +10,6 @@ namespace UCS_CRM.Persistence.Interfaces
         Task<List<TicketComment>> GetTicketCommentsAsync(int ticketId);
         Task<TicketComment> GetTicketCommentAsync(int id);
         void Remove(TicketComment ticketComment);
+        Task<int> TotalCount();
     }
 }

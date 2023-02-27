@@ -9,5 +9,6 @@ namespace UCS_CRM.Persistence.Interfaces
         Task<List<Member>> GetMembers();
         Task<Member> GetMemberAsync(int id);
         void Remove(Member member);
+        Task<int> TotalCount();
     }
 }
