@@ -3,7 +3,8 @@ using Microsoft.EntityFrameworkCore;
 using Pomelo.EntityFrameworkCore.MySql.Infrastructure;
 using UCS_CRM.Core.Models;
 using UCS_CRM.Data;
-
+using UCS_CRM.Persistence.Interfaces;
+using UCS_CRM.Persistence.SQLRepositories;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -27,6 +28,8 @@ options => _ = provider switch
     _ => throw new Exception($"Unsupported provider: {provider}")
 });
 
+//builder.Services.AddDefaultIdentity<ApplicationUser>(options => options.SignIn.RequireConfirmedAccount = true).AddEntityFrameworkStores<ApplicationDbContext>();
+
 builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 
 builder.Services.AddIdentity<ApplicationUser,IdentityRole>(options =>
@@ -38,6 +41,7 @@ builder.Services.AddIdentity<ApplicationUser,IdentityRole>(options =>
     .AddDefaultTokenProviders();
 
 builder.Services.AddControllersWithViews();
+builder.Services.AddScoped<IAccountTypeRepository, AccountTypeRepository>();
 
 var app = builder.Build();
 
@@ -59,13 +63,13 @@ app.UseStaticFiles();
 app.UseRouting();
 
 app.UseAuthorization();
-
+app.MapControllerRoute(
+   name: "areas",
+            pattern: "{area:exists}/{controller=Home}/{action=Index}/{id?}");
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}");
-//app.MapControllerRoute(
-//   name: "areas",
-//            pattern: "{area:exists}/{controller=Home}/{action=Index}/{id?}");
+
 app.MapRazorPages();
 
 app.Run();

@@ -44,7 +44,11 @@ namespace UCS_CRM.Persistence.SQLRepositories
 
                     //accountTypes.AsQueryable().OrderBy("gjakdgdag");
 
-                    accountTypes = accountTypes.AsQueryable().OrderBy(@params.SortColum +" "+@params.SortDirection);
+                    if(string.IsNullOrEmpty(@params.SortColum) && !string.IsNullOrEmpty(@params.SortDirection))
+                    {
+                        accountTypes = accountTypes.AsQueryable().OrderBy(@params.SortColum + " " + @params.SortDirection);
+
+                    }
 
 
                     return accountTypes.ToList();
