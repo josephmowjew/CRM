@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Identity;
+using UCS_CRM.Core.Helpers;
 using UCS_CRM.Core.Models;
 using UCS_CRM.Core.ViewModels;
 
@@ -11,7 +12,7 @@ namespace UCS_CRM.Persistence.Interfaces
         public Task<IEnumerable<ApplicationUser>> GetAllUsers();
         Task<List<UserViewModel>> GetUnconfirmedUsersWithRoles();
 
-        Task<List<UserViewModel>> GetUsersWithRoles();
+        Task<List<UserViewModel>> GetUsersWithRoles(CursorParams @params);
 
         Task<UserViewModel> GetUserWithRole(string email);
         ApplicationUser? Exists(ApplicationUser applicationUser);
@@ -33,5 +34,6 @@ namespace UCS_CRM.Persistence.Interfaces
         Task<IdentityResult> UpdateAsync(ApplicationUser applicationUser);
 
         Task<List<UserViewModel>> GetDeletedUsers();
+        Task<int> TotalCount();
     }
 }

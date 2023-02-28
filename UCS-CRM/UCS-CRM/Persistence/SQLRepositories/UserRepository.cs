@@ -151,16 +151,38 @@ namespace UCS_CRM.Persistence.SQLRepositories
 
         }
 
-        public async Task<List<UserViewModel>> GetUsersWithRoles()
+        public async Task<List<UserViewModel>> GetUsersWithRoles(CursorParams @params)
         {
             //Initialize the mapper
             var config = new MapperConfiguration(cfg =>
                     cfg.CreateMap<ApplicationUser, UserViewModel>()
                 );
 
+            List<ApplicationUser> users = new List<ApplicationUser>();
             Mapper mapper = new Mapper(config);
 
-            var users = await this._context.Users.Where(u => u.Status != Lambda.Deleted  && u.EmailConfirmed == true).ToListAsync();
+            //check if the search term has been provided
+
+            if(string.IsNullOrEmpty(@params.SearchTerm)) {
+
+               users = await this._context.Users.Where(u => u.Status != Lambda.Deleted && u.EmailConfirmed == true).Skip(@params.Skip).Take(@params.Take).ToListAsync();
+
+            }
+            else
+            {
+                users = await this._context.Users
+                    .Where(u => u.Status != Lambda.Deleted && u.EmailConfirmed == true 
+                            || u.FirstName.ToLower().Contains(@params.SearchTerm.ToLower().Trim())
+                            || u.LastName.ToLower().Contains(@params.SearchTerm.ToLower().Trim())
+                            || u.Gender.ToLower().Contains(@params.SearchTerm.ToLower().Trim())
+                            || u.Email.ToLower().Contains(@params.SearchTerm.ToLower().Trim())
+                            || u.PhoneNumber.ToLower().Contains(@params.SearchTerm.ToLower().Trim()))
+                    .Skip(@params.Skip)
+                    .Take(@params.Take)
+                    .ToListAsync();
+
+            }
+
 
             //convert the list of users records to a list of UserViewModels
 
@@ -229,6 +251,11 @@ namespace UCS_CRM.Persistence.SQLRepositories
         {
             applicationUser.DeletedDate = DateTime.Now;
             //save changes 
+        }
+
+        public async Task<int> TotalCount()
+        {
+            return await this._context.Users.Where(u => u.Status != Lambda.Deleted).CountAsync();
         }
 
         public async Task<IdentityResult> UpdateAsync(ApplicationUser applicationUser)
