@@ -12,7 +12,7 @@
     <meta name="description"
           content="Material Pro Lite is powerful and clean admin dashboard template, inpired from Bootstrap Framework">
     <meta name="robots" content="noindex,nofollow">
-    <title>Material Pro Lite Template by WrapPixel</title>
+    <title>UCS-SACCO CRM</title>
     <link rel="canonical" href="https://www.wrappixel.com/templates/materialpro-lite/" />
     <!-- Favicon icon -->
     <link rel="icon" type="image/png" sizes="16x16" href="~/assets/images/favicon.png">
@@ -20,11 +20,19 @@
 @*    <link href="~/assets/plugins/chartist-js/dist/chartist.min.css" rel="stylesheet">
     <link href="~/assets/plugins/chartist-js/dist/chartist-init.css" rel="stylesheet">*@
     @*<link href="~/assets/plugins/chartist-plugin-tooltip-master/dist/chartist-plugin-tooltip.css" rel="stylesheet">*@
+        <!-- Icon fonts -->
+    <link href="~/fonts/feather.css" rel="stylesheet" />
+    <link href="~/fonts/fontawesome.css" rel="stylesheet" />
+    <link href="~/fonts/ionicons.css" rel="stylesheet" />
+    <link href="~/fonts/linearicons.css" rel="stylesheet" />
+    <link href="~/fonts/open-iconic.css" rel="stylesheet" />
+    <link href="~/fonts/pe-icon-7-stroke.css" rel="stylesheet" />
     <link href="~/css/datatables.min.css" rel="stylesheet">
     <!--This page css - Morris CSS -->
     <link href="~/assets/plugins/c3-master/c3.min.css" rel="stylesheet">
     <!-- Custom CSS -->
     <link href="~/css/style.min.css" rel="stylesheet">
+    <link href="~/css/toastr.css" rel="stylesheet">
 </head>
 
 <body>
@@ -78,7 +86,7 @@
                             </nav>
                         </div>
                     </div>
-                    <div class="col-md-6 col-4 align-self-center">
+                    @*<div class="col-md-6 col-4 align-self-center">
                         <div class="text-end upgrade-btn">
                             <a href="#"
                                class="btn btn-danger d-none d-md-inline-block text-white" target="_blank">
@@ -86,7 +94,7 @@
                                 Pro
                             </a>
                         </div>
-                    </div>
+                    </div>*@
                 </div>
             </div>
             <!-- ============================================================== -->
@@ -150,6 +158,8 @@
     @*<script src="~/js/pages/dashboards/dashboard1.js"></script>*@
     <script src="~/js/custom.js"></script>
     <script src="~/js/datatables.min.js"></script>
+    <script src="~/js/toastr.min.js"></script>
+    <script src="~/js/bootbox.min.js"></script>
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 

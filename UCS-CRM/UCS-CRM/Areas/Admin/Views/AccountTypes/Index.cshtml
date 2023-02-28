@@ -9,24 +9,26 @@
 <p>
 
     <!-- Button trigger modal -->
-    <button type="button" class="btn btn-info" data-toggle="modal" data-target="#create_account_type_modal">
+    <button type="button" class="btn btn-info" data-bs-toggle="modal" data-bs-target="#create_account_type_modal">
         Create Account Type
     </button>
+
+
 
 </p>
 
 
 <div class="modal fade" id="create_account_type_modal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
-    <partial name="_Createaccount_typePartial" />
+    <partial name="_CreateAccountTypePartial" />
 </div>
 
 <div class="modal fade" id="edit_account_type_modal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
-    <partial name="_Editaccount_typePartial" />
+    <partial name="_EditAccountTypePartial" />
 </div>
 
 <div class="card">
     <div class="card-header">
-        <h4 class="text-center text-uppercase">Categories Available In The System</h4>
+        <h4 class="text-center text-uppercase">Account Type Categories Available In The System</h4>
     </div>
     <div class="card-body">
         <table class="table table-bordered table-responsive-sm" id="my_table">
@@ -46,6 +48,8 @@
         </table>
     </div>
 </div>
+
+
 
 
 @section Scripts{

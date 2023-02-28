@@ -6,7 +6,7 @@ namespace UCS_CRM.Persistence.Interfaces
     public interface IAccountTypeRepository
     {
         void Add(AccountType accountType);
-        AccountType? Exists(AccountType accountType);
+        AccountType? Exists(string name);
         Task<List<AccountType>?> GetAccountTypes(CursorParams @params);
         Task<AccountType?> GetAccountType(int id);
         void Remove(AccountType accountType);

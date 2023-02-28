@@ -32,3 +32,16 @@ $(function () {
     $(window).on("resize", setsidebartype);
 
 });
+
+function toTitleCase(str) {
+
+    if (str === "" || str == undefined) {
+        return str;
+    } else {
+        return str.toLowerCase().split(' ').map(function (word) {
+            return (word.charAt(0).toUpperCase() + word.slice(1));
+        }).join(' ');
+    }
+
+
+}

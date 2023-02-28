@@ -80,6 +80,26 @@ namespace UCS_CRM.Areas.Identity.Pages.Account
             [Display(Name = "Email")]
             public string Email { get; set; }
 
+            [Required]
+            [Display(Name = "First Name")]
+            public string FirstName { get; set; }
+
+            [Required]
+            [Display(Name = "Last Name")]
+            public string LastName { get; set; }
+
+            [Required]
+            [Display(Name = "Gender")]
+            public string Gender { get; set; }
+
+            [Required]
+            [Display(Name = "Date of Birth")]
+            public DateTime DateOfBirth { get; set; }
+
+            [Required]
+            [Display(Name = "Phone Number")]
+            public string PhoneNumber { get; set; }
+
             /// <summary>
             ///     This API supports the ASP.NET Core Identity default UI infrastructure and is not intended to be used
             ///     directly from your code. This API may change or be removed in future releases.
@@ -98,6 +118,8 @@ namespace UCS_CRM.Areas.Identity.Pages.Account
             [Display(Name = "Confirm password")]
             [Compare("Password", ErrorMessage = "The password and confirmation password do not match.")]
             public string ConfirmPassword { get; set; }
+
+
         }
 
 
@@ -111,9 +133,10 @@ namespace UCS_CRM.Areas.Identity.Pages.Account
         {
             returnUrl ??= Url.Content("~/");
             ExternalLogins = (await _signInManager.GetExternalAuthenticationSchemesAsync()).ToList();
+
             if (ModelState.IsValid)
             {
-                var user = CreateUser();
+                var user = CreateUser2();
 
                 await _userStore.SetUserNameAsync(user, Input.Email, CancellationToken.None);
                 await _emailStore.SetEmailAsync(user, Input.Email, CancellationToken.None);
@@ -151,6 +174,8 @@ namespace UCS_CRM.Areas.Identity.Pages.Account
                 }
             }
 
+           var errors = ModelState.Values.SelectMany(v => v.Errors);
+
             // If we got this far, something failed, redisplay form
             return Page();
         }
@@ -167,6 +192,23 @@ namespace UCS_CRM.Areas.Identity.Pages.Account
                     $"Ensure that '{nameof(ApplicationUser)}' is not an abstract class and has a parameterless constructor, or alternatively " +
                     $"override the register page in /Areas/Identity/Pages/Account/Register.cshtml");
             }
+        }
+
+        private ApplicationUser CreateUser2()
+        {
+            var user = new ApplicationUser()
+            {
+                FirstName = Input.FirstName,
+                LastName = Input.LastName,
+                Email = Input.Email,
+                Gender = Input.Gender,
+                PhoneNumber = Input.PhoneNumber,
+                DateOfBirth = Input.DateOfBirth.ToString(),
+                Status = "Active",
+
+            };
+
+            return user;
         }
 
         private IUserEmailStore<ApplicationUser> GetEmailStore()

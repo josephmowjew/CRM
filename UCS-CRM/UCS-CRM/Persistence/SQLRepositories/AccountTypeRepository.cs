@@ -22,14 +22,14 @@ namespace UCS_CRM.Persistence.SQLRepositories
             this._context.AccountTypes.Add(accountType);
         }
 
-        public AccountType? Exists(AccountType accountType)
+        public AccountType? Exists(string name)
         {
-            return this._context.AccountTypes.FirstOrDefault(a => a.Name.ToLower() == accountType.Name.ToLower());
+            return this._context.AccountTypes.FirstOrDefault(a => a.Name.ToLower() == name.ToLower() & a.Status != Lambda.Deleted);
         }
 
         public async Task<AccountType?> GetAccountType(int id)
         {
-            return await this._context.AccountTypes.FirstOrDefaultAsync(x => x.Id == id);
+            return await this._context.AccountTypes.FirstOrDefaultAsync(x => x.Id == id & x.Status != Lambda.Deleted);
         }
 
         public async Task<List<AccountType>?> GetAccountTypes(CursorParams @params)
@@ -40,7 +40,7 @@ namespace UCS_CRM.Persistence.SQLRepositories
 
                if(string.IsNullOrEmpty(@params.SearchTerm))
                 {
-                    var accountTypes = (from tblOb in await this._context.AccountTypes.Skip(@params.Skip).Take(@params.Take).ToListAsync()  select tblOb);
+                    var accountTypes = (from tblOb in await this._context.AccountTypes.Where(a => a.Status != Lambda.Deleted).Skip(@params.Skip).Take(@params.Take).ToListAsync()  select tblOb);
 
                     //accountTypes.AsQueryable().OrderBy("gjakdgdag");
 
@@ -58,7 +58,7 @@ namespace UCS_CRM.Persistence.SQLRepositories
                 {
                     //include search text in the query
                     var accountTypes = (from tblOb in await this._context.AccountTypes
-                                        .Where(a => a.Name.ToLower() == @params.SearchTerm)
+                                        .Where(a => a.Name.ToLower().Contains(@params.SearchTerm) & a.Status != Lambda.Deleted)
                                         .Skip(@params.Skip)
                                         .Take(@params.Take)
                                         .ToListAsync() select tblOb);
@@ -89,7 +89,7 @@ namespace UCS_CRM.Persistence.SQLRepositories
 
         public Task<int> TotalCount()
         {
-            return this._context.AccountTypes.CountAsync();
+            return this._context.AccountTypes.CountAsync(a =>  a.Status != Lambda.Deleted);
         }
     }
 }

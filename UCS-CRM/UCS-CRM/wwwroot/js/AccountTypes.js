@@ -56,7 +56,7 @@
 
                     //rewire the onclick event on the form
 
-                    $("#edit_category_modal button[name='update_account_type_btn']").unbind().click(function () { updateAccountType(id) })
+                    $("#edit_account_type_modal button[name='update_account_type_btn']").unbind().click(function () { updateAccountType(id) })
 
                     var form = $("#create_account_type_modal")
 
@@ -167,41 +167,6 @@ function Delete(id) {
     });
 }
 
-function MakeDefault(id) {
-
-    bootbox.confirm("Are you sure you want to make this account type defalt for videos?", function (result) {
-
-
-        if (result) {
-            $.ajax({
-                url: 'AccountTypes/MakeDefault/' + id,
-                type: 'GET',
-
-            }).done(function (data) {
-
-                if (data.status == "success") {
-
-                    toastr.success(data.message)
-                }
-                else {
-                    toastr.error(data.message)
-                }
-
-
-                datatable.ajax.reload();
-
-
-            }).fail(function (response) {
-
-                toastr.error(response.responseText)
-
-                datatable.ajax.reload();
-            });
-        }
-
-
-    });
-}
 
 function updateAccountType(id) {
 
