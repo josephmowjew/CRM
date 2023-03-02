@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Threading.Channels;
-using UCS_CRM.Core.DTOs.AccountType;
+using UCS_CRM.Core.DTOs.TicketCategory;
 using UCS_CRM.Core.Helpers;
 using UCS_CRM.Core.Models;
 using UCS_CRM.Persistence.Interfaces;
@@ -11,40 +11,40 @@ using UCS_CRM.Persistence.Interfaces;
 namespace UCS_CRM.Areas.Admin.Controllers
 {
     [Area("Admin")]
-    public class AccountTypesController : Controller
+    public class TicketCategoriesController : Controller
     {
-        private readonly IAccountTypeRepository _accountTypeRepository;
+        private readonly ITicketCategoryRepository _ticketCategoryRepository;
         private readonly IMapper _mapper;
         private readonly IUnitOfWork _unitOfWork;
-        public AccountTypesController(IAccountTypeRepository accountTypeRepository, IMapper mapper, IUnitOfWork unitOfWork)
+        public TicketCategoriesController(ITicketCategoryRepository ticketCategoryRepository, IMapper mapper, IUnitOfWork unitOfWork)
         {
-            this._accountTypeRepository = accountTypeRepository;
+            this._ticketCategoryRepository = ticketCategoryRepository;
             this._mapper = mapper;
             _unitOfWork = unitOfWork;
         }
 
-        // GET: AccountTypesController
+        // GET: TicketCategoriesController
         public ActionResult Index()
         {
             return View();
         }
 
-        // GET: AccountTypesController/Details/5
+        // GET: TicketCategoriesController/Details/5
         public ActionResult Details(int id)
         {
             return View();
         }
 
-        // GET: AccountTypesController/Create
+        // GET: TicketCategoriesController/Create
         public ActionResult Create()
         {
             return View();
         }
 
-        // POST: AccountTypesController/Create
+        // POST: TicketCategoriesController/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<ActionResult> Create(CreateAccountTypeDTO createAcccountTypeDTO)
+        public async Task<ActionResult> Create(CreateTicketCategoryDTO createAcccountTypeDTO)
         {
             //check for model validity
 
@@ -58,19 +58,19 @@ namespace UCS_CRM.Areas.Admin.Controllers
 
                 //check for article title presence
 
-                var mappedAccountType = this._mapper.Map<AccountType>(createAcccountTypeDTO);
+                var mappedTicketCategory = this._mapper.Map<TicketCategory>(createAcccountTypeDTO);
 
-                var accountTypePresence = this._accountTypeRepository.Exists(mappedAccountType.Name);
+                var ticketCategoryPresence = this._ticketCategoryRepository.Exists(mappedTicketCategory.Name);
 
 
 
-                if (accountTypePresence != null)
+                if (ticketCategoryPresence != null)
                 {
                     createAcccountTypeDTO.DataInvalid = "true";
 
                     ModelState.AddModelError(nameof(createAcccountTypeDTO.Name), $"Another account type exists with the parameters submitted'");
 
-                    return PartialView("_CreateAccountTypePartial", createAcccountTypeDTO);
+                    return PartialView("_CreateTicketCategoryPartial", createAcccountTypeDTO);
                 }
 
 
@@ -79,13 +79,13 @@ namespace UCS_CRM.Areas.Admin.Controllers
                 try
                 {
                     //comment out this code
-                    mappedAccountType.CreatedById = "1c9d8003-91b9-4eab-96a6-0bc90edd349b";
+                    mappedTicketCategory.CreatedById = "1c9d8003-91b9-4eab-96a6-0bc90edd349b";
 
-                    this._accountTypeRepository.Add(mappedAccountType);
+                    this._ticketCategoryRepository.Add(mappedTicketCategory);
                     await this._unitOfWork.SaveToDataStore();
 
 
-                    return PartialView("_CreateAccountTypePartial", createAcccountTypeDTO);
+                    return PartialView("_CreateTicketCategoryPartial", createAcccountTypeDTO);
                 }
                 catch (DbUpdateException ex)
                 {
@@ -93,7 +93,7 @@ namespace UCS_CRM.Areas.Admin.Controllers
 
                     ModelState.AddModelError(string.Empty, ex.InnerException.Message);
 
-                    return PartialView("_CreateAccountTypePartial", createAcccountTypeDTO);
+                    return PartialView("_CreateTicketCategoryPartial", createAcccountTypeDTO);
                 }
 
                 catch (Exception ex)
@@ -103,7 +103,7 @@ namespace UCS_CRM.Areas.Admin.Controllers
 
                     ModelState.AddModelError(string.Empty, ex.Message);
 
-                    return PartialView("_CreateAccountTypePartial", createAcccountTypeDTO);
+                    return PartialView("_CreateTicketCategoryPartial", createAcccountTypeDTO);
                 }
 
 
@@ -111,25 +111,25 @@ namespace UCS_CRM.Areas.Admin.Controllers
 
             }
 
-           
 
-            return PartialView("_CreateAccountTypePartial", createAcccountTypeDTO);
+
+            return PartialView("_CreateTicketCategoryPartial", createAcccountTypeDTO);
         }
 
-        // GET: AccountTypesController/Edit/5
+        // GET: TicketCategoriesController/Edit/5
         public async Task<ActionResult> Edit(int id)
         {
             //get  account type record with the id sent
 
             try
             {
-                AccountType? accountTypeDbRecord = await this._accountTypeRepository.GetAccountType(id);
+                TicketCategory? ticketCategoryDbRecord = await this._ticketCategoryRepository.GetTicketCategory(id);
 
-                if (accountTypeDbRecord is not null)
+                if (ticketCategoryDbRecord is not null)
                 {
                     //map the record 
 
-                    ReadAccoutTypeDTO mappedAccountRecord = this._mapper.Map<ReadAccoutTypeDTO>(accountTypeDbRecord);
+                    ReadTicketCategoryDTO mappedAccountRecord = this._mapper.Map<ReadTicketCategoryDTO>(ticketCategoryDbRecord);
 
                     return Json(mappedAccountRecord);
 
@@ -145,69 +145,69 @@ namespace UCS_CRM.Areas.Admin.Controllers
                 return Json(new { status = "error", message = ex.Message });
             }
 
-           
+
 
             return View();
         }
 
-        // POST: AccountTypesController/Edit/5
+        // POST: TicketCategoriesController/Edit/5
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<ActionResult> Edit(int id, EditAccountTypeDTO editAccountTypeDTO)
+        public async Task<ActionResult> Edit(int id, EditTicketCategoryDTO editTicketCategoryDTO)
         {
-            editAccountTypeDTO.DataInvalid = "true";
+            editTicketCategoryDTO.DataInvalid = "true";
 
             if (ModelState.IsValid)
             {
-                editAccountTypeDTO.DataInvalid = "";
+                editTicketCategoryDTO.DataInvalid = "";
                 //check if the role name isn't already taken
 
-                var accountTypeDB =  this._accountTypeRepository.Exists(editAccountTypeDTO.Name);
+                var ticketCategoryDB = this._ticketCategoryRepository.Exists(editTicketCategoryDTO.Name);
 
 
 
-                bool isTaken = (accountTypeDB != null);
+                bool isTaken = (ticketCategoryDB != null);
 
                 if (isTaken)
                 {
 
-                    editAccountTypeDTO.DataInvalid = "true";
+                    editTicketCategoryDTO.DataInvalid = "true";
 
-                    ModelState.AddModelError(nameof(editAccountTypeDTO.Name), $"The Account Type  {editAccountTypeDTO.Name} is already taken");
+                    ModelState.AddModelError(nameof(editTicketCategoryDTO.Name), $"The Account Type  {editTicketCategoryDTO.Name} is already taken");
 
 
-                    return PartialView("_EditAccountTypePartial", editAccountTypeDTO);
+                    return PartialView("_EditTicketCategoryPartial", editTicketCategoryDTO);
                 }
 
 
 
-                this._mapper.Map(editAccountTypeDTO, accountTypeDB);
+                this._mapper.Map(editTicketCategoryDTO, ticketCategoryDB);
 
                 //save changes to data store
 
                 await this._unitOfWork.SaveToDataStore();
 
-                return Json(accountTypeDB);
+                return Json(ticketCategoryDB);
 
             }
 
 
 
-            return PartialView("_EditAccountTypePartial", editAccountTypeDTO);
+            return PartialView("_EditTicketCategoryPartial", editTicketCategoryDTO);
 
         }
 
-        // GET: AccountTypesController/Delete/5
+        // GET: TicketCategoriesController/Delete/5
         [HttpPost]
         public async Task<ActionResult> Delete(int id)
         {
             //check if the role name isn't already taken
 
-            var accountTypeDb = await this._accountTypeRepository.GetAccountType(id);
+            var ticketCategoryDb = await this._ticketCategoryRepository.GetTicketCategory(id);
 
-            if (accountTypeDb != null)
+            if (ticketCategoryDb != null)
             {
-                this._accountTypeRepository.Remove(accountTypeDb);
+                this._ticketCategoryRepository.Remove(ticketCategoryDb);
 
                 await this._unitOfWork.SaveToDataStore();
 
@@ -217,10 +217,10 @@ namespace UCS_CRM.Areas.Admin.Controllers
             return Json(new { status = "error", message = "account type could not be found from the system" });
         }
 
-       
+
 
         [HttpPost]
-        public async Task<ActionResult> GetAccountTypes()
+        public async Task<ActionResult> GetTicketCategories()
         {
 
             try
@@ -241,12 +241,12 @@ namespace UCS_CRM.Areas.Admin.Controllers
                 //create a cursor params based on the data coming from the datatable
                 CursorParams CursorParameters = new CursorParams() { SearchTerm = searchValue, Skip = skip, SortColum = sortColumn, SortDirection = sortColumnAscDesc, Take = pageSize };
 
-                List<AccountType>? repoAccountTypes = await this._accountTypeRepository.GetAccountTypes(CursorParameters);
+                List<TicketCategory>? repoTicketCategories = await this._ticketCategoryRepository.GetTicketCategories(CursorParameters);
 
 
                 //get total records from the database
-                resultTotal = await this._accountTypeRepository.TotalCount();
-                var result = repoAccountTypes;
+                resultTotal = await this._ticketCategoryRepository.TotalCount();
+                var result = repoTicketCategories;
                 return Json(new { draw = draw, recordsFiltered = resultTotal, recordsTotal = resultTotal, data = result });
             }
             catch (Exception ex)
