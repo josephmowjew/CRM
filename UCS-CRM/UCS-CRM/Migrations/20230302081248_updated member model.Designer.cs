@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using UCS_CRM.Data;
 
@@ -10,9 +11,11 @@ using UCS_CRM.Data;
 namespace UCS_CRM.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20230302081248_updated member model")]
+    partial class updatedmembermodel
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -249,9 +252,6 @@ namespace UCS_CRM.Migrations
                     b.Property<DateTimeOffset?>("LockoutEnd")
                         .HasColumnType("datetime(6)");
 
-                    b.Property<int?>("MemberId")
-                        .HasColumnType("int");
-
                     b.Property<string>("NormalizedEmail")
                         .HasMaxLength(200)
                         .HasColumnType("varchar(200)");
@@ -290,9 +290,6 @@ namespace UCS_CRM.Migrations
                         .HasColumnType("varchar(256)");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("MemberId")
-                        .IsUnique();
 
                     b.HasIndex("NormalizedEmail")
                         .HasDatabaseName("EmailIndex");
@@ -343,14 +340,10 @@ namespace UCS_CRM.Migrations
                         .HasMaxLength(70)
                         .HasColumnType("varchar(70)");
 
-                    b.Property<string>("NationalId")
+                    b.Property<string>("NationaId")
                         .IsRequired()
                         .HasMaxLength(70)
                         .HasColumnType("varchar(70)");
-
-                    b.Property<string>("PhoneNumber")
-                        .HasMaxLength(20)
-                        .HasColumnType("varchar(20)");
 
                     b.Property<string>("Status")
                         .IsRequired()
@@ -763,19 +756,10 @@ namespace UCS_CRM.Migrations
                     b.Navigation("CreatedBy");
                 });
 
-            modelBuilder.Entity("UCS_CRM.Core.Models.ApplicationUser", b =>
-                {
-                    b.HasOne("UCS_CRM.Core.Models.Member", "Member")
-                        .WithOne("ApplicationUser")
-                        .HasForeignKey("UCS_CRM.Core.Models.ApplicationUser", "MemberId");
-
-                    b.Navigation("Member");
-                });
-
             modelBuilder.Entity("UCS_CRM.Core.Models.Member", b =>
                 {
                     b.HasOne("UCS_CRM.Core.Models.ApplicationUser", "CreatedBy")
-                        .WithMany("Members")
+                        .WithMany()
                         .HasForeignKey("CreatedById")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -925,17 +909,6 @@ namespace UCS_CRM.Migrations
                         .IsRequired();
 
                     b.Navigation("CreatedBy");
-                });
-
-            modelBuilder.Entity("UCS_CRM.Core.Models.ApplicationUser", b =>
-                {
-                    b.Navigation("Members");
-                });
-
-            modelBuilder.Entity("UCS_CRM.Core.Models.Member", b =>
-                {
-                    b.Navigation("ApplicationUser")
-                        .IsRequired();
                 });
 
             modelBuilder.Entity("UCS_CRM.Core.Models.Ticket", b =>

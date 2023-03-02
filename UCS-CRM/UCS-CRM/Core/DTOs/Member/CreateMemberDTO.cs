@@ -1,11 +1,10 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace UCS_CRM.Core.Models
+namespace UCS_CRM.Core.DTOs.Member
 {
-    public class Member : Meta
+    public class CreateMemberDTO
     {
-        public int Id { get; set; }
-        [Display(Name = "First Name")]
+        [Display(Name ="First Name")]
         public string? FirstName { get; set; }
         [Display(Name = "Surname")]
         [StringLength(maximumLength: 70, MinimumLength = 2)]
@@ -14,18 +13,15 @@ namespace UCS_CRM.Core.Models
         public DateTime? DateOfBirth { get; set; }
         [Required]
         public string? Gender { get; set; }
-
         [StringLength(maximumLength: 10, MinimumLength = 2)]
         [Display(Name = "Account Number")]
         public string AccountNumber { get; set; }
-
         [StringLength(maximumLength: 70, MinimumLength = 5)]
+        [Display(Name = "Nationa Id")]
         public string NationalId { get; set; }
         [StringLength(maximumLength: 200, MinimumLength = 5)]
         public string? Address { get; set; }
-        public ApplicationUser ApplicationUser { get; set; }
-        [StringLength(maximumLength:20)]
-        public string? PhoneNumber { get; set; }
 
+        public string? PhoneNumber { get; set; }
     }
 }

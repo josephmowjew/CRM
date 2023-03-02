@@ -2,12 +2,14 @@
 using System.ComponentModel.DataAnnotations.Schema;
 using UCS_CRM.Core.Models;
 using System.Globalization;
+using System.ComponentModel.DataAnnotations;
 
 namespace UCS_CRM.Core.ViewModels
 {
     public class UserViewModel : ApplicationUser
     {
         TextInfo myTI = new CultureInfo("en-US", false).TextInfo;
+        [Display(Name = "Role Name")]
         public string RoleName { get; set; }
         public string DataInvalid { get; set; }
         public string FormattedFirstName => myTI.ToTitleCase(FirstName);

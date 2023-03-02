@@ -1,0 +1,158 @@
+﻿
+@using Microsoft.Extensions.Configuration
+@inject IConfiguration Configuration
+@{
+    var host = Configuration.GetSection("HostingSettings")["Host"];
+    var path = Configuration.GetSection("HostingSettings")["path"];
+    var protocol = Configuration.GetSection("HostingSettings")["Protocol"];
+}
+@{
+    ViewData["Title"] = "Index";
+    Layout = "~/Areas/Admin/Views/shared/_Layout.cshtml";
+}
+
+
+
+
+
+<div class="card">
+    <div class="card-header">
+        <h4 class="text-center text-uppercase">Members Available In The System</h4>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-bordered " id="my_table">
+            <thead>
+                <tr>
+                    <th>
+                        Account Number
+                    </th>
+                     <th>
+                        National Id
+                    </th>
+                    <th>
+                        First Name
+                    </th>
+                    <th>
+                        Surname
+                    </th>
+                    <th>
+                        Gender
+                    </th>
+                   
+                    <th>
+                        Phone Number
+                    </th>
+                    
+                    <th>
+                        Date Of Birth
+                    </th>
+
+                    <th>
+                        Action
+                    </th>
+
+                </tr>
+            </thead>
+            <tbody>
+            </tbody>
+        </table>
+        </div>
+    </div>
+</div>
+
+
+@section Scripts{
+
+            <script>
+                var datatable;
+            </script>
+
+            <script src="../js/Member.js" asp-append-version="true"></script>
+            <script>
+                $(document).ready(function () {
+                    datatable = $('#my_table').DataTable({
+
+
+                        "processing": true,
+                        "serverSide": true,
+                        "order": [[0, "desc"]],
+                        ajax: {
+                            url: 'members/GetMembers',
+                            type: 'post',
+                            datatype: 'Json',
+
+
+                      },
+                        columnDefs: [
+                            {
+                                defaultContent: "",
+                                targets: "_all",
+                                'orderable': true
+                            },
+                        ],
+                        columns: [
+
+                            {
+                                data: "accountNumber",
+                                name: "accountNumber",
+                                className: "text-left",
+                                "orderable": true,
+                            },
+                            {
+                                data: "nationalId",
+                                name: "nationalId",
+                                className: "text-left",
+                                "orderable": true,
+                            },
+                            {
+                                data: "formattedFirstName",
+                                name: "firstName",
+                                className: "text-left",
+                                "orderable": true,
+                            },
+                            {
+                                data: "formattedLastName",
+                                name: "lastName",
+                                className: "text-left",
+                                "orderable": true,
+                            },
+                            {
+                                data: "formattedGender",
+                                name: "gender",
+                                className: "text-left",
+                                "orderable": true,
+                            },
+                            {
+                                data: "phoneNumber",
+                                name: "phoneNumber",
+                                className: "text-left",
+                                "orderable": false,
+                            },
+
+                             {
+                                data: "formattedDateOfBirth",
+                                name: "dateOfBirth",
+                                className: "text-left",
+                                "orderable": false,
+                            },
+                            {
+                                data: "id",
+                                name: "id",
+                                "orderable": false,
+                                render: function (data) {
+                                    return "<a href='#' onclick=Update('" + data + "') type='button' class='feather icon-user-plus' title='Create User Account' ></a>"
+                                }
+                            }
+                        ],
+                        responsive: true,
+                        "autoWidth": false,
+                    });
+                });
+            </script>
+
+
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

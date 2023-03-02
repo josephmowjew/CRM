@@ -1,14 +1,16 @@
-﻿using UCS_CRM.Core.Models;
+﻿using UCS_CRM.Core.Helpers;
+using UCS_CRM.Core.Models;
 
 namespace UCS_CRM.Persistence.Interfaces
 {
     public interface IMemberRepository
     {
         void Add(Member member);
-        Member Exists(Member member);
-        Task<List<Member>> GetMembers();
-        Task<Member> GetMemberAsync(int id);
+        Member Exists(Member? member);
+        Task<List<Member>?> GetMembers(CursorParams cursorParams);
+        Task<Member?> GetMemberAsync(int id);
         void Remove(Member member);
         Task<int> TotalCount();
+        void DeleteUser(Member member);
     }
 }

@@ -26,10 +26,7 @@
         var email = $("#create_user_modal input[name ='Email']").val()
         var contact = $("#create_user_modal input[name ='PhoneNumber']").val()
         var role = $("#create_user_modal select[name ='RoleName']").val()
-        var dateOfBirth = $("#create_user_modal input[name ='DateOfBirth']").val()
         //prepare data for request pushing
-
-        console.log(areaOfExpertiseId);
 
 
         var userInput = {
@@ -39,7 +36,6 @@
             Gender: gender,
             Email: email,
             PhoneNumber: contact,
-            DateOfBirth: dateOfBirth,
             RoleName: role,
         }
 

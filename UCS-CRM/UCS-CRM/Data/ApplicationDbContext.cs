@@ -1,6 +1,8 @@
 ﻿using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
+using System.Reflection.Emit;
+using System.Reflection.Metadata;
 using UCS_CRM.Core.Models;
 
 namespace UCS_CRM.Data
@@ -28,6 +30,17 @@ namespace UCS_CRM.Data
         protected override void OnModelCreating(ModelBuilder builder)
         {
             base.OnModelCreating(builder);
+
+            builder.Entity<ApplicationUser>()
+              .HasOne(a => a.Member)
+              .WithOne(i => i.ApplicationUser)
+              .HasForeignKey<ApplicationUser>(b => b.MemberId);
+
+            builder.Entity<ApplicationUser>()
+            .HasMany(a => a.Members)
+            .WithOne(i => i.CreatedBy);
+            
+
             builder.Entity<ApplicationUser>(entity =>
             {
                 entity.ToTable(name: "Users");

@@ -50,6 +50,7 @@ builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IEmailService, EmailService>();
 builder.Services.AddScoped<IRoleRepositorycs, RoleRepository>();
+builder.Services.AddScoped<IMemberRepository, MemberRepository>();
 
 
 var app = builder.Build();

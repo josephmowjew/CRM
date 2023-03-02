@@ -6,6 +6,10 @@ namespace UCS_CRM.Core.Models
 {
     public class ApplicationUser : IdentityUser
     {
+        public ApplicationUser()
+        {
+            Members = new List<Member>();
+        }
         [Required]
         [StringLength(maximumLength: 70, MinimumLength = 2)]
         public string FirstName { get; set; }
@@ -13,7 +17,7 @@ namespace UCS_CRM.Core.Models
         [StringLength(maximumLength:70, MinimumLength =2)]
         public string LastName { get; set; }
         [Required]
-        [StringLength(maximumLength:10,MinimumLength = 3)]
+       
         public string Gender { get; set; }
         public string DateOfBirth { get; set; }
 
@@ -39,6 +43,9 @@ namespace UCS_CRM.Core.Models
                 return FirstName + " " + LastName;
             }
         }
+        public ICollection<Member> Members { get; set; }
+        public int? MemberId { get; set; }
+        public Member? Member { get; set; }
 
     }
 }

@@ -70,6 +70,8 @@
 
                     dataTable.ajax.reload();
 
+                    $("#create_role_modal").modal("hide")
+
                 }
 
 
