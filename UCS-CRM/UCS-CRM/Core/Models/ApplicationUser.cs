@@ -29,6 +29,8 @@ namespace UCS_CRM.Core.Models
 
         public string Status { get; set; }
 
+        public DateTime LastLogin { get; set; }
+
         [NotMapped]
         public String FullName
         {
