@@ -93,7 +93,7 @@ function Delete(id) {
 
         if (result) {
             $.ajax({
-                url: 'role/delete/' + id,
+                url: 'roles/delete/' + id,
                 type: 'POST',
             }).done(function (data) {
 
@@ -120,7 +120,7 @@ function EditForm(id) {
     //get the record from the database
 
     $.ajax({
-        url: 'role/edit/' + id,
+        url: 'roles/edit/' + id,
         type: 'GET'
     }).done(function (data) {
 
@@ -208,6 +208,8 @@ function upDateRole(id) {
                 toastr.success("Role updated successfully")
 
                 dataTable.ajax.reload();
+
+                $("#edit_role_modal").modal("hide")
 
             }
 
