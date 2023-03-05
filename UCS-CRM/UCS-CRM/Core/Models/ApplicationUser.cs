@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Identity;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using UCS_CRM.Core.Helpers;
 
 namespace UCS_CRM.Core.Models
 {
@@ -19,7 +20,6 @@ namespace UCS_CRM.Core.Models
         [Required]
        
         public string Gender { get; set; }
-        public string DateOfBirth { get; set; }
 
         [StringLength(maximumLength:15, MinimumLength = 10)]
         public string PhoneNumber { get; set; }
@@ -31,7 +31,7 @@ namespace UCS_CRM.Core.Models
 
         public DateTime? DeletedDate { get; set; }
 
-        public string Status { get; set; }
+        public string Status { get; set; } = Lambda.Active;
 
         public DateTime LastLogin { get; set; }
 

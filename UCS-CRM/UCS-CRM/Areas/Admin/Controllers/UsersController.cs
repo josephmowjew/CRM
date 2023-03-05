@@ -77,7 +77,8 @@ namespace UCS_CRM.Areas.Admin.Controllers
                     Gender = userViewModel.Gender,
                     Email = userViewModel.Email,
                     PhoneNumber = userViewModel.PhoneNumber,
-                    DateOfBirth = userViewModel.DateOfBirth,
+                    UserName= userViewModel.Email,
+
 
                 };
 
@@ -109,19 +110,48 @@ namespace UCS_CRM.Areas.Admin.Controllers
                     //save the record to the database
                     var result = await this._userRepository.CreateUserAsync(applicationUser, "P@$$w0rd");
 
+                   
+
+
+
                     if(result.Succeeded)
                     {
-                        //send account creation and confirmation emails
+                        //associate user with a role
 
-                        _emailService.SendMail(applicationUser.Email, "UCS SACCO ACCOUNT INFO", $"Good day, for those who have not yet registered with Gravator, please do so so that you may upload an avatar of yourself that can be associated with your email address and displayed on your profile in the Mental Lab application.\r\nPlease visit https://en.gravatar.com/ to register with Gravatar. ");
-                        string UserNameBody = "An account has been created on UCS SACCO. Your email is " + "<b>" + applicationUser.Email + " <br /> ";
-                        string PasswordBody = "An account has been created on UCS SACCO App. Your password is " + "<b> P@$$w0rd <br />";
+                        var roleResult = await this._userRepository.AddUserToRoleAsync(applicationUser, userViewModel.RoleName);
+
+                        if(roleResult.Succeeded)
+                        {
+                            //send account creation and confirmation emails
+
+                            //_emailService.SendMail(applicationUser.Email, "UCS SACCO ACCOUNT INFO", $"Good day, for those who have not yet registered with Gravator, please do so so that you may upload an avatar of yourself that can be associated with your email address and displayed on your profile in the Mental Lab application.\r\nPlease visit https://en.gravatar.com/ to register with Gravatar. ");
+                            string UserNameBody = "An account has been created on UCS SACCO. Your email is " + "<b>" + applicationUser.Email + " <br /> ";
+                            string PasswordBody = "An account has been created on UCS SACCO App. Your password is " + "<b> P@$$w0rd <br />";
+
+
+
+                            //_emailService.SendMail(applicationUser.Email, "Login Details", UserNameBody);
+                            //_emailService.SendMail(applicationUser.Email, "Login Details", PasswordBody);
+                            return Json(new { response = "User account created succefully" });
+                        }
+                        else
+                        {
+                            //repopulate roles
+
+                            this._roleManager.Roles.ToList().ForEach(r =>
+                            {
+                                roles.Add(new SelectListItem { Text = r.Name, Value = r.Name });
+                            });
+
+                            userViewModel.DataInvalid = "true";
+
+                            ViewBag.rolesList = roles;
+                            ViewBag.genderList = newUser.GenderList;
+                            //something is not right, could not save record to the database
+                            return PartialView("_CreateUserPartial", userViewModel);
+                        }
 
                        
-
-                        _emailService.SendMail(applicationUser.Email, "Login Details", UserNameBody);
-                        _emailService.SendMail(applicationUser.Email, "Login Details", PasswordBody);
-                        return Json(new { response = "User account created succefully" });
                     }
                     else
                     {
@@ -204,7 +234,7 @@ namespace UCS_CRM.Areas.Admin.Controllers
 
                 await this._userRepository.UpdateAsync(user);
 
-                _emailService.SendMail(user.Email, "Account Changes", "Sorry but your account has been suspended from UCS SACCO. You can no longer access the appliaction. Contact support for more information and queries");
+               // _emailService.SendMail(user.Email, "Account Changes", "Sorry but your account has been suspended from UCS SACCO. You can no longer access the appliaction. Contact support for more information and queries");
 
                 return Json(new { status = "success", message = "user deleted from the system" });
             }

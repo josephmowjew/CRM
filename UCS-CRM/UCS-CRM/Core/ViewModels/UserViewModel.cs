@@ -11,7 +11,7 @@ namespace UCS_CRM.Core.ViewModels
         TextInfo myTI = new CultureInfo("en-US", false).TextInfo;
         [Display(Name = "Role Name")]
         public string RoleName { get; set; }
-        public string DataInvalid { get; set; }
+        public string DataInvalid { get; set; } = "true";
         public string FormattedFirstName => myTI.ToTitleCase(FirstName);
         public string FormattedLastName => myTI.ToTitleCase(LastName);
         public string FormattedGender => (!string.IsNullOrEmpty(Gender)) ? myTI.ToTitleCase(Gender) : "";

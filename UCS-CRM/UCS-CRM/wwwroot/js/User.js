@@ -190,7 +190,7 @@ function EditForm(id, area = "") {
     //get the record from the database
 
     $.ajax({
-        url: area + 'user/edit/' + id,
+        url: area + 'users/edit/' + id,
         type: 'GET'
     }).done(function (data) {
 
@@ -236,7 +236,7 @@ function Delete(id) {
 
         if (result) {
             $.ajax({
-                url: 'user/delete/' + id,
+                url: 'users/delete/' + id,
                 type: 'POST',
 
             }).done(function (data) {
@@ -274,7 +274,7 @@ function Reactivate(id) {
 
         if (result) {
             $.ajax({
-                url: 'user/reactivate/' + id,
+                url: 'users/reactivate/' + id,
                 type: 'GET',
 
             }).done(function (data) {

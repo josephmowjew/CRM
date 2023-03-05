@@ -203,7 +203,6 @@ namespace UCS_CRM.Areas.Identity.Pages.Account
                 Email = Input.Email,
                 Gender = Input.Gender,
                 PhoneNumber = Input.PhoneNumber,
-                DateOfBirth = Input.DateOfBirth.ToString(),
                 Status = "Active",
 
             };
