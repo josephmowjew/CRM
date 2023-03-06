@@ -274,7 +274,7 @@ function Reactivate(id) {
 
         if (result) {
             $.ajax({
-                url: 'users/reactivate/' + id,
+                url: 'reactivate/' + id,
                 type: 'GET',
 
             }).done(function (data) {

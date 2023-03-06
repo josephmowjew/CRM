@@ -10,7 +10,7 @@ namespace UCS_CRM.Persistence.Interfaces
         public Task<IEnumerable<ApplicationUser>> GetUsers();
 
         public Task<IEnumerable<ApplicationUser>> GetAllUsers();
-        Task<List<UserViewModel>> GetUnconfirmedUsersWithRoles();
+        Task<List<UserViewModel>> GetUnconfirmedUsersWithRoles(CursorParams @params);
 
         Task<List<UserViewModel>> GetUsersWithRoles(CursorParams @params);
 
@@ -26,6 +26,7 @@ namespace UCS_CRM.Persistence.Interfaces
         Task<string> GenerateEmailConfirmationTokenAsync(ApplicationUser applicationUser);
 
         Task<ApplicationUser?> FindByIdAsync(string id);
+        Task<ApplicationUser?> FindByIdDeleteInclusiveAsync(string id);
 
         Task<ApplicationUser?> FindByEmailsync(string email);
 
@@ -33,7 +34,12 @@ namespace UCS_CRM.Persistence.Interfaces
 
         Task<IdentityResult> UpdateAsync(ApplicationUser applicationUser);
 
-        Task<List<UserViewModel>> GetDeletedUsers();
+        Task<List<UserViewModel>> GetDeletedUsers(CursorParams @params);
         Task<int> TotalCount();
+
+        Task<int> TotalUncomfirmedCount();
+
+        Task<int> TotalDeletedCount();
+        Task<IdentityResult> RemoveFromRolesAsync(ApplicationUser applicationUser, IEnumerable<string> roleNames);
     }
 }

@@ -1,5 +1,7 @@
-﻿@{
+﻿@using Microsoft.AspNetCore.Identity;
+@{
     Layout = "";
+    @inject SignInManager<UCS_CRM.Core.Models.ApplicationUser> SignInManager
 }
 
 <!DOCTYPE html>
@@ -13,8 +15,8 @@
             <div class="container-fluid h-custom">
               <div class="row d-flex justify-content-center align-items-center h-100">
                 <div class="col-md-9 col-lg-6 col-xl-5">
-                  <img src="https://mdbcdn.b-cdn.net/img/Photos/new-templates/bootstrap-login-form/draw2.webp"
-                    class="img-fluid" alt="Sample image">
+                    <img src="~/images/draw2.webp" class="img-fluid" alt="Sample image"/>
+                  
                 </div>
                 <div class="col-md-8 col-lg-6 col-xl-4 offset-xl-1">
                   <form asp-action="Create" asp-antiforgery="true" method="post">
@@ -89,8 +91,12 @@
               <!-- Right -->
             </div>
           </section>
-
-
-
     </body>
+
+@if (SignInManager.IsSignedIn(User))
+{
+            <script>
+                    location.href = "admin/users"
+            </script>
+}
 </html>

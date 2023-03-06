@@ -47,6 +47,11 @@ namespace UCS_CRM.Persistence.SQLRepositories
             return await this._context.Users.FirstOrDefaultAsync(u => u.Id == id & u.Status != Lambda.Deleted);
         }
 
+        public async Task<ApplicationUser?> FindByIdDeleteInclusiveAsync(string id)
+        {
+            return await this._context.Users.FirstOrDefaultAsync(u => u.Id == id);
+        }
+
         public async Task<string> GenerateEmailConfirmationTokenAsync(ApplicationUser applicationUser)
         {
             return await _userManager.GenerateEmailConfirmationTokenAsync(applicationUser);
@@ -57,7 +62,7 @@ namespace UCS_CRM.Persistence.SQLRepositories
             return await this._context.Users.ToListAsync();
         }
 
-        public async Task<List<UserViewModel>> GetDeletedUsers()
+        public async Task<List<UserViewModel>> GetDeletedUsers(CursorParams @params)
         {
             //Initialize the mapper
             var config = new MapperConfiguration(cfg =>
@@ -66,7 +71,28 @@ namespace UCS_CRM.Persistence.SQLRepositories
 
             Mapper mapper = new Mapper(config);
 
-            var users = await this._context.Users.Where(u => u.Status != Lambda.Deleted).ToListAsync();
+            List<ApplicationUser> users = new List<ApplicationUser>();
+
+            if (string.IsNullOrEmpty(@params.SearchTerm))
+            {
+
+                users = await this._context.Users.Where(u => u.Status == Lambda.Deleted ).Skip(@params.Skip).Take(@params.Take).ToListAsync();
+
+            }
+            else
+            {
+                users = await this._context.Users
+                    .Where(u => u.Status == Lambda.Deleted
+                            || u.FirstName.ToLower().Contains(@params.SearchTerm.ToLower().Trim())
+                            || u.LastName.ToLower().Contains(@params.SearchTerm.ToLower().Trim())
+                            || u.Gender.ToLower().Contains(@params.SearchTerm.ToLower().Trim())
+                            || u.Email.ToLower().Contains(@params.SearchTerm.ToLower().Trim())
+                            || u.PhoneNumber.ToLower().Contains(@params.SearchTerm.ToLower().Trim()))
+                    .Skip(@params.Skip)
+                    .Take(@params.Take)
+                    .ToListAsync();
+
+            }
 
             //convert the list of users records to a list of UserViewModels
 
@@ -110,7 +136,7 @@ namespace UCS_CRM.Persistence.SQLRepositories
 
         }
 
-        public async Task<List<UserViewModel>> GetUnconfirmedUsersWithRoles()
+        public async Task<List<UserViewModel>> GetUnconfirmedUsersWithRoles(CursorParams @params)
         {
             //Initialize the mapper
             var config = new MapperConfiguration(cfg =>
@@ -118,8 +144,29 @@ namespace UCS_CRM.Persistence.SQLRepositories
                 );
 
             Mapper mapper = new Mapper(config);
+            List<ApplicationUser> users = new List<ApplicationUser>();
 
-            var users = await this._context.Users.Where(u => u.DeletedDate == null && u.EmailConfirmed == false).ToListAsync();
+
+            if (string.IsNullOrEmpty(@params.SearchTerm))
+            {
+
+                users = await this._context.Users.Where(u => u.Status != Lambda.Deleted && u.EmailConfirmed == false).Skip(@params.Skip).Take(@params.Take).ToListAsync();
+
+            }
+            else
+            {
+                users = await this._context.Users
+                    .Where(u => u.Status != Lambda.Deleted && u.EmailConfirmed == false
+                            || u.FirstName.ToLower().Contains(@params.SearchTerm.ToLower().Trim())
+                            || u.LastName.ToLower().Contains(@params.SearchTerm.ToLower().Trim())
+                            || u.Gender.ToLower().Contains(@params.SearchTerm.ToLower().Trim())
+                            || u.Email.ToLower().Contains(@params.SearchTerm.ToLower().Trim())
+                            || u.PhoneNumber.ToLower().Contains(@params.SearchTerm.ToLower().Trim()))
+                    .Skip(@params.Skip)
+                    .Take(@params.Take)
+                    .ToListAsync();
+
+            }
 
             //convert the list of users records to a list of UserViewModels
 
@@ -253,9 +300,24 @@ namespace UCS_CRM.Persistence.SQLRepositories
             //save changes 
         }
 
+        public async Task<IdentityResult> RemoveFromRolesAsync(ApplicationUser applicationUser, IEnumerable<string> roleNames)
+        {
+            return await this._userManager.RemoveFromRolesAsync(applicationUser, roleNames);
+        }
+
         public async Task<int> TotalCount()
         {
             return await this._context.Users.Where(u => u.Status != Lambda.Deleted).CountAsync();
+        }
+
+        public async Task<int> TotalUncomfirmedCount()
+        {
+            return await this._context.Users.Where(u => u.Status != Lambda.Deleted && u.EmailConfirmed == false).CountAsync();
+        }
+
+        public async Task<int> TotalDeletedCount()
+        {
+            return await this._context.Users.Where(u => u.Status == Lambda.Deleted).CountAsync();
         }
 
         public async Task<IdentityResult> UpdateAsync(ApplicationUser applicationUser)

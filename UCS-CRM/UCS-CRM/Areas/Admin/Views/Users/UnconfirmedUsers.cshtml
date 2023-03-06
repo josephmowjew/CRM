@@ -1,0 +1,182 @@
+﻿
+@using Microsoft.Extensions.Configuration
+@inject IConfiguration Configuration
+@{
+    var host = Configuration.GetSection("HostingSettings")["Host"];
+    var path = Configuration.GetSection("HostingSettings")["path"];
+    var protocol = Configuration.GetSection("HostingSettings")["Protocol"];
+}
+@{
+    ViewData["Title"] = "Index";
+    Layout = "~/Areas/Admin/Views/shared/_Layout.cshtml";
+}
+
+<p>
+
+
+    <a asp-area="admin" asp-controller="users" asp-action="index" class="btn btn-info" asp-protocol="@protocol" asp-host="@host">
+           View all users
+        </a>
+
+
+     <a asp-area="admin" asp-controller="users" asp-action="unconfirmedUsers" class="btn btn-warning" asp-protocol="@protocol" asp-host="@host">
+        View Unconfirmed Users
+    </a>
+
+     <a asp-area="admin" asp-controller="users" asp-action="deletedUsers" class="btn btn-danger" asp-protocol="@protocol" asp-host="@host">
+        View Suspended Users
+    </a>
+    
+      
+ 
+
+</p>
+
+
+
+<div class="modal fade" id="create_user_modal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <partial name="_CreateUserPartial" />
+</div>
+
+<div class="modal fade" id="edit_user_modal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <partial name="_EditUserPartial" />
+</div>
+<div class="card">
+    <div class="card-header">
+        <h4 class="text-center text-uppercase">Unconfirmed Accounts Available In The System</h4>
+    </div>
+    <div class="card-body">
+        <table class="table table-bordered table-responsive-sm" id="my_table">
+            <thead>
+                <tr>
+                    <th>
+                        First Name
+                    </th>
+                    <th>
+                        Surname
+                    </th>
+                    <th>
+                        Gender
+                    </th>
+                    <th>
+                        Email
+                    </th>
+                    <th>
+                        Contact
+                    </th>
+                    <th>
+                        Role
+                    </th>
+                    <th>
+                        Date Of Birth
+                    </th>
+                    <th>
+                        Date Added
+                    </th>
+                    
+                    <th>
+                        Action
+                    </th>
+
+                </tr>
+            </thead>
+            <tbody>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+
+@section Scripts{
+
+    <script>
+        var datatable;
+    </script>
+
+    <script src="../js/User.js" asp-append-version="true"></script>
+    <script>
+        $(document).ready(function () {
+            datatable = $('#my_table').DataTable({
+
+
+                "processing": true,
+                "serverSide": true,
+                "order": [[0, "desc"]],
+                ajax: {
+                    url: 'users/GetUnconfirmedUsers',
+                    type: 'post',
+                    datatype: 'Json',
+                   
+                   
+              },
+                columnDefs: [
+                    {
+                        defaultContent: "",
+                        targets: "_all",
+                        'orderable': true
+                    },
+                ],
+                columns: [
+                    {
+                        data: "formattedFirstName",
+                        name: "firstName",
+                        className: "text-left",
+                        "orderable": true,
+                    },
+                    {
+                        data: "formattedLastName",
+                        name: "lastName",
+                        className: "text-left",
+                        "orderable": true,
+                    },
+                    {
+                        data: "formattedGender",
+                        name: "gender",
+                        className: "text-left",
+                        "orderable": true,
+                    },
+                    {
+                        data: "email",
+                        name: "email",
+                        className: "text-left",
+                        "orderable": true,
+                    },
+                    {
+                        data: "phoneNumber",
+                        name: "contact",
+                        className: "text-left",
+                        "orderable": true,
+                    },
+                     {
+                        data: "roleName",
+                        name: "role",
+                        className: "text-left",
+                        "orderable": true,
+                    },
+
+                    
+                     {
+                        data: "formattedCreatedDate",
+                        name: "createdDate",
+                        className: "text-left",
+                        "orderable": true,
+                    },
+                   
+                    {
+                        data: "id",
+                        name: "id",
+                        "orderable": false,
+                        render: function (data) {
+                            return "<a href='#' type='button' onclick=Delete('" + data + "') title='delete' class='feather icon-trash-2'></a>"
+                        }
+                    }
+                ],
+                responsive: true,
+                "autoWidth": false,
+            });
+        });
+    </script>
+
+
+    @{ await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

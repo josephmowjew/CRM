@@ -10,7 +10,7 @@
             </button>
         </div>
         <div class="modal-body">
-            <form asp-action="Create">
+            <form asp-action="Edit">
                 <div asp-validation-summary="ModelOnly" class="text-danger"></div>
                 <input type="hidden" asp-for="DataInvalid" />
                 <input type="hidden" asp-for="Id" />
@@ -50,7 +50,7 @@
         </div>
         <div class="modal-footer">
             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-            <button type="button" class="btn btn-primary" id="update_user_btn" name="update_account_type_btn">Update User Account</button>
+            <button type="button" class="btn btn-primary" id="update_user_btn" name="update_user_btn">Update User Account</button>
         </div>
     </div>
 </div>

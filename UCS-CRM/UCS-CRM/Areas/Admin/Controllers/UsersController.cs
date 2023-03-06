@@ -18,15 +18,17 @@ namespace UCS_CRM.Areas.Admin.Controllers
     {
         private readonly IUserRepository _userRepository;
         private readonly IEmailService _emailService;
+        private readonly IUnitOfWork _unitOfWork;
         private RoleManager<IdentityRole> _roleManager;
         private readonly UserManager<ApplicationUser> _userManager;
         public UsersController(IUserRepository userRepository, IEmailService emailService, RoleManager<IdentityRole> roleManager,
-            UserManager<ApplicationUser> userManager)
+            UserManager<ApplicationUser> userManager, IUnitOfWork unitOfWork)
         {
             this._userRepository = userRepository;
             this._emailService = emailService;
             this._roleManager = roleManager;
             this._userManager = userManager;
+            _unitOfWork = unitOfWork;
         }
 
         // GET: UsersController
@@ -196,24 +198,98 @@ namespace UCS_CRM.Areas.Admin.Controllers
         }
 
         // GET: UsersController/Edit/5
-        public ActionResult Edit(int id)
+        public async Task<ActionResult> Edit(string id)
         {
-            return View();
+            var user = await this._userRepository.FindByIdAsync(id);
+
+            UserViewModel userView = new()
+            {
+                FirstName = user.FirstName,
+                LastName = user.LastName,
+                Gender = user.Gender,
+                PhoneNumber = user.PhoneNumber,
+                Email = user.Email,
+                Id = user.Id,
+
+            };
+
+
+            var userRoles = await this._userRepository.GetRolesAsync(user.Id);
+
+            //only add role name if the user actually is assigned to some roles
+
+            if (userRoles.Count > 0)
+            {
+                userView.RoleName = userRoles.First();
+            }
+
+
+            return Json(userView);
         }
 
         // POST: UsersController/Edit/5
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public ActionResult Edit(int id, IFormCollection collection)
+        public async Task<ActionResult> Edit(string id, UserViewModel applicationViewModel)
         {
-            try
+            applicationViewModel.DataInvalid = "true";
+            UserViewModel user = new UserViewModel();
+            List<SelectListItem> roles = new List<SelectListItem>();
+            List<SelectListItem> districts = new List<SelectListItem>();
+
+
+            if (ModelState.IsValid)
             {
-                return RedirectToAction(nameof(Index));
+                applicationViewModel.DataInvalid = "";
+
+                //find a user with the id provided
+                var dbUser = await this._userRepository.FindByIdAsync(applicationViewModel.Id);
+
+                if (dbUser != null)
+                {
+                    dbUser.FirstName = applicationViewModel.FirstName;
+                    dbUser.LastName = applicationViewModel.LastName;
+                    dbUser.Gender = applicationViewModel.Gender;
+                    dbUser.Email = applicationViewModel.Email;
+                    dbUser.PhoneNumber = applicationViewModel.PhoneNumber;
+
+                    IdentityResult result = await this._userRepository.UpdateAsync(dbUser);
+
+
+                    //update user role
+
+                    var currentUserRoles = await this._userRepository.GetRolesAsync(dbUser.Id);
+
+                    if (!currentUserRoles.Contains(applicationViewModel.RoleName))
+                    {
+                        //swap the roles
+                        await _userRepository.RemoveFromRolesAsync(dbUser, currentUserRoles);
+
+                        await this._userRepository.AddUserToRoleAsync(dbUser, applicationViewModel.RoleName);
+                    }
+                    await this._unitOfWork.SaveToDataStore();
+
+                    return Json(new { status = "success", message = "user details updated successfully" });
+                }
+
+
+
+                return Json(new { status = "error", message = $"No user with the submited Id {applicationViewModel.Id} was found in the system" });
             }
-            catch
+
+            this._roleManager.Roles.ToList().ForEach(r =>
             {
-                return View();
-            }
+                roles.Add(new SelectListItem { Text = r.Name, Value = r.Name });
+            });
+
+          
+            ViewBag.rolesList = roles;
+
+            ViewBag.genderList = user.GenderList;
+
+          
+
+            return PartialView("_EditUserPartial", applicationViewModel);
         }
 
        
@@ -279,6 +355,161 @@ namespace UCS_CRM.Areas.Admin.Controllers
                 return Json(new { error = ex.Message });
             }
 
+        }
+
+        [HttpGet]
+        [Route("admin/unconfirmedUsers")]
+        public async Task<ActionResult> UnconfirmedUsersAsync()
+        {
+            UserViewModel user = new UserViewModel();
+
+            List<SelectListItem> roles = new List<SelectListItem>();
+            List<SelectListItem> districts = new List<SelectListItem>();
+
+
+
+            this._roleManager.Roles.ToList().ForEach(r =>
+            {
+                roles.Add(new SelectListItem { Text = r.Name, Value = r.Name });
+            });
+
+           
+
+
+            ViewBag.rolesList = roles;
+
+
+            ViewBag.genderList = user.GenderList;
+            return View();
+        }
+        public async Task<ActionResult> GetUnconfirmedUsers()
+        {
+            List<UserViewModel> users = new List<UserViewModel>();
+
+            try
+            {
+                //datatable stuff
+                var draw = HttpContext.Request.Form["draw"].FirstOrDefault();
+                var start = HttpContext.Request.Form["start"].FirstOrDefault();
+                var length = HttpContext.Request.Form["length"].FirstOrDefault();
+
+                var sortColumn = HttpContext.Request.Form["columns[" + HttpContext.Request.Form["order[0][column]"].FirstOrDefault() + "][name]"].FirstOrDefault();
+                var sortColumnAscDesc = Request.Form["order[0][dir]"].FirstOrDefault();
+                var searchValue = Request.Form["search[value]"].FirstOrDefault();
+
+                int pageSize = length != null ? Convert.ToInt32(length) : 0;
+                int skip = start != null ? Convert.ToInt32(start) : 0;
+                int resultTotal = 0;
+
+                //create a cursor params based on the data coming from the datatable
+                CursorParams CursorParameters = new CursorParams() { SearchTerm = searchValue, Skip = skip, SortColum = sortColumn, SortDirection = sortColumnAscDesc, Take = pageSize };
+
+                users = await this._userRepository.GetUnconfirmedUsersWithRoles(CursorParameters);
+
+                try
+                {
+
+
+                    resultTotal = await this._userRepository.TotalUncomfirmedCount();
+                    var result =  await this._userRepository.GetUnconfirmedUsersWithRoles(CursorParameters);
+                    return Json(new { draw = draw, recordsFiltered = resultTotal, recordsTotal = resultTotal, data = result });
+
+                }
+                catch (Exception)
+                {
+
+                    throw;
+                }
+
+
+            }
+            catch (Exception ex)
+            {
+
+                return Json(new { error = ex.Message });
+            }
+        }
+
+        public ActionResult DeletedUsers()
+        {
+            return View();
+        }
+        [HttpPost]
+        public async Task<ActionResult> GetDeletedUsers()
+        {
+            List<UserViewModel> users = new List<UserViewModel>();
+
+            try
+            {
+                //datatable stuff
+                var draw = HttpContext.Request.Form["draw"].FirstOrDefault();
+                var start = HttpContext.Request.Form["start"].FirstOrDefault();
+                var length = HttpContext.Request.Form["length"].FirstOrDefault();
+
+                var sortColumn = HttpContext.Request.Form["columns[" + HttpContext.Request.Form["order[0][column]"].FirstOrDefault() + "][name]"].FirstOrDefault();
+                var sortColumnAscDesc = Request.Form["order[0][dir]"].FirstOrDefault();
+                var searchValue = Request.Form["search[value]"].FirstOrDefault();
+
+                int pageSize = length != null ? Convert.ToInt32(length) : 0;
+                int skip = start != null ? Convert.ToInt32(start) : 0;
+                int resultTotal = 0;
+
+                //create a cursor params based on the data coming from the datatable
+                CursorParams CursorParameters = new CursorParams() { SearchTerm = searchValue, Skip = skip, SortColum = sortColumn, SortDirection = sortColumnAscDesc, Take = pageSize };
+
+                users = await this._userRepository.GetDeletedUsers(CursorParameters);
+
+
+
+                try
+                {
+
+                    resultTotal = await this._userRepository.TotalDeletedCount();
+                    var result = users;
+                    return Json(new { draw = draw, recordsFiltered = resultTotal, recordsTotal = resultTotal, data = result });
+
+                }
+                catch (Exception)
+                {
+
+                    throw;
+                }
+
+
+            }
+            catch (Exception ex)
+            {
+
+                return Json(new { error = ex.Message });
+            }
+        }
+
+        [Route("admin/users/reactivate/{id}")]
+        public async Task<ActionResult> Reactivate(string id)
+        {
+
+            //find the user with the Id provided
+
+            var user = await this._userRepository.FindByIdDeleteInclusiveAsync(id);
+
+            if (user != null)
+            {
+                user.DeletedDate = null;
+                user.Status = Lambda.Active;
+
+                //update the user
+
+                await this._userRepository.UpdateAsync(user);
+
+                await this._unitOfWork.SaveToDataStore();
+
+                _emailService.SendMail(user.Email, "Account Changes", "Congratulations!! your account has been reactivated on UCS SACCO.");
+
+
+                return Json(new { status = "success", message = "user activated from the system successfully" });
+            }
+
+            return Json(new { status = "error", message = "user not found" });
         }
     }
 }
