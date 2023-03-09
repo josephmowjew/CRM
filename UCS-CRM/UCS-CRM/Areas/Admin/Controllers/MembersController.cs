@@ -1,23 +1,29 @@
 ﻿using AutoMapper;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using UCS_CRM.Areas.Admin.ViewModels;
 using UCS_CRM.Core.DTOs.Member;
 using UCS_CRM.Core.Helpers;
 using UCS_CRM.Core.Models;
+using UCS_CRM.Core.Services;
 using UCS_CRM.Persistence.Interfaces;
 
 namespace UCS_CRM.Areas.Admin.Controllers
 {
     [Area("Admin")]
+    [Authorize]
     public class MembersController : Controller
     {
         private readonly IMemberRepository _memberRepository;
         private readonly IMapper _mapper;
         private readonly IUnitOfWork _unitOfWork;
-        public MembersController(IMemberRepository memberRepository, IMapper mapper, IUnitOfWork unitOfWork)
+        private readonly IEmailService _emailService;
+        public MembersController(IMemberRepository memberRepository, IMapper mapper, IUnitOfWork unitOfWork, IEmailService emailService)
         {
             _memberRepository = memberRepository;
+            _emailService = emailService;
             _mapper = mapper;
             _unitOfWork = unitOfWork;
         }
@@ -28,51 +34,69 @@ namespace UCS_CRM.Areas.Admin.Controllers
             return View();
         }
 
-        // GET: MemberController/Details/5
-        public ActionResult Details(int id)
-        {
-            return View();
-        }
+      
 
-        // GET: MemberController/Create
-        public ActionResult Create()
-        {
-            return View();
-        }
-
-        // POST: MemberController/Create
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public ActionResult Create(IFormCollection collection)
-        {
-            try
-            {
-                return RedirectToAction(nameof(Index));
-            }
-            catch
-            {
-                return View();
-            }
-        }
-
-        // GET: MemberController/Edit/5
-        public ActionResult Edit(int id)
-        {
-            return View();
-        }
+       
 
         // POST: MemberController/Edit/5
         [HttpPost]
-        [ValidateAntiForgeryToken]
-        public ActionResult Edit(int id, IFormCollection collection)
+        public async Task<ActionResult> CreateUserFromMember(UserFromMemberViewModel model)
         {
             try
             {
-                return RedirectToAction(nameof(Index));
+                //find the member with the Id provided
+
+                Member? databaseMemberRecord = await this._memberRepository.GetMemberAsync(model.Id);
+
+                if (databaseMemberRecord != null)
+                {
+                    ApplicationUser? user =  await this._memberRepository.CreateUserAccount(databaseMemberRecord, model.Email);
+
+                    if (user == null)
+                    {
+                        return Json(new { error = "error", message = "failed to create the user account from the member" });
+                    }
+
+                    //sync changes 
+
+                    await this._unitOfWork.SaveToDataStore();
+
+
+                    //send emails
+
+                    string UserNameBody = "An account has been created on UCS SACCO. Your email is " + "<b>" + user.Email + " <br /> ";
+                    string PasswordBody = "An account has been created on UCS SACCO App. Your password is " + "<b> P@$$w0rd <br />";
+
+
+                    //check if this is a new user or not (old users will have a deleted date field set to an actual date)
+                    if(user.DeletedDate != null)
+                    {
+                        _emailService.SendMail(user.Email, "Account Status", $"Good day, We are pleased to inform you that your account has been reactivated on the UCS SACCO. You may proceed to login using your previous credentials. ");
+
+                    }
+                    else
+                    {
+                        _emailService.SendMail(user.Email, "Login Details", UserNameBody);
+                        _emailService.SendMail(user.Email, "Login Details", PasswordBody);
+                        _emailService.SendMail(user.Email, "Account Details", $"Good day, for those who have not yet registered with Gravator, please do so so that you may upload an avatar of yourself that can be associated with your email address and displayed on your profile in the Mental Lab application.\r\nPlease visit https://en.gravatar.com/ to register with Gravatar. ");
+
+
+                    }
+
+
+                    return Json(new { status = "success", message = "user account created successfully" });
+                }
+                else
+                {
+                    return Json(new { error = "error", message = "failed to create the user account from the member" });
+
+                }
+
             }
-            catch
+            catch (Exception)
             {
-                return View();
+
+                return Json(new { error = "error", message = "failed to create the user account from the member" });
             }
         }
 
@@ -84,7 +108,6 @@ namespace UCS_CRM.Areas.Admin.Controllers
 
         // POST: MemberController/Delete/5
         [HttpPost]
-        [ValidateAntiForgeryToken]
         public async Task<ActionResult> DeleteUserAccount(int id)
         {
             //get member id
@@ -143,7 +166,22 @@ namespace UCS_CRM.Areas.Admin.Controllers
             //map the results to a read DTO
 
             var mappedResult = this._mapper.Map<List<ReadMemberDTO>>(result);
-            return Json(new { draw = draw, recordsFiltered = resultTotal, recordsTotal = resultTotal, data = mappedResult });
+
+            var cleanListOfMemberReadDTO = new List<ReadMemberDTO>();
+
+            mappedResult.ForEach(m =>
+            {
+
+              
+
+                if(m?.User != null)
+                {
+                    m.User.Member = null;
+                }
+
+                cleanListOfMemberReadDTO.Add(m);
+            });
+            return Json(new { draw = draw, recordsFiltered = resultTotal, recordsTotal = resultTotal, data = cleanListOfMemberReadDTO });
 
         }
 

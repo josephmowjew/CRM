@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using System.Data;
@@ -9,6 +10,7 @@ using UCS_CRM.Persistence.Interfaces;
 namespace UCS_CRM.Areas.Admin.Controllers
 {
     [Area("Admin")]
+    [Authorize]
     public class RolesController : Controller
     {
         private readonly IRoleRepositorycs _roleRepository;

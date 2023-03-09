@@ -14,6 +14,7 @@ using System.Data;
 namespace UCS_CRM.Areas.Admin.Controllers
 {
     [Area("Admin")]
+    [Authorize]
     public class UsersController : Controller
     {
         private readonly IUserRepository _userRepository;
@@ -130,10 +131,8 @@ namespace UCS_CRM.Areas.Admin.Controllers
                             string UserNameBody = "An account has been created on UCS SACCO. Your email is " + "<b>" + applicationUser.Email + " <br /> ";
                             string PasswordBody = "An account has been created on UCS SACCO App. Your password is " + "<b> P@$$w0rd <br />";
 
-
-
-                            //_emailService.SendMail(applicationUser.Email, "Login Details", UserNameBody);
-                            //_emailService.SendMail(applicationUser.Email, "Login Details", PasswordBody);
+                            _emailService.SendMail(applicationUser.Email, "Login Details", UserNameBody);
+                            _emailService.SendMail(applicationUser.Email, "Login Details", PasswordBody);
                             return Json(new { response = "User account created succefully" });
                         }
                         else
@@ -309,6 +308,8 @@ namespace UCS_CRM.Areas.Admin.Controllers
                 //update the user
 
                 await this._userRepository.UpdateAsync(user);
+
+                await this._unitOfWork.SaveToDataStore();
 
                // _emailService.SendMail(user.Email, "Account Changes", "Sorry but your account has been suspended from UCS SACCO. You can no longer access the appliaction. Contact support for more information and queries");
 

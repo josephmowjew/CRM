@@ -13,20 +13,20 @@
                 </li>
                 <li class="sidebar-item">
                     <a class="sidebar-link waves-effect waves-dark sidebar-link"
-                       href="pages-profile.html" aria-expanded="false">
-                        <i class="mdi me-2 mdi-account-check"></i><span class="hide-menu">Profile</span>
+                       asp-area="Admin" asp-controller="users" asp-action="Index" aria-expanded="false">
+                        <i class="mdi me-2 mdi-account-check"></i><span class="hide-menu">Users</span>
                     </a>
                 </li>
                 <li class="sidebar-item">
                     <a class="sidebar-link waves-effect waves-dark sidebar-link"
-                       href="table-basic.html" aria-expanded="false">
-                        <i class="mdi me-2 mdi-table"></i><span class="hide-menu">Members</span>
+                      asp-area="Admin" asp-controller="members" asp-action="Index" aria-expanded="false">
+                        <i class="mdi me-2 mdi-account-multiple"></i><span class="hide-menu">Members</span>
                     </a>
                 </li>
                 <li class="sidebar-item">
                     <a class="sidebar-link waves-effect waves-dark sidebar-link"
                        href="icon-material.html" aria-expanded="false">
-                        <i class="mdi me-2 mdi-emoticon"></i><span class="hide-menu">FInancial Status</span>
+                        <i class="mdi me-2 mdi-emoticon"></i><span class="hide-menu">Financial Status</span>
                     </a>
                 </li>
                 <li class="sidebar-item">
@@ -88,7 +88,7 @@
             </div>
             <div class="col-4 link-wrap">
                 <!-- item-->
-                <a href="" class="link" data-toggle="tooltip" title="" data-original-title="Logout">
+                <a asp-action="Logout" asp-controller="auth" asp-area="" class="link" data-toggle="tooltip" title="" data-original-title="Logout">
                     <i class="mdi mdi-power"></i>
                 </a>
             </div>

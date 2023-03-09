@@ -162,11 +162,13 @@ namespace UCS_CRM.Areas.Admin.Controllers
                 editAccountTypeDTO.DataInvalid = "";
                 //check if the role name isn't already taken
 
-                var accountTypeDB =  this._accountTypeRepository.Exists(editAccountTypeDTO.Name);
+                var accountTypeDB = await this._accountTypeRepository.GetAccountType(id);
+
+                var accountTypePresent =  this._accountTypeRepository.Exists(editAccountTypeDTO.Name);
 
 
 
-                bool isTaken = (accountTypeDB != null);
+                bool isTaken = (accountTypePresent != null);
 
                 if (isTaken)
                 {

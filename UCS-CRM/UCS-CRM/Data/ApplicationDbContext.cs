@@ -33,7 +33,7 @@ namespace UCS_CRM.Data
 
             builder.Entity<ApplicationUser>()
               .HasOne(a => a.Member)
-              .WithOne(i => i.ApplicationUser)
+              .WithOne(i => i.User)
               .HasForeignKey<ApplicationUser>(b => b.MemberId);
 
             builder.Entity<ApplicationUser>()

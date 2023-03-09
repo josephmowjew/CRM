@@ -13,7 +13,9 @@
 
 
 
-
+<div class="modal fade" id="set_email_modal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <partial name="_SetEmailPartial" />
+</div>
 
 <div class="card">
     <div class="card-header">
@@ -47,10 +49,11 @@
                     <th>
                         Date Of Birth
                     </th>
-
                     <th>
                         Action
                     </th>
+
+                  
 
                 </tr>
             </thead>
@@ -68,7 +71,7 @@
                 var datatable;
             </script>
 
-            <script src="../js/Member.js" asp-append-version="true"></script>
+               <script src="~/js/member.js"></script>
             <script>
                 $(document).ready(function () {
                     datatable = $('#my_table').DataTable({
@@ -80,8 +83,8 @@
                         ajax: {
                             url: 'members/GetMembers',
                             type: 'post',
-                            datatype: 'Json',
-
+                            datatype: 'Json'
+                           
 
                       },
                         columnDefs: [
@@ -136,14 +139,14 @@
                                 className: "text-left",
                                 "orderable": false,
                             },
-                            {
-                                data: "id",
-                                name: "id",
-                                "orderable": false,
-                                render: function (data) {
-                                    return "<a href='#' onclick=Update('" + data + "') type='button' class='feather icon-user-plus' title='Create User Account' ></a>"
-                                }
-                            }
+                              {
+                                data: { state: "user.id"},
+                                mRender: function (data, type, full) {
+                                                                    return data.user != null && data.user.status != 'Deleted' ?  "<a href='#' onclick=removeUserAccount('" + data.id + "') type='button' class='mdi mdi-account-remove' title='Remove User Account' ></a>" : "<a href='#' onclick=set_email_modal('" + data.id + "') type='button' class='feather icon-user-plus' title='Create User Account' ></a>";
+                                }, "name": "user.name",
+                                className: "text-left"
+                            },
+                            
                         ],
                         responsive: true,
                         "autoWidth": false,

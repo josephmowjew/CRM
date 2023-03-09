@@ -9,6 +9,7 @@ using UCS_CRM.Persistence.Interfaces;
 
 namespace UCS_CRM.Persistence.SQLRepositories
 {
+
     public class UserRepository : IUserRepository
     {
         private readonly ApplicationDbContext _context;
@@ -324,5 +325,7 @@ namespace UCS_CRM.Persistence.SQLRepositories
         {
             return await this._userManager.UpdateAsync(applicationUser);
         }
+
+       
     }
 }

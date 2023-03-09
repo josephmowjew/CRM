@@ -23,7 +23,7 @@ namespace UCS_CRM.Core.Models
         public string NationalId { get; set; }
         [StringLength(maximumLength: 200, MinimumLength = 5)]
         public string? Address { get; set; }
-        public ApplicationUser ApplicationUser { get; set; }
+        public ApplicationUser User { get; set; }
         [StringLength(maximumLength:20)]
         public string? PhoneNumber { get; set; }
 

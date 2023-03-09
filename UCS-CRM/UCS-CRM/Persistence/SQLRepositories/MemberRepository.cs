@@ -4,16 +4,20 @@ using UCS_CRM.Core.Models;
 using UCS_CRM.Data;
 using System.Linq.Dynamic.Core;
 using UCS_CRM.Persistence.Interfaces;
+using UCS_CRM.Core.ViewModels;
+using Microsoft.AspNetCore.Identity;
 
 namespace UCS_CRM.Persistence.SQLRepositories
 {
     public class MemberRepository : IMemberRepository
     {
         private readonly ApplicationDbContext _context;
+        private readonly UserManager<ApplicationUser> _userManager;
 
-        public MemberRepository(ApplicationDbContext context)
+        public MemberRepository(ApplicationDbContext context, UserManager<ApplicationUser> userManager)
         {
             _context = context;
+            this._userManager = userManager;
         }
         public void Add(Member member)
         {
@@ -22,9 +26,55 @@ namespace UCS_CRM.Persistence.SQLRepositories
 
         public void DeleteUser(Member member)
         {
-            member.ApplicationUser.Status = Lambda.Deleted;
-            member.DeletedDate = DateTime.Now;
+            member.User.Status = Lambda.Deleted;
+            member.User.DeletedDate = DateTime.Now;
 
+        }
+
+        public async Task<ApplicationUser?> CreateUserAccount(Member member, string email)
+        {
+            //create a user record from the member information
+
+            ApplicationUser user = new()
+            {
+                FirstName = member.FirstName,
+                LastName = member.LastName,
+                Gender = member.Gender,
+                Email = email,
+                PhoneNumber = member.PhoneNumber,
+                UserName = email,
+                MemberId = member.Id
+            };
+
+
+            var recordPresence = this._context.Users.FirstOrDefault(u => u.Email == email);
+
+            if (recordPresence != null)
+            {
+                if(recordPresence.Status == Lambda.Deleted)
+                {
+                    recordPresence.Status = Lambda.Active;
+
+                   
+                }
+                
+                    return recordPresence;
+               
+               
+            }
+            else
+            {
+                await this._userManager.CreateAsync(user, "P@$$w0rd");
+
+                var roleResult =  await this._userManager.AddToRoleAsync(user, "Member");
+
+                if(roleResult.Succeeded)
+                {
+                    return user;
+                }
+
+                return null;
+            }
         }
 
         public Member? Exists(Member member)
@@ -34,7 +84,7 @@ namespace UCS_CRM.Persistence.SQLRepositories
 
         public async Task<Member?> GetMemberAsync(int id)
         {
-            Member? databaseMember = await this._context.Members.FirstOrDefaultAsync(m =>m.Id == id);
+            Member? databaseMember = await this._context.Members.Include(m => m.User).FirstOrDefaultAsync(m =>m.Id == id);
 
             //return record if only it has been found or return null
             return databaseMember != null ? databaseMember : null;
@@ -52,7 +102,7 @@ namespace UCS_CRM.Persistence.SQLRepositories
                 if (string.IsNullOrEmpty(cursorParams.SearchTerm))
                 {
                    
-                    var records = (from tblOb in await this._context.Members.Where(m => m.Status != Lambda.Deleted).Take(cursorParams.Take).Skip(cursorParams.Skip).ToListAsync() select tblOb);
+                    var records = (from tblOb in await this._context.Members.Include(m => m.User).Where(m => m.Status != Lambda.Deleted).Take(cursorParams.Take).Skip(cursorParams.Skip).ToListAsync() select tblOb);
 
                     //accountTypes.AsQueryable().OrderBy("gjakdgdag");
 
@@ -69,7 +119,7 @@ namespace UCS_CRM.Persistence.SQLRepositories
                 {
                     //include search query
 
-                    var records = (from tblOb in await this._context.Members
+                    var records = (from tblOb in await this._context.Members.Include(m => m.User)
                                    .Where(m => m.Status != Lambda.Deleted 
                                         && m.FirstName.ToLower().Trim().Contains(cursorParams.SearchTerm) ||
                                            m.LastName.ToLower().Trim().Contains(cursorParams.SearchTerm) ||

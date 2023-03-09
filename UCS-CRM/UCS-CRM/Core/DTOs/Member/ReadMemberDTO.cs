@@ -33,6 +33,6 @@ namespace UCS_CRM.Core.DTOs.Member
         public string FormattedGender => (!string.IsNullOrEmpty(Gender)) ? myTI.ToTitleCase(Gender) : "";
         public string formattedDateOfBirth => DateOfBirth?.ToString("dd-MM-yyyy");
 
-        public ApplicationUser ApplicationUser { get; set; }
+        public ApplicationUser User { get; set; }
     }
 }
