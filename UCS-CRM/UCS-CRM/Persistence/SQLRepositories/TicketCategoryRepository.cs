@@ -22,9 +22,9 @@ namespace UCS_CRM.Persistence.SQLRepositories
             this._context.TicketCategories.Add(accountType);
         }
 
-        public TicketCategory? Exists(string name, int id)
+        public TicketCategory? Exists(string name)
         {
-            return this._context.TicketCategories.FirstOrDefault(a => a.Name.ToLower() == name.ToLower() & a.Status != Lambda.Deleted && a.Id != id);
+            return this._context.TicketCategories.FirstOrDefault(a => a.Name.ToLower() == name.ToLower() & a.Status != Lambda.Deleted);
         }
 
         public async Task<TicketCategory?> GetTicketCategory(int id)

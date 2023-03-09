@@ -63,7 +63,7 @@ namespace UCS_CRM.Areas.Admin.Controllers
 
                 var mappedTicketPriority = this._mapper.Map<TicketPriority>(createTicketPriorityDTO);
 
-                var ticketPriorityPresence = this._ticketPriorityRepository.Exists(mappedTicketPriority.Name, mappedTicketPriority.Id);
+                var ticketPriorityPresence = this._ticketPriorityRepository.Exists(mappedTicketPriority.Name);
 
 
 
@@ -182,7 +182,7 @@ namespace UCS_CRM.Areas.Admin.Controllers
                 }
                 //check if the role name isn't already taken
 
-                var ticketPriorityExist = this._ticketPriorityRepository.Exists(editTicketPriorityDTO.Name, id);
+                var ticketPriorityExist = this._ticketPriorityRepository.Exists(editTicketPriorityDTO.Name);
 
 
 

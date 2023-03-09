@@ -1,0 +1,85 @@
+﻿using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
+using UCS_CRM.Core.Helpers;
+using UCS_CRM.Core.Models;
+using UCS_CRM.Data;
+using System.Linq;
+using System.Linq.Dynamic.Core;
+using UCS_CRM.Persistence.Interfaces;
+
+namespace UCS_CRM.Persistence.SQLRepositories
+{
+    public class StateRepository : IStateRepository
+    {
+        private readonly ApplicationDbContext _context;
+
+        public StateRepository(ApplicationDbContext context)
+        {
+            _context = context;
+        }
+
+        public void Add(State state)
+        {
+            //add record to the database
+            this._context.States.Add(state);
+        }
+
+        public State? Exists(State state)
+        {
+            return this._context.States.FirstOrDefault(s=>  state.Name.ToLower().Trim() != s.Name.Trim().ToLower() && s.Status != Lambda.Deleted);
+        }
+
+        public async Task<State?> GetStateAsync(int id)
+        {
+            return await this._context.States.FirstOrDefaultAsync(s => s.Id == id);
+        }
+
+        public async Task<List<State>?> GetStates(CursorParams @params)
+        {
+            if (@params.Take > 0)
+            {
+                if (string.IsNullOrEmpty(@params.SearchTerm))
+                {
+                    var stateList = (from tblObj in _context.States.Skip(@params.Skip).Take(@params.Take) select tblObj);
+
+                    if (string.IsNullOrEmpty(@params.SortColum) && !string.IsNullOrEmpty(@params.SortDirection))
+                    {
+                        stateList = stateList.AsQueryable().OrderBy(@params.SortColum + " " + @params.SortDirection);
+
+                    }
+
+
+                    return stateList.ToList();
+
+                }
+                else
+                {
+                    //include search text in the query
+                    var stateList = (from tblOb in _context.States.Where(r => r.Name.ToLower().Trim().Contains(@params.SearchTerm))
+                                        .Skip(@params.Skip)
+                                        .Take(@params.Take)
+                                             select tblOb);
+
+                    stateList = stateList.AsQueryable().OrderBy(@params.SortColum + " " + @params.SortDirection);
+
+
+                    return stateList.ToList();
+
+                }
+
+            }
+
+            return null;
+        }
+
+        public void Remove(State state)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<int> TotalCount()
+        {
+            throw new NotImplementedException();
+        }
+    }
+}

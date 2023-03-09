@@ -63,7 +63,7 @@ namespace UCS_CRM.Areas.Admin.Controllers
 
                 var mappedTicketCategory = this._mapper.Map<TicketCategory>(createAcccountTypeDTO);
 
-                var ticketCategoryPresence = this._ticketCategoryRepository.Exists(mappedTicketCategory.Name,mappedTicketCategory.Id);
+                var ticketCategoryPresence = this._ticketCategoryRepository.Exists(mappedTicketCategory.Name);
 
 
 
@@ -180,7 +180,7 @@ namespace UCS_CRM.Areas.Admin.Controllers
                 }
                 //check if the role name isn't already taken
 
-                var ticketCategoryExist = this._ticketCategoryRepository.Exists(editTicketCategoryDTO.Name,id);
+                var ticketCategoryExist = this._ticketCategoryRepository.Exists(editTicketCategoryDTO.Name);
 
 
 
