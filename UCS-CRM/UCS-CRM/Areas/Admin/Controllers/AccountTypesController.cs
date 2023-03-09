@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Security.Claims;
 using System.Threading.Channels;
 using UCS_CRM.Core.DTOs.AccountType;
 using UCS_CRM.Core.Helpers;
@@ -78,8 +79,12 @@ namespace UCS_CRM.Areas.Admin.Controllers
 
                 try
                 {
-                    //comment out this code
-                    mappedAccountType.CreatedById = "1c9d8003-91b9-4eab-96a6-0bc90edd349b";
+                    var userClaims = (ClaimsIdentity)User.Identity;
+
+                    var claimsIdentitifier = userClaims.FindFirst(ClaimTypes.NameIdentifier);
+
+                    mappedAccountType.CreatedById = claimsIdentitifier.Value;
+
 
                     this._accountTypeRepository.Add(mappedAccountType);
                     await this._unitOfWork.SaveToDataStore();
@@ -218,8 +223,6 @@ namespace UCS_CRM.Areas.Admin.Controllers
 
             return Json(new { status = "error", message = "account type could not be found from the system" });
         }
-
-       
 
         [HttpPost]
         public async Task<ActionResult> GetAccountTypes()

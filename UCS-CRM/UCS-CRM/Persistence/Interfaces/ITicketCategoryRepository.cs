@@ -6,7 +6,7 @@ namespace UCS_CRM.Persistence.Interfaces
     public interface ITicketCategoryRepository
     {
         void Add(TicketCategory accountType);
-        TicketCategory? Exists(string name);
+        TicketCategory? Exists(string name, int id);
         Task<List<TicketCategory>?> GetTicketCategories(CursorParams @params);
         Task<TicketCategory?> GetTicketCategory(int id);
         void Remove(TicketCategory accountType);

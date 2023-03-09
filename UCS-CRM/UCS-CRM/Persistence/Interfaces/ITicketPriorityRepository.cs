@@ -6,7 +6,7 @@ namespace UCS_CRM.Persistence.Interfaces
     public interface ITicketPriorityRepository
     {
         void Add(TicketPriority ticketPriority);
-        TicketPriority Exists(string name);
+        TicketPriority Exists(string name, int id);
         Task<List<TicketPriority>?> GetTicketPriorities(CursorParams @params);
         Task<TicketPriority?> GetTicketPriority(int id);
         void Remove(TicketPriority ticketPriority);

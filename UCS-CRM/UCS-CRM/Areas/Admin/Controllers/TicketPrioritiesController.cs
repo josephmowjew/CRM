@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Security.Claims;
 using System.Threading.Channels;
 using UCS_CRM.Core.DTOs.TicketPriority;
 using UCS_CRM.Core.Helpers;
@@ -62,7 +63,7 @@ namespace UCS_CRM.Areas.Admin.Controllers
 
                 var mappedTicketPriority = this._mapper.Map<TicketPriority>(createTicketPriorityDTO);
 
-                var ticketPriorityPresence = this._ticketPriorityRepository.Exists(mappedTicketPriority.Name);
+                var ticketPriorityPresence = this._ticketPriorityRepository.Exists(mappedTicketPriority.Name, mappedTicketPriority.Id);
 
 
 
@@ -80,10 +81,15 @@ namespace UCS_CRM.Areas.Admin.Controllers
 
                 try
                 {
-                    //comment out this code
-                    mappedTicketPriority.CreatedById = "1c9d8003-91b9-4eab-96a6-0bc90edd349b";
+                    //get the current the current user
+                    var userClaims = (ClaimsIdentity)User.Identity;
+
+                    var claimsIdentitifier = userClaims.FindFirst(ClaimTypes.NameIdentifier);
+
+                    mappedTicketPriority.CreatedById = claimsIdentitifier.Value;
 
                     this._ticketPriorityRepository.Add(mappedTicketPriority);
+
                     await this._unitOfWork.SaveToDataStore();
 
 
@@ -162,13 +168,25 @@ namespace UCS_CRM.Areas.Admin.Controllers
             if (ModelState.IsValid)
             {
                 editTicketPriorityDTO.DataInvalid = "";
+
+                var ticketPriorityDB = await this._ticketPriorityRepository.GetTicketPriority(id);
+
+                if(ticketPriorityDB is null)
+                {
+                    editTicketPriorityDTO.DataInvalid = "true";
+
+                    ModelState.AddModelError("", $"The record with the Identifier sent was not found");
+
+
+                    return PartialView("_EditTicketPriorityPartial", editTicketPriorityDTO);
+                }
                 //check if the role name isn't already taken
 
-                var ticketPriorityDB = this._ticketPriorityRepository.Exists(editTicketPriorityDTO.Name);
+                var ticketPriorityExist = this._ticketPriorityRepository.Exists(editTicketPriorityDTO.Name, id);
 
 
 
-                bool isTaken = (ticketPriorityDB != null);
+                bool isTaken = (ticketPriorityExist != null);
 
                 if (isTaken)
                 {

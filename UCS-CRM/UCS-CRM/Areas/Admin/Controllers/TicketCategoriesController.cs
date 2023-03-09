@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Security.Claims;
 using System.Threading.Channels;
 using UCS_CRM.Core.DTOs.TicketCategory;
 using UCS_CRM.Core.Helpers;
@@ -62,7 +63,7 @@ namespace UCS_CRM.Areas.Admin.Controllers
 
                 var mappedTicketCategory = this._mapper.Map<TicketCategory>(createAcccountTypeDTO);
 
-                var ticketCategoryPresence = this._ticketCategoryRepository.Exists(mappedTicketCategory.Name);
+                var ticketCategoryPresence = this._ticketCategoryRepository.Exists(mappedTicketCategory.Name,mappedTicketCategory.Id);
 
 
 
@@ -80,8 +81,12 @@ namespace UCS_CRM.Areas.Admin.Controllers
 
                 try
                 {
-                    //comment out this code
-                    mappedTicketCategory.CreatedById = "1c9d8003-91b9-4eab-96a6-0bc90edd349b";
+                    var userClaims = (ClaimsIdentity)User.Identity;
+
+                    var claimsIdentitifier = userClaims.FindFirst(ClaimTypes.NameIdentifier);
+
+                    mappedTicketCategory.CreatedById = claimsIdentitifier.Value;
+                  
 
                     this._ticketCategoryRepository.Add(mappedTicketCategory);
                     await this._unitOfWork.SaveToDataStore();
@@ -162,13 +167,24 @@ namespace UCS_CRM.Areas.Admin.Controllers
             if (ModelState.IsValid)
             {
                 editTicketCategoryDTO.DataInvalid = "";
+
+                var ticketCategoryDB = await this._ticketCategoryRepository.GetTicketCategory(id);
+
+                if(ticketCategoryDB is null)
+                {
+                    editTicketCategoryDTO.DataInvalid = "true";
+
+                    ModelState.AddModelError("", $"The Identifier of the record was not found taken");
+
+                    return PartialView("_EditTicketCategoryPartial", editTicketCategoryDTO);
+                }
                 //check if the role name isn't already taken
 
-                var ticketCategoryDB = this._ticketCategoryRepository.Exists(editTicketCategoryDTO.Name);
+                var ticketCategoryExist = this._ticketCategoryRepository.Exists(editTicketCategoryDTO.Name,id);
 
 
 
-                bool isTaken = (ticketCategoryDB != null);
+                bool isTaken = (ticketCategoryExist != null);
 
                 if (isTaken)
                 {
