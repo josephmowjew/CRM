@@ -154,7 +154,6 @@ namespace UCS_CRM.Areas.Admin.Controllers
 
 
 
-            return View();
         }
 
         // POST: TicketCategoriesController/Edit/5
@@ -191,7 +190,7 @@ namespace UCS_CRM.Areas.Admin.Controllers
 
                     editTicketCategoryDTO.DataInvalid = "true";
 
-                    ModelState.AddModelError(nameof(editTicketCategoryDTO.Name), $"The Account Type  {editTicketCategoryDTO.Name} is already taken");
+                    ModelState.AddModelError(nameof(editTicketCategoryDTO.Name), $"The ticket category  {editTicketCategoryDTO.Name} is already taken");
 
 
                     return PartialView("_EditTicketCategoryPartial", editTicketCategoryDTO);

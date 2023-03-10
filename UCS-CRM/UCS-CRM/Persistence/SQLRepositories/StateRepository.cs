@@ -24,9 +24,9 @@ namespace UCS_CRM.Persistence.SQLRepositories
             this._context.States.Add(state);
         }
 
-        public State? Exists(State state)
+        public State? Exists(string name)
         {
-            return this._context.States.FirstOrDefault(s=>  state.Name.ToLower().Trim() != s.Name.Trim().ToLower() && s.Status != Lambda.Deleted);
+            return this._context.States.FirstOrDefault(s => name.ToLower().Trim() == s.Name.Trim().ToLower() && s.Status != Lambda.Deleted);
         }
 
         public async Task<State?> GetStateAsync(int id)
@@ -40,7 +40,7 @@ namespace UCS_CRM.Persistence.SQLRepositories
             {
                 if (string.IsNullOrEmpty(@params.SearchTerm))
                 {
-                    var stateList = (from tblObj in _context.States.Skip(@params.Skip).Take(@params.Take) select tblObj);
+                    var stateList = (from tblObj in _context.States.Where(s => s.Status != Lambda.Deleted).Skip(@params.Skip).Take(@params.Take) select tblObj);
 
                     if (string.IsNullOrEmpty(@params.SortColum) && !string.IsNullOrEmpty(@params.SortDirection))
                     {
@@ -55,7 +55,7 @@ namespace UCS_CRM.Persistence.SQLRepositories
                 else
                 {
                     //include search text in the query
-                    var stateList = (from tblOb in _context.States.Where(r => r.Name.ToLower().Trim().Contains(@params.SearchTerm))
+                    var stateList = (from tblOb in _context.States.Where(s => s.Name.ToLower().Trim().Contains(@params.SearchTerm) && s.Status != Lambda.Deleted)
                                         .Skip(@params.Skip)
                                         .Take(@params.Take)
                                              select tblOb);
@@ -74,12 +74,18 @@ namespace UCS_CRM.Persistence.SQLRepositories
 
         public void Remove(State state)
         {
-            throw new NotImplementedException();
+            state.DeletedDate = DateTime.Now;
+            state.Status = Lambda.Deleted;
         }
 
-        public Task<int> TotalCount()
+        public async Task<int> TotalActiveCount()
         {
-            throw new NotImplementedException();
+           return await this._context.States.CountAsync(s => s.Status == Lambda.Active);
+        }
+
+        public async Task<int> TotalDeletedCount()
+        {
+            return await this._context.States.CountAsync(s => s.Status == Lambda.Deleted);
         }
     }
 }
