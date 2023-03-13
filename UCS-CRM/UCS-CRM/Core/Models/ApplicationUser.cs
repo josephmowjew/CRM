@@ -13,15 +13,18 @@ namespace UCS_CRM.Core.Models
         }
         [Required]
         [StringLength(maximumLength: 70, MinimumLength = 2)]
+        [Display(Name = "First Name")]
         public string FirstName { get; set; }
         [Required]
         [StringLength(maximumLength:70, MinimumLength =2)]
+        [Display(Name = "Last Name")]
         public string LastName { get; set; }
         [Required]
        
         public string Gender { get; set; }
 
         [StringLength(maximumLength:15, MinimumLength = 10)]
+        [Display(Name = "Phone Number")]
         public string PhoneNumber { get; set; }
 
         [Required]
