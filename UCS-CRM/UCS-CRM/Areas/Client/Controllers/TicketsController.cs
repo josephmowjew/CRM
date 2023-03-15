@@ -1,0 +1,302 @@
+﻿using AutoMapper;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.EntityFrameworkCore;
+using System.Security.Claims;
+using UCS_CRM.Core.DTOs.Member;
+using UCS_CRM.Core.DTOs.State;
+using UCS_CRM.Core.DTOs.Ticket;
+using UCS_CRM.Core.Helpers;
+using UCS_CRM.Core.Models;
+using UCS_CRM.Persistence.Interfaces;
+using UCS_CRM.Persistence.SQLRepositories;
+
+namespace UCS_CRM.Areas.Client.Controllers
+{
+    [Area("Client")]
+    [Authorize]
+    public class TicketsController : Controller
+    {
+        private readonly ITicketRepository _ticketRepository;
+        private readonly ITicketCategoryRepository _ticketCategoryRepository;
+        private readonly IStateRepository _stateRepository;
+        private readonly ITicketPriorityRepository _priorityRepository;
+        private readonly IMapper _mapper;
+        private readonly IUnitOfWork _unitOfWork;
+        public TicketsController(ITicketRepository ticketRepository, IMapper mapper, IUnitOfWork unitOfWork, ITicketCategoryRepository ticketCategoryRepository, IStateRepository stateRepository, ITicketPriorityRepository priorityRepository)
+        {
+            _ticketRepository = ticketRepository;
+            _mapper = mapper;
+            _unitOfWork = unitOfWork;
+            _ticketCategoryRepository = ticketCategoryRepository;
+            _stateRepository = stateRepository;
+            _priorityRepository = priorityRepository;
+        }
+
+        // GET: TicketsController
+        public async Task<ActionResult> Index()
+        {
+            await populateViewBags();
+
+            return View();
+        }
+
+       
+        // POST: TicketsController/Create
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<ActionResult> Create(CreateTicketDTO createTicketDTO)
+        {
+
+
+            createTicketDTO.DataInvalid = "true";
+
+            if (ModelState.IsValid)
+            {
+
+                createTicketDTO.DataInvalid = "";
+
+
+                //check for article title presence
+
+                var mappedTicket = this._mapper.Map<Ticket>(createTicketDTO);
+
+                var statePresence = this._ticketRepository.Exists(mappedTicket);
+
+                if (statePresence != null)
+                {
+                    createTicketDTO.DataInvalid = "true";
+
+                    ModelState.AddModelError(nameof(createTicketDTO.Title), $"title exists with the name submitted'");
+
+                    await populateViewBags();
+
+                    return PartialView("_CreateTicketPartial", createTicketDTO);
+                }
+
+
+                //save to the database
+
+                try
+                {
+                    var userClaims = (ClaimsIdentity)User.Identity;
+
+                    var claimsIdentitifier = userClaims.FindFirst(ClaimTypes.NameIdentifier);
+
+                    mappedTicket.CreatedById = claimsIdentitifier.Value;
+
+
+                    this._ticketRepository.Add(mappedTicket);
+
+                    await this._unitOfWork.SaveToDataStore();
+
+
+                    return PartialView("_CreateTicketPartial", createTicketDTO);
+                }
+                catch (DbUpdateException ex)
+                {
+                    createTicketDTO.DataInvalid = "true";
+
+                    ModelState.AddModelError(string.Empty, ex.InnerException.Message);
+
+                    await populateViewBags();
+
+                    return PartialView("_CreateTicketPartial", createTicketDTO);
+                }
+
+                catch (Exception ex)
+                {
+                    createTicketDTO.DataInvalid = "true";
+
+                    ModelState.AddModelError(string.Empty, ex.Message);
+
+                    await populateViewBags();
+
+                    return PartialView("_CreateTicketPartial", createTicketDTO);
+                }
+
+
+
+
+            }
+
+
+
+            return PartialView("_CreateTicketPartial", createTicketDTO);
+        }
+
+        // GET: TicketsController/Edit/5
+        public async Task<ActionResult> Edit(int id)
+        {
+            var identityRole = await _ticketRepository.GetTicket(id);
+
+            return Json(identityRole);
+        }
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<ActionResult> Edit(int id, EditTicketDTO editTicketDTO)
+        {
+            editTicketDTO.DataInvalid = "true";
+
+            if (ModelState.IsValid)
+            {
+                editTicketDTO.DataInvalid = "";
+
+                var ticketDB = await this._ticketRepository.GetTicket(id);
+
+                if (ticketDB is null)
+                {
+                    editTicketDTO.DataInvalid = "true";
+
+                    ModelState.AddModelError("", $"The Identifier of the record was not found taken");
+
+                    return PartialView("_EditTicketPartial", editTicketDTO);
+                }
+                //check if the role name isn't already taken
+                var mappedTicket = this._mapper.Map<Ticket>(editTicketDTO);
+
+                var ticketExist = this._ticketRepository.Exists(mappedTicket);
+
+
+
+                bool isTaken = (ticketExist != null);
+                if (isTaken)
+                {
+
+                    editTicketDTO.DataInvalid = "true";
+                    ModelState.AddModelError(nameof(editTicketDTO.Title), $"The title {editTicketDTO.Title} is already taken");
+
+
+                    return PartialView("_EditTicketPartial", editTicketDTO);
+                }
+
+
+
+                this._mapper.Map(editTicketDTO, ticketDB);
+
+                //save changes to data store
+
+                await this._unitOfWork.SaveToDataStore();
+
+                return Json(ticketDB);
+            }
+
+
+
+            return PartialView("_EditTicketPartial", editTicketDTO);
+        }
+
+       
+        // POST: TicketsController/Delete/5
+        [HttpPost]
+        public async Task<ActionResult> Delete(int id)
+        {
+            //check if the role name isn't already taken
+
+            var ticketRecordDb = await this._ticketRepository.GetTicket(id);
+
+            if (ticketRecordDb != null)
+            {
+                //only execute remove if the state is not pending
+
+                if(ticketRecordDb.State.Name.ToLower() != Lambda.Pending.ToLower())
+                {
+                    return Json(new { status = "error", message = "ticket could not be found from the system at the moment as it has been responded to, consider closing it instead" });
+                }
+                else
+                {
+                    this._ticketRepository.Remove(ticketRecordDb);
+
+                    await this._unitOfWork.SaveToDataStore();
+
+                    return Json(new { status = "success", message = "ticket has been removed from the system successfully" });
+                }
+               
+            }
+
+            return Json(new { status = "error", message = "ticket could not be found from the system" });
+        }
+
+        [HttpPost]
+        public async Task<ActionResult> GetTickets()
+        {
+            //datatable stuff
+            var draw = HttpContext.Request.Form["draw"].FirstOrDefault();
+            var start = HttpContext.Request.Form["start"].FirstOrDefault();
+            var length = HttpContext.Request.Form["length"].FirstOrDefault();
+
+            var sortColumn = HttpContext.Request.Form["columns[" + HttpContext.Request.Form["order[0][column]"].FirstOrDefault() + "][name]"].FirstOrDefault();
+            var sortColumnAscDesc = Request.Form["order[0][dir]"].FirstOrDefault();
+            var searchValue = Request.Form["search[value]"].FirstOrDefault();
+
+            int pageSize = length != null ? Convert.ToInt32(length) : 0;
+            int skip = start != null ? Convert.ToInt32(start) : 0;
+            int resultTotal = 0;
+
+            //create a cursor params based on the data coming from the datatable
+            CursorParams CursorParameters = new CursorParams() { SearchTerm = searchValue, Skip = skip, SortColum = sortColumn, SortDirection = sortColumnAscDesc, Take = pageSize };
+
+            resultTotal = await this._ticketRepository.TotalCount();
+            var result = await this._ticketRepository.GetTickets(CursorParameters);
+
+            //map the results to a read DTO
+
+            var mappedResult = this._mapper.Map<List<ReadMemberDTO>>(result);
+
+            var cleanListOfMemberReadDTO = new List<ReadMemberDTO>();
+
+            mappedResult.ForEach(m =>
+            {
+
+
+
+                if (m?.User != null)
+                {
+                    m.User.Member = null;
+                }
+
+                cleanListOfMemberReadDTO.Add(m);
+            });
+            return Json(new { draw = draw, recordsFiltered = resultTotal, recordsTotal = resultTotal, data = cleanListOfMemberReadDTO });
+
+        }
+
+        private  async Task<List<SelectListItem>>  GetTicketCategories()
+        {
+            var ticketCategories = await this._ticketCategoryRepository.GetTicketCategories();
+
+            var ticketCategoriesList = new List<SelectListItem>();
+
+            ticketCategories.ForEach(category =>
+            {
+                ticketCategoriesList.Add(new SelectListItem() { Text = category.Name, Value = category.Name });
+            });
+
+            return ticketCategoriesList;
+
+        }
+
+        private async Task<List<SelectListItem>> GetTicketPriorities()
+        {
+            var ticketPriorities = await this._priorityRepository.GetTicketPriorities();
+
+            var ticketPrioritiesList = new List<SelectListItem>();
+
+            ticketPriorities.ForEach(priority =>
+            {
+                ticketPrioritiesList.Add(new SelectListItem() { Text = priority.Name, Value = priority.Name });
+            });
+
+            return ticketPrioritiesList;
+
+        }
+
+        private async Task populateViewBags()
+        {
+            ViewBag.priorities = await GetTicketPriorities();
+            ViewBag.categories = await GetTicketCategories();
+        }
+    }
+}

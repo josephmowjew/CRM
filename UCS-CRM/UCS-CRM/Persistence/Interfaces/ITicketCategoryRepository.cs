@@ -8,8 +8,10 @@ namespace UCS_CRM.Persistence.Interfaces
         void Add(TicketCategory accountType);
         TicketCategory? Exists(string name);
         Task<List<TicketCategory>?> GetTicketCategories(CursorParams @params);
+        Task<List<TicketCategory>?> GetTicketCategories();
         Task<TicketCategory?> GetTicketCategory(int id);
         void Remove(TicketCategory accountType);
+
         Task<int> TotalCount();
     }
 }

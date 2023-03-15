@@ -80,6 +80,11 @@ namespace UCS_CRM.Persistence.SQLRepositories
 
         }
 
+        public async Task<List<TicketCategory>?> GetTicketCategories()
+        {
+           return  await this._context.TicketCategories.Where(a => a.Status != Lambda.Deleted).ToListAsync();
+        }
+
         public void Remove(TicketCategory accountType)
         {
             //mark the record as deleted

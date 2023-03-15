@@ -8,6 +8,7 @@ namespace UCS_CRM.Persistence.Interfaces
         void Add(TicketPriority ticketPriority);
         TicketPriority Exists(string name);
         Task<List<TicketPriority>?> GetTicketPriorities(CursorParams @params);
+        Task<List<TicketPriority>?> GetTicketPriorities();
         Task<TicketPriority?> GetTicketPriority(int id);
         void Remove(TicketPriority ticketPriority);
         Task<int> TotalCount();

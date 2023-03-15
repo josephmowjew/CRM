@@ -1,5 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
-using UCS_CRM.Core.Models;
+
 
 namespace UCS_CRM.Core.DTOs.State
 {
@@ -10,6 +10,6 @@ namespace UCS_CRM.Core.DTOs.State
         [StringLength(maximumLength: 255, MinimumLength = 2)]
         public string Name { get; set; }
 
-        public List<Ticket> Tickets { get; set; }
+        public List<UCS_CRM.Core.Models.Ticket> Tickets { get; set; }
     }
 }

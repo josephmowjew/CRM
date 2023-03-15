@@ -14,6 +14,7 @@ namespace UCS_CRM.Core.Helpers
         public static string Closed = "Closed";
         public static string IssuePrefix = "REF-0000";
         public static string RequestPrefix = "REQ-0000";
+        public static string Pending = "Pending";
 
         // roles
         public static string Administrator = "Administrator";

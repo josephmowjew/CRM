@@ -80,6 +80,11 @@ namespace UCS_CRM.Persistence.SQLRepositories
 
         }
 
+        public async Task<List<TicketPriority>?> GetTicketPriorities()
+        {
+            return await this._context.TicketPriorities.Where(a => a.Status != Lambda.Deleted).ToListAsync();
+        }
+
         public void Remove(TicketPriority ticketPriority)
         {
             //mark the record as deleted
