@@ -49,6 +49,19 @@ namespace UCS_CRM.Areas.Client.Controllers
         [ValidateAntiForgeryToken]
         public async Task<ActionResult> Create(CreateTicketDTO createTicketDTO)
         {
+            var defaultState = _stateRepository.DefaultState("Waiting For Support");
+
+            if (defaultState == null)
+            {
+                createTicketDTO.DataInvalid = "true";
+
+                ModelState.AddModelError(string.Empty, "No State found");
+
+                await populateViewBags();
+
+                return PartialView("_CreateTicketPartial", createTicketDTO);
+            }
+            createTicketDTO.StateId = defaultState.Id;
 
 
             createTicketDTO.DataInvalid = "true";
@@ -58,20 +71,7 @@ namespace UCS_CRM.Areas.Client.Controllers
 
                 createTicketDTO.DataInvalid = "";
 
-                var defaultState = _stateRepository.DefaultState("Waiting For Support");
-
-                if (defaultState == null)
-                {
-                    createTicketDTO.DataInvalid = "true";
-
-                    ModelState.AddModelError(string.Empty, "No State found");
-
-                    await populateViewBags();
-
-                    return PartialView("_CreateTicketPartial", createTicketDTO);
-                }
-                createTicketDTO.StateId = defaultState.Id;
-
+              
                 //check for article title presence
 
                 var mappedTicket = this._mapper.Map<Ticket>(createTicketDTO);

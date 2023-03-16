@@ -9,16 +9,16 @@ namespace UCS_CRM.Core.DTOs.Ticket
         public int Id { get; set; }
         [Required]
         public string Title { get; set; }
-    
+     
         [StringLength(maximumLength: 255)]
         [Display(Name = "Ticket Number")]
         public string? TicketNumber { get; set; }
         [Required]
         public string Description { get; set; }
-        [Required]
-        public string Status { get; set; } = Lambda.Active;
+   
+        public string? Status { get; set; }
         public DateTime? ClosedDate { get; set; }
-       
+      
         [Display(Name = "Assigned To")]
         public string? AssignedToId { get; set; }
         [Required]
@@ -27,7 +27,7 @@ namespace UCS_CRM.Core.DTOs.Ticket
         [Required]
         [Display(Name ="Ticket Category")]
         public int TicketCategoryId { get; set; }
-        [Required]
+    
         [Display(Name = "State")]
         public int? StateId { get; set; }
 
