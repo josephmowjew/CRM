@@ -29,6 +29,11 @@ namespace UCS_CRM.Persistence.SQLRepositories
             return this._context.States.FirstOrDefault(s => name.ToLower().Trim() == s.Name.Trim().ToLower() && s.Status != Lambda.Deleted);
         }
 
+        public State? DefaultState(string name) 
+        {
+            return this._context.States.FirstOrDefault(s => name.ToLower().Trim() == s.Name.Trim().ToLower() && s.Status != Lambda.Deleted);
+        }
+
         public async Task<State?> GetStateAsync(int id)
         {
             return await this._context.States.FirstOrDefaultAsync(s => s.Id == id);

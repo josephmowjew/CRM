@@ -29,7 +29,7 @@ namespace UCS_CRM.Core.DTOs.Ticket
         public int TicketCategoryId { get; set; }
         [Required]
         [Display(Name = "State")]
-        public int StateId { get; set; } = 1;
+        public int? StateId { get; set; }
 
         public ICollection<TicketAttachment> TicketAttachments { get; set; }
         public ICollection<TicketComment> TicketComments { get; set; }

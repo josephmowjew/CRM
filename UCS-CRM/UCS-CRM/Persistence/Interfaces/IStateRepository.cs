@@ -12,5 +12,6 @@ namespace UCS_CRM.Persistence.Interfaces
         void Remove(State state);
         Task<int> TotalActiveCount();
         Task<int> TotalDeletedCount();
+        State? DefaultState(string name);
     }
 }

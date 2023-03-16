@@ -11,20 +11,22 @@
                         <i class="mdi me-2 mdi-gauge"></i><span class="hide-menu">Dashboard</span>
                     </a>
                 </li>
-              
-                 <li class="sidebar-item">
+            
+                <li class="sidebar-item">
                     <a class="sidebar-link waves-effect waves-dark sidebar-link"
-                      asp-area="Client" asp-controller="Tickets" asp-action="Index" aria-expanded="false">
-                        <i class="mdi me-2 mdi-account-multiple"></i><span class="hide-menu">Tickets</span>
+                      asp-area="Admin" asp-controller="members" asp-action="Index" aria-expanded="false">
+                        <i class="mdi me-2 mdi-account-multiple"></i><span class="hide-menu">Members</span>
                     </a>
                 </li>
-         
-                <li class="text-center p-20 upgrade-btn">
-                    <a href=""
-                       class="btn btn-warning text-white mt-4" target="_blank">
-                       Button
+
+
+                <li class="sidebar-item">
+                    <a class="sidebar-link waves-effect waves-dark sidebar-link"
+                       asp-area="Clerk" asp-controller="clerkTickets" asp-action="Index" aria-expanded="false">
+                        <i class="mdi me-2 mdi-account-multiple"></i><span class="hide-menu">Members</span>
                     </a>
                 </li>
+              
             </ul>
 
         </nav>

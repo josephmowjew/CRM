@@ -80,7 +80,7 @@
                     var datatable;
                 </script>
 
-                <script src="~/js/clientticket.js"></script>
+    <script src="~/js/ClerkTicket.js"></script>
                 <script>
                     $(document).ready(function () {
                         datatable = $('#my_table').DataTable({
@@ -90,7 +90,7 @@
                             "serverSide": true,
                             "order": [[0, "desc"]],
                             ajax: {
-                                url: 'GetTickets',
+                    url: 'ClerkTickets/GetTickets',
                                 type: 'post',
                                 datatype: 'Json'
 

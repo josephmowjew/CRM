@@ -15,9 +15,9 @@ using UCS_CRM.Persistence.SQLRepositories;
 
 namespace UCS_CRM.Areas.Client.Controllers
 {
-    [Area("Client")]
+    [Area("Clerk")]
     [Authorize]
-    public class TicketsController : Controller
+    public class ClerkTicketsController : Controller
     {
         private readonly ITicketRepository _ticketRepository;
         private readonly ITicketCategoryRepository _ticketCategoryRepository;
@@ -25,7 +25,7 @@ namespace UCS_CRM.Areas.Client.Controllers
         private readonly ITicketPriorityRepository _priorityRepository;
         private readonly IMapper _mapper;
         private readonly IUnitOfWork _unitOfWork;
-        public TicketsController(ITicketRepository ticketRepository, IMapper mapper, IUnitOfWork unitOfWork, ITicketCategoryRepository ticketCategoryRepository, IStateRepository stateRepository, ITicketPriorityRepository priorityRepository)
+        public ClerkTicketsController(ITicketRepository ticketRepository, IMapper mapper, IUnitOfWork unitOfWork, ITicketCategoryRepository ticketCategoryRepository, IStateRepository stateRepository, ITicketPriorityRepository priorityRepository)
         {
             _ticketRepository = ticketRepository;
             _mapper = mapper;
@@ -58,6 +58,19 @@ namespace UCS_CRM.Areas.Client.Controllers
 
                 createTicketDTO.DataInvalid = "";
 
+                var defaultState = _stateRepository.DefaultState("Waiting For Support");
+
+                if (defaultState == null)
+                {
+                    createTicketDTO.DataInvalid = "true";
+
+                    ModelState.AddModelError(string.Empty, "No State found");
+
+                    await populateViewBags();
+
+                    return PartialView("_CreateTicketPartial", createTicketDTO);
+                }
+                createTicketDTO.StateId = defaultState.Id;
 
                 //check for article title presence
 
