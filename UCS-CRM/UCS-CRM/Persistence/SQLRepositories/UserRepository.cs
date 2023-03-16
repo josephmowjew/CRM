@@ -308,7 +308,7 @@ namespace UCS_CRM.Persistence.SQLRepositories
 
         public async Task<int> TotalCount()
         {
-            return await this._context.Users.Where(u => u.Status != Lambda.Deleted).CountAsync();
+            return await this._context.Users.Where(u => u.Status != Lambda.Deleted && u.EmailConfirmed == true).CountAsync();
         }
 
         public async Task<int> TotalUncomfirmedCount()
