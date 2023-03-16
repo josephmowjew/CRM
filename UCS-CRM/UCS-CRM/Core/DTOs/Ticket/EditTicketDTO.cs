@@ -8,9 +8,9 @@ namespace UCS_CRM.Core.DTOs.Ticket
         public int Id { get; set; }
         [Required]
         public string Title { get; set; }
-        [Required]
+      
         [StringLength(maximumLength: 255)]
-        public string TicketNumber { get; set; }
+        public string? TicketNumber { get; set; }
         [Required]
         public string Description { get; set; }
         [Required]

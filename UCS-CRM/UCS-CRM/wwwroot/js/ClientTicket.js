@@ -30,7 +30,6 @@
             __RequestVerificationToken: authenticationToken,
             Title: title,
             Description: description,
-            StateId: stateId,
             TicketCategoryId: ticketCategoryId,
             TicketPriorityId: ticketPriorityId,
         }
@@ -124,7 +123,6 @@ function EditForm(id, area = "") {
 
         $("#edit_ticket_modal input[name ='Title']").val(data.title)
         $("#edit_ticket_modal textarea[name ='Description']").val(data.description)
-        $("#edit_ticket_modal select[name ='TicketStateId']").val(data.stateId)
         $("#edit_ticket_modal input[name ='TicketCategoryId']").val(data.ticketCategoryId)
         $("#edit_ticket_modal input[name='Id']").val(data.id)
 

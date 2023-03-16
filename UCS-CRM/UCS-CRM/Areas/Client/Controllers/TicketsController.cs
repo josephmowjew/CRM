@@ -58,6 +58,25 @@ namespace UCS_CRM.Areas.Client.Controllers
 
                 createTicketDTO.DataInvalid = "";
 
+                //search for the default state
+
+                var defaultState =  this._stateRepository.DefaultState(Lambda.State);
+
+                if(defaultState == null)
+                {
+                    createTicketDTO.DataInvalid = "true";
+
+                    ModelState.AddModelError("", "Sorry but the application failed to log your ticket because of a missing state, please contact administrator for assistance");
+
+                    await populateViewBags();
+
+                    return PartialView("_CreateTicketPartial", createTicketDTO);
+                }
+                else
+                {
+                    createTicketDTO.StateId = defaultState.Id;
+                }
+
 
                 //check for article title presence
 
