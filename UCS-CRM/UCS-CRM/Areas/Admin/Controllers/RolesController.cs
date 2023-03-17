@@ -109,6 +109,8 @@ namespace UCS_CRM.Areas.Admin.Controllers
 
                 await _roleRepository.UpdateRoleAsync(identityRole);
 
+                return Json(new { status = "success", message = "role details updated successfully" });
+
             }
 
             return PartialView("_EditRolePartial", role);

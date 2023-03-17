@@ -204,33 +204,43 @@ function updateTicket() {
 
     var form_url = $("#edit_ticket_modal form").attr("action");
 
+    var form = $("#edit_ticket_modal form")
+
 
     //get the form fields
 
-    var title = $("#edit_ticket_modal input[name ='Title']").val()
-    var description = $("#edit_ticket_modal textarea[name ='Description']").val()
-    var ticketCategoryId = $("#edit_ticket_modal select[name ='TicketCategoryId']").val()
-    var ticketPriorityId = $("#edit_ticket_modal input[name ='TicketPriorityId']").val()
-    var id = $("#edit_ticket_modal input[name='Id']").val()
+    //var title = $("#edit_ticket_modal input[name ='Title']").val()
+    //var description = $("#edit_ticket_modal textarea[name ='Description']").val()
+    //var ticketCategoryId = $("#edit_ticket_modal select[name ='TicketCategoryId']").val()
+    //var ticketPriorityId = $("#edit_ticket_modal input[name ='TicketPriorityId']").val()
+    //var id = $("#edit_ticket_modal input[name='Id']").val()
+
+
+    let formData = new FormData(form[0]);
 
 
     //prepare data for request pushing
 
-    var userInput = {
-        __RequestVerificationToken: authenticationToken,
-        Title: title,
-        Description: description,
-        TicketCategoryId: ticketCategoryId,
-        TicketPriorityId: ticketPriorityId,
-        Id: id
-    }
+    //var userInput = {
+    //    __RequestVerificationToken: authenticationToken,
+    //    Title: title,
+    //    Description: description,
+    //    TicketCategoryId: ticketCategoryId,
+    //    TicketPriorityId: ticketPriorityId,
+    //    Id: id
+    //}
+
 
     //send the request
+
+
 
     $.ajax({
         url: form_url,
         type: 'POST',
-        data: userInput,
+        data: formData,
+        processData: false,
+        contentType: false,
         success: function (data) {
 
 
