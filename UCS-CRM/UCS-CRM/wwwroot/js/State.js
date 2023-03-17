@@ -70,7 +70,7 @@
                     var dataTable = $('#my_table').DataTable();
 
                     //send success message
-                    toastr.success("Ticket Category added successfully")
+                    toastr.success("Ticket state added successfully")
 
                     $("#create_state_modal").modal("hide")
 

@@ -10,7 +10,7 @@
             </button>
         </div>
         <div class="modal-body">
-            <form asp-action="Create">
+            <form asp-action="Create" enctype="multipart/form-data">
                 <div asp-validation-summary="ModelOnly" class="text-danger"></div>
                 <input type="hidden" asp-for="DataInvalid" />
                 <div class="form-group">
@@ -33,7 +33,10 @@
                     <select asp-for="TicketCategoryId" asp-items="@ViewBag.categories" class="form-control"></select>
                     <span asp-validation-for="TicketCategoryId" class="text-danger"></span>
                 </div>
-
+                <div class="form-group">
+                  <label for="Attachments" class="form-label">Upload Ticket Attachments</label>
+                  <input class="form-control" type="file" id="Attachments" name="Attachments" multiple>
+                </div>
                 
 
             </form>
