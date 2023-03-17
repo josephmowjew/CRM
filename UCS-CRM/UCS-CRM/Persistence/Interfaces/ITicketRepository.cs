@@ -11,5 +11,6 @@ namespace UCS_CRM.Persistence.Interfaces
         Task<Ticket?> GetTicket(int id);
         void Remove(Ticket ticket);
         Task<int> TotalCount();
+        Task<Ticket> LastTicket();
     }
 }

@@ -1,11 +1,15 @@
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc.Formatters;
 using Microsoft.EntityFrameworkCore;
+using Newtonsoft.Json;
 using Pomelo.EntityFrameworkCore.MySql.Infrastructure;
+using System.Buffers;
 using UCS_CRM.Core.Models;
 using UCS_CRM.Core.Services;
 using UCS_CRM.Data;
 using UCS_CRM.Persistence.Interfaces;
 using UCS_CRM.Persistence.SQLRepositories;
+
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -42,7 +46,7 @@ builder.Services.AddIdentity<ApplicationUser,IdentityRole>(options =>
     .AddDefaultTokenProviders();
 
 //configure services
-builder.Services.AddControllersWithViews();
+builder.Services.AddControllersWithViews().AddNewtonsoftJson(x => x.SerializerSettings.ReferenceLoopHandling = Newtonsoft.Json.ReferenceLoopHandling.Ignore);
 builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 builder.Services.AddScoped<IAccountTypeRepository, AccountTypeRepository>();
 builder.Services.AddScoped<ITicketCategoryRepository, TicketCategoryRepository>();

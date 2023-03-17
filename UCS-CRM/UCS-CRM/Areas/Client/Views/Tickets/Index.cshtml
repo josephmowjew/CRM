@@ -92,7 +92,14 @@
                             ajax: {
                                 url: 'tickets/GetTickets',
                                 type: 'post',
-                                datatype: 'Json'
+                                datatype: 'Json',
+                                     error: function(XMLHttpRequest, textStatus, errorThrown) { 
+                                             console.log(errorThrown)
+                                             console.log(textStatus)
+                                             console.log(XMLHttpRequest.responseText)
+                                           
+                                            
+                                        }  
 
 
                           },

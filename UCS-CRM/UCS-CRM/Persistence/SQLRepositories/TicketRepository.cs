@@ -43,7 +43,7 @@ namespace UCS_CRM.Persistence.SQLRepositories
                 //check if there is a search parameter
                 if (string.IsNullOrEmpty(@params.SearchTerm))
                 {
-                    var records = (from tblOb in await this._context.Tickets.Include(t => t.AssignedTo).Include(t => t.State).Include(t => t.TicketCategory).Where(t => t.Status != Lambda.Deleted).Take(@params.Take).Skip(@params.Skip).ToListAsync() select tblOb);
+                    var records = (from tblOb in await this._context.Tickets.Include(t => t.AssignedTo).Include(t => t.TicketAttachments).Include(t => t.State).Include(t => t.TicketCategory).Include(t => t.TicketPriority).Where(t => t.Status != Lambda.Deleted).Take(@params.Take).Skip(@params.Skip).ToListAsync() select tblOb);
 
                     //accountTypes.AsQueryable().OrderBy("gjakdgdag");
 
@@ -60,7 +60,7 @@ namespace UCS_CRM.Persistence.SQLRepositories
                 {
                     //include search query
 
-                    var records = (from tblOb in await this._context.Tickets.Include(t => t.AssignedTo).Include(t => t.State).Include(t => t.TicketCategory)
+                    var records = (from tblOb in await this._context.Tickets.Include(t => t.AssignedTo).Include(t => t.TicketAttachments).Include(t => t.State).Include(t => t.TicketCategory).Include(t => t.TicketPriority)
                                    .Where(t => t.Status != Lambda.Deleted
                                         && t.Title.ToLower().Trim().Contains(@params.SearchTerm) ||
                                            t.Description.ToLower().Trim().Contains(@params.SearchTerm) ||
@@ -86,6 +86,11 @@ namespace UCS_CRM.Persistence.SQLRepositories
             {
                 return null;
             }
+        }
+
+        public async Task<Ticket> LastTicket()
+        {
+            return await this._context.Tickets.OrderByDescending(t => t.Id).LastOrDefaultAsync();
         }
 
         public void Remove(Ticket ticket)

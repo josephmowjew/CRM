@@ -15,8 +15,8 @@ namespace UCS_CRM.Core.DTOs.Ticket
         public string? TicketNumber { get; set; }
         [Required]
         public string Description { get; set; }
-   
-        public string? Status { get; set; }
+
+        public string? Status { get; set; } = Lambda.Active;
         public DateTime? ClosedDate { get; set; }
       
         [Display(Name = "Assigned To")]
@@ -31,15 +31,10 @@ namespace UCS_CRM.Core.DTOs.Ticket
         [Display(Name = "State")]
         public int? StateId { get; set; }
 
-        public ICollection<TicketAttachment> TicketAttachments { get; set; }
-        public ICollection<TicketComment> TicketComments { get; set; }
+        public ICollection<IFormFile> Attachments { get; set; }
 
-        public string DataInvalid { get; set; } = "true";
+        public string? DataInvalid { get; set; } = "true";
 
-        public CreateTicketDTO()
-        {
-            TicketAttachments = new List<TicketAttachment>();
-            TicketComments = new List<TicketComment>();
-        }
+
     }
 }
