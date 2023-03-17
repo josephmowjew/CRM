@@ -66,8 +66,27 @@ namespace UCS_CRM.Controllers
                         }
 
                         await this._context.SaveChangesAsync();
+                        if (User.IsInRole("Administrator"))
+                        {
+                            return RedirectToAction("Index", "Users", new { Area = "Admin" });
+                        }
+                        if (User.IsInRole("Clerk"))
+                        {
+                            return RedirectToAction("Index", "ClerkTickets", new { Area = "Clerk" });
+                        }
+                        if (User.IsInRole("Manager"))
+                        {
+                            return RedirectToAction("Index", "Dashboard", new { Area = "Admin" });
+                        }
+                        if (User.IsInRole("Senior Manager"))
+                        {
+                            return RedirectToAction("Index", "Dashboard", new { Area = "Admin" });
+                        }
+                        else {
 
-                        return RedirectToAction("Index", "Users",new {Area = "Admin"});
+                            return RedirectToAction("Index", "Tickets", new { Area = "Client" });
+                        }
+
 
 
 
