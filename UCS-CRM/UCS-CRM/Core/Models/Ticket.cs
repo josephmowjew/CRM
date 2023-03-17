@@ -12,8 +12,6 @@ namespace UCS_CRM.Core.Models
         public string TicketNumber { get; set; }
         [Required]
         public string Description { get; set; }
-        [Required]
-        public string Status { get; set; }
         public DateTime? ClosedDate { get; set; }
       
         public string? AssignedToId { get; set; }
