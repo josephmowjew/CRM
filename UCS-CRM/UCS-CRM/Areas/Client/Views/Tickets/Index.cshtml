@@ -26,6 +26,10 @@
     <partial name="_CreateTicketPartial" />
 </div>
 
+<div class="modal fade" id="edit_ticket_modal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <partial name="_EditTicketPartial" />
+</div>
+
 <div class="card">
     <div class="card-header">
         <h4 class="text-center text-uppercase">My Tickets Available In The System</h4>
@@ -90,7 +94,7 @@
                             "serverSide": true,
                             "order": [[0, "desc"]],
                             ajax: {
-                                url: 'tickets/GetTickets',
+                                url: 'GetTickets',
                                 type: 'post',
                                 datatype: 'Json',
                                      error: function(XMLHttpRequest, textStatus, errorThrown) { 

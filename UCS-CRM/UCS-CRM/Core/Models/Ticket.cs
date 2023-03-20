@@ -26,8 +26,8 @@ namespace UCS_CRM.Core.Models
         public ApplicationUser AssignedTo { get; set; }
         public TicketPriority TicketPriority { get; set; }
 
-        public ICollection<TicketAttachment> TicketAttachments { get; set; }
-        public ICollection<TicketComment> TicketComments { get; set; }
+        public ICollection<TicketAttachment>? TicketAttachments { get; set; }
+        public ICollection<TicketComment>? TicketComments { get; set; }
 
         public Ticket()
         {

@@ -1,21 +1,19 @@
-﻿@model UCS_CRM.Core.DTOs.Ticket.CreateTicketDTO
+﻿@model UCS_CRM.Core.DTOs.Ticket.EditTicketDTO
 <!-- Modal -->
 
 <div class="modal-dialog" role="document">
     <div class="modal-content">
         <div class="modal-header">
-            <h5 class="modal-title" id="exampleModalLabel">Edit Ticket</h5>
+            <h5 class="modal-title" id="exampleModalLabel">Create Ticket</h5>
             <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close">
                 <span aria-hidden="true">&times;</span>
             </button>
         </div>
         <div class="modal-body">
-            <form asp-action="Edit">
+            <form asp-action="Edit" enctype="multipart/form-data">
                 <div asp-validation-summary="ModelOnly" class="text-danger"></div>
                 <input type="hidden" asp-for="DataInvalid" />
                 <input type="hidden" asp-for="Id" />
-                <input type="hidden" asp-for="StateId" />
-
                 <div class="form-group">
                     <label asp-for="Title" class="control-label"></label>
                     <input asp-for="Title" placeholder="Enter Ticket Title" class="form-control" />
@@ -36,14 +34,17 @@
                     <select asp-for="TicketCategoryId" asp-items="@ViewBag.categories" class="form-control"></select>
                     <span asp-validation-for="TicketCategoryId" class="text-danger"></span>
                 </div>
+                <div class="form-group">
+                  <label for="Attachments" class="form-label">Upload Ticket Attachments</label>
+                  <input class="form-control" type="file" id="Attachments" name="Attachments" multiple>
+                </div>
 
-                
 
             </form>
         </div>
         <div class="modal-footer">
             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-            <button type="button" class="btn btn-primary" id="edit_ticket_btn" name="update_ticket_btn">Update Ticket</button>
+            <button type="button" class="btn btn-primary" id="update_ticket_btn" name="update_ticket_btn">Create Ticket</button>
         </div>
     </div>
 </div>
