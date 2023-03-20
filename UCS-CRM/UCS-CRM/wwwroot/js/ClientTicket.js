@@ -119,7 +119,7 @@ function EditForm(id, area = "") {
     //get the record from the database
 
     $.ajax({
-        url: area + 'tickets/edit/' + id,
+        url: area + 'clerktickets/edit/' + id,
         type: 'GET'
     }).done(function (data) {
 
@@ -148,7 +148,7 @@ function EditForm(id, area = "") {
 
         var validator = $("#edit_ticket_modal form").validate();
 
-        validator.resetForm();
+        //validator.resetForm();
 
         $("#edit_ticket_modal").modal("show");
 

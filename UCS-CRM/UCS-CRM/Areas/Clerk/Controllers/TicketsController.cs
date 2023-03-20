@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
+using NuGet.Packaging;
 using System.Security.Claims;
 using UCS_CRM.Core.DTOs.Member;
 using UCS_CRM.Core.DTOs.State;
@@ -25,7 +26,8 @@ namespace UCS_CRM.Areas.Client.Controllers
         private readonly ITicketPriorityRepository _priorityRepository;
         private readonly IMapper _mapper;
         private readonly IUnitOfWork _unitOfWork;
-        public ClerkTicketsController(ITicketRepository ticketRepository, IMapper mapper, IUnitOfWork unitOfWork, ITicketCategoryRepository ticketCategoryRepository, IStateRepository stateRepository, ITicketPriorityRepository priorityRepository)
+        private IWebHostEnvironment _env;
+        public ClerkTicketsController(ITicketRepository ticketRepository, IMapper mapper, IUnitOfWork unitOfWork, ITicketCategoryRepository ticketCategoryRepository, IStateRepository stateRepository, ITicketPriorityRepository priorityRepository, IWebHostEnvironment env)
         {
             _ticketRepository = ticketRepository;
             _mapper = mapper;
@@ -33,6 +35,7 @@ namespace UCS_CRM.Areas.Client.Controllers
             _ticketCategoryRepository = ticketCategoryRepository;
             _stateRepository = stateRepository;
             _priorityRepository = priorityRepository;
+            _env = env;
         }
 
         // GET: TicketsController
@@ -43,25 +46,12 @@ namespace UCS_CRM.Areas.Client.Controllers
             return View();
         }
 
-       
+
         // POST: TicketsController/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<ActionResult> Create(CreateTicketDTO createTicketDTO)
         {
-            var defaultState = _stateRepository.DefaultState("Waiting For Support");
-
-            if (defaultState == null)
-            {
-                createTicketDTO.DataInvalid = "true";
-
-                ModelState.AddModelError(string.Empty, "No State found");
-
-                await populateViewBags();
-
-                return PartialView("_CreateTicketPartial", createTicketDTO);
-            }
-            createTicketDTO.StateId = defaultState.Id;
 
 
             createTicketDTO.DataInvalid = "true";
@@ -71,7 +61,26 @@ namespace UCS_CRM.Areas.Client.Controllers
 
                 createTicketDTO.DataInvalid = "";
 
-              
+                //search for the default state
+
+                var defaultState = this._stateRepository.DefaultState(Lambda.State);
+
+                if (defaultState == null)
+                {
+                    createTicketDTO.DataInvalid = "true";
+
+                    ModelState.AddModelError("", "Sorry but the application failed to log your ticket because of a missing state, please contact administrator for assistance");
+
+                    await populateViewBags();
+
+                    return PartialView("_CreateTicketPartial", createTicketDTO);
+                }
+                else
+                {
+                    createTicketDTO.StateId = defaultState.Id;
+                }
+
+
                 //check for article title presence
 
                 var mappedTicket = this._mapper.Map<Ticket>(createTicketDTO);
@@ -100,10 +109,50 @@ namespace UCS_CRM.Areas.Client.Controllers
 
                     mappedTicket.CreatedById = claimsIdentitifier.Value;
 
+                    //get the last ticket
+
+                    Ticket lastTicket = await this._ticketRepository.LastTicket();
+
+
+                    //generate ticket number
+                    var lastTicketId = lastTicket == null ? 0 : lastTicket.Id;
+
+                    string ticketNumber = Lambda.IssuePrefix + (lastTicketId + 1);
+
+                    //assign ticket number to the mapped record
+
+                    mappedTicket.TicketNumber = ticketNumber;
+
 
                     this._ticketRepository.Add(mappedTicket);
 
+
+
+
+                    //save ticket to the data store
+
                     await this._unitOfWork.SaveToDataStore();
+
+                    if (createTicketDTO.Attachments.Count > 0)
+                    {
+                        var attachments = createTicketDTO.Attachments.Select(async attachment =>
+                        {
+                            string fileUrl = await UploadFile(attachment);
+                            return new TicketAttachment()
+                            {
+                                FileName = attachment.FileName,
+                                TicketId = mappedTicket.Id,
+                                Url = fileUrl
+                            };
+                        });
+
+                        var mappedAttachments = await Task.WhenAll(attachments);
+
+                        mappedTicket.TicketAttachments.AddRange(mappedAttachments);
+
+                        await this._unitOfWork.SaveToDataStore();
+                    }
+
 
 
                     return PartialView("_CreateTicketPartial", createTicketDTO);
@@ -201,7 +250,7 @@ namespace UCS_CRM.Areas.Client.Controllers
             return PartialView("_EditTicketPartial", editTicketDTO);
         }
 
-       
+
         // POST: TicketsController/Delete/5
         [HttpPost]
         public async Task<ActionResult> Delete(int id)
@@ -214,7 +263,7 @@ namespace UCS_CRM.Areas.Client.Controllers
             {
                 //only execute remove if the state is not pending
 
-                if(ticketRecordDb.State.Name.ToLower() != Lambda.Pending.ToLower())
+                if (ticketRecordDb.State.Name.ToLower() != Lambda.Pending.ToLower())
                 {
                     return Json(new { status = "error", message = "ticket could not be found from the system at the moment as it has been responded to, consider closing it instead" });
                 }
@@ -226,7 +275,7 @@ namespace UCS_CRM.Areas.Client.Controllers
 
                     return Json(new { status = "success", message = "ticket has been removed from the system successfully" });
                 }
-               
+
             }
 
             return Json(new { status = "error", message = "ticket could not be found from the system" });
@@ -256,27 +305,28 @@ namespace UCS_CRM.Areas.Client.Controllers
 
             //map the results to a read DTO
 
-            var mappedResult = this._mapper.Map<List<ReadMemberDTO>>(result);
+            var mappedResult = this._mapper.Map<List<ReadTicketDTO>>(result);
 
-            var cleanListOfMemberReadDTO = new List<ReadMemberDTO>();
+            var cleanResult = new List<ReadTicketDTO>();
 
-            mappedResult.ForEach(m =>
-            {
+            //mappedResult.ForEach(record =>
+            //{
+            //    record.State.Tickets = null;
+            //    record.TicketAttachments.Select(r => r.Ticket = null);
+
+            //    cleanResult.Add(record);
+
+            //});
 
 
 
-                if (m?.User != null)
-                {
-                    m.User.Member = null;
-                }
+            return Json(new { draw = draw, recordsFiltered = result.Count, recordsTotal = resultTotal, data = mappedResult });
 
-                cleanListOfMemberReadDTO.Add(m);
-            });
-            return Json(new { draw = draw, recordsFiltered = resultTotal, recordsTotal = resultTotal, data = cleanListOfMemberReadDTO });
+
 
         }
 
-        private  async Task<List<SelectListItem>>  GetTicketCategories()
+        private async Task<List<SelectListItem>> GetTicketCategories()
         {
             var ticketCategories = await this._ticketCategoryRepository.GetTicketCategories();
 
@@ -311,5 +361,43 @@ namespace UCS_CRM.Areas.Client.Controllers
             ViewBag.priorities = await GetTicketPriorities();
             ViewBag.categories = await GetTicketCategories();
         }
+
+        private async Task<string> UploadFile(IFormFile file)
+        {
+            string fileName = string.Empty;
+            string complete_file_name = string.Empty;
+            try
+            {
+                // Get the extension of the file
+                var extension = Path.GetExtension(file.FileName);
+                // Generate a file name on the spot
+                fileName = Path.GetRandomFileName() + extension;
+                // Generate a possible path to the file
+                var pathBuilt = Path.Combine(this._env.WebRootPath, "TicketAttachments");
+
+                if (!Directory.Exists(pathBuilt))
+                {
+                    // Create the directory
+                    await Task.Run(() => Directory.CreateDirectory(pathBuilt));
+                }
+
+                var path = Path.Combine(pathBuilt, fileName);
+
+                using (var stream = new FileStream(path, FileMode.Create))
+                {
+                    // Copy the file to the path
+                    await file.CopyToAsync(stream);
+                }
+
+                complete_file_name = Path.Combine("/", "TicketAttachments", fileName);
+
+                return complete_file_name;
+            }
+            catch (Exception ex)
+            {
+                return $"{complete_file_name} {ex}";
+            }
+        }
+
     }
 }
