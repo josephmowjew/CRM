@@ -53,5 +53,46 @@ namespace UCS_CRM.Core.Helpers
         public static string TicketUnassigned = "Ticket Unassigned";
         public static string TicketEscalation = "Ticket Escalation";
 
+        public static async Task<string> UploadFile(IFormFile file,string webrootPath)
+        {
+            string cleanFileName = string.Empty;
+            string fileName = string.Empty;
+            string complete_file_name = string.Empty;
+            try
+            {
+                // Get the extension of the file
+                var extension = Path.GetExtension(file.FileName);
+
+                // Generate a file name on the spot
+                fileName = Path.GetRandomFileName();
+
+                cleanFileName = Path.GetFileNameWithoutExtension(fileName) + extension; ;
+                // Generate a possible path to the file
+                var pathBuilt = Path.Combine(webrootPath, "TicketAttachments");
+
+                if (!Directory.Exists(pathBuilt))
+                {
+                    // Create the directory
+                    await Task.Run(() => Directory.CreateDirectory(pathBuilt));
+                }
+
+                var path = Path.Combine(pathBuilt, cleanFileName);
+
+                using (var stream = new FileStream(path, FileMode.Create))
+                {
+                    // Copy the file to the path
+                    await file.CopyToAsync(stream);
+                }
+
+                complete_file_name = Path.Combine("/", "TicketAttachments", cleanFileName);
+
+                return complete_file_name;
+            }
+            catch (Exception ex)
+            {
+                return $"{complete_file_name} {ex}";
+            }
+        }
+
     }
 }

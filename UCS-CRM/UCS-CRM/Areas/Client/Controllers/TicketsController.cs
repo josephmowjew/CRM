@@ -9,6 +9,7 @@ using System.Security.Claims;
 using UCS_CRM.Core.DTOs.Member;
 using UCS_CRM.Core.DTOs.State;
 using UCS_CRM.Core.DTOs.Ticket;
+using UCS_CRM.Core.DTOs.TicketComment;
 using UCS_CRM.Core.Helpers;
 using UCS_CRM.Core.Models;
 using UCS_CRM.Persistence.Interfaces;
@@ -21,13 +22,14 @@ namespace UCS_CRM.Areas.Client.Controllers
     public class TicketsController : Controller
     {
         private readonly ITicketRepository _ticketRepository;
+        private readonly ITicketCommentRepository _ticketCommentRepository;
         private readonly ITicketCategoryRepository _ticketCategoryRepository;
         private readonly IStateRepository _stateRepository;
         private readonly ITicketPriorityRepository _priorityRepository;
         private readonly IMapper _mapper;
         private readonly IUnitOfWork _unitOfWork;
         private IWebHostEnvironment _env;
-        public TicketsController(ITicketRepository ticketRepository, IMapper mapper, IUnitOfWork unitOfWork, ITicketCategoryRepository ticketCategoryRepository, IStateRepository stateRepository, ITicketPriorityRepository priorityRepository, IWebHostEnvironment env)
+        public TicketsController(ITicketRepository ticketRepository, IMapper mapper, IUnitOfWork unitOfWork, ITicketCategoryRepository ticketCategoryRepository, IStateRepository stateRepository, ITicketPriorityRepository priorityRepository, IWebHostEnvironment env, ITicketCommentRepository ticketCommentRepository)
         {
             _ticketRepository = ticketRepository;
             _mapper = mapper;
@@ -36,6 +38,7 @@ namespace UCS_CRM.Areas.Client.Controllers
             _stateRepository = stateRepository;
             _priorityRepository = priorityRepository;
             _env = env;
+            _ticketCommentRepository = ticketCommentRepository;
         }
 
         // GET: TicketsController
@@ -137,7 +140,7 @@ namespace UCS_CRM.Areas.Client.Controllers
                     {
                         var attachments = createTicketDTO.Attachments.Select(async attachment =>
                         {
-                            string fileUrl = await UploadFile(attachment);
+                            string fileUrl = await Lambda.UploadFile(attachment,this._env.WebRootPath);
                             return new TicketAttachment()
                             {
                                 FileName = attachment.FileName,
@@ -253,7 +256,7 @@ namespace UCS_CRM.Areas.Client.Controllers
                 {
                     var attachments = editTicketDTO.Attachments.Select(async attachment =>
                     {
-                        string fileUrl = await UploadFile(attachment);
+                        string fileUrl = await Lambda.UploadFile(attachment, this._env.WebRootPath);
                         return new TicketAttachment()
                         {
                             FileName = attachment.FileName,
@@ -277,7 +280,21 @@ namespace UCS_CRM.Areas.Client.Controllers
             return PartialView("_EditTicketPartial", editTicketDTO);
         }
 
-       
+        // GET: TicketController/Details/5
+        public async Task<ActionResult> Details(int id)
+        {
+            var ticketDB = await this._ticketRepository.GetTicket(id);
+
+            if(ticketDB == null)
+            {
+                return RedirectToAction("Index");
+            }
+
+
+            var mappedTicket = this._mapper.Map<ReadTicketDTO>(ticketDB);
+
+            return View(mappedTicket);
+        }
         // POST: TicketsController/Delete/5
         [HttpPost]
         public async Task<ActionResult> Delete(int id)
@@ -352,7 +369,38 @@ namespace UCS_CRM.Areas.Client.Controllers
            
 
         }
+        [HttpPost]
 
+        public async Task<ActionResult> GetTicketComments(int ticketId)
+        {
+            //datatable stuff
+            var draw = HttpContext.Request.Form["draw"].FirstOrDefault();
+            var start = HttpContext.Request.Form["start"].FirstOrDefault();
+            var length = HttpContext.Request.Form["length"].FirstOrDefault();
+
+            var sortColumn = HttpContext.Request.Form["columns[" + HttpContext.Request.Form["order[0][column]"].FirstOrDefault() + "][name]"].FirstOrDefault();
+            var sortColumnAscDesc = Request.Form["order[0][dir]"].FirstOrDefault();
+            var searchValue = Request.Form["search[value]"].FirstOrDefault();
+
+            int pageSize = length != null ? Convert.ToInt32(length) : 0;
+            int skip = start != null ? Convert.ToInt32(start) : 0;
+            int resultTotal = 0;
+
+            //create a cursor params based on the data coming from the datatable
+            CursorParams CursorParameters = new CursorParams() { SearchTerm = searchValue, Skip = skip, SortColum = sortColumn, SortDirection = sortColumnAscDesc, Take = pageSize };
+
+            resultTotal = await this._ticketCommentRepository.TotalActiveCount();
+            var result = await this._ticketCommentRepository.GetTicketCommentsAsync(ticketId, CursorParameters);
+
+            //map the results to a read DTO
+
+            var mappedResult = this._mapper.Map<List<ReadTicketCommentDTO>>(result);
+
+
+
+            return Json(new { draw = draw, recordsFiltered = result.Count, recordsTotal = resultTotal, data = mappedResult });
+
+        }
         private  async Task<List<SelectListItem>>  GetTicketCategories()
         {
             var ticketCategories = await this._ticketCategoryRepository.GetTicketCategories();
@@ -389,42 +437,7 @@ namespace UCS_CRM.Areas.Client.Controllers
             ViewBag.categories = await GetTicketCategories();
         }
 
-        private async Task<string> UploadFile(IFormFile file)
-        {
-            string fileName = string.Empty;
-            string complete_file_name = string.Empty;
-            try
-            {
-                // Get the extension of the file
-                var extension = Path.GetExtension(file.FileName);
-                // Generate a file name on the spot
-                fileName = Path.GetRandomFileName() + extension;
-                // Generate a possible path to the file
-                var pathBuilt = Path.Combine(this._env.WebRootPath, "TicketAttachments");
-
-                if (!Directory.Exists(pathBuilt))
-                {
-                    // Create the directory
-                    await Task.Run(() => Directory.CreateDirectory(pathBuilt));
-                }
-
-                var path = Path.Combine(pathBuilt, fileName);
-
-                using (var stream = new FileStream(path, FileMode.Create))
-                {
-                    // Copy the file to the path
-                    await file.CopyToAsync(stream);
-                }
-
-                complete_file_name = Path.Combine("/", "TicketAttachments", fileName);
-
-                return complete_file_name;
-            }
-            catch (Exception ex)
-            {
-                return $"{complete_file_name} {ex}";
-            }
-        }
+        
 
     }
 }

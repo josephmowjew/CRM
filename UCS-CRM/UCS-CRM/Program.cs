@@ -58,6 +58,7 @@ builder.Services.AddScoped<IEmailService, EmailService>();
 builder.Services.AddScoped<IRoleRepositorycs, RoleRepository>();
 builder.Services.AddScoped<IMemberRepository, MemberRepository>();
 builder.Services.AddScoped<IStateRepository, StateRepository>();
+builder.Services.AddScoped<ITicketCommentRepository, TicketCommentRepository>();
 
 
 var app = builder.Build();

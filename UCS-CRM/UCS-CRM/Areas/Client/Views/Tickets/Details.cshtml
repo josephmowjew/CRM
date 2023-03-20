@@ -1,0 +1,132 @@
+﻿@*
+    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
+*@
+@{
+    @model UCS_CRM.Core.DTOs.Ticket.ReadTicketDTO
+}
+
+<div class="card">
+
+     <div class="tab-pane" id="profile" role="tabpanel">
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-3 col-xs-6 b-r"> <strong>Title</strong>
+                        <br>
+                        <p class="text-muted">@Model.Title</p>
+                    </div>
+                    <div class="col-md-3 col-xs-6 b-r"> <strong>Assigned To</strong>
+                        <br>
+                        <p class="text-muted"></p>
+                    </div>
+                    <div class="col-md-3 col-xs-6 b-r"> <strong>State</strong>
+                        <br>
+                        <p class="text-muted">@Model.State.Name</p>
+                    </div>
+                    <div class="col-md-3 col-xs-6"> <strong>Ticket Category</strong>
+                        <br>
+                        <p class="text-muted">@Model.TicketCategory.Name</p>
+                    </div>
+                </div>
+                <hr>
+                <h4 class="font-medium mt-4">Description</h4>
+                <p class="mt-4">@Model.Description</p>
+                <h4 class="font-medium mt-4">Comments</h4>
+                <hr>
+                <h5 class="d-flex mt-4">Wordpress <span class="ms-auto">80%</span></h5>
+                <table class="table table-bordered " id="my_table">
+                    <thead>
+                        <tr>
+                            <th>
+                                Comment
+                            </th>
+                             <th>
+                                AssignedTo
+                            </th>
+                           
+                            <th>
+                                Action
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    </tbody>
+                </table>
+            </div>
+         </div>
+
+</div>
+
+@section Scripts{
+
+                    <script>
+                        var datatable;
+                    </script>
+
+                    <script src="~/js/clientticket.js"></script>
+                    <script>
+                        $(document).ready(function () {
+                            datatable = $('#my_table').DataTable({
+
+
+                                "processing": true,
+                                "serverSide": true,
+                                "order": [[0, "desc"]],
+                                ajax: {
+                                    url: '/client/tickets/GetTicketComments/'+@Model.Id,
+                                    type: 'post',
+                                    datatype: 'Json',
+                                         error: function(XMLHttpRequest, textStatus, errorThrown) { 
+
+                                                 console.log(XMLHttpRequest.responseText)
+
+
+                                            }  
+
+
+                              },
+                                columnDefs: [
+                                    {
+                                        defaultContent: "",
+                                        targets: "_all",
+                                        'orderable': true
+                                    },
+                                ],
+                                columns: [
+
+                                    {
+                                        data: "comment",
+                                        name: "comment",
+                                        className: "text-left",
+                                        "orderable": true,
+                                    },
+                                    
+
+                                     {
+                                            data: { state: "assignedTo.fullName"},
+                                            mRender: function (data, type, full) {
+                                                return data.assignedTo != null && data.assignedTo.status != 'Deleted' ?   data.assignedTo.fullName  : "";
+                                                }, "name": "assignedTo.fullName",
+                                            className: "text-left"
+                                    },
+                                      {
+                                        data: "id",
+                                        name: "id",
+                                        "orderable": false,
+                                        render: function (data) {
+                                                        return "<a href='#' onclick=EditForm('" + data + "') type='button' class='feather icon-edit' title='edit' ></a> <a href='#' type='button' onclick=Delete('" +data + "') title='delete' class='feather icon-trash-2'></a><a href='tickets/details/"+data+"' class='mdi mdi-eye'></a>"
+                                        }
+                                    },
+
+                                ],
+                                responsive: true,
+                                "autoWidth": false,
+                            });
+                        });
+                    </script>
+
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+
+
+}

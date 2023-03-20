@@ -31,7 +31,13 @@ namespace UCS_CRM.Persistence.SQLRepositories
 
         public async Task<Ticket?> GetTicket(int id)
         {
-            return await this._context.Tickets.FirstOrDefaultAsync(t => t.Id == id);
+            return await this._context.Tickets
+                .Include(t=> t.TicketCategory)
+                .Include(t => t.State)
+                .Include(t => t.AssignedTo)
+                .Include(t => t.TicketComments)
+                .Include(t => t.TicketAttachments)
+                .FirstOrDefaultAsync(t => t.Id == id);
         }
 
         public async Task<List<Ticket?>> GetTickets(CursorParams @params)
