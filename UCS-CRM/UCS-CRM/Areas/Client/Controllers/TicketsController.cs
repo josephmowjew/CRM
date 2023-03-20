@@ -194,6 +194,8 @@ namespace UCS_CRM.Areas.Client.Controllers
         {
             var identityRole = await _ticketRepository.GetTicket(id);
 
+            await populateViewBags();
+
             return Json(identityRole);
         }
         [HttpPost]
@@ -216,6 +218,11 @@ namespace UCS_CRM.Areas.Client.Controllers
 
                     return PartialView("_EditTicketPartial", editTicketDTO);
                 }
+
+              
+                editTicketDTO.StateId = editTicketDTO.StateId == null ? ticketDB.StateId: editTicketDTO.StateId;
+
+                editTicketDTO.TicketNumber = ticketDB.TicketNumber;
                 //check if the role name isn't already taken
                 var mappedTicket = this._mapper.Map<Ticket>(editTicketDTO);
 
@@ -242,7 +249,27 @@ namespace UCS_CRM.Areas.Client.Controllers
 
                 await this._unitOfWork.SaveToDataStore();
 
-                return Json(ticketDB);
+                if (editTicketDTO.Attachments.Count > 0)
+                {
+                    var attachments = editTicketDTO.Attachments.Select(async attachment =>
+                    {
+                        string fileUrl = await UploadFile(attachment);
+                        return new TicketAttachment()
+                        {
+                            FileName = attachment.FileName,
+                            TicketId = mappedTicket.Id,
+                            Url = fileUrl
+                        };
+                    });
+
+                    var mappedAttachments = await Task.WhenAll(attachments);
+
+                    mappedTicket.TicketAttachments.AddRange(mappedAttachments);
+
+                    await this._unitOfWork.SaveToDataStore();
+                }
+
+                return Json(new { status = "success", message = "user ticked updated successfully" });
             }
 
 

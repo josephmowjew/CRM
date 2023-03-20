@@ -194,7 +194,7 @@ namespace UCS_CRM.Areas.Admin.Controllers
 
                 await this._unitOfWork.SaveToDataStore();
 
-                return Json(accountTypeDB);
+                return Json(new { status = "success", message = "account type details updated successfully" });
 
             }
 

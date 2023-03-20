@@ -207,7 +207,7 @@ namespace UCS_CRM.Areas.Admin.Controllers
 
                 await this._unitOfWork.SaveToDataStore();
 
-                return Json(ticketPriorityDB);
+                return Json(new { status = "success", message = "ticket priority details updated successfully" });
 
             }
 

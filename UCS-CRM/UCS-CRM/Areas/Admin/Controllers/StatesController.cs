@@ -198,7 +198,7 @@ namespace UCS_CRM.Areas.Admin.Controllers
 
                 await this._unitOfWork.SaveToDataStore();
 
-                return Json(ticketCategoryDB);
+                return Json(new { status = "success", message = "state details updated successfully" });
             }
 
 

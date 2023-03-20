@@ -31,9 +31,14 @@ namespace UCS_CRM.Core.DTOs.Ticket
         [Display(Name = "State")]
         public int? StateId { get; set; }
 
-        public ICollection<IFormFile> Attachments { get; set; }
+        public ICollection<IFormFile>? Attachments { get; set; }
 
         public string? DataInvalid { get; set; } = "true";
+
+        public CreateTicketDTO()
+        {
+            Attachments = new List<IFormFile>();
+        }
 
 
     }
