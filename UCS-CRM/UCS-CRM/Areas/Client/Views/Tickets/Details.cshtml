@@ -32,16 +32,16 @@
                 <p class="mt-4">@Model.Description</p>
                 <h4 class="font-medium mt-4">Comments</h4>
                 <hr>
-                <h5 class="d-flex mt-4">Wordpress <span class="ms-auto">80%</span></h5>
+
+                
+               
                 <table class="table table-bordered " id="my_table">
                     <thead>
                         <tr>
                             <th>
                                 Comment
                             </th>
-                             <th>
-                                AssignedTo
-                            </th>
+                            
                            
                             <th>
                                 Action
@@ -72,7 +72,7 @@
                                 "serverSide": true,
                                 "order": [[0, "desc"]],
                                 ajax: {
-                                    url: '/client/tickets/GetTicketComments/'+@Model.Id,
+                                            url: '/client/tickets/GetTicketComments/?ticketId='+@Model.Id,
                                     type: 'post',
                                     datatype: 'Json',
                                          error: function(XMLHttpRequest, textStatus, errorThrown) { 
@@ -100,14 +100,6 @@
                                         "orderable": true,
                                     },
                                     
-
-                                     {
-                                            data: { state: "assignedTo.fullName"},
-                                            mRender: function (data, type, full) {
-                                                return data.assignedTo != null && data.assignedTo.status != 'Deleted' ?   data.assignedTo.fullName  : "";
-                                                }, "name": "assignedTo.fullName",
-                                            className: "text-left"
-                                    },
                                       {
                                         data: "id",
                                         name: "id",

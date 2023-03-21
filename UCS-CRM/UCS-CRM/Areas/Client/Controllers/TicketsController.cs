@@ -371,7 +371,7 @@ namespace UCS_CRM.Areas.Client.Controllers
         }
         [HttpPost]
 
-        public async Task<ActionResult> GetTicketComments(int ticketId)
+        public async Task<ActionResult> GetTicketComments(string ticketId)
         {
             //datatable stuff
             var draw = HttpContext.Request.Form["draw"].FirstOrDefault();
@@ -390,7 +390,7 @@ namespace UCS_CRM.Areas.Client.Controllers
             CursorParams CursorParameters = new CursorParams() { SearchTerm = searchValue, Skip = skip, SortColum = sortColumn, SortDirection = sortColumnAscDesc, Take = pageSize };
 
             resultTotal = await this._ticketCommentRepository.TotalActiveCount();
-            var result = await this._ticketCommentRepository.GetTicketCommentsAsync(ticketId, CursorParameters);
+            var result = await this._ticketCommentRepository.GetTicketCommentsAsync(int.Parse(ticketId), CursorParameters);
 
             //map the results to a read DTO
 

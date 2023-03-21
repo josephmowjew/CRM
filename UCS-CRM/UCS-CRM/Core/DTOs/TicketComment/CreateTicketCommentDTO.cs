@@ -10,5 +10,6 @@ namespace UCS_CRM.Core.DTOs.TicketComment
         [Required]
         public string Comment { get; set; }
 
+        public string DataInvalid { get; set; } = "true";
     }
 }
