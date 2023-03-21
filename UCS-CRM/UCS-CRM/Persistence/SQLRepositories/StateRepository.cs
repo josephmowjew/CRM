@@ -60,7 +60,7 @@ namespace UCS_CRM.Persistence.SQLRepositories
                 else
                 {
                     //include search text in the query
-                    var stateList = (from tblOb in _context.States.Where(s => s.Name.ToLower().Trim().Contains(@params.SearchTerm) && s.Status != Lambda.Deleted)
+                    var stateList = (from tblOb in _context.States.Where(s => s.Name.ToLower().Trim().Contains(@params.SearchTerm.ToLower().Trim()) && s.Status != Lambda.Deleted)
                                         .Skip(@params.Skip)
                                         .Take(@params.Take)
                                              select tblOb);

@@ -68,12 +68,12 @@ namespace UCS_CRM.Persistence.SQLRepositories
 
                     var records = (from tblOb in await this._context.Tickets.Include(t => t.AssignedTo).Include(t => t.TicketAttachments).Include(t => t.State).Include(t => t.TicketCategory).Include(t => t.TicketPriority)
                                    .Where(t => t.Status != Lambda.Deleted
-                                        && t.Title.ToLower().Trim().Contains(@params.SearchTerm) ||
-                                           t.Description.ToLower().Trim().Contains(@params.SearchTerm) ||
-                                           t.State.Name.ToLower().Trim().Contains(@params.SearchTerm) ||
-                                           t.TicketCategory.Name.ToLower().Trim().Contains(@params.SearchTerm))
+                                        && t.Title.ToLower().Trim().Contains(@params.SearchTerm.ToLower()) ||
+                                           t.Description.ToLower().Trim().Contains(@params.SearchTerm.ToLower()) ||
+                                           t.State.Name.ToLower().Trim().Contains(@params.SearchTerm.ToLower()) ||
+                                           t.TicketCategory.Name.ToLower().Trim().Contains(@params.SearchTerm.ToLower()))
                                    .Take(@params.Take)
-                                   .Skip(@params.Take)
+                                   .Skip(@params.Skip)
                                    .ToListAsync()
                                    select tblOb);
 
