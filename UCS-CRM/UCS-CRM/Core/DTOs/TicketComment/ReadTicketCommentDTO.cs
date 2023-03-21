@@ -12,6 +12,6 @@ namespace UCS_CRM.Core.DTOs.TicketComment
         public string Comment { get; set; }
         public UCS_CRM.Core.Models.Ticket Ticket { get; set; }
 
-        public string formattedCreatedAt => CreatedDate.ToString("dd-MM-yyyy hh:mm tt");
+        public string formattedCreatedAt => CreatedDate.ToString("hh:mm tt - dd-MM-yyyy ");
     }
 }

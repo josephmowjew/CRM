@@ -39,7 +39,7 @@ namespace UCS_CRM.Persistence.SQLRepositories
                 //check if there is a search parameter
                 if (string.IsNullOrEmpty(@params.SearchTerm))
                 {
-                    var records = (from tblOb in await this._context.TicketComments.Include(t => t.CreatedBy).Where(t => t.Status != Lambda.Deleted && t.TicketId == ticketId).Take(@params.Take).Skip(@params.Skip).ToListAsync() select tblOb);
+                    var records = (from tblOb in await this._context.TicketComments.OrderByDescending(t => t.Id).Include(t => t.CreatedBy).Where(t => t.Status != Lambda.Deleted && t.TicketId == ticketId).Take(@params.Take).Skip(@params.Skip).ToListAsync() select tblOb);
 
                     //accountTypes.AsQueryable().OrderBy("gjakdgdag");
 
@@ -56,11 +56,11 @@ namespace UCS_CRM.Persistence.SQLRepositories
                 {
                     //include search query
 
-                    var records = (from tblOb in await this._context.TicketComments.Include(t => t.CreatedBy)
+                    var records = (from tblOb in await this._context.TicketComments.OrderByDescending(t => t.Id).Include(t => t.CreatedBy)
                                    .Where(t => t.Status != Lambda.Deleted && t.TicketId == ticketId
-                                        && t.Comment.ToLower().Trim().Contains(@params.SearchTerm))
+                                        && t.Comment.Trim().Contains(@params.SearchTerm.Trim().ToLower()))
                                    .Take(@params.Take)
-                                   .Skip(@params.Take)
+                                   .Skip(@params.Skip)
                                    .ToListAsync()
                                    select tblOb);
 
