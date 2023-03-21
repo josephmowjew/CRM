@@ -193,8 +193,6 @@ function Delete(id) {
     });
 }
 
-
-
 function updateTicket() {
     toastr.clear()
 
@@ -298,6 +296,82 @@ function updateTicket() {
     });
 
 
+}
+
+function addComment(ticketId) {
+
+    toastr.clear()
+
+    let comment = $("#ticketComment").val()
+    let formData = new FormData();
+    
+
+    formData.append("ticketId", ticketId)
+    formData.append("comment", comment)
+
+
+
+    $.ajax({
+        url: "/client/tickets/AddTicketComment",
+        type: 'POST',
+        data: formData,
+        processData: false,
+        contentType: false,
+        success: function (data) {
+
+
+            //parse whatever comes back to html
+
+            var parsedData = $.parseHTML(data)
+
+
+
+            //check if there is an error in the data that is coming back from the user
+
+            var isInvalid = $(parsedData).find("input[name='DataInvalid']").val() == "true"
+
+
+            if (isInvalid == true) {
+
+                //replace the form data with the data retrieved from the server
+                $("#edit_ticket_modal").html(data)
+
+
+                //rewire the onclick event on the form
+
+                $("#edit_ticket_modal button[name='update_ticket_btn']").unbind().click(function () { updateTicket() });
+
+                var form = $("#edit_ticket_modal")
+
+                $(form).removeData("validator")
+                $(form).removeData("unobtrusiveValidation")
+                $.validator.unobtrusive.parse(form)
+
+
+            }
+            else {
+
+
+                //show success message to the user
+                var dataTable = $('#my_table').DataTable();
+
+                toastr.success(data.message)
+
+                $("#edit_ticket_modal").modal("hide")
+
+                dataTable.ajax.reload();
+
+            }
+
+
+
+        },
+        error: function (xhr, ajaxOtions, thrownError) {
+
+            console.error(thrownError + "r\n" + xhr.statusText + "r\n" + xhr.responseText)
+        }
+
+    });
 }
 
 
