@@ -272,7 +272,7 @@ namespace UCS_CRM.Areas.Client.Controllers
                     await this._unitOfWork.SaveToDataStore();
                 }
 
-                return Json(new { status = "success", message = "user ticked updated successfully" });
+                return Json(new { status = "success", message = "user ticket updated successfully" });
             }
 
 
@@ -367,6 +367,54 @@ namespace UCS_CRM.Areas.Client.Controllers
            return Json(new { draw = draw, recordsFiltered = result.Count, recordsTotal = resultTotal, data = mappedResult });
 
            
+
+        }
+        [HttpPost]
+        public async Task<ActionResult> AddTicketComment(CreateTicketCommentDTO createTicketCommentDTO)
+        {
+            //check if the dto has data in it
+
+            if (string.IsNullOrEmpty(createTicketCommentDTO.TicketId.ToString()))
+            {
+                return Json(new { status = "error", message = "The identifier of the ticket was not passed" });
+            }
+
+            if (string.IsNullOrEmpty(createTicketCommentDTO.Comment))
+            {
+                return Json(new { status = "error", message = "You did not type in a comment" });
+            }
+
+            //find the ticket with the id sent
+
+            Ticket? ticketDbRecord = await this._ticketRepository.GetTicket(createTicketCommentDTO.TicketId);
+
+            if(ticketDbRecord == null)
+            {
+                return Json(new { status = "error", message = "Error finding the ticket being passed" });
+            }
+
+            //get the current user id
+            var userClaims = (ClaimsIdentity)User.Identity;
+
+            var claimsIdentitifier = userClaims.FindFirst(ClaimTypes.NameIdentifier);
+
+          
+
+            TicketComment ticketComment = new TicketComment();
+
+            ticketComment.Comment = createTicketCommentDTO.Comment.Trim();
+            ticketComment.TicketId = ticketDbRecord.Id;
+            ticketComment.CreatedById = claimsIdentitifier.Value;
+
+            this._ticketCommentRepository.Add(ticketComment);
+
+            //sync changes with the data store
+
+            await this._unitOfWork.SaveToDataStore();
+
+
+            return Json(new { status = "success", message = "ticket added successfully" });
+
 
         }
         [HttpPost]

@@ -54,39 +54,40 @@ namespace UCS_CRM.Controllers
 
                     if (result.Succeeded)
                     {
-                        //change the status of the loginInvalid property to false
-
-                        //find the user with the email provideded
-
                         var user = await this._userManager.FindByNameAsync(loginModel.Email);
-
+                        var roles = _userManager.GetRolesAsync(user).Result.ToList();
                         if (user != null)
                         {
                             user.LastLogin = DateTime.Now;
                         }
 
                         await this._context.SaveChangesAsync();
-                        if (User.IsInRole("Administrator"))
+
+                        if (roles.Contains("Administrator"))
                         {
                             return RedirectToAction("Index", "Users", new { Area = "Admin" });
                         }
-                        if (User.IsInRole("Clerk"))
+                        if (roles.Contains("Clerk"))
                         {
                             return RedirectToAction("Index", "ClerkTickets", new { Area = "Clerk" });
                         }
-                        if (User.IsInRole("Manager"))
+                        if (roles.Contains("Manager"))
+                        {
+                            return RedirectToAction("Index", "Users", new { Area = "Admin" });
+                        }
+                        if (roles.Contains("Senior Manager"))
                         {
                             return RedirectToAction("Index", "Dashboard", new { Area = "Admin" });
                         }
-                        if (User.IsInRole("Senior Manager"))
+                        if (roles.Contains("Client"))
                         {
-                            return RedirectToAction("Index", "Dashboard", new { Area = "Admin" });
+                            return RedirectToAction("Index", "Tickets", new { Area = "Client" });
                         }
-                        else {
+                        else
+                        {
 
                             return RedirectToAction("Index", "Tickets", new { Area = "Client" });
                         }
-
 
 
 

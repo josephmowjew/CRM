@@ -3,6 +3,7 @@
 *@
 @{
     @model UCS_CRM.Core.DTOs.Ticket.ReadTicketDTO
+
 }
 
 <div class="card">
@@ -28,21 +29,40 @@
                     </div>
                 </div>
                 <hr>
-                <h4 class="font-medium mt-4">Description</h4>
+                <p class="font-normal mt-4">Description</p>
                 <p class="mt-4">@Model.Description</p>
-                <h4 class="font-medium mt-4">Comments</h4>
+                <p class="font-normal mt-4">Comments</p>
                 <hr>
 
-                
-               
+                  <div class="row p-3">
+                      <form>
+                         <div class="row">
+                            <div class="col-md-8 col-xs-8 b-r">
+                                 <textarea class="form-control" name="ticketComment" id="ticketComment" placeholder="Type in your comment..."></textarea>
+                            </div>
+                            <div class="col-md-8 col-xs-8 b-r p-3"> 
+
+                                <input type="button" class="btn btn-primary" onclick="addComment(@Model.Id)" name="createComment" value="Create Comment"/>
+                            </div>
+                       </div>
+                    </form>
+                  </div>
+
+                 <hr />
+
+
                 <table class="table table-bordered " id="my_table">
                     <thead>
                         <tr>
                             <th>
                                 Comment
                             </th>
-                            
-                           
+                             <th>
+                                Created By
+                            </th>
+                           <th>
+                                Date 
+                            </th>
                             <th>
                                 Action
                             </th>
@@ -58,63 +78,69 @@
 
 @section Scripts{
 
-                    <script>
-                        var datatable;
-                    </script>
+                        <script>
+                            var datatable;
+                        </script>
 
-                    <script src="~/js/clientticket.js"></script>
-                    <script>
-                        $(document).ready(function () {
-                            datatable = $('#my_table').DataTable({
-
-
-                                "processing": true,
-                                "serverSide": true,
-                                "order": [[0, "desc"]],
-                                ajax: {
-                                            url: '/client/tickets/GetTicketComments/?ticketId='+@Model.Id,
-                                    type: 'post',
-                                    datatype: 'Json',
-                                         error: function(XMLHttpRequest, textStatus, errorThrown) { 
-
-                                                 console.log(XMLHttpRequest.responseText)
+                        <script src="~/js/ClientTicket.js"></script>
+                        <script>
+                            $(document).ready(function () {
+                                datatable = $('#my_table').DataTable({
 
 
-                                            }  
+                                    "processing": true,
+                                    "serverSide": true,
+                                    "order": [[0, "desc"]],
+                                    ajax: {
+                                                url: '/client/tickets/GetTicketComments/?ticketId='+@Model.Id,
+                                        type: 'post',
+                                        datatype: 'Json',
+                                       
 
+                                  },
+                                    columnDefs: [
+                                        {
+                                            defaultContent: "",
+                                            targets: "_all",
+                                            'orderable': true
+                                        },
+                                    ],
+                                    columns: [
 
-                              },
-                                columnDefs: [
-                                    {
-                                        defaultContent: "",
-                                        targets: "_all",
-                                        'orderable': true
-                                    },
-                                ],
-                                columns: [
+                                        {
+                                            data: "comment",
+                                            name: "comment",
+                                            className: "text-left",
+                                            "orderable": true,
+                                        },
+                                          {
+                                            data: { state: "createdBy.fullName"},
+                                            mRender: function (data, type, full) {
+                                                                      return data.createdBy != null && data.createdBy.status != 'Deleted' ?   data.createdBy.fullName  : "";
+                                                     }, "name": "createdBy.name",
+                                            className: "text-left"
+                                        },
+                                        {
+                                            data: "formattedCreatedAt",
+                                            name: "CreatedDate",
+                                            className: "text-left",
+                                            "orderable": true,
+                                        },
+                                          {
+                                            data: "id",
+                                            name: "id",
+                                            "orderable": false,
+                                            render: function (data) {
+                                                            return " <a href='#' type='button' onclick=Delete('" +data + "') title='delete' class='feather icon-trash-2'></a>"
+                                            }
+                                        },
 
-                                    {
-                                        data: "comment",
-                                        name: "comment",
-                                        className: "text-left",
-                                        "orderable": true,
-                                    },
-                                    
-                                      {
-                                        data: "id",
-                                        name: "id",
-                                        "orderable": false,
-                                        render: function (data) {
-                                                        return "<a href='#' onclick=EditForm('" + data + "') type='button' class='feather icon-edit' title='edit' ></a> <a href='#' type='button' onclick=Delete('" +data + "') title='delete' class='feather icon-trash-2'></a><a href='tickets/details/"+data+"' class='mdi mdi-eye'></a>"
-                                        }
-                                    },
-
-                                ],
-                                responsive: true,
-                                "autoWidth": false,
+                                    ],
+                                    responsive: true,
+                                    "autoWidth": false,
+                                });
                             });
-                        });
-                    </script>
+                        </script>
 
     @{
         await Html.RenderPartialAsync("_ValidationScriptsPartial");
