@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc.Formatters;
 using Microsoft.EntityFrameworkCore;
@@ -41,9 +42,13 @@ builder.Services.AddIdentity<ApplicationUser,IdentityRole>(options =>
 {
     options.SignIn.RequireConfirmedEmail = true;
     options.Password.RequireNonAlphanumeric = true;
+    
+   
 })  .AddEntityFrameworkStores<ApplicationDbContext>()
     .AddDefaultUI()
     .AddDefaultTokenProviders();
+
+
 
 //configure services
 builder.Services.AddControllersWithViews().AddNewtonsoftJson(x => x.SerializerSettings.ReferenceLoopHandling = Newtonsoft.Json.ReferenceLoopHandling.Ignore);
