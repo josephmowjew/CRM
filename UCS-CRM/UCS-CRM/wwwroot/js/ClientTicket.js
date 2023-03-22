@@ -374,5 +374,43 @@ function addComment(ticketId) {
     });
 }
 
+function DeleteComment(id) {
+
+    bootbox.confirm("Are you sure you want to delete this comment from the system?", function (result) {
+
+
+        if (result) {
+            $.ajax({
+                url: '/client/tickets/deleteComment/' + id,
+                type: 'POST',
+
+            }).done(function (data) {
+
+                if (data.status == "success") {
+
+                    toastr.success(data.message)
+                }
+                else {
+                    toastr.error(data.message)
+                }
+
+
+
+
+                datatable.ajax.reload();
+
+
+            }).fail(function (response) {
+
+                toastr.error(response.responseText)
+
+                datatable.ajax.reload();
+            });
+        }
+
+
+    });
+}
+
 
 

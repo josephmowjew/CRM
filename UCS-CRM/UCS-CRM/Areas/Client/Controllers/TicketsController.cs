@@ -324,6 +324,29 @@ namespace UCS_CRM.Areas.Client.Controllers
 
             return Json(new { status = "error", message = "ticket could not be found from the system" });
         }
+        [HttpPost]
+        public async Task<ActionResult> deleteComment(int id)
+        {
+            //check if the role name isn't already taken
+
+            var ticketCommentDbRecord = await this._ticketCommentRepository.GetTicketCommentAsync(id);
+
+            if (ticketCommentDbRecord != null)
+            {
+                //only execute remove if the state is not pending
+
+              
+                    this._ticketCommentRepository.Remove(ticketCommentDbRecord);
+
+                    await this._unitOfWork.SaveToDataStore();
+
+                    return Json(new { status = "success", message = "comment has been removed from the system successfully" });
+               
+
+            }
+
+            return Json(new { status = "error", message = "comment could not be found from the system" });
+        }
 
         [HttpPost]
         public async Task<ActionResult> GetTickets()

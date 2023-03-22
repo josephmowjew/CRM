@@ -25,9 +25,9 @@ namespace UCS_CRM.Persistence.SQLRepositories
             return this._context.TicketComments.Where(tc => tc.TicketId == ticketComment.TicketId & tc.Comment.ToLower().Trim() == ticketComment.Comment.ToLower().Trim()).FirstOrDefault();
         }
 
-        public Task<TicketComment> GetTicketCommentAsync(int id)
+        public async Task<TicketComment?> GetTicketCommentAsync(int id)
         {
-            throw new NotImplementedException();
+            return await this._context.TicketComments.FirstOrDefaultAsync(tc => tc.Id == id);
         }
 
         public async Task<List<TicketComment>?> GetTicketCommentsAsync(int ticketId, CursorParams @params)
