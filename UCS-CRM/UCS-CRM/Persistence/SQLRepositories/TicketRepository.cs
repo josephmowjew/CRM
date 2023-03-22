@@ -35,6 +35,7 @@ namespace UCS_CRM.Persistence.SQLRepositories
                 .Include(t=> t.TicketCategory)
                 .Include(t => t.State)
                 .Include(t => t.AssignedTo)
+                .Include(t => t.Member)
                 .Include(t => t.TicketComments)
                 .Include(t => t.TicketAttachments)
                 .FirstOrDefaultAsync(t => t.Id == id);
@@ -49,7 +50,7 @@ namespace UCS_CRM.Persistence.SQLRepositories
                 //check if there is a search parameter
                 if (string.IsNullOrEmpty(@params.SearchTerm))
                 {
-                    var records = (from tblOb in await this._context.Tickets.Include(t => t.AssignedTo).Include(t => t.TicketAttachments).Include(t => t.State).Include(t => t.TicketCategory).Include(t => t.TicketPriority).Where(t => t.Status != Lambda.Deleted).Take(@params.Take).Skip(@params.Skip).ToListAsync() select tblOb);
+                    var records = (from tblOb in await this._context.Tickets.Include(t => t.Member).Include(t => t.AssignedTo).Include(t => t.TicketAttachments).Include(t => t.State).Include(t => t.TicketCategory).Include(t => t.TicketPriority).Where(t => t.Status != Lambda.Deleted).Take(@params.Take).Skip(@params.Skip).ToListAsync() select tblOb);
 
                     //accountTypes.AsQueryable().OrderBy("gjakdgdag");
 
@@ -71,6 +72,8 @@ namespace UCS_CRM.Persistence.SQLRepositories
                                         && t.Title.ToLower().Trim().Contains(@params.SearchTerm.ToLower()) ||
                                            t.Description.ToLower().Trim().Contains(@params.SearchTerm.ToLower()) ||
                                            t.State.Name.ToLower().Trim().Contains(@params.SearchTerm.ToLower()) ||
+                                           t.Member.FirstName.ToLower().Trim().Contains(@params.SearchTerm.ToLower()) ||
+                                           t.Member.LastName.ToLower().Trim().Contains(@params.SearchTerm.ToLower()) ||
                                            t.TicketCategory.Name.ToLower().Trim().Contains(@params.SearchTerm.ToLower()))
                                    .Take(@params.Take)
                                    .Skip(@params.Skip)

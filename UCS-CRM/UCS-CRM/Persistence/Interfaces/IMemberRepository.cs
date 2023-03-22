@@ -14,6 +14,7 @@ namespace UCS_CRM.Persistence.Interfaces
         void DeleteUser(Member member);
         Task<Member?> GetMemberByNationalId(string nationalId);
 
+        Task<List<Member>?> GetMembers();
         Task<ApplicationUser?> CreateUserAccount(Member member, string email, string password = "");
     }
 }

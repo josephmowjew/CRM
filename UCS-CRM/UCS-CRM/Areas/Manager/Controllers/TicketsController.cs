@@ -17,12 +17,12 @@ using UCS_CRM.Persistence.SQLRepositories;
 
 namespace UCS_CRM.Areas.Client.Controllers
 {
-    [Area("Clerk")]
+    [Area("Manager")]
     [Authorize]
-    public class ClerkTicketsController : Controller
+    public class ManagerTicketsController : Controller
     {
-        private readonly IUserRepository _userRepository;
         private readonly ITicketRepository _ticketRepository;
+        private readonly IUserRepository _userRepository;
         private readonly ITicketCommentRepository _ticketCommentRepository;
         private readonly ITicketCategoryRepository _ticketCategoryRepository;
         private readonly IStateRepository _stateRepository;
@@ -31,7 +31,7 @@ namespace UCS_CRM.Areas.Client.Controllers
         private readonly IMapper _mapper;
         private readonly IUnitOfWork _unitOfWork;
         private IWebHostEnvironment _env;
-        public ClerkTicketsController(ITicketRepository ticketRepository, IMapper mapper, IUnitOfWork unitOfWork, 
+        public ManagerTicketsController(ITicketRepository ticketRepository, IMapper mapper, IUnitOfWork unitOfWork, 
             ITicketCategoryRepository ticketCategoryRepository, IStateRepository stateRepository, ITicketPriorityRepository priorityRepository,
             IWebHostEnvironment env, ITicketCommentRepository ticketCommentRepository, IUserRepository userRepository, IMemberRepository memberRepository)
         {
@@ -56,148 +56,6 @@ namespace UCS_CRM.Areas.Client.Controllers
         }
 
 
-        // POST: TicketsController/Create
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<ActionResult> Create(CreateTicketDTO createTicketDTO)
-        {
-
-
-            createTicketDTO.DataInvalid = "true";
-
-            if (ModelState.IsValid)
-            {
-
-                createTicketDTO.DataInvalid = "";
-
-                //search for the default state
-
-                var defaultState = this._stateRepository.DefaultState(Lambda.WaitingForSupport);
-
-                if (defaultState == null)
-                {
-                    createTicketDTO.DataInvalid = "true";
-
-                    ModelState.AddModelError("", "Sorry but the application failed to log your ticket because of a missing state, please contact administrator for assistance");
-
-                    await populateViewBags();
-
-                    return PartialView("_CreateTicketPartial", createTicketDTO);
-                }
-                else
-                {
-                    createTicketDTO.StateId = defaultState.Id;
-                }
-
-
-                //check for article title presence
-
-                var mappedTicket = this._mapper.Map<Ticket>(createTicketDTO);
-
-                var statePresence = this._ticketRepository.Exists(mappedTicket);
-
-                if (statePresence != null)
-                {
-                    createTicketDTO.DataInvalid = "true";
-
-                    ModelState.AddModelError(nameof(createTicketDTO.Title), $"title exists with the name submitted'");
-
-                    await populateViewBags();
-
-                    return PartialView("_CreateTicketPartial", createTicketDTO);
-                }
-
-
-                //save to the database
-
-                try
-                {
-                    var userClaims = (ClaimsIdentity)User.Identity;
-
-                    var claimsIdentitifier = userClaims.FindFirst(ClaimTypes.NameIdentifier);
-
-                    mappedTicket.CreatedById = claimsIdentitifier.Value;
-
-                    //get the last ticket
-
-                    Ticket lastTicket = await this._ticketRepository.LastTicket();
-
-
-                    //generate ticket number
-                    var lastTicketId = lastTicket == null ? 0 : lastTicket.Id;
-
-                    string ticketNumber = Lambda.IssuePrefix + (lastTicketId + 1);
-
-                    //assign ticket number to the mapped record
-
-                    mappedTicket.TicketNumber = ticketNumber;
-
-
-                    this._ticketRepository.Add(mappedTicket);
-
-
-
-
-                    //save ticket to the data store
-
-                    await this._unitOfWork.SaveToDataStore();
-
-                    if (createTicketDTO.Attachments.Count > 0)
-                    {
-                        var attachments = createTicketDTO.Attachments.Select(async attachment =>
-                        {
-                            string fileUrl = await Lambda.UploadFile(attachment, this._env.WebRootPath);
-                            return new TicketAttachment()
-                            {
-                                FileName = attachment.FileName,
-                                TicketId = mappedTicket.Id,
-                                Url = fileUrl
-                            };
-                        });
-
-                        var mappedAttachments = await Task.WhenAll(attachments);
-
-                        mappedTicket.TicketAttachments.AddRange(mappedAttachments);
-
-                        await this._unitOfWork.SaveToDataStore();
-                    }
-
-
-
-                    return PartialView("_CreateTicketPartial", createTicketDTO);
-                }
-                catch (DbUpdateException ex)
-                {
-                    createTicketDTO.DataInvalid = "true";
-
-                    ModelState.AddModelError(string.Empty, ex.InnerException.Message);
-
-                    await populateViewBags();
-
-                    return PartialView("_CreateTicketPartial", createTicketDTO);
-                }
-
-                catch (Exception ex)
-                {
-                    createTicketDTO.DataInvalid = "true";
-
-                    ModelState.AddModelError(string.Empty, ex.Message);
-
-                    await populateViewBags();
-
-                    return PartialView("_CreateTicketPartial", createTicketDTO);
-                }
-
-
-
-
-            }
-
-
-
-            return PartialView("_CreateTicketPartial", createTicketDTO);
-        }
-
         // GET: TicketsController/Edit/5
         public async Task<ActionResult> Edit(int id)
         {
@@ -207,9 +65,11 @@ namespace UCS_CRM.Areas.Client.Controllers
 
             return Json(identityRole);
         }
+
+
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<ActionResult> Edit(int id, EditTicketDTO editTicketDTO)
+        public async Task<ActionResult> Edit(int id, EditManagerTicketDTO editTicketDTO)
         {
             editTicketDTO.DataInvalid = "true";
 
@@ -234,23 +94,6 @@ namespace UCS_CRM.Areas.Client.Controllers
                 editTicketDTO.TicketNumber = ticketDB.TicketNumber;
                 //check if the role name isn't already taken
                 var mappedTicket = this._mapper.Map<Ticket>(editTicketDTO);
-
-                var ticketExist = this._ticketRepository.Exists(mappedTicket);
-
-
-
-                bool isTaken = (ticketExist != null);
-                if (isTaken)
-                {
-
-                    editTicketDTO.DataInvalid = "true";
-                    ModelState.AddModelError(nameof(editTicketDTO.Title), $"The title {editTicketDTO.Title} is already taken");
-
-
-                    return PartialView("_EditTicketPartial", editTicketDTO);
-                }
-
-
 
                 this._mapper.Map(editTicketDTO, ticketDB);
 
@@ -495,7 +338,7 @@ namespace UCS_CRM.Areas.Client.Controllers
 
             var ticketStatesList = new List<SelectListItem>();
 
-            ticketStatesList.Add(new SelectListItem() { Text = "------ Select State ------", Value = "" });
+            ticketStatesList.Add(new SelectListItem() { Text = "------ Select State ------", Value = ""  });
 
             ticketStates.ForEach(state =>
             {
@@ -544,6 +387,7 @@ namespace UCS_CRM.Areas.Client.Controllers
         {
             ViewBag.priorities = await GetTicketPriorities();
             ViewBag.categories = await GetTicketCategories();
+            ViewBag.assignees = await GetAssignees();
             ViewBag.states = await GetTicketStates();
             ViewBag.members = await GetMembers();
         }

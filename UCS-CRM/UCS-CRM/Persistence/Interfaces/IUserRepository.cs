@@ -7,7 +7,7 @@ namespace UCS_CRM.Persistence.Interfaces
 {
     public interface IUserRepository
     {
-        public Task<IEnumerable<ApplicationUser>> GetUsers();
+       // public Task<IEnumerable<ApplicationUser>> GetUsers();
 
         public Task<IEnumerable<ApplicationUser>> GetAllUsers();
         Task<List<UserViewModel>> GetUnconfirmedUsersWithRoles(CursorParams @params);
@@ -41,5 +41,6 @@ namespace UCS_CRM.Persistence.Interfaces
 
         Task<int> TotalDeletedCount();
         Task<IdentityResult> RemoveFromRolesAsync(ApplicationUser applicationUser, IEnumerable<string> roleNames);
+        Task<List<ApplicationUser>> GetUsers();
     }
 }

@@ -66,7 +66,7 @@ namespace UCS_CRM.Areas.Client.Controllers
 
                 //search for the default state
 
-                var defaultState =  this._stateRepository.DefaultState(Lambda.State);
+                var defaultState =  this._stateRepository.DefaultState(Lambda.WaitingForSupport);
 
                 if(defaultState == null)
                 {
@@ -307,7 +307,7 @@ namespace UCS_CRM.Areas.Client.Controllers
             {
                 //only execute remove if the state is not pending
 
-                if(ticketRecordDb.State.Name.ToLower() != Lambda.Pending.ToLower())
+                if(ticketRecordDb.State.Name.ToLower() != Lambda.WaitingForSupport.ToLower())
                 {
                     return Json(new { status = "error", message = "ticket could not be found from the system at the moment as it has been responded to, consider closing it instead" });
                 }

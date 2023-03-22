@@ -5,7 +5,6 @@
     var createTicketButton = $("#create_ticket_modal button[name='create_ticket_btn']").unbind().click(OnCreateClick);
 
 
-
     function OnCreateClick() {
 
         //get the form url
@@ -24,29 +23,13 @@
         var description = $("#create_ticket_modal textarea[name ='Description']").val()
         var ticketCategoryId = $("#create_ticket_modal select[name ='TicketCategoryId']").val()
         var ticketPriorityId = $("#create_ticket_modal select[name ='TicketPriorityId']").val()
+        var stateId = $("#create_ticket_modal select[name ='StateId']").val()
+        var assignedToId = $("#create_ticket_modal select[name ='AssignedToId']").val()
+        var memberId = $("#create_ticket_modal select[name ='MemberId']").val()
         var files = $("#create_ticket_modal input[name = 'Attachments']")[0].files;
 
         //prepare data for request pushing
         var formData = new FormData(form[0]);
-
-        //formData.append("Title", title);
-        //formData.append("Description", description);
-        //formData.append("TicketCategoryId", ticketCategoryId);
-        //formData.append("TicketPriorityId", ticketPriorityId);
-        //formData.append("__RequestVerificationToken", authenticationToken);
-
-        //formData.append("TicketAttachments", files);
-
-
-        //var userInput = {
-        //    __RequestVerificationToken: authenticationToken,
-        //    Title: title,
-        //    Description: description,
-        //    TicketCategoryId: ticketCategoryId,
-        //    TicketPriorityId: ticketPriorityId,
-        //    TicketAttachments: files
-        //}
-
 
         //send the request
 
@@ -113,13 +96,12 @@
 
 
 
-
 function EditForm(id, area = "") {
 
     //get the record from the database
 
     $.ajax({
-        url: area + '/client/tickets/edit/' + id,
+        url: area + 'managertickets/edit/' + id,
         type: 'GET'
     }).done(function (data) {
 
@@ -138,8 +120,11 @@ function EditForm(id, area = "") {
 
         $("#edit_ticket_modal input[name ='Title']").val(data.title)
         $("#edit_ticket_modal textarea[name ='Description']").val(data.description)
-        $("#edit_ticket_modal input[name ='TicketCategoryId']").val(data.ticketCategoryId)
-        $("#edit_ticket_modal input[name ='TicketPriorityId']").val(data.ticketPriorityId)
+        $("#edit_ticket_modal select[name ='TicketCategoryId']").val(data.ticketCategoryId)
+        $("#edit_ticket_modal select[name ='TicketPriorityId']").val(data.ticketPriorityId)
+        $("#edit_ticket_modal select[name ='StateId']").val(data.stateId)
+        $("#create_ticket_modal select[name ='AssignedToId']").val(data.assignedToId)
+        $("#create_ticket_modal select[name ='MemberId']").val(data.memberId)
         $("#edit_ticket_modal input[name='Id']").val(data.id)
 
         //hook up an event to the update role button
@@ -162,7 +147,7 @@ function Delete(id) {
 
         if (result) {
             $.ajax({
-                url: 'tickets/delete/' + id,
+                url: 'Managertickets/delete/' + id,
                 type: 'POST',
 
             }).done(function (data) {
@@ -193,6 +178,7 @@ function Delete(id) {
     });
 }
 
+
 function updateTicket() {
     toastr.clear()
 
@@ -205,28 +191,7 @@ function updateTicket() {
     var form = $("#edit_ticket_modal form")
 
 
-    //get the form fields
-
-    //var title = $("#edit_ticket_modal input[name ='Title']").val()
-    //var description = $("#edit_ticket_modal textarea[name ='Description']").val()
-    //var ticketCategoryId = $("#edit_ticket_modal select[name ='TicketCategoryId']").val()
-    //var ticketPriorityId = $("#edit_ticket_modal input[name ='TicketPriorityId']").val()
-    //var id = $("#edit_ticket_modal input[name='Id']").val()
-
-
     let formData = new FormData(form[0]);
-
-
-    //prepare data for request pushing
-
-    //var userInput = {
-    //    __RequestVerificationToken: authenticationToken,
-    //    Title: title,
-    //    Description: description,
-    //    TicketCategoryId: ticketCategoryId,
-    //    TicketPriorityId: ticketPriorityId,
-    //    Id: id
-    //}
 
 
     //send the request
@@ -304,7 +269,7 @@ function addComment(ticketId) {
 
     let comment = $("#ticketComment").val()
     let formData = new FormData();
-    
+
 
     formData.append("ticketId", ticketId)
     formData.append("comment", comment)
@@ -312,7 +277,7 @@ function addComment(ticketId) {
 
 
     $.ajax({
-        url: "/client/tickets/AddTicketComment",
+        url: "/manager/managertickets/AddTicketComment",
         type: 'POST',
         data: formData,
         processData: false,
@@ -370,44 +335,6 @@ function addComment(ticketId) {
 
             console.error(thrownError + "r\n" + xhr.statusText + "r\n" + xhr.responseText)
         }
-
-    });
-}
-
-function DeleteComment(id) {
-
-    bootbox.confirm("Are you sure you want to delete this comment from the system?", function (result) {
-
-
-        if (result) {
-            $.ajax({
-                url: '/client/tickets/deleteComment/' + id,
-                type: 'POST',
-
-            }).done(function (data) {
-
-                if (data.status == "success") {
-
-                    toastr.success(data.message)
-                }
-                else {
-                    toastr.error(data.message)
-                }
-
-
-
-
-                datatable.ajax.reload();
-
-
-            }).fail(function (response) {
-
-                toastr.error(response.responseText)
-
-                datatable.ajax.reload();
-            });
-        }
-
 
     });
 }

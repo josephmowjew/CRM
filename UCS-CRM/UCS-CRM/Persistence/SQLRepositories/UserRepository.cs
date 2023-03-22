@@ -193,7 +193,7 @@ namespace UCS_CRM.Persistence.SQLRepositories
             return userViewModels;
         }
 
-        public async Task<IEnumerable<ApplicationUser>> GetUsers()
+        public async Task<List<ApplicationUser>> GetUsers()
         {
             return await this._context.Users.Where(u =>  u.EmailConfirmed == true && u.Status != Lambda.Deleted).ToListAsync();
 

@@ -27,7 +27,7 @@ namespace UCS_CRM.Core.Helpers
         // default properties
         public static string Category = "Support";
         public static string Priority = "Level One";
-        public static string State = "Waiting For Support";
+        public static string WaitingForSupport = "Waiting For Support";
 
 
        

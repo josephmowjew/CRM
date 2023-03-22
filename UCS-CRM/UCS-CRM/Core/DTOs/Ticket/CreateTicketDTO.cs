@@ -21,6 +21,9 @@ namespace UCS_CRM.Core.DTOs.Ticket
       
         [Display(Name = "Assigned To")]
         public string? AssignedToId { get; set; }
+
+        [Display(Name = "Member")]
+        public int? MemberId { get; set; }
         [Required]
         [Display(Name = "Ticket Priority")]
         public int TicketPriorityId { get; set; }

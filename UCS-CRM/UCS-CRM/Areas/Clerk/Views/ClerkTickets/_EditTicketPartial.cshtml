@@ -4,7 +4,7 @@
 <div class="modal-dialog" role="document">
     <div class="modal-content">
         <div class="modal-header">
-            <h5 class="modal-title" id="exampleModalLabel">Create Ticket</h5>
+            <h5 class="modal-title" id="exampleModalLabel">Update Ticket</h5>
             <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close">
                 <span aria-hidden="true">&times;</span>
             </button>
@@ -35,6 +35,16 @@
                     <span asp-validation-for="TicketCategoryId" class="text-danger"></span>
                 </div>
                 <div class="form-group">
+                    <label asp-for="StateId"></label>
+                    <select asp-for="StateId" asp-items="@ViewBag.states" class="form-control"></select>
+                    <span asp-validation-for="StateId" class="text-danger"></span>
+                </div>
+                <div class="form-group">
+                    <label asp-for="MemberId"></label>
+                    <select asp-for="MemberId" asp-items="@ViewBag.members" class="form-control"></select>
+                    <span asp-validation-for="MemberId" class="text-danger"></span>
+                </div>
+                <div class="form-group">
                   <label for="Attachments" class="form-label">Upload Ticket Attachments</label>
                   <input class="form-control" type="file" id="Attachments" name="Attachments" multiple>
                 </div>
@@ -44,7 +54,7 @@
         </div>
         <div class="modal-footer">
             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-            <button type="button" class="btn btn-primary" id="update_ticket_btn" name="update_ticket_btn">Create Ticket</button>
+            <button type="button" class="btn btn-primary" id="update_ticket_btn" name="update_ticket_btn">Edit Ticket</button>
         </div>
     </div>
 </div>

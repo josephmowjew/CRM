@@ -18,6 +18,9 @@ namespace UCS_CRM.Core.DTOs.Ticket
         public DateTime? ClosedDate { get; set; }
         [Required]
         public string AssignedToId { get; set; }
+
+        [Display(Name = "Member")]
+        public int? MemberId { get; set; }
         [Required]
         public int TicketPriorityId { get; set; }
         [Required]
@@ -25,6 +28,7 @@ namespace UCS_CRM.Core.DTOs.Ticket
         [Required]
         public int StateId { get; set; }
         public UCS_CRM.Core.Models.State State { get; set; }
+        public UCS_CRM.Core.Models.Member Member { get; set; }
         public UCS_CRM.Core.Models.TicketCategory TicketCategory { get; set; }
         public ApplicationUser AssignedTo { get; set; }
         public UCS_CRM.Core.Models.TicketPriority TicketPriority { get; set; }
