@@ -15,6 +15,7 @@ namespace UCS_CRM.Core.Models
         public DateTime? ClosedDate { get; set; }
       
         public string? AssignedToId { get; set; }
+        public int? MemberId { get; set; }
         [Required]
         public int TicketPriorityId { get; set; }
         [Required]
@@ -24,6 +25,7 @@ namespace UCS_CRM.Core.Models
         public State State { get; set; }
         public TicketCategory TicketCategory { get; set; }
         public ApplicationUser AssignedTo { get; set; }
+        public Member Member { get; set; }
         public TicketPriority TicketPriority { get; set; }
 
         public ICollection<TicketAttachment>? TicketAttachments { get; set; }

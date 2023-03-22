@@ -1,26 +1,27 @@
-﻿@model UCS_CRM.Core.DTOs.Ticket.CreateTicketDTO
+﻿@model UCS_CRM.Core.DTOs.Ticket.EditTicketDTO
 <!-- Modal -->
 
 <div class="modal-dialog" role="document">
     <div class="modal-content">
         <div class="modal-header">
-            <h5 class="modal-title" id="exampleModalLabel">Create Ticket</h5>
+            <h5 class="modal-title" id="exampleModalLabel">Update Ticket</h5>
             <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close">
                 <span aria-hidden="true">&times;</span>
             </button>
         </div>
         <div class="modal-body">
-            <form asp-action="Create" enctype="multipart/form-data">
+            <form asp-action="Edit" enctype="multipart/form-data">
                 <div asp-validation-summary="ModelOnly" class="text-danger"></div>
                 <input type="hidden" asp-for="DataInvalid" />
+                <input type="hidden" asp-for="Id" />
                 <div class="form-group">
                     <label asp-for="Title" class="control-label"></label>
-                    <input asp-for="Title" placeholder="Enter Ticket Title" class="form-control" />
+                    <input asp-for="Title" placeholder="Enter Ticket Title" class="form-control" disabled="disabled"/>
                     <span asp-validation-for="Title" class="text-danger"></span>
                 </div>
                  <div class="form-group">
                     <label asp-for="Description" class="control-label"></label>
-                    <textarea asp-for="Description" placeholder="Enter Description" class="form-control" ></textarea>
+                    <textarea asp-for="Description" placeholder="Enter Description" class="form-control" disabled="disabled"></textarea>
                     <span asp-validation-for="Description" class="text-danger"></span>
                 </div>
                 <div class="form-group">
@@ -44,16 +45,21 @@
                     <span asp-validation-for="MemberId" class="text-danger"></span>
                 </div>
                 <div class="form-group">
+                    <label asp-for="AssignedToId"></label>
+                    <select asp-for="AssignedToId" asp-items="@ViewBag.Assignees" class="form-control"></select>
+                    <span asp-validation-for="AssignedToId" class="text-danger"></span>
+                </div>
+                <div class="form-group">
                   <label for="Attachments" class="form-label">Upload Ticket Attachments</label>
                   <input class="form-control" type="file" id="Attachments" name="Attachments" multiple>
                 </div>
-                
+
 
             </form>
         </div>
         <div class="modal-footer">
             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-            <button type="button" class="btn btn-primary" id="create_ticket_btn" name="create_ticket_btn">Create Ticket</button>
+            <button type="button" class="btn btn-primary" id="update_ticket_btn" name="update_ticket_btn">Edit Ticket</button>
         </div>
     </div>
 </div>

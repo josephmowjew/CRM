@@ -17,19 +17,23 @@ using UCS_CRM.Persistence.SQLRepositories;
 
 namespace UCS_CRM.Areas.Client.Controllers
 {
-    [Area("Client")]
+    [Area("Manager")]
     [Authorize]
-    public class TicketsController : Controller
+    public class ManagerTicketsController : Controller
     {
         private readonly ITicketRepository _ticketRepository;
+        private readonly IUserRepository _userRepository;
         private readonly ITicketCommentRepository _ticketCommentRepository;
         private readonly ITicketCategoryRepository _ticketCategoryRepository;
         private readonly IStateRepository _stateRepository;
         private readonly ITicketPriorityRepository _priorityRepository;
+        private readonly IMemberRepository _memberRepository;
         private readonly IMapper _mapper;
         private readonly IUnitOfWork _unitOfWork;
         private IWebHostEnvironment _env;
-        public TicketsController(ITicketRepository ticketRepository, IMapper mapper, IUnitOfWork unitOfWork, ITicketCategoryRepository ticketCategoryRepository, IStateRepository stateRepository, ITicketPriorityRepository priorityRepository, IWebHostEnvironment env, ITicketCommentRepository ticketCommentRepository)
+        public ManagerTicketsController(ITicketRepository ticketRepository, IMapper mapper, IUnitOfWork unitOfWork, 
+            ITicketCategoryRepository ticketCategoryRepository, IStateRepository stateRepository, ITicketPriorityRepository priorityRepository,
+            IWebHostEnvironment env, ITicketCommentRepository ticketCommentRepository, IUserRepository userRepository, IMemberRepository memberRepository)
         {
             _ticketRepository = ticketRepository;
             _mapper = mapper;
@@ -39,6 +43,8 @@ namespace UCS_CRM.Areas.Client.Controllers
             _priorityRepository = priorityRepository;
             _env = env;
             _ticketCommentRepository = ticketCommentRepository;
+            _userRepository = userRepository;
+            _memberRepository = memberRepository;
         }
 
         // GET: TicketsController
@@ -49,148 +55,6 @@ namespace UCS_CRM.Areas.Client.Controllers
             return View();
         }
 
-       
-        // POST: TicketsController/Create
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<ActionResult> Create(CreateTicketDTO createTicketDTO)
-        {
-
-
-            createTicketDTO.DataInvalid = "true";
-
-            if (ModelState.IsValid)
-            {
-
-                createTicketDTO.DataInvalid = "";
-
-                //search for the default state
-
-                var defaultState =  this._stateRepository.DefaultState(Lambda.WaitingForSupport);
-
-                if(defaultState == null)
-                {
-                    createTicketDTO.DataInvalid = "true";
-
-                    ModelState.AddModelError("", "Sorry but the application failed to log your ticket because of a missing state, please contact administrator for assistance");
-
-                    await populateViewBags();
-
-                    return PartialView("_CreateTicketPartial", createTicketDTO);
-                }
-                else
-                {
-                    createTicketDTO.StateId = defaultState.Id;
-                }
-
-
-                //check for article title presence
-
-                var mappedTicket = this._mapper.Map<Ticket>(createTicketDTO);
-
-                var statePresence = this._ticketRepository.Exists(mappedTicket);
-
-                if (statePresence != null)
-                {
-                    createTicketDTO.DataInvalid = "true";
-
-                    ModelState.AddModelError(nameof(createTicketDTO.Title), $"title exists with the name submitted'");
-
-                    await populateViewBags();
-
-                    return PartialView("_CreateTicketPartial", createTicketDTO);
-                }
-
-
-                //save to the database
-
-                try
-                {
-                    var userClaims = (ClaimsIdentity)User.Identity;
-
-                    var claimsIdentitifier = userClaims.FindFirst(ClaimTypes.NameIdentifier);
-
-                    mappedTicket.CreatedById = claimsIdentitifier.Value;
-
-                    //get the last ticket
-
-                    Ticket lastTicket = await this._ticketRepository.LastTicket();
-
-
-                    //generate ticket number
-                    var lastTicketId = lastTicket == null ? 0 : lastTicket.Id;
-
-                    string ticketNumber = Lambda.IssuePrefix + (lastTicketId + 1);
-
-                    //assign ticket number to the mapped record
-
-                    mappedTicket.TicketNumber = ticketNumber;
-
-
-                    this._ticketRepository.Add(mappedTicket);
-
-
-                  
-
-                    //save ticket to the data store
-
-                    await this._unitOfWork.SaveToDataStore();
-
-                    if (createTicketDTO.Attachments.Count > 0)
-                    {
-                        var attachments = createTicketDTO.Attachments.Select(async attachment =>
-                        {
-                            string fileUrl = await Lambda.UploadFile(attachment,this._env.WebRootPath);
-                            return new TicketAttachment()
-                            {
-                                FileName = attachment.FileName,
-                                TicketId = mappedTicket.Id,
-                                Url = fileUrl
-                            };
-                        });
-
-                        var mappedAttachments = await Task.WhenAll(attachments);
-
-                        mappedTicket.TicketAttachments.AddRange(mappedAttachments);
-
-                        await this._unitOfWork.SaveToDataStore();
-                    }
-
-
-
-                    return PartialView("_CreateTicketPartial", createTicketDTO);
-                }
-                catch (DbUpdateException ex)
-                {
-                    createTicketDTO.DataInvalid = "true";
-
-                    ModelState.AddModelError(string.Empty, ex.InnerException.Message);
-
-                    await populateViewBags();
-
-                    return PartialView("_CreateTicketPartial", createTicketDTO);
-                }
-
-                catch (Exception ex)
-                {
-                    createTicketDTO.DataInvalid = "true";
-
-                    ModelState.AddModelError(string.Empty, ex.Message);
-
-                    await populateViewBags();
-
-                    return PartialView("_CreateTicketPartial", createTicketDTO);
-                }
-
-
-
-
-            }
-
-
-
-            return PartialView("_CreateTicketPartial", createTicketDTO);
-        }
 
         // GET: TicketsController/Edit/5
         public async Task<ActionResult> Edit(int id)
@@ -201,9 +65,11 @@ namespace UCS_CRM.Areas.Client.Controllers
 
             return Json(identityRole);
         }
+
+
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<ActionResult> Edit(int id, EditTicketDTO editTicketDTO)
+        public async Task<ActionResult> Edit(int id, EditManagerTicketDTO editTicketDTO)
         {
             editTicketDTO.DataInvalid = "true";
 
@@ -222,29 +88,12 @@ namespace UCS_CRM.Areas.Client.Controllers
                     return PartialView("_EditTicketPartial", editTicketDTO);
                 }
 
-              
-                editTicketDTO.StateId = editTicketDTO.StateId == null ? ticketDB.StateId: editTicketDTO.StateId;
+
+                editTicketDTO.StateId = editTicketDTO.StateId == null ? ticketDB.StateId : editTicketDTO.StateId;
 
                 editTicketDTO.TicketNumber = ticketDB.TicketNumber;
                 //check if the role name isn't already taken
                 var mappedTicket = this._mapper.Map<Ticket>(editTicketDTO);
-
-                var ticketExist = this._ticketRepository.Exists(mappedTicket);
-
-
-
-                bool isTaken = (ticketExist != null);
-                if (isTaken)
-                {
-
-                    editTicketDTO.DataInvalid = "true";
-                    ModelState.AddModelError(nameof(editTicketDTO.Title), $"The title {editTicketDTO.Title} is already taken");
-
-
-                    return PartialView("_EditTicketPartial", editTicketDTO);
-                }
-
-
 
                 this._mapper.Map(editTicketDTO, ticketDB);
 
@@ -285,7 +134,7 @@ namespace UCS_CRM.Areas.Client.Controllers
         {
             var ticketDB = await this._ticketRepository.GetTicket(id);
 
-            if(ticketDB == null)
+            if (ticketDB == null)
             {
                 return RedirectToAction("Index");
             }
@@ -307,7 +156,7 @@ namespace UCS_CRM.Areas.Client.Controllers
             {
                 //only execute remove if the state is not pending
 
-                if(ticketRecordDb.State.Name.ToLower() != Lambda.WaitingForSupport.ToLower())
+                if (ticketRecordDb.State.Name.ToLower() != Lambda.WaitingForSupport.ToLower())
                 {
                     return Json(new { status = "error", message = "ticket could not be found from the system at the moment as it has been responded to, consider closing it instead" });
                 }
@@ -319,7 +168,7 @@ namespace UCS_CRM.Areas.Client.Controllers
 
                     return Json(new { status = "success", message = "ticket has been removed from the system successfully" });
                 }
-               
+
             }
 
             return Json(new { status = "error", message = "ticket could not be found from the system" });
@@ -364,9 +213,9 @@ namespace UCS_CRM.Areas.Client.Controllers
 
 
 
-           return Json(new { draw = draw, recordsFiltered = result.Count, recordsTotal = resultTotal, data = mappedResult });
+            return Json(new { draw = draw, recordsFiltered = result.Count, recordsTotal = resultTotal, data = mappedResult });
 
-           
+
 
         }
         [HttpPost]
@@ -388,7 +237,7 @@ namespace UCS_CRM.Areas.Client.Controllers
 
             Ticket? ticketDbRecord = await this._ticketRepository.GetTicket(createTicketCommentDTO.TicketId);
 
-            if(ticketDbRecord == null)
+            if (ticketDbRecord == null)
             {
                 return Json(new { status = "error", message = "Error finding the ticket being passed" });
             }
@@ -398,7 +247,7 @@ namespace UCS_CRM.Areas.Client.Controllers
 
             var claimsIdentitifier = userClaims.FindFirst(ClaimTypes.NameIdentifier);
 
-          
+
 
             TicketComment ticketComment = new TicketComment();
 
@@ -449,11 +298,13 @@ namespace UCS_CRM.Areas.Client.Controllers
             return Json(new { draw = draw, recordsFiltered = result.Count, recordsTotal = resultTotal, data = mappedResult });
 
         }
-        private  async Task<List<SelectListItem>>  GetTicketCategories()
+        private async Task<List<SelectListItem>> GetTicketCategories()
         {
             var ticketCategories = await this._ticketCategoryRepository.GetTicketCategories();
 
             var ticketCategoriesList = new List<SelectListItem>();
+
+            ticketCategoriesList.Add(new SelectListItem() { Text = "------ Select Category ------", Value = "" });
 
             ticketCategories.ForEach(category =>
             {
@@ -470,6 +321,8 @@ namespace UCS_CRM.Areas.Client.Controllers
 
             var ticketPrioritiesList = new List<SelectListItem>();
 
+            ticketPrioritiesList.Add(new SelectListItem() { Text = "------ Select Priority ------", Value = "" });
+
             ticketPriorities.ForEach(priority =>
             {
                 ticketPrioritiesList.Add(new SelectListItem() { Text = priority.Name, Value = priority.Id.ToString() });
@@ -479,13 +332,67 @@ namespace UCS_CRM.Areas.Client.Controllers
 
         }
 
+        private async Task<List<SelectListItem>> GetTicketStates()
+        {
+            var ticketStates = await this._stateRepository.GetStates();
+
+            var ticketStatesList = new List<SelectListItem>();
+
+            ticketStatesList.Add(new SelectListItem() { Text = "------ Select State ------", Value = ""  });
+
+            ticketStates.ForEach(state =>
+            {
+                ticketStatesList.Add(new SelectListItem() { Text = state.Name, Value = state.Id.ToString() });
+            });
+
+            return ticketStatesList;
+
+        }
+
+        private async Task<List<SelectListItem>> GetAssignees()
+        {
+            var users = await this._userRepository.GetUsers();
+
+            var usersList = new List<SelectListItem>();
+
+            usersList.Add(new SelectListItem() { Text = "---- Select Assignee -------", Value = "" });
+
+            users.ForEach(user =>
+            {
+                usersList.Add(new SelectListItem() { Text = user.FullName, Value = user.Id.ToString() });
+            });
+
+            return usersList;
+
+        }
+
+        private async Task<List<SelectListItem>> GetMembers()
+        {
+            var members = await this._memberRepository.GetMembers();
+
+            var membersList = new List<SelectListItem>();
+
+            membersList.Add(new SelectListItem() { Text = "---- Select Member -------", Value = "" });
+
+            members.ForEach(member =>
+            {
+                membersList.Add(new SelectListItem() { Text = member.FullName, Value = member.Id.ToString() });
+            });
+
+            return membersList;
+
+        }
+
         private async Task populateViewBags()
         {
             ViewBag.priorities = await GetTicketPriorities();
             ViewBag.categories = await GetTicketCategories();
+            ViewBag.assignees = await GetAssignees();
+            ViewBag.states = await GetTicketStates();
+            ViewBag.members = await GetMembers();
         }
 
-        
+
 
     }
 }

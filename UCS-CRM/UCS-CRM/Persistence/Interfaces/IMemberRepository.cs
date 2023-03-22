@@ -14,5 +14,6 @@ namespace UCS_CRM.Persistence.Interfaces
         void DeleteUser(Member member);
 
         Task<ApplicationUser?> CreateUserAccount(Member member, string email);
+        Task<List<Member>?> GetMembers();
     }
 }

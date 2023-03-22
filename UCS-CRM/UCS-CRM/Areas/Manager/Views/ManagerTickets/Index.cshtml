@@ -11,27 +11,13 @@
     Layout = "~/Areas/Admin/Views/shared/_Layout.cshtml";
 }
 
-<p>
-
-    <!-- Button trigger modal -->
-    <button type="button" class="btn btn-info" data-bs-toggle="modal" data-bs-target="#create_ticket_modal">
-        Create A Ticket
-    </button>
-
-</p>
-
-
-
-<div class="modal fade" id="create_ticket_modal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
-    <partial name="_CreateTicketPartial" />
-</div>
 
 <div class="modal fade" id="edit_ticket_modal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
     <partial name="_EditTicketPartial" />
 </div>
 <div class="card">
     <div class="card-header">
-        <h4 class="text-center text-uppercase">My Tickets Available In The System</h4>
+        <h4 class="text-center text-uppercase">Tickets Available In The System</h4>
     </div>
     <div class="card-body">
         <div class="table-responsive">
@@ -83,7 +69,7 @@
                     var datatable;
                 </script>
 
-                <script src="~/js/ClerkTicket.js"></script>
+                <script src="~/js/ManagerTicket.js"></script>
                 <script>
                     $(document).ready(function () {
                         datatable = $('#my_table').DataTable({
@@ -93,7 +79,7 @@
                             "serverSide": true,
                             "order": [[0, "desc"]],
                             ajax: {
-                                url: '/clerk/Clerktickets/GetTickets',
+                                url: '/manager/Managertickets/GetTickets',
                                 type: 'post',
                                 datatype: 'Json',
                                      error: function(XMLHttpRequest, textStatus, errorThrown) { 
@@ -166,7 +152,7 @@
                                     name: "id",
                                     "orderable": false,
                                     render: function (data) {
-                                                    return "<a href='#' onclick=EditForm('" + data + "') type='button' class='feather icon-edit' title='edit' ></a> <a href='#' type='button' onclick=Delete('" +data + "') title='delete' class='feather icon-trash-2'></a><a href='clerktickets/details/"+data+"' class='mdi mdi-eye'></a>"
+                                                    return "<a href='#' onclick=EditForm('" + data + "') type='button' class='feather icon-edit' title='edit' ></a> <a href='#' type='button' onclick=Delete('" +data + "') title='delete' class='feather icon-trash-2'></a><a href='managertickets/details/"+data+"' class='mdi mdi-eye'></a>"
                                     }
                                 },
 

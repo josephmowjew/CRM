@@ -144,6 +144,12 @@ namespace UCS_CRM.Persistence.SQLRepositories
             return null;
         }
 
+        public async Task<List<Member>?> GetMembers()
+        {
+            return await this._context.Members.Where(a => a.Status != Lambda.Deleted).ToListAsync();
+        }
+
+
         public void Remove(Member member)
         {
                member.Status = Lambda.Deleted;
