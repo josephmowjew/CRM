@@ -93,7 +93,7 @@
                             "serverSide": true,
                             "order": [[0, "desc"]],
                             ajax: {
-                                url: '/clerk/Clerktickets/GetTickets',
+                                url: '/clerk/tickets/GetTickets',
                                 type: 'post',
                                 datatype: 'Json',
                                      error: function(XMLHttpRequest, textStatus, errorThrown) { 
@@ -166,7 +166,7 @@
                                     name: "id",
                                     "orderable": false,
                                     render: function (data) {
-                                                    return "<a href='#' onclick=EditForm('" + data + "') type='button' class='feather icon-edit' title='edit' ></a> <a href='#' type='button' onclick=Delete('" +data + "') title='delete' class='feather icon-trash-2'></a><a href='clerktickets/details/"+data+"' class='mdi mdi-eye'></a>"
+                                                    return "<a href='#' onclick=EditForm('" + data + "') type='button' class='feather icon-edit' title='edit' ></a> <a href='#' type='button' onclick=Delete('" +data + "') title='delete' class='feather icon-trash-2'></a><a href='tickets/details/"+data+"' class='mdi mdi-eye'></a>"
                                     }
                                 },
 

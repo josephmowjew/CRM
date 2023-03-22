@@ -16,5 +16,6 @@ namespace UCS_CRM.Persistence.Interfaces
 
         Task<List<Member>?> GetMembers();
         Task<ApplicationUser?> CreateUserAccount(Member member, string email, string password = "");
+        Task<Member?> GetMemberByUserId(string userId);
     }
 }

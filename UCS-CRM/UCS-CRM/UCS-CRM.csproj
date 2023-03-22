@@ -80,15 +80,15 @@
       <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
       <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
     </Content>
-    <Content Update="Areas\Clerk\Views\ClerkTickets\Index.cshtml">
+    <Content Update="Areas\Clerk\Views\Tickets\Index.cshtml">
       <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
       <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
     </Content>
-    <Content Update="Areas\Clerk\Views\ClerkTickets\_CreateTicketPartial.cshtml">
+    <Content Update="Areas\Clerk\Views\Tickets\_CreateTicketPartial.cshtml">
       <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
       <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
     </Content>
-    <Content Update="Areas\Clerk\Views\ClerkTickets\_EditTicketPartial.cshtml">
+    <Content Update="Areas\Clerk\Views\Tickets\_EditTicketPartial.cshtml">
       <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
       <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
     </Content>

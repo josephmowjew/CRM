@@ -101,7 +101,7 @@ function EditForm(id, area = "") {
     //get the record from the database
 
     $.ajax({
-        url: area + 'clerktickets/edit/' + id,
+        url: area + 'tickets/edit/' + id,
         type: 'GET'
     }).done(function (data) {
 
@@ -146,7 +146,7 @@ function Delete(id) {
 
         if (result) {
             $.ajax({
-                url: 'clerktickets/delete/' + id,
+                url: 'tickets/delete/' + id,
                 type: 'POST',
 
             }).done(function (data) {
@@ -276,7 +276,7 @@ function addComment(ticketId) {
 
 
     $.ajax({
-        url: "/clerk/clerktickets/AddTicketComment",
+        url: "/clerk/tickets/AddTicketComment",
         type: 'POST',
         data: formData,
         processData: false,

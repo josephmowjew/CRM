@@ -170,5 +170,11 @@ namespace UCS_CRM.Persistence.SQLRepositories
         {
             return await this._context.Members.FirstOrDefaultAsync(m => m.NationalId == nationalId);
         }
+
+        public async Task<Member?> GetMemberByUserId(string userId)
+        {
+            return await this._context.Members.FirstOrDefaultAsync(m => m.User.Id == userId);
+
+        }
     }
 }

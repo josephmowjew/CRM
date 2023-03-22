@@ -26,10 +26,11 @@ namespace UCS_CRM.Areas.Client.Controllers
         private readonly ITicketCategoryRepository _ticketCategoryRepository;
         private readonly IStateRepository _stateRepository;
         private readonly ITicketPriorityRepository _priorityRepository;
+        private readonly IMemberRepository _memberRepository;
         private readonly IMapper _mapper;
         private readonly IUnitOfWork _unitOfWork;
         private IWebHostEnvironment _env;
-        public TicketsController(ITicketRepository ticketRepository, IMapper mapper, IUnitOfWork unitOfWork, ITicketCategoryRepository ticketCategoryRepository, IStateRepository stateRepository, ITicketPriorityRepository priorityRepository, IWebHostEnvironment env, ITicketCommentRepository ticketCommentRepository)
+        public TicketsController(ITicketRepository ticketRepository, IMapper mapper, IUnitOfWork unitOfWork, ITicketCategoryRepository ticketCategoryRepository, IStateRepository stateRepository, ITicketPriorityRepository priorityRepository, IWebHostEnvironment env, ITicketCommentRepository ticketCommentRepository, IMemberRepository memberRepository)
         {
             _ticketRepository = ticketRepository;
             _mapper = mapper;
@@ -39,6 +40,7 @@ namespace UCS_CRM.Areas.Client.Controllers
             _priorityRepository = priorityRepository;
             _env = env;
             _ticketCommentRepository = ticketCommentRepository;
+            _memberRepository = memberRepository;
         }
 
         // GET: TicketsController
@@ -81,6 +83,7 @@ namespace UCS_CRM.Areas.Client.Controllers
                 else
                 {
                     createTicketDTO.StateId = defaultState.Id;
+                    
                 }
 
 
@@ -111,6 +114,11 @@ namespace UCS_CRM.Areas.Client.Controllers
                     var claimsIdentitifier = userClaims.FindFirst(ClaimTypes.NameIdentifier);
 
                     mappedTicket.CreatedById = claimsIdentitifier.Value;
+
+                    var member = this._memberRepository.GetMemberByUserId(mappedTicket.CreatedById);
+
+                    //set up the member id
+                    mappedTicket.MemberId = member.Id;
 
                     //get the last ticket
 
