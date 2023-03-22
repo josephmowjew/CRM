@@ -31,8 +31,9 @@ namespace UCS_CRM.Persistence.SQLRepositories
 
         }
 
-        public async Task<ApplicationUser?> CreateUserAccount(Member member, string email)
+        public async Task<ApplicationUser?> CreateUserAccount(Member member, string email,string password = "")
         {
+            string DEFAULT_PASSWORD = "P@$$w0rd";
             //create a user record from the member information
 
             ApplicationUser user = new()
@@ -43,7 +44,8 @@ namespace UCS_CRM.Persistence.SQLRepositories
                 Email = email,
                 PhoneNumber = member.PhoneNumber,
                 UserName = email,
-                MemberId = member.Id
+                MemberId = member.Id,
+                EmailConfirmed = true,
             };
 
 
@@ -64,9 +66,12 @@ namespace UCS_CRM.Persistence.SQLRepositories
             }
             else
             {
-                await this._userManager.CreateAsync(user, "P@$$w0rd");
 
-                var roleResult =  await this._userManager.AddToRoleAsync(user, "Member");
+                 await this._userManager.CreateAsync(user, password ?? DEFAULT_PASSWORD);
+               
+               
+
+                var roleResult =  await this._userManager.AddToRoleAsync(user, "Client");
 
                 if(roleResult.Succeeded)
                 {
@@ -155,6 +160,9 @@ namespace UCS_CRM.Persistence.SQLRepositories
             return await this._context.Members.CountAsync();
         }
 
-
+        public async Task<Member?> GetMemberByNationalId(string nationalId)
+        {
+            return await this._context.Members.FirstOrDefaultAsync(m => m.NationalId == nationalId);
+        }
     }
 }

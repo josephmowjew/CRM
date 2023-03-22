@@ -265,7 +265,7 @@ namespace UCS_CRM.Persistence.SQLRepositories
 
             Mapper mapper = new Mapper(config);
 
-            var user = await this._context.Users.Where(u => u.Email == email && u.DeletedDate == null && u.EmailConfirmed == true).FirstOrDefaultAsync();
+            var user = await this._context.Users.Where(u => u.Email == email && u.Status != Lambda.Deleted && u.EmailConfirmed == true).FirstOrDefaultAsync();
 
             //convert the list of users records to a list of UserViewModels
 

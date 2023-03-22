@@ -81,6 +81,7 @@ namespace UCS_CRM.Areas.Admin.Controllers
                     Email = userViewModel.Email,
                     PhoneNumber = userViewModel.PhoneNumber,
                     UserName= userViewModel.Email,
+                    EmailConfirmed = true,
 
 
                 };
