@@ -486,6 +486,8 @@ namespace UCS_CRM.Areas.Member.Controllers
 
             var ticketCategoriesList = new List<SelectListItem>();
 
+            ticketCategoriesList.Add(new SelectListItem() { Text = "------ Select Category ------", Value = "" });
+
             ticketCategories.ForEach(category =>
             {
                 ticketCategoriesList.Add(new SelectListItem() { Text = category.Name, Value = category.Id.ToString() });
@@ -500,6 +502,8 @@ namespace UCS_CRM.Areas.Member.Controllers
             var ticketPriorities = await this._priorityRepository.GetTicketPriorities();
 
             var ticketPrioritiesList = new List<SelectListItem>();
+
+            ticketPrioritiesList.Add(new SelectListItem() { Text = "------ Select Priority ------", Value = "" });
 
             ticketPriorities.ForEach(priority =>
             {

@@ -117,12 +117,11 @@ function EditForm(id, area = "") {
         var date = currentDate.getFullYear() + "-" + (month) + "-" + (day);
 
 
-
         $("#edit_ticket_modal input[name ='Title']").val(data.title)
         $("#edit_ticket_modal textarea[name ='Description']").val(data.description)
-        $("#edit_ticket_modal input[name ='TicketCategoryId']").val(data.ticketCategoryId)
-        $("#edit_ticket_modal input[name ='TicketPriorityId']").val(data.ticketPriorityId)
-        $("#create_ticket_modal select[name ='MemberId']").val(data.memberId)
+        $("#edit_ticket_modal select[name ='TicketCategoryId']").val(data.ticketCategoryId)
+        $("#edit_ticket_modal select[name ='TicketPriorityId']").val(data.ticketPriorityId)
+        $("#edit_ticket_modal select[name ='MemberId']").val(data.memberId)
         $("#edit_ticket_modal select[name ='StateId']").val(data.stateId)
         $("#edit_ticket_modal input[name='Id']").val(data.id)
 

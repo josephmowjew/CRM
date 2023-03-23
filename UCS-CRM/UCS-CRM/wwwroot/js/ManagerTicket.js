@@ -116,7 +116,7 @@ function EditForm(id, area = "") {
 
         var date = currentDate.getFullYear() + "-" + (month) + "-" + (day);
 
-
+       
 
         $("#edit_ticket_modal input[name ='Title']").val(data.title)
         $("#edit_ticket_modal textarea[name ='Description']").val(data.description)
