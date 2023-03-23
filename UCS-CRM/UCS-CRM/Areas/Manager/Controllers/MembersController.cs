@@ -46,7 +46,7 @@ namespace UCS_CRM.Areas.Manager.Controllers
             {
                 //find the member with the Id provided
 
-                Member? databaseMemberRecord = await this._memberRepository.GetMemberAsync(model.Id);
+               UCS_CRM.Core.Models.Member? databaseMemberRecord = await this._memberRepository.GetMemberAsync(model.Id);
 
                 if (databaseMemberRecord != null)
                 {
@@ -114,7 +114,7 @@ namespace UCS_CRM.Areas.Manager.Controllers
 
             try
             {
-                Member databaseMemberRecord = await this._memberRepository.GetMemberAsync(id);
+                UCS_CRM.Core.Models.Member databaseMemberRecord = await this._memberRepository.GetMemberAsync(id);
 
                 if (databaseMemberRecord != null)
                 {

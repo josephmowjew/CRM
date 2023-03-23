@@ -84,7 +84,7 @@
                                 var datatable;
                             </script>
 
-                            <script src="~/js/ClientTicket.js"></script>
+                            <script src="~/js/MemberTicket.js"></script>
                             <script>
                                 $(document).ready(function () {
                                     datatable = $('#my_table').DataTable({
@@ -94,7 +94,7 @@
                                         "serverSide": true,
                                         "order": [[0, "desc"]],
                                         ajax: {
-                                                    url: '/client/tickets/GetTicketComments/?ticketId='+@Model.Id,
+                                                    url: '/member/tickets/GetTicketComments/?ticketId='+@Model.Id,
                                             type: 'post',
                                             datatype: 'Json',
 

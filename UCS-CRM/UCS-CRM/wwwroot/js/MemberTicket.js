@@ -119,7 +119,7 @@ function EditForm(id, area = "") {
     //get the record from the database
 
     $.ajax({
-        url: area + '/client/tickets/edit/' + id,
+        url: area + '/member/tickets/edit/' + id,
         type: 'GET'
     }).done(function (data) {
 
@@ -312,7 +312,7 @@ function addComment(ticketId) {
 
 
     $.ajax({
-        url: "/client/tickets/AddTicketComment",
+        url: "/member/tickets/AddTicketComment",
         type: 'POST',
         data: formData,
         processData: false,
@@ -381,7 +381,7 @@ function DeleteComment(id) {
 
         if (result) {
             $.ajax({
-                url: '/client/tickets/deleteComment/' + id,
+                url: '/member/tickets/deleteComment/' + id,
                 type: 'POST',
 
             }).done(function (data) {

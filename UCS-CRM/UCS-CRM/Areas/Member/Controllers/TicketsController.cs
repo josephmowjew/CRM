@@ -15,9 +15,9 @@ using UCS_CRM.Core.Models;
 using UCS_CRM.Persistence.Interfaces;
 using UCS_CRM.Persistence.SQLRepositories;
 
-namespace UCS_CRM.Areas.Client.Controllers
+namespace UCS_CRM.Areas.Member.Controllers
 {
-    [Area("Client")]
+    [Area("Member")]
     [Authorize]
     public class TicketsController : Controller
     {

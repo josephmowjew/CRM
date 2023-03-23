@@ -1,7 +1,7 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
-namespace UCS_CRM.Areas.Client.Controllers
+namespace UCS_CRM.Areas.Member.Controllers
 {
     [Area("Client")]
     [Authorize]
