@@ -10,17 +10,17 @@ using UCS_CRM.Core.Models;
 using UCS_CRM.Core.Services;
 using UCS_CRM.Persistence.Interfaces;
 
-namespace UCS_CRM.Areas.Admin.Controllers
+namespace UCS_CRM.Areas.Manager.Controllers
 {
     [Area("Manager")]
     [Authorize]
-    public class MMembersController : Controller
+    public class MembersController : Controller
     {
         private readonly IMemberRepository _memberRepository;
         private readonly IMapper _mapper;
         private readonly IUnitOfWork _unitOfWork;
         private readonly IEmailService _emailService;
-        public MMembersController(IMemberRepository memberRepository, IMapper mapper, IUnitOfWork unitOfWork, IEmailService emailService)
+        public MembersController(IMemberRepository memberRepository, IMapper mapper, IUnitOfWork unitOfWork, IEmailService emailService)
         {
             _memberRepository = memberRepository;
             _emailService = emailService;

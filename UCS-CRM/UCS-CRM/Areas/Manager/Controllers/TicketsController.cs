@@ -15,11 +15,11 @@ using UCS_CRM.Core.Models;
 using UCS_CRM.Persistence.Interfaces;
 using UCS_CRM.Persistence.SQLRepositories;
 
-namespace UCS_CRM.Areas.Client.Controllers
+namespace UCS_CRM.Areas.Manager.Controllers
 {
     [Area("Manager")]
     [Authorize]
-    public class ManagerTicketsController : Controller
+    public class TicketsController : Controller
     {
         private readonly ITicketRepository _ticketRepository;
         private readonly IUserRepository _userRepository;
@@ -31,7 +31,7 @@ namespace UCS_CRM.Areas.Client.Controllers
         private readonly IMapper _mapper;
         private readonly IUnitOfWork _unitOfWork;
         private IWebHostEnvironment _env;
-        public ManagerTicketsController(ITicketRepository ticketRepository, IMapper mapper, IUnitOfWork unitOfWork, 
+        public TicketsController(ITicketRepository ticketRepository, IMapper mapper, IUnitOfWork unitOfWork, 
             ITicketCategoryRepository ticketCategoryRepository, IStateRepository stateRepository, ITicketPriorityRepository priorityRepository,
             IWebHostEnvironment env, ITicketCommentRepository ticketCommentRepository, IUserRepository userRepository, IMemberRepository memberRepository)
         {
