@@ -1,8 +1,9 @@
-﻿@*
-    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
-*@
+﻿
 @{
-    @model UCS_CRM.Core.DTOs.Ticket.ReadTicketDTO
+    @using Microsoft.Extensions.Configuration
+    @inject IConfiguration Configuration
+    @model UCS_CRM.Core.DTOs.Ticket.ReadTicketDTO;
+    var host = Configuration.GetSection("HostingSettings")["Host"];
 
 }
 
@@ -31,7 +32,33 @@
                 <hr>
                 <p class="font-normal mt-4">Description</p>
                 <p class="mt-4">@Model.Description</p>
-                <p class="font-normal mt-4">Comments</p>
+                <p class="font-normal mt-4">Attachments</p>
+                <div class="container">
+                  <div class="row">
+                    <div class="col-md-12">
+                     
+                    </div>
+                  </div>
+                  <div class="row">
+                    @foreach (var attachment in Model.TicketAttachments)
+                    {
+                        <div class="col-md-3">
+                            <div class="card">
+                                <div class="card-body">
+                                    <h5 class="card-title">
+                                        <i class="mdi mdi-file-pdf"></i>
+                                        @attachment.FileName
+                                    </h5>
+                                        <a href="/../@attachment.Url" class="btn btn-primary" download>Download</a>
+                                </div>
+                            </div>
+                        </div>
+                        
+                    }
+                    
+                        
+                  </div>
+                </div>
 
             </div>
          </div>

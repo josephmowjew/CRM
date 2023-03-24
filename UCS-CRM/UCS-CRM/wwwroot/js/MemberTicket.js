@@ -134,13 +134,19 @@ function EditForm(id, area = "") {
 
         var date = currentDate.getFullYear() + "-" + (month) + "-" + (day);
 
-        console.log(data)
+        const prefix = "#edit_ticket_modal ";
+        const fields = {
+            Title: "title",
+            Description: "description",
+            TicketCategoryId: "ticketCategoryId",
+            TicketPriorityId: "ticketPriorityId",
+            Id: "id"
+        };
 
-        $("#edit_ticket_modal input[name ='Title']").val(data.title)
-        $("#edit_ticket_modal textarea[name ='Description']").val(data.description)
-        $("#edit_ticket_modal select[name ='TicketCategoryId']").val(data.ticketCategoryId)
-        $("#edit_ticket_modal select[name ='TicketPriorityId']").val(data.ticketPriorityId)
-        $("#edit_ticket_modal input[name='Id']").val(data.id)
+        Object.entries(fields).forEach(([name, value]) => {
+            $(`${prefix}[name='${name}']`).val(data[value]);
+        });
+
 
         //hook up an event to the update role button
 

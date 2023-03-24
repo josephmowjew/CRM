@@ -87,9 +87,9 @@ namespace UCS_CRM.Persistence.SQLRepositories
             ticketComment.DeletedDate = DateTime.UtcNow;
         }
 
-        public async Task<int> TotalActiveCount()
+        public async Task<int> TotalActiveCount(int ticketId)
         {
-            return await this._context.TicketComments.CountAsync();
+            return await this._context.TicketComments.CountAsync(t => t.Id == ticketId);
         }
     }
 }

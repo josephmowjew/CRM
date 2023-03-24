@@ -286,7 +286,7 @@ namespace UCS_CRM.Areas.Manager.Controllers
             //create a cursor params based on the data coming from the datatable
             CursorParams CursorParameters = new CursorParams() { SearchTerm = searchValue, Skip = skip, SortColum = sortColumn, SortDirection = sortColumnAscDesc, Take = pageSize };
 
-            resultTotal = await this._ticketCommentRepository.TotalActiveCount();
+            resultTotal = await this._ticketCommentRepository.TotalActiveCount(int.Parse(ticketId));
             var result = await this._ticketCommentRepository.GetTicketCommentsAsync(int.Parse(ticketId), CursorParameters);
 
             //map the results to a read DTO
