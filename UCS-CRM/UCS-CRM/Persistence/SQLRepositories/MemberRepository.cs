@@ -59,6 +59,12 @@ namespace UCS_CRM.Persistence.SQLRepositories
 
                    
                 }
+
+                //associate the user with this member id 
+                if(recordPresence.MemberId != member.Id)
+                {
+                    recordPresence.MemberId = member.Id;
+                }
                 
                     return recordPresence;
                
@@ -71,7 +77,7 @@ namespace UCS_CRM.Persistence.SQLRepositories
                
                
 
-                var roleResult =  await this._userManager.AddToRoleAsync(user, "Client");
+                var roleResult =  await this._userManager.AddToRoleAsync(user, "Member");
 
                 if(roleResult.Succeeded)
                 {
