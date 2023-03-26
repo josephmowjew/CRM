@@ -27,6 +27,8 @@ namespace UCS_CRM.Core.Models
         public ApplicationUser User { get; set; }
         [StringLength(maximumLength:20)]
         public string? PhoneNumber { get; set; }
+        public string? Branch { get; set; }
+        public string? Employer { get; set; }
 
         [NotMapped]
         public String FullName
