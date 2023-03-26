@@ -38,6 +38,7 @@ namespace UCS_CRM.Persistence.SQLRepositories
                 .Include(t => t.Member)
                 .Include(t => t.TicketComments)
                 .Include(t => t.TicketAttachments)
+                .Include(t => t.TicketPriority)
                 .FirstOrDefaultAsync(t => t.Id == id);
         }
 
