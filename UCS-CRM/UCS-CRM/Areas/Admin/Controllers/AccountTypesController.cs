@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -12,6 +13,7 @@ using UCS_CRM.Persistence.Interfaces;
 namespace UCS_CRM.Areas.Admin.Controllers
 {
     [Area("Admin")]
+    [Authorize]
     public class AccountTypesController : Controller
     {
         private readonly IAccountTypeRepository _accountTypeRepository;

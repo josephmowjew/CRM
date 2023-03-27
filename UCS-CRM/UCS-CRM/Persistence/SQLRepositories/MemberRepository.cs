@@ -31,8 +31,9 @@ namespace UCS_CRM.Persistence.SQLRepositories
 
         }
 
-        public async Task<ApplicationUser?> CreateUserAccount(Member member, string email)
+        public async Task<ApplicationUser?> CreateUserAccount(Member member, string email,string password = "")
         {
+            string DEFAULT_PASSWORD = "P@$$w0rd";
             //create a user record from the member information
 
             ApplicationUser user = new()
@@ -43,7 +44,8 @@ namespace UCS_CRM.Persistence.SQLRepositories
                 Email = email,
                 PhoneNumber = member.PhoneNumber,
                 UserName = email,
-                MemberId = member.Id
+                MemberId = member.Id,
+                EmailConfirmed = true,
             };
 
 
@@ -57,6 +59,12 @@ namespace UCS_CRM.Persistence.SQLRepositories
 
                    
                 }
+
+                //associate the user with this member id 
+                if(recordPresence.MemberId != member.Id)
+                {
+                    recordPresence.MemberId = member.Id;
+                }
                 
                     return recordPresence;
                
@@ -64,7 +72,10 @@ namespace UCS_CRM.Persistence.SQLRepositories
             }
             else
             {
-                await this._userManager.CreateAsync(user, "P@$$w0rd");
+
+                 await this._userManager.CreateAsync(user, password ?? DEFAULT_PASSWORD);
+               
+               
 
                 var roleResult =  await this._userManager.AddToRoleAsync(user, "Member");
 
@@ -144,6 +155,12 @@ namespace UCS_CRM.Persistence.SQLRepositories
             return null;
         }
 
+        public async Task<List<Member>?> GetMembers()
+        {
+            return await this._context.Members.Where(a => a.Status != Lambda.Deleted).ToListAsync();
+        }
+
+
         public void Remove(Member member)
         {
                member.Status = Lambda.Deleted;
@@ -155,6 +172,15 @@ namespace UCS_CRM.Persistence.SQLRepositories
             return await this._context.Members.CountAsync();
         }
 
+        public async Task<Member?> GetMemberByNationalId(string nationalId)
+        {
+            return await this._context.Members.FirstOrDefaultAsync(m => m.NationalId == nationalId);
+        }
 
+        public async Task<Member?> GetMemberByUserId(string userId)
+        {
+            return await this._context.Members.FirstOrDefaultAsync(m => m.User.Id == userId);
+
+        }
     }
 }

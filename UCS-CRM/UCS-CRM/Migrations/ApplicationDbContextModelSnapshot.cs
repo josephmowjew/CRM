@@ -191,7 +191,7 @@ namespace UCS_CRM.Migrations
 
                     b.HasIndex("CreatedById");
 
-                    b.ToTable("AccountTypes", (string)null);
+                    b.ToTable("AccountTypes");
                 });
 
             modelBuilder.Entity("UCS_CRM.Core.Models.ApplicationUser", b =>
@@ -315,6 +315,9 @@ namespace UCS_CRM.Migrations
                         .HasMaxLength(200)
                         .HasColumnType("varchar(200)");
 
+                    b.Property<string>("Branch")
+                        .HasColumnType("longtext");
+
                     b.Property<string>("CreatedById")
                         .IsRequired()
                         .HasColumnType("varchar(200)");
@@ -327,6 +330,9 @@ namespace UCS_CRM.Migrations
 
                     b.Property<DateTime?>("DeletedDate")
                         .HasColumnType("datetime(6)");
+
+                    b.Property<string>("Employer")
+                        .HasColumnType("longtext");
 
                     b.Property<string>("FirstName")
                         .HasColumnType("longtext");
@@ -359,7 +365,7 @@ namespace UCS_CRM.Migrations
 
                     b.HasIndex("CreatedById");
 
-                    b.ToTable("Members", (string)null);
+                    b.ToTable("Members");
                 });
 
             modelBuilder.Entity("UCS_CRM.Core.Models.MemberAccount", b =>
@@ -402,7 +408,7 @@ namespace UCS_CRM.Migrations
 
                     b.HasIndex("MemberId");
 
-                    b.ToTable("MemberAccounts", (string)null);
+                    b.ToTable("MemberAccounts");
                 });
 
             modelBuilder.Entity("UCS_CRM.Core.Models.Message", b =>
@@ -451,7 +457,7 @@ namespace UCS_CRM.Migrations
 
                     b.HasIndex("CreatedById");
 
-                    b.ToTable("Messages", (string)null);
+                    b.ToTable("Messages");
                 });
 
             modelBuilder.Entity("UCS_CRM.Core.Models.State", b =>
@@ -486,7 +492,7 @@ namespace UCS_CRM.Migrations
 
                     b.HasIndex("CreatedById");
 
-                    b.ToTable("States", (string)null);
+                    b.ToTable("States");
                 });
 
             modelBuilder.Entity("UCS_CRM.Core.Models.Ticket", b =>
@@ -514,6 +520,9 @@ namespace UCS_CRM.Migrations
                     b.Property<string>("Description")
                         .IsRequired()
                         .HasColumnType("longtext");
+
+                    b.Property<int?>("MemberId")
+                        .HasColumnType("int");
 
                     b.Property<int>("StateId")
                         .HasColumnType("int");
@@ -546,13 +555,15 @@ namespace UCS_CRM.Migrations
 
                     b.HasIndex("CreatedById");
 
+                    b.HasIndex("MemberId");
+
                     b.HasIndex("StateId");
 
                     b.HasIndex("TicketCategoryId");
 
                     b.HasIndex("TicketPriorityId");
 
-                    b.ToTable("Tickets", (string)null);
+                    b.ToTable("Tickets");
                 });
 
             modelBuilder.Entity("UCS_CRM.Core.Models.TicketAttachment", b =>
@@ -578,7 +589,7 @@ namespace UCS_CRM.Migrations
 
                     b.HasIndex("TicketId");
 
-                    b.ToTable("TicketAttachments", (string)null);
+                    b.ToTable("TicketAttachments");
                 });
 
             modelBuilder.Entity("UCS_CRM.Core.Models.TicketCategory", b =>
@@ -613,7 +624,7 @@ namespace UCS_CRM.Migrations
 
                     b.HasIndex("CreatedById");
 
-                    b.ToTable("TicketCategories", (string)null);
+                    b.ToTable("TicketCategories");
                 });
 
             modelBuilder.Entity("UCS_CRM.Core.Models.TicketComment", b =>
@@ -652,7 +663,7 @@ namespace UCS_CRM.Migrations
 
                     b.HasIndex("TicketId");
 
-                    b.ToTable("TicketComments", (string)null);
+                    b.ToTable("TicketComments");
                 });
 
             modelBuilder.Entity("UCS_CRM.Core.Models.TicketPriority", b =>
@@ -693,7 +704,7 @@ namespace UCS_CRM.Migrations
 
                     b.HasIndex("CreatedById");
 
-                    b.ToTable("TicketPriorities", (string)null);
+                    b.ToTable("TicketPriorities");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
@@ -839,6 +850,10 @@ namespace UCS_CRM.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("UCS_CRM.Core.Models.Member", "Member")
+                        .WithMany()
+                        .HasForeignKey("MemberId");
+
                     b.HasOne("UCS_CRM.Core.Models.State", "State")
                         .WithMany("Tickets")
                         .HasForeignKey("StateId")
@@ -860,6 +875,8 @@ namespace UCS_CRM.Migrations
                     b.Navigation("AssignedTo");
 
                     b.Navigation("CreatedBy");
+
+                    b.Navigation("Member");
 
                     b.Navigation("State");
 

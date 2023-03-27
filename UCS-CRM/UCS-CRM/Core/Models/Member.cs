@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace UCS_CRM.Core.Models
 {
@@ -26,6 +27,17 @@ namespace UCS_CRM.Core.Models
         public ApplicationUser User { get; set; }
         [StringLength(maximumLength:20)]
         public string? PhoneNumber { get; set; }
+        public string? Branch { get; set; }
+        public string? Employer { get; set; }
+
+        [NotMapped]
+        public String FullName
+        {
+            get
+            {
+                return FirstName + " " + LastName;
+            }
+        }
 
     }
 }

@@ -26,6 +26,9 @@ namespace UCS_CRM.Core.DTOs.Member
         [StringLength(maximumLength: 200, MinimumLength = 5)]
         public string? Address { get; set; }
         public string? PhoneNumber { get; set; }
+        public string? Branch { get; set; }
+
+        public string? Employer { get; set; }
 
         public string FormattedFirstName => (!string.IsNullOrEmpty(FirstName)) ? myTI.ToTitleCase(FirstName) : "";
         public string FormattedLastName => (!string.IsNullOrEmpty(LastName)) ? myTI.ToTitleCase(LastName) : "";

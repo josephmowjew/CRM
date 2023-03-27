@@ -14,7 +14,7 @@
             
                 <li class="sidebar-item">
                     <a class="sidebar-link waves-effect waves-dark sidebar-link"
-                      asp-area="Admin" asp-controller="members" asp-action="Index" aria-expanded="false">
+                      asp-area="clerk" asp-controller="member" asp-action="Index" aria-expanded="false">
                         <i class="mdi me-2 mdi-account-multiple"></i><span class="hide-menu">Members</span>
                     </a>
                 </li>
@@ -22,7 +22,7 @@
 
                 <li class="sidebar-item">
                     <a class="sidebar-link waves-effect waves-dark sidebar-link"
-                       asp-area="Clerk" asp-controller="clerkTickets" asp-action="Index" aria-expanded="false">
+                       asp-area="Clerk" asp-controller="Tickets" asp-action="Index" aria-expanded="false">
                         <i class="mdi me-2 mdi-account-multiple"></i><span class="hide-menu">Tickets</span>
                     </a>
                 </li>
@@ -34,8 +34,8 @@
     </div>
     <!-- End Sidebar scroll-->
     <div class="sidebar-footer">
-        <div class="row">
-            <div class="col-4 link-wrap">
+        <div class="row justify-content-center">
+            @*<div class="col-4 link-wrap">
                 <!-- item-->
                 <a href="" class="link" data-toggle="tooltip" title="" data-original-title="Settings">
                     <i class="ti-settings"></i>
@@ -46,7 +46,7 @@
                 <a href="" class="link" data-toggle="tooltip" title="" data-original-title="Email">
                     <i class="mdi mdi-gmail"></i>
                 </a>
-            </div>
+            </div>*@
             <div class="col-4 link-wrap">
                 <!-- item-->
                 <a asp-action="Logout" asp-controller="auth" asp-area="" class="link" data-toggle="tooltip" title="" data-original-title="Logout">

@@ -77,6 +77,11 @@ namespace UCS_CRM.Persistence.SQLRepositories
             return null;
         }
 
+        public async Task<List<State>?> GetStates()
+        {
+            return await this._context.States.Where(a => a.Status != Lambda.Deleted).ToListAsync();
+        }
+
         public void Remove(State state)
         {
             state.DeletedDate = DateTime.Now;

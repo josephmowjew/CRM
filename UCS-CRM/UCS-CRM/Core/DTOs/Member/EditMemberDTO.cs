@@ -24,5 +24,8 @@ namespace UCS_CRM.Core.DTOs.Member
         public string? Address { get; set; }
 
         public string? PhoneNumber { get; set; }
+        public string? Branch { get; set; }
+
+        public string? Employer { get; set; }
     }
 }

@@ -11,6 +11,7 @@ namespace UCS_CRM.Core.Mapping
         {
             CreateMap<CreateTicketDTO, Ticket>();
             CreateMap<EditTicketDTO, Ticket>();
+            CreateMap<EditManagerTicketDTO, Ticket>(); 
             CreateMap<Ticket, ReadTicketDTO>();
 
         }

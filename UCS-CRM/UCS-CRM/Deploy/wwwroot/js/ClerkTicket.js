@@ -24,6 +24,9 @@
         var description = $("#create_ticket_modal textarea[name ='Description']").val()
         var ticketCategoryId = $("#create_ticket_modal select[name ='TicketCategoryId']").val()
         var ticketPriorityId = $("#create_ticket_modal select[name ='TicketPriorityId']").val()
+        var stateId = $("#create_ticket_modal select[name ='StateId']").val()
+        var memberId = $("#create_ticket_modal select[name ='MemberId']").val()
+
         var files = $("#create_ticket_modal input[name = 'Attachments']")[0].files;
 
         //prepare data for request pushing
@@ -119,7 +122,6 @@ function EditForm(id, area = "") {
     //get the record from the database
 
     $.ajax({
-        url: area + 'edit/' + id,
         type: 'GET'
     }).done(function (data) {
 
@@ -134,13 +136,18 @@ function EditForm(id, area = "") {
 
         var date = currentDate.getFullYear() + "-" + (month) + "-" + (day);
 
+        const ticketFields = {
+            Title: 'title',
+            Description: 'description',
+            TicketCategoryId: 'ticketCategoryId',
+            TicketPriorityId: 'ticketPriorityId',
+            MemberId: 'memberId',
+            StateId: 'stateId',
+            Id: 'id',
+        };
 
+        const editTicketModal = $("#edit_ticket_modal");
 
-        $("#edit_ticket_modal input[name ='Title']").val(data.title)
-        $("#edit_ticket_modal textarea[name ='Description']").val(data.description)
-        $("#edit_ticket_modal input[name ='TicketCategoryId']").val(data.ticketCategoryId)
-        $("#edit_ticket_modal input[name ='TicketPriorityId']").val(data.ticketPriorityId)
-        $("#edit_ticket_modal input[name='Id']").val(data.id)
 
         //hook up an event to the update role button
 
@@ -204,17 +211,12 @@ function updateTicket() {
 
     var form_url = $("#edit_ticket_modal form").attr("action");
 
+    var form = $("#edit_ticket_modal form")
 
     //get the form fields
 
-    var title = $("#edit_ticket_modal input[name ='Title']").val()
-    var description = $("#edit_ticket_modal textarea[name ='Description']").val()
-    var ticketCategoryId = $("#edit_ticket_modal select[name ='TicketCategoryId']").val()
-    var ticketPriorityId = $("#edit_ticket_modal input[name ='TicketPriorityId']").val()
-    var id = $("#edit_ticket_modal input[name='Id']").val()
 
 
-    //prepare data for request pushing
 
     var userInput = {
         __RequestVerificationToken: authenticationToken,
@@ -230,7 +232,6 @@ function updateTicket() {
     $.ajax({
         url: form_url,
         type: 'POST',
-        data: userInput,
         success: function (data) {
 
 
@@ -288,6 +289,82 @@ function updateTicket() {
     });
 
 
+}
+
+function addComment(ticketId) {
+
+    toastr.clear()
+
+    let comment = $("#ticketComment").val()
+    let formData = new FormData();
+
+
+    formData.append("ticketId", ticketId)
+    formData.append("comment", comment)
+
+
+
+    $.ajax({
+        url: "/clerk/tickets/AddTicketComment",
+        type: 'POST',
+        data: formData,
+        processData: false,
+        contentType: false,
+        success: function (data) {
+
+
+            //parse whatever comes back to html
+
+            var parsedData = $.parseHTML(data)
+
+
+
+            //check if there is an error in the data that is coming back from the user
+
+            var isInvalid = $(parsedData).find("input[name='DataInvalid']").val() == "true"
+
+
+            if (isInvalid == true) {
+
+                //replace the form data with the data retrieved from the server
+                $("#edit_ticket_modal").html(data)
+
+
+                //rewire the onclick event on the form
+
+                $("#edit_ticket_modal button[name='update_ticket_btn']").unbind().click(function () { updateTicket() });
+
+                var form = $("#edit_ticket_modal")
+
+                $(form).removeData("validator")
+                $(form).removeData("unobtrusiveValidation")
+                $.validator.unobtrusive.parse(form)
+
+
+            }
+            else {
+
+
+                //show success message to the user
+                var dataTable = $('#my_table').DataTable();
+
+                toastr.success(data.message)
+
+                $("#edit_ticket_modal").modal("hide")
+
+                dataTable.ajax.reload();
+
+            }
+
+
+
+        },
+        error: function (xhr, ajaxOtions, thrownError) {
+
+            console.error(thrownError + "r\n" + xhr.statusText + "r\n" + xhr.responseText)
+        }
+
+    });
 }
 
 

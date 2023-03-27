@@ -1,0 +1,170 @@
+﻿
+@using Microsoft.Extensions.Configuration
+@inject IConfiguration Configuration
+@{
+    var host = Configuration.GetSection("HostingSettings")["Host"];
+    var path = Configuration.GetSection("HostingSettings")["path"];
+    var protocol = Configuration.GetSection("HostingSettings")["Protocol"];
+}
+@{
+    ViewData["Title"] = "Tickets";
+    Layout = "~/Areas/Admin/Views/shared/_Layout.cshtml";
+}
+
+
+<div class="modal fade" id="edit_ticket_modal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <partial name="_EditTicketPartial" />
+</div>
+<div class="card">
+    <div class="card-header">
+        <h4 class="text-center text-uppercase">Tickets Available In The System</h4>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-bordered " id="my_table">
+            <thead>
+                <tr>
+                    <th>
+                        Ticket Number
+                    </th>
+                     <th>
+                        Title
+                    </th>
+                    <th>
+                        Description
+                    </th>
+                    <th>
+                        Priority
+                    </th>
+                    <th>
+                        Category
+                    </th>
+
+                    <th>
+                       State
+                    </th>
+
+                    <th>
+                        Assigned To
+                    </th>
+                    <th>
+                        Action
+                    </th>
+
+
+
+                </tr>
+            </thead>
+            <tbody>
+            </tbody>
+        </table>
+        </div>
+    </div>
+</div>
+
+
+@section Scripts{
+
+                <script>
+                    var datatable;
+                </script>
+
+                <script src="~/js/ManagerTicket.js"></script>
+                <script>
+                    $(document).ready(function () {
+                        datatable = $('#my_table').DataTable({
+
+
+                            "processing": true,
+                            "serverSide": true,
+                            "order": [[0, "desc"]],
+                            ajax: {
+                                url: '/manager/tickets/GetTickets',
+                                type: 'post',
+                                datatype: 'Json',
+                                     error: function(XMLHttpRequest, textStatus, errorThrown) { 
+                                            
+                                             console.log(XMLHttpRequest.responseText)
+                                           
+                                            
+                                        }  
+
+
+                          },
+                            columnDefs: [
+                                {
+                                    defaultContent: "",
+                                    targets: "_all",
+                                    'orderable': true
+                                },
+                            ],
+                            columns: [
+
+                                {
+                                    data: "ticketNumber",
+                                    name: "ticketNumber",
+                                    className: "text-left",
+                                    "orderable": true,
+                                },
+                                {
+                                    data: "title",
+                                    name: "title",
+                                    className: "text-left",
+                                    "orderable": true,
+                                },
+                                {
+                                    data: "description",
+                                    name: "description",
+                                    className: "text-left",
+                                    "orderable": false,
+                                },
+                                {
+                                    data: { state: "ticketPriority.name"},
+                                    mRender: function (data, type, full) {
+                                                  return data.ticketPriority != null && data.ticketPriority.status != 'Deleted' ?   data.ticketPriority.name  : "";
+                                         }, "name": "ticketPriority.name",
+                                    className: "text-left"
+                                },
+                                {
+                                    data: { state: "ticketCategory.name"},
+                                    mRender: function (data, type, full) {
+                                           return data.ticketCategory != null && data.ticketCategory.status != 'Deleted' ?   data.ticketCategory.name  : "";
+                                            }, "name": "ticketCategory.name",
+                                    className: "text-left"
+                                },
+                                 {
+                                    data: { state: "state.name"},
+                                    mRender: function (data, type, full) {
+                                        return data.state != null && data.state.status != 'Deleted' ?   data.state.name : "";
+                                        }, "name": "state.name",
+                                    className: "text-left"
+                                },
+
+                                 {
+                                        data: { state: "assignedTo.fullName"},
+                                        mRender: function (data, type, full) {
+                                            return data.assignedTo != null && data.assignedTo.status != 'Deleted' ?   data.assignedTo.fullName  : "";
+                                            }, "name": "assignedTo.fullName",
+                                        className: "text-left"
+                                },
+                                  {
+                                    data: "id",
+                                    name: "id",
+                                    "orderable": false,
+                                    render: function (data) {
+                                                    return "<a href='#' onclick=EditForm('" + data + "') type='button' class='feather icon-edit' title='edit' ></a> <a href='#' type='button' onclick=Delete('" +data + "') title='delete' class='feather icon-trash-2'></a><a href='tickets/details/"+data+"' class='mdi mdi-eye'></a>"
+                                    }
+                                },
+
+                            ],
+                            responsive: true,
+                            "autoWidth": false,
+                        });
+                    });
+                </script>
+
+
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

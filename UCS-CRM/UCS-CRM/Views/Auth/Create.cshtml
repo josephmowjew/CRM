@@ -2,11 +2,13 @@
 @{
     Layout = "";
     @inject SignInManager<UCS_CRM.Core.Models.ApplicationUser> SignInManager
+
+    string message = TempData["response"] as string;
 }
 
 <!DOCTYPE html>
     <head>
-        <title>Hello there</title>
+        <title>UCS SACCO CRM</title>
          <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
         <link href="~/css/page.css" rel="stylesheet" />
     </head>
@@ -19,6 +21,19 @@
                   
                 </div>
                 <div class="col-md-8 col-lg-6 col-xl-4 offset-xl-1">
+                    <div>
+                       @if (!string.IsNullOrEmpty(message))
+                        {
+                                    <div class="alert alert-success alert-dismissible fade show" role="alert">
+                                    @message
+                                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                                </div>
+                            <div>
+                               
+                            </div>
+                        }
+                        
+                    </div>
                   <form asp-action="Create" asp-antiforgery="true" method="post">
                        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
                         @*<div class="d-flex flex-row align-items-center justify-content-center justify-content-lg-start">
@@ -53,6 +68,7 @@
                         </label>
                       </div>
                       <a href="#!" class="text-body">Forgot password?</a>
+                      <a asp-action="register" asp-controller="auth" class="text-body">Register as member</a>
                     </div>
 
                     <div class="text-center text-lg-start mt-4 pt-2">
@@ -69,7 +85,7 @@
               class="d-flex flex-column flex-md-row text-center text-md-start justify-content-between py-4 px-4 px-xl-5 bg-primary">
               <!-- Copyright -->
               <div class="text-white mb-3 mb-md-0">
-                Copyright © 2023. All rights reserved.
+                Copyright © 2023. All rights reserved. Developed by Sparc Systems Limited
               </div>
               <!-- Copyright -->
 
