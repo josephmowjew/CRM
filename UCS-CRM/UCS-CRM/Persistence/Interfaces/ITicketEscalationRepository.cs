@@ -9,7 +9,7 @@ namespace UCS_CRM.Persistence.Interfaces
         TicketEscalation? Exists(TicketEscalation ticketEscalation);
         Task<TicketEscalation?> GetTicketEscalation(int id);
         Task<List<TicketEscalation>?> GetTicketEscalations();
-        Task<List<TicketEscalation>?> GetTicketEscalations(CursorParams @params);
+        Task<List<TicketEscalation>?> GetTicketEscalations(int escalationLevel, CursorParams @params);
         void Remove(TicketEscalation accountType);
         Task<int> TotalCount();
     }

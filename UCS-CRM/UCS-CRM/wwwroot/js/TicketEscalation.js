@@ -24,8 +24,8 @@
         var ticketCategoryId = $("#create_ticket_modal select[name ='TicketCategoryId']").val()
         var ticketPriorityId = $("#create_ticket_modal select[name ='TicketPriorityId']").val()
         var stateId = $("#create_ticket_modal select[name ='StateId']").val()
+        var assignedToId = $("#create_ticket_modal select[name ='AssignedToId']").val()
         var memberId = $("#create_ticket_modal select[name ='MemberId']").val()
-
         var files = $("#create_ticket_modal input[name = 'Attachments']")[0].files;
 
         //prepare data for request pushing
@@ -96,58 +96,6 @@
 
 
 
-function EditForm(id, area = "") {
-
-    //get the record from the database
-
-    $.ajax({
-        url: area + 'tickets/edit/' + id,
-        type: 'GET'
-    }).done(function (data) {
-
-        //get the input field inside the edit role modal form
-        //var date = new Date(data.dateOfBirth);
-
-
-        var currentDate = new Date(data.dateOfBirth);
-
-        var day = ("0" + currentDate.getDate()).slice(-2);
-        var month = ("0" + (currentDate.getMonth() + 1)).slice(-2);
-
-        var date = currentDate.getFullYear() + "-" + (month) + "-" + (day);
-
-        const ticketFields = {
-            Title: 'title',
-            Description: 'description',
-            TicketCategoryId: 'ticketCategoryId',
-            TicketPriorityId: 'ticketPriorityId',
-            MemberId: 'memberId',
-            StateId: 'stateId',
-            Id: 'id',
-        };
-
-        const editTicketModal = $("#edit_ticket_modal");
-
-        Object.entries(ticketFields).forEach(([fieldName, dataKey]) => {
-            const field = editTicketModal.find(`[name='${fieldName}']`);
-            field.val(data[dataKey]);
-        });
-
-        //hook up an event to the update role button
-
-        $("#edit_ticket_modal button[name='update_ticket_btn']").unbind().click(function () { updateTicket() })
-
-        var validator = $("#edit_ticket_modal form").validate();
-
-        //validator.resetForm();
-
-        $("#edit_ticket_modal").modal("show");
-
-    })
-}
-
-
-//escalate ticket
 function EscalationForm(id, area = "") {
 
     //get the input field inside the edit role modal form
@@ -156,7 +104,7 @@ function EscalationForm(id, area = "") {
 
     //hook up an event to the update role button
 
-    $("#escalate_ticket_modal button[name='escalate_ticket_btn']").unbind().click(function () { escalateTicket() })
+    $("#escalate_ticket_modal button[name='escalate_ticket_btn']").unbind().click(function () { EscalateTicket() })
 
     var validator = $("#escalate_ticket_modal form").validate();
 
@@ -166,44 +114,6 @@ function EscalationForm(id, area = "") {
 
 }
 
-
-function Delete(id) {
-
-    bootbox.confirm("Are you sure you want to delete this ticket from the system?", function (result) {
-
-
-        if (result) {
-            $.ajax({
-                url: 'tickets/delete/' + id,
-                type: 'POST',
-
-            }).done(function (data) {
-
-                if (data.status == "success") {
-
-                    toastr.success(data.message)
-                }
-                else {
-                    toastr.error(data.message)
-                }
-
-
-
-
-                datatable.ajax.reload();
-
-
-            }).fail(function (response) {
-
-                toastr.error(response.responseText)
-
-                datatable.ajax.reload();
-            });
-        }
-
-
-    });
-}
 
 
 function escalateTicket() {
@@ -291,16 +201,55 @@ function escalateTicket() {
 }
 
 
+function Delete(id) {
+
+    bootbox.confirm("Are you sure you want to delete this ticket from the system?", function (result) {
+
+
+        if (result) {
+            $.ajax({
+                url: 'tickets/delete/' + id,
+                type: 'POST',
+
+            }).done(function (data) {
+
+                if (data.status == "success") {
+
+                    toastr.success(data.message)
+                }
+                else {
+                    toastr.error(data.message)
+                }
+
+
+
+
+                datatable.ajax.reload();
+
+
+            }).fail(function (response) {
+
+                toastr.error(response.responseText)
+
+                datatable.ajax.reload();
+            });
+        }
+
+
+    });
+}
+
+
 function updateTicket() {
     toastr.clear()
 
     //get the authorisation token
     //upDateRole
-    var authenticationToken = $("#edit_ticket_modal input[name='__RequestVerificationToken']").val();
+    var authenticationToken = $("#escalate_ticket_modal input[name='__RequestVerificationToken']").val();
 
-    var form_url = $("#edit_ticket_modal form").attr("action");
+    var form_url = $("#escalate_ticket_modal form").attr("action");
 
-    var form = $("#edit_ticket_modal form")
+    var form = $("#escalate_ticket_modal form")
 
 
     let formData = new FormData(form[0]);
@@ -333,14 +282,14 @@ function updateTicket() {
             if (isInvalid == true) {
 
                 //replace the form data with the data retrieved from the server
-                $("#edit_ticket_modal").html(data)
+                $("#escalate_ticket_modal").html(data)
 
 
                 //rewire the onclick event on the form
 
-                $("#edit_ticket_modal button[name='update_ticket_btn']").unbind().click(function () { updateTicket() });
+                $("#escalate_ticket_modal button[name='escalate_ticket_btn']").unbind().click(function () { updateTicket() });
 
-                var form = $("#edit_ticket_modal")
+                var form = $("#escalate_ticket_modal")
 
                 $(form).removeData("validator")
                 $(form).removeData("unobtrusiveValidation")
@@ -356,7 +305,7 @@ function updateTicket() {
 
                 toastr.success(data.message)
 
-                $("#edit_ticket_modal").modal("hide")
+                $("#escalate_ticket_modal").modal("hide")
 
                 dataTable.ajax.reload();
 
@@ -389,7 +338,7 @@ function addComment(ticketId) {
 
 
     $.ajax({
-        url: "/clerk/tickets/AddTicketComment",
+        url: "/manager/tickets/AddTicketComment",
         type: 'POST',
         data: formData,
         processData: false,
@@ -411,14 +360,14 @@ function addComment(ticketId) {
             if (isInvalid == true) {
 
                 //replace the form data with the data retrieved from the server
-                $("#edit_ticket_modal").html(data)
+                $("#escalate_ticket_modal").html(data)
 
 
                 //rewire the onclick event on the form
 
-                $("#edit_ticket_modal button[name='update_ticket_btn']").unbind().click(function () { updateTicket() });
+                $("#escalate_ticket_modal button[name='escalate_ticket_btn']").unbind().click(function () { updateTicket() });
 
-                var form = $("#edit_ticket_modal")
+                var form = $("#escalate_ticket_modal")
 
                 $(form).removeData("validator")
                 $(form).removeData("unobtrusiveValidation")
@@ -434,7 +383,7 @@ function addComment(ticketId) {
 
                 toastr.success(data.message)
 
-                $("#edit_ticket_modal").modal("hide")
+                $("#escalate_ticket_modal").modal("hide")
 
                 dataTable.ajax.reload();
 

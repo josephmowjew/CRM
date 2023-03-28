@@ -5,16 +5,16 @@
         <nav class="sidebar-nav">
             <ul id="sidebarnav">
                 <!-- User Profile-->
+              
                 <li class="sidebar-item">
                     <a class="sidebar-link waves-effect waves-dark sidebar-link"
-                       href="index.html" aria-expanded="false">
+                       asp-area="SeniorManager" asp-controller="Dashboard" asp-action="Index" aria-expanded="false">
                         <i class="mdi me-2 mdi-gauge"></i><span class="hide-menu">Dashboard</span>
                     </a>
                 </li>
-            
                 <li class="sidebar-item">
                     <a class="sidebar-link waves-effect waves-dark sidebar-link"
-                      asp-area="Manager" asp-controller="Members" asp-action="Index" aria-expanded="false">
+                       asp-area="SeniorManager" asp-controller="Members" asp-action="Index" aria-expanded="false">
                         <i class="mdi me-2 mdi-account-multiple"></i><span class="hide-menu">Members</span>
                     </a>
                 </li>
@@ -22,15 +22,22 @@
 
                 <li class="sidebar-item">
                     <a class="sidebar-link waves-effect waves-dark sidebar-link"
-                       asp-area="Manager" asp-controller="Tickets" asp-action="Index" aria-expanded="false">
-                        <i class="mdi me-2 mdi-account-multiple"></i><span class="hide-menu">Tickets</span>
+                       asp-area="SeniorManager" asp-controller="Tickets" asp-action="Index" aria-expanded="false">
+                        <i class="mdi me-2 mdi-account-multiple"></i><span class="hide-menu">Open Tickets</span>
+                    </a>
+                </li>
+
+                <li class="sidebar-item">
+                    <a class="sidebar-link waves-effect waves-dark sidebar-link"
+                       asp-area="SeniorManager" asp-controller="Tickets" asp-action="Closed" aria-expanded="false">
+                        <i class="mdi me-2 mdi-account-multiple"></i><span class="hide-menu">Closed Tickets</span>
                     </a>
                 </li>
 
 
                 <li class="sidebar-item">
                     <a class="sidebar-link waves-effect waves-dark sidebar-link"
-                       asp-area="Manager" asp-controller="TicketEscalations" asp-action="First" aria-expanded="false">
+                       asp-area="SeniorManager" asp-controller="TicketEscalations" asp-action="First" aria-expanded="false">
                         <i class="mdi me-2 mdi-account-multiple"></i><span class="hide-menu">Tickets Escalated</span>
                     </a>
                 </li>

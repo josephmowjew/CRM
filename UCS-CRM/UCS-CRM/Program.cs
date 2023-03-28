@@ -64,6 +64,7 @@ builder.Services.AddScoped<IRoleRepositorycs, RoleRepository>();
 builder.Services.AddScoped<IMemberRepository, MemberRepository>();
 builder.Services.AddScoped<IStateRepository, StateRepository>();
 builder.Services.AddScoped<ITicketCommentRepository, TicketCommentRepository>();
+builder.Services.AddScoped<ITicketEscalationRepository, TicketEscalationRepository>();
 
 
 var app = builder.Build();

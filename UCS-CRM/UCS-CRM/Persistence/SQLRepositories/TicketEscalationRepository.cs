@@ -20,22 +20,22 @@ namespace UCS_CRM.Persistence.SQLRepositories
             _context = context;
         }
 
-        public void Add(TicketEscalation accountType)
+        public void Add(TicketEscalation ticketEscalation)
         {
-            this._context.TicketEscalations.Add(accountType);
+            this._context.TicketEscalations.Add(ticketEscalation);
         }
 
         public TicketEscalation? Exists(TicketEscalation ticketEscalation)
         {
-            return this._context.TicketEscalations.FirstOrDefault(a => a.TicketId == ticketEscalation.TicketId && a.DateEscalated == ticketEscalation.DateEscalated & a.Status != Lambda.Deleted);
+            return this._context.TicketEscalations.Include(t => t.Ticket).FirstOrDefault(a => a.TicketId == ticketEscalation.TicketId && a.DateEscalated == ticketEscalation.DateEscalated & a.Status != Lambda.Deleted);
         }
 
         public async Task<TicketEscalation?> GetTicketEscalation(int id)
         {
-            return await this._context.TicketEscalations.FirstOrDefaultAsync(x => x.Id == id & x.Status != Lambda.Deleted);
+            return await this._context.TicketEscalations.Include(t=>t.Ticket).ThenInclude(m=>m.Member).Include(p => p.Ticket.TicketPriority).Include(a => a.Ticket.AssignedTo).FirstOrDefaultAsync(x => x.Id == id & x.Status != Lambda.Deleted);
         }
 
-        public async Task<List<TicketEscalation>?> GetTicketEscalations(CursorParams @params)
+        public async Task<List<TicketEscalation>?> GetTicketEscalations(int escalationLevel, CursorParams @params)
         {
             if (@params.Take > 0)
             {
@@ -43,9 +43,9 @@ namespace UCS_CRM.Persistence.SQLRepositories
 
                 if (string.IsNullOrEmpty(@params.SearchTerm))
                 {
-                    var ticketEscalations = (from tblOb in await this._context.TicketEscalations.Where(a => a.Status != Lambda.Deleted).Skip(@params.Skip).Take(@params.Take).ToListAsync() select tblOb);
+                    var ticketEscalations = (from tblOb in await this._context.TicketEscalations.Include(t => t.Ticket).ThenInclude(m => m.Member).Include(a => a.Ticket.AssignedTo).Include(p => p.Ticket.TicketPriority).Where(a => a.Status != Lambda.Deleted && a.EscalationLevel == escalationLevel
+                                             && a.Resolved == false).Skip(@params.Skip).Take(@params.Take).ToListAsync() select tblOb);
 
-                    //ticketEscalations.AsQueryable().OrderBy("gjakdgdag");
 
                     if (string.IsNullOrEmpty(@params.SortColum) && !string.IsNullOrEmpty(@params.SortDirection))
                     {
@@ -60,7 +60,7 @@ namespace UCS_CRM.Persistence.SQLRepositories
                 else
                 {
                     //include search text in the query
-                    var ticketEscalations = (from tblOb in await this._context.TicketEscalations
+                    var ticketEscalations = (from tblOb in await this._context.TicketEscalations.Include(t => t.Ticket).ThenInclude(m => m.Member).Include(a => a.Ticket.AssignedTo).Include(p => p.Ticket.TicketPriority)
                                         .Where(a => a.Ticket.Title.ToLower().Contains(@params.SearchTerm) & a.Status != Lambda.Deleted)
                                         .Skip(@params.Skip)
                                         .Take(@params.Take)
@@ -85,15 +85,15 @@ namespace UCS_CRM.Persistence.SQLRepositories
 
         public async Task<List<TicketEscalation>?> GetTicketEscalations()
         {
-            return await this._context.TicketEscalations.Where(a => a.Status != Lambda.Deleted).ToListAsync();
+            return await this._context.TicketEscalations.Include(t => t.Ticket).ThenInclude(m => m.Member).Include(a => a.Ticket.AssignedTo).Where(a => a.Status != Lambda.Deleted).ToListAsync();
         }
 
-        public void Remove(TicketEscalation accountType)
+        public void Remove(TicketEscalation ticketEscalation)
         {
             //mark the record as deleted
 
-            accountType.Status = Lambda.Deleted;
-            accountType.DeletedDate = DateTime.UtcNow;
+            ticketEscalation.Status = Lambda.Deleted;
+            ticketEscalation.DeletedDate = DateTime.UtcNow;
         }
 
         public Task<int> TotalCount()

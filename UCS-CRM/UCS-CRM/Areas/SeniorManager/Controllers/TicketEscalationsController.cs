@@ -9,9 +9,9 @@ using UCS_CRM.Core.Helpers;
 using UCS_CRM.Core.Models;
 using UCS_CRM.Persistence.Interfaces;
 
-namespace UCS_CRM.Areas.Manager.Controllers
+namespace UCS_CRM.Areas.SeniorManager.Controllers
 {
-    [Area("Manager")]
+    [Area("SeniorManager")]
     [Authorize]
     public class TicketEscalationsController : Controller
     {
@@ -27,16 +27,18 @@ namespace UCS_CRM.Areas.Manager.Controllers
             _ticketRepository = ticketRepository;
         }
 
-        // GET: TicketEscalationsController
-        public ActionResult First()
+        // GET: TicketEscalationsController/Details/5
+        public ActionResult Second()
         {
             return View();
         }
 
-        // GET: TicketEscalationsController/Details/5
-    
-
         // GET: TicketEscalationsController/Create
+        public ActionResult Create()
+        {
+            return View();
+        }
+
         // GET: TicketController/Details/5
         public async Task<ActionResult> Details(int id)
         {
@@ -44,7 +46,7 @@ namespace UCS_CRM.Areas.Manager.Controllers
 
             if (ticketDB == null)
             {
-                return RedirectToAction("First");
+                return RedirectToAction("Second");
             }
 
 
@@ -52,7 +54,6 @@ namespace UCS_CRM.Areas.Manager.Controllers
 
             return View(mappedTicket);
         }
-
         // POST: TicketEscalationsController/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
