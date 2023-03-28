@@ -57,17 +57,16 @@
             processData: false,
             contentType: false,
             success: function (data) {
-
+                console.log(data)
                 //parse whatever comes back to html
 
                 var parsedData = $.parseHTML(data)
 
 
-
+                
                 //check if there is an error in the data that is coming back from the user
 
                 var isInvalid = $(parsedData).find("input[name='DataInvalid']").val() == "true"
-
 
                 if (isInvalid == true) {
 

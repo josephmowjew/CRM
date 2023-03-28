@@ -8,7 +8,7 @@
 }
 @{
     ViewData["Title"] = "Tickets";
-    Layout = "~/Areas/Admin/Views/shared/_Layout.cshtml";
+    Layout = "~/Areas/Member/Views/shared/_Layout.cshtml";
 }
 
 <p>
@@ -149,7 +149,26 @@
                                  {
                                     data: { state: "state.name"},
                                     mRender: function (data, type, full) {
-                                        return data.state != null && data.state.status != 'Deleted' ?   data.state.name : "";
+
+                                                if(data.state != null && data.state.status != 'Deleted'){
+                                                    if(data.state.name == "Waiting For Support")
+                                                    {
+                                                        return "<span class='badge bg-light-warning text-warning font-weight-medium'>Waiting for support</span>"
+                                                    }
+                                                    if(data.state.name == "Closed")
+                                                    {
+                                                        return "<span class='badge bg-light-danger text-danger font-weight-medium'>Closed</span>"
+                                                    }
+                                                    if(data.state.name == "Open")
+                                                    {
+                                                        return "<span class='badge bg-light-success text-success font-weight-medium'>Open</span>"
+                                                    }
+
+                                                 }
+                                                else{
+                                                    return "NA"
+                                                }
+                                        
                                         }, "name": "state.name",
                                     className: "text-left"
                                 },
@@ -157,6 +176,7 @@
                                  {
                                         data: { state: "assignedTo.fullName"},
                                         mRender: function (data, type, full) {
+
                                             return data.assignedTo != null && data.assignedTo.status != 'Deleted' ?   data.assignedTo.fullName  : "";
                                             }, "name": "assignedTo.fullName",
                                         className: "text-left"

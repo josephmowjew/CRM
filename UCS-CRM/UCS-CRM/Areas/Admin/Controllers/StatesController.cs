@@ -54,7 +54,6 @@ namespace UCS_CRM.Areas.Admin.Controllers
         {
             //check for model validity
 
-            createStateDTO.DataInvalid = "true";
 
             if (ModelState.IsValid)
             {
