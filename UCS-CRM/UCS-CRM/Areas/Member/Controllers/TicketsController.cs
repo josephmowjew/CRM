@@ -58,8 +58,10 @@ namespace UCS_CRM.Areas.Member.Controllers
         public async Task<ActionResult> Create(CreateTicketDTO createTicketDTO)
         {
 
+          
 
-            createTicketDTO.DataInvalid = "true";
+
+
 
             if (ModelState.IsValid)
             {
@@ -164,7 +166,7 @@ namespace UCS_CRM.Areas.Member.Controllers
                         await this._unitOfWork.SaveToDataStore();
                     }
 
-
+                    await populateViewBags();
 
                     return PartialView("_CreateTicketPartial", createTicketDTO);
                 }
@@ -194,10 +196,17 @@ namespace UCS_CRM.Areas.Member.Controllers
 
 
             }
+            else
+            {
+                await populateViewBags();
+
+                
+
+                return PartialView("_CreateTicketPartial", createTicketDTO);
+            }
 
 
-
-            return PartialView("_CreateTicketPartial", createTicketDTO);
+            
         }
 
         // GET: TicketsController/Edit/5
