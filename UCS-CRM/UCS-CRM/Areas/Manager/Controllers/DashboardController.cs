@@ -2,7 +2,7 @@
 
 namespace UCS_CRM.Areas.Manager.Controllers
 {
-    public class ManagerDashboardController : Controller
+    public class DashboardController : Controller
     {
         public IActionResult Index()
         {

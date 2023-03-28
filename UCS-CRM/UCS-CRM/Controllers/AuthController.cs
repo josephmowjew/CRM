@@ -76,11 +76,11 @@ namespace UCS_CRM.Controllers
                         }
                         if (roles.Contains("Clerk"))
                         {
-                            return RedirectToAction("Index", "ClerkTickets", new { Area = "Clerk" });
+                            return RedirectToAction("Index", "Tickets", new { Area = "Clerk" });
                         }
                         if (roles.Contains("Manager"))
                         {
-                            return RedirectToAction("Index", "Users", new { Area = "Admin" });
+                            return RedirectToAction("Index", "Tickets", new { Area = "Manager" });
                         }
                         if (roles.Contains("Senior Manager"))
                         {
