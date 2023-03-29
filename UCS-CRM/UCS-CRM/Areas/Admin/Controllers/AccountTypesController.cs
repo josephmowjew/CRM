@@ -154,7 +154,7 @@ namespace UCS_CRM.Areas.Admin.Controllers
 
            
 
-            return View();
+            //return View();
         }
 
         // POST: AccountTypesController/Edit/5
