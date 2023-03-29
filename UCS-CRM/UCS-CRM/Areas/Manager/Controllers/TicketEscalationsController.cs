@@ -1,7 +1,9 @@
 ﻿using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
+using NuGet.Packaging;
 using System.Security.Claims;
 using UCS_CRM.Core.DTOs.Ticket;
 using UCS_CRM.Core.DTOs.TicketEscalation;
@@ -19,17 +21,32 @@ namespace UCS_CRM.Areas.Manager.Controllers
         private readonly ITicketRepository _ticketRepository;
         private readonly IMapper _mapper;
         private readonly IUnitOfWork _unitOfWork;
-        public TicketEscalationsController(ITicketEscalationRepository ticketEscalationRepository, IMapper mapper, IUnitOfWork unitOfWork, ITicketRepository ticketRepository)
+        private IWebHostEnvironment _env;
+        private readonly IStateRepository _stateRepository;
+        private readonly ITicketPriorityRepository _priorityRepository;
+        private readonly IMemberRepository _memberRepository;
+        private readonly IUserRepository _userRepository;
+        private readonly ITicketCategoryRepository _ticketCategoryRepository;
+        public TicketEscalationsController(ITicketEscalationRepository ticketEscalationRepository, IMapper mapper, IUnitOfWork unitOfWork, ITicketRepository ticketRepository, 
+            IWebHostEnvironment env, IStateRepository stateRepository, ITicketPriorityRepository priorityRepository, IMemberRepository memberRepository, IUserRepository userRepository, 
+            ITicketCategoryRepository ticketCategoryRepository)
         {
             this._ticketEscalationRepository = ticketEscalationRepository;
             this._mapper = mapper;
             _unitOfWork = unitOfWork;
             _ticketRepository = ticketRepository;
+            _env = env;
+            _stateRepository = stateRepository;
+            _priorityRepository = priorityRepository;
+            _memberRepository = memberRepository;
+            _userRepository = userRepository;
+            _ticketCategoryRepository = ticketCategoryRepository;
         }
 
         // GET: TicketEscalationsController
-        public ActionResult First()
+        public async Task<ActionResult> First()
         {
+            await populateViewBags();
             return View();
         }
 
@@ -203,6 +220,69 @@ namespace UCS_CRM.Areas.Manager.Controllers
 
         }
 
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<ActionResult> EditTicket(int id, EditManagerTicketDTO editTicketDTO)
+        {
+            editTicketDTO.DataInvalid = "true";
+
+            if (ModelState.IsValid)
+            {
+                editTicketDTO.DataInvalid = "";
+
+                var ticketDB = await this._ticketRepository.GetTicket(id);
+
+                if (ticketDB is null)
+                {
+                    editTicketDTO.DataInvalid = "true";
+
+                    ModelState.AddModelError("", $"The Identifier of the record was not found taken");
+
+                    return PartialView("_EditTicketPartial", editTicketDTO);
+                }
+
+
+                editTicketDTO.StateId = editTicketDTO.StateId == null ? ticketDB.StateId : editTicketDTO.StateId;
+
+                editTicketDTO.TicketNumber = ticketDB.TicketNumber;
+                //check if the role name isn't already taken
+                var mappedTicket = this._mapper.Map<Ticket>(editTicketDTO);
+
+                this._mapper.Map(editTicketDTO, ticketDB);
+
+                //save changes to data store
+
+                await this._unitOfWork.SaveToDataStore();
+
+                if (editTicketDTO.Attachments.Count > 0)
+                {
+                    var attachments = editTicketDTO.Attachments.Select(async attachment =>
+                    {
+                        string fileUrl = await Lambda.UploadFile(attachment, this._env.WebRootPath);
+                        return new TicketAttachment()
+                        {
+                            FileName = attachment.FileName,
+                            TicketId = mappedTicket.Id,
+                            Url = fileUrl
+                        };
+                    });
+
+                    var mappedAttachments = await Task.WhenAll(attachments);
+
+                    mappedTicket.TicketAttachments.AddRange(mappedAttachments);
+
+                    await this._unitOfWork.SaveToDataStore();
+                }
+
+                return Json(new { status = "success", message = "user ticket updated successfully" });
+            }
+
+
+
+            return PartialView("_EditTicketPartial", editTicketDTO);
+        }
+
+
         // GET: TicketEscalationsController/Delete/5
         [HttpPost]
         public async Task<ActionResult> Delete(int id)
@@ -271,5 +351,102 @@ namespace UCS_CRM.Areas.Manager.Controllers
             //return Json(identityRolesList.ToList());
 
         }
+
+
+        private async Task<List<SelectListItem>> GetTicketCategories()
+        {
+            var ticketCategories = await this._ticketCategoryRepository.GetTicketCategories();
+
+            var ticketCategoriesList = new List<SelectListItem>();
+
+            ticketCategoriesList.Add(new SelectListItem() { Text = "------ Select Category ------", Value = "" });
+
+            ticketCategories.ForEach(category =>
+            {
+                ticketCategoriesList.Add(new SelectListItem() { Text = category.Name, Value = category.Id.ToString() });
+            });
+
+            return ticketCategoriesList;
+
+        }
+
+        private async Task<List<SelectListItem>> GetTicketPriorities()
+        {
+            var ticketPriorities = await this._priorityRepository.GetTicketPriorities();
+
+            var ticketPrioritiesList = new List<SelectListItem>();
+
+            ticketPrioritiesList.Add(new SelectListItem() { Text = "------ Select Priority ------", Value = "" });
+
+            ticketPriorities.ForEach(priority =>
+            {
+                ticketPrioritiesList.Add(new SelectListItem() { Text = priority.Name, Value = priority.Id.ToString() });
+            });
+
+            return ticketPrioritiesList;
+
+        }
+
+        private async Task<List<SelectListItem>> GetTicketStates()
+        {
+            var ticketStates = await this._stateRepository.GetStates();
+
+            var ticketStatesList = new List<SelectListItem>();
+
+            ticketStatesList.Add(new SelectListItem() { Text = "------ Select State ------", Value = "" });
+
+            ticketStates.ForEach(state =>
+            {
+                ticketStatesList.Add(new SelectListItem() { Text = state.Name, Value = state.Id.ToString() });
+            });
+
+            return ticketStatesList;
+
+        }
+
+        private async Task<List<SelectListItem>> GetAssignees()
+        {
+            var users = await this._userRepository.GetUsers();
+
+            var usersList = new List<SelectListItem>();
+
+            usersList.Add(new SelectListItem() { Text = "---- Select Assignee -------", Value = "" });
+
+            users.ForEach(user =>
+            {
+                usersList.Add(new SelectListItem() { Text = user.FullName, Value = user.Id.ToString() });
+            });
+
+            return usersList;
+
+        }
+
+        private async Task<List<SelectListItem>> GetMembers()
+        {
+            var members = await this._memberRepository.GetMembers();
+
+            var membersList = new List<SelectListItem>();
+
+            membersList.Add(new SelectListItem() { Text = "---- Select Member -------", Value = "" });
+
+            members.ForEach(member =>
+            {
+                membersList.Add(new SelectListItem() { Text = member.FullName, Value = member.Id.ToString() });
+            });
+
+            return membersList;
+
+        }
+
+        private async Task populateViewBags()
+        {
+            ViewBag.priorities = await GetTicketPriorities();
+            ViewBag.categories = await GetTicketCategories();
+            ViewBag.assignees = await GetAssignees();
+            ViewBag.states = await GetTicketStates();
+            ViewBag.members = await GetMembers();
+        }
+
+
     }
 }
