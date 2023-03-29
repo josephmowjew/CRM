@@ -287,6 +287,24 @@ namespace UCS_CRM.Persistence.SQLRepositories
             return await this._context.Tickets.CountAsync(t => t.Status != Lambda.Deleted);
         }
 
+        // count tickets by state
+        public async Task<int> CountTicketsByStatus(string state)
+        {
+            return await this._context.Tickets.Include(t => t.State).CountAsync(t => t.Status != Lambda.Deleted & t.State.Name.Trim().ToLower() == state.Trim().ToLower());
+        }
+
+        // count tickets by category
+        public async Task<int> CountTicketsByCategory(string category)
+        {
+            return await this._context.Tickets.Include(t => t.TicketCategory).CountAsync(t => t.Status != Lambda.Deleted & t.TicketCategory.Name.Trim().ToLower() == category.Trim().ToLower());
+        }
+
+        // count tickets by category
+        public async Task<int> CountTicketsByPriority(string priority)
+        {
+            return await this._context.Tickets.Include(t => t.TicketPriority).CountAsync(t => t.Status != Lambda.Deleted & t.TicketPriority.Name.Trim().ToLower() == priority.Trim().ToLower());
+        }
+
         public async Task<int> TotalCountByMember(int memberId)
         {
             return await this._context.Tickets.CountAsync(t => t.Status != Lambda.Deleted && t.MemberId == memberId);
