@@ -354,7 +354,15 @@ namespace UCS_CRM.Areas.Clerk.Controllers
             CursorParams CursorParameters = new CursorParams() { SearchTerm = searchValue, Skip = skip, SortColum = sortColumn, SortDirection = sortColumnAscDesc, Take = pageSize };
 
             resultTotal = await this._ticketRepository.TotalCount();
-            var result = await this._ticketRepository.GetTickets(CursorParameters);
+
+            var userClaims = (ClaimsIdentity)User.Identity;
+
+            var claimsIdentitifier = userClaims.FindFirst(ClaimTypes.NameIdentifier);
+
+         
+            var result = await this._ticketRepository.GetAssignedToTickets(CursorParameters, claimsIdentitifier.Value);
+            
+           
 
             //map the results to a read DTO
 

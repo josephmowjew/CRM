@@ -385,7 +385,24 @@ namespace UCS_CRM.Areas.Member.Controllers
             CursorParams CursorParameters = new CursorParams() { SearchTerm = searchValue, Skip = skip, SortColum = sortColumn, SortDirection = sortColumnAscDesc, Take = pageSize };
 
             resultTotal = await this._ticketRepository.TotalCount();
-            var result = await this._ticketRepository.GetTickets(CursorParameters);
+
+            var userClaims = (ClaimsIdentity)User.Identity;
+
+            var claimsIdentitifier = userClaims.FindFirst(ClaimTypes.NameIdentifier);
+
+            var member = await this._memberRepository.GetMemberByUserId(claimsIdentitifier.Value);
+
+            List<Ticket?> result = new List<Ticket>();
+
+            if(member != null)
+            {
+                result = await this._ticketRepository.GetMemberTickets(CursorParameters,member.Id);
+            }
+            else
+            {
+                result = await this._ticketRepository.GetTickets(CursorParameters);
+
+            }
 
             //map the results to a read DTO
 
