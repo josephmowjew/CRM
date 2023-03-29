@@ -1,9 +1,9 @@
-﻿@*
-    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
-*@
-@{
-    @model UCS_CRM.Core.DTOs.Ticket.ReadTicketDTO
-    ViewData["Title"] = "Ticket Details";
+﻿@{
+    @using Microsoft.Extensions.Configuration
+    @inject IConfiguration Configuration
+    @model UCS_CRM.Core.DTOs.Ticket.ReadTicketDTO;
+    var host = Configuration.GetSection("HostingSettings")["Host"];
+
 }
 
 <div class="card">
@@ -12,152 +12,190 @@
         <div class="card-body">
             <div class="row">
                 <div class="col-md-3 col-xs-6 b-r">
-                    <strong>Member</strong>
+                    <strong>TITLE</strong>
                     <br>
-                    <p class="text-muted">
-                        @{
-                            var member = Model.Member != null ? Model.Member.FullName : "";
-                        }
-                    </p>
+                    <p class="text-muted">@Model.Title</p>
                 </div>
                 <div class="col-md-3 col-xs-6 b-r">
-                    <strong>Assigned To</strong>
+                    <strong>ASSIGNED TO</strong>
                     <br>
                     <p class="text-muted">
                         @{
                             var assignee = Model.AssignedTo != null ? Model.AssignedTo.FullName : "Not Assigned";
-                        }
+                        } @assignee
                     </p>
                 </div>
                 <div class="col-md-3 col-xs-6 b-r">
-                    <strong>State</strong>
+                    <strong>STATE</strong>
                     <br>
                     <p class="text-muted">@Model.State.Name</p>
                 </div>
                 <div class="col-md-3 col-xs-6">
-                    <strong>Ticket Category</strong>
+                    <strong>TICKET CATEGORY</strong>
                     <br>
                     <p class="text-muted">@Model.TicketCategory.Name</p>
                 </div>
+                <div class="col-md-3 col-xs-6 b-r">
+                    <strong>MEMBER</strong>
+                    <br>
+                    <p class="text-muted">
+                        @{
+                            var member = Model.Member != null ? Model.Member.FullName : "";
+                        } @member
+                    </p>
+                </div>
+                <div class="col-md-3 col-xs-6 b-r">
+                    <strong>TICKET PRIORITY</strong>
+                    <br>
+                    <p class="text-muted">@Model.TicketPriority.Name</p>
+                </div>
+                <div class="col-md-3 col-xs-6">
+                    <strong>TICKET DESCRIPTION</strong>
+                    <br>
+                    <p class="text-muted">@Model.Description</p>
+                </div>
             </div>
-            <hr>
-
-            <p class="font-normal mt-4">Title</p>
-            <p class="mt-4">@Model.Title</p>
-
-            <p class="font-normal mt-4">Description</p>
-            <p class="mt-4">@Model.Description</p>
-
-                <p class="font-normal mt-4">Comments</p>
-                <hr>
-
-                  <div class="row p-3">
-                      <form>
-                         <div class="row">
-                            <div class="col-md-8 col-xs-8 b-r">
-                                 <textarea class="form-control" name="ticketComment" id="ticketComment" placeholder="Type in your comment..."></textarea>
+            <hr />
+            <p class="font-normal mt-4">ATTACHMENTS</p>
+            <div class="container">
+                <div class="row">
+                    <div class="col-md-12">
+                    </div>
+                </div>
+                <div class="row">
+                    @foreach (var attachment in Model.TicketAttachments)
+                    {
+                        <div class="col-md-3">
+                            <div class="card">
+                                <div class="card-body">
+                                    <h5 class="card-title">
+                                        <i class="mdi mdi-file-pdf"></i>
+                                        @attachment.FileName
+                                    </h5>
+                                    <a href="/../@attachment.Url" class="btn btn-primary" download>Download</a>
+                                </div>
                             </div>
-                            <div class="col-md-8 col-xs-8 b-r p-3"> 
+                        </div>
 
-                                <input type="button" class="btn btn-primary" onclick="addComment(@Model.Id)" name="createComment" value="Create Comment"/>
-                            </div>
-                       </div>
-                    </form>
-                  </div>
-
-                 <hr />
+                    }
 
 
-                <table class="table table-bordered " id="my_table">
-                    <thead>
-                        <tr>
-                            <th>
-                                Comment
-                            </th>
-                             <th>
-                                Created By
-                            </th>
-                           <th>
-                                Date 
-                            </th>
-                            <th>
-                                Action
-                            </th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                    </tbody>
-                </table>
+                </div>
             </div>
-         </div>
+
+        </div>
+    </div>
+
+</div>
+
+<div class="card">
+    <div class="card-body">
+
+        <div class="row p-3">
+            <h5 class="font-normal mt-4 ">COMMENTS</h5>
+            <hr class="mb-5" />
+            <form>
+                <div class="row">
+                    <div class="col-md-8 col-xs-8 b-r">
+                        <textarea class="form-control" style="background-color:#dee2e6;" name="ticketComment" id="ticketComment" placeholder="Type in your comment..."></textarea>
+                    </div>
+                    <div class="col-md-8 col-xs-8 b-r p-3">
+
+                        <input type="button" class="btn btn-primary" onclick="addComment(@Model.Id)" name="createComment" value="Add Comment" />
+                    </div>
+                </div>
+            </form>
+        </div>
+        <hr />
+        <table class="table table-bordered " id="my_table">
+            <thead>
+                <tr>
+                    <th>
+                        Comment
+                    </th>
+                    <th>
+                        Created By
+                    </th>
+                    <th>
+                        Date
+                    </th>
+                    <th>
+                        Action
+                    </th>
+                </tr>
+            </thead>
+            <tbody>
+            </tbody>
+        </table>
+    </div>
 
 </div>
 
 @section Scripts{
 
-                        <script>
-                            var datatable;
-                        </script>
+    <script>
+        var datatable;
+    </script>
 
-                        <script src="~/js/ClientTicket.js"></script>
-                        <script>
-                            $(document).ready(function () {
-                                datatable = $('#my_table').DataTable({
+    <script src="~/js/MemberTicket.js"></script>
+    <script>
+        $(document).ready(function () {
+            datatable = $('#my_table').DataTable({
 
 
-                                    "processing": true,
-                                    "serverSide": true,
-                                    "order": [[0, "desc"]],
-                                    ajax: {
-                                                url: '/client/tickets/GetTicketComments/?ticketId='+@Model.Id,
-                                        type: 'post',
-                                        datatype: 'Json',
-                                       
+                "processing": true,
+                "serverSide": true,
+                "order": [[0, "desc"]],
+                ajax: {
+                    url: '/seniormanager/tickets/GetTicketComments/?ticketId=' + @Model.Id,
+                    type: 'post',
+                    datatype: 'Json',
 
-                                  },
-                                    columnDefs: [
-                                        {
-                                            defaultContent: "",
-                                            targets: "_all",
-                                            'orderable': true
-                                        },
-                                    ],
-                                    columns: [
 
-                                        {
-                                            data: "comment",
-                                            name: "comment",
-                                            className: "text-left",
-                                            "orderable": true,
-                                        },
-                                          {
-                                            data: { state: "createdBy.fullName"},
-                                            mRender: function (data, type, full) {
-                                                                      return data.createdBy != null && data.createdBy.status != 'Deleted' ?   data.createdBy.fullName  : "";
-                                                     }, "name": "createdBy.name",
-                                            className: "text-left"
-                                        },
-                                        {
-                                            data: "formattedCreatedAt",
-                                            name: "CreatedDate",
-                                            className: "text-left",
-                                            "orderable": true,
-                                        },
-                                          {
-                                            data: "id",
-                                            name: "id",
-                                            "orderable": false,
-                                            render: function (data) {
-                                                            return " <a href='#' type='button' onclick=Delete('" +data + "') title='delete' class='feather icon-trash-2'></a>"
-                                            }
-                                        },
+                },
+                columnDefs: [
+                    {
+                        defaultContent: "",
+                        targets: "_all",
+                        'orderable': true
+                    },
+                ],
+                columns: [
 
-                                    ],
-                                    responsive: true,
-                                    "autoWidth": false,
-                                });
-                            });
-                        </script>
+                    {
+                        data: "comment",
+                        name: "comment",
+                        className: "text-left",
+                        "orderable": true,
+                    },
+                    {
+                        data: { state: "createdBy.fullName" },
+                        mRender: function (data, type, full) {
+                            return data.createdBy != null && data.createdBy.status != 'Deleted' ? data.createdBy.fullName : "";
+                        }, "name": "createdBy.name",
+                        className: "text-left"
+                    },
+                    {
+                        data: "formattedCreatedAt",
+                        name: "CreatedDate",
+                        className: "text-left",
+                        "orderable": true,
+                    },
+                    {
+                        data: "id",
+                        name: "id",
+                        "orderable": false,
+                        render: function (data) {
+                            return " <a href='#' type='button' onclick=DeleteComment('" + data + "') title='delete' class='feather icon-trash-2'></a>"
+                        }
+                    },
+
+                ],
+                responsive: true,
+                "autoWidth": false,
+            });
+        });
+    </script>
 
     @{
         await Html.RenderPartialAsync("_ValidationScriptsPartial");

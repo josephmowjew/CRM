@@ -53,7 +53,7 @@ namespace UCS_CRM.Areas.SeniorManager.Controllers
         // GET: TicketsController
         public async Task<ActionResult> Index()
         {
-            await populateViewBags();
+            //await populateViewBags();
 
             return View();
         }
