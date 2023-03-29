@@ -18,5 +18,8 @@ namespace UCS_CRM.Persistence.Interfaces
         Task<int> CountTicketsByStatusAssignedTo(string status, string assignedToId);
         Task<int> CountTicketsByStatusMember(string status, int memberId);
         Task<Ticket> LastTicket();
+        Task<int> CountTicketsByPriority(string priority);
+        Task<int> CountTicketsByCategory(string category);
+        Task<int> CountTicketsByStatus(string state);
     }
 }
