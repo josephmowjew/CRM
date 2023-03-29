@@ -1,0 +1,4 @@
+﻿input[data-val-required="true"]::after {
+    content: "*" !important;
+    color: red !important;
+}
