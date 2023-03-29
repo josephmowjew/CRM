@@ -22,9 +22,18 @@ namespace UCS_CRM.Persistence.SQLRepositories
             this._context.TicketPriorities.Add(ticketPriority);
         }
 
-        public TicketPriority Exists(string name)
+        public TicketPriority Exists(string name, int id = 0)
         {
-            return this._context.TicketPriorities.FirstOrDefault(a => a.Name.ToLower() == name.ToLower() & a.Status != Lambda.Deleted);
+            if(id == 0)
+            {
+                return this._context.TicketPriorities.FirstOrDefault(a => a.Name.ToLower() == name.ToLower() & a.Status != Lambda.Deleted);
+
+            }
+            else
+            {
+                return this._context.TicketPriorities.FirstOrDefault(a => a.Name.ToLower() == name.ToLower() & a.Status != Lambda.Deleted & a.Id != id);
+
+            }
         }
 
         public async Task<TicketPriority?> GetTicketPriority(int id)

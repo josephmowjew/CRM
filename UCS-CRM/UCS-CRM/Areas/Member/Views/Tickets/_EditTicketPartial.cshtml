@@ -10,9 +10,11 @@
             </button>
         </div>
         <div class="modal-body">
+
+             <input asp-for="DataInvalid" type="hidden"/>
             <form asp-action="Edit" enctype="multipart/form-data">
                 <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-                <input type="hidden" asp-for="DataInvalid" />
+               
                 <input type="hidden" asp-for="Id" />
                 <div class="form-group">
                     <label asp-for="Title" class="control-label"></label>
@@ -35,8 +37,8 @@
                     <span asp-validation-for="TicketCategoryId" class="text-danger"></span>
                 </div>
                 <div class="form-group">
-                  <label for="Attachments" class="form-label">Upload Ticket Attachments</label>
-                  <input class="form-control" type="file" id="Attachments" name="Attachments" multiple>
+                  <label for="Attachments" class="form-label">Upload Ticket Attachments (PDF)</label>
+                  <input class="form-control" type="file" id="Attachments" name="Attachments" multiple accept="application/pdf" >
                 </div>
 
 

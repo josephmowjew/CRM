@@ -25,6 +25,7 @@ namespace UCS_CRM.Data
         public DbSet<TicketAttachment> TicketAttachments { get; set; }
         public DbSet<State> States { get; set; }
         public DbSet<Message> Messages { get; set; }
+        public DbSet<TicketEscalation> TicketEscalations { get; set; } 
 
 
         protected override void OnModelCreating(ModelBuilder builder)

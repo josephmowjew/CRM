@@ -10,6 +10,7 @@ using UCS_CRM.Core.DTOs.Member;
 using UCS_CRM.Core.DTOs.State;
 using UCS_CRM.Core.DTOs.Ticket;
 using UCS_CRM.Core.DTOs.TicketComment;
+using UCS_CRM.Core.DTOs.TicketEscalation;
 using UCS_CRM.Core.Helpers;
 using UCS_CRM.Core.Models;
 using UCS_CRM.Persistence.Interfaces;
@@ -24,6 +25,7 @@ namespace UCS_CRM.Areas.Manager.Controllers
         private readonly ITicketRepository _ticketRepository;
         private readonly IUserRepository _userRepository;
         private readonly ITicketCommentRepository _ticketCommentRepository;
+        private readonly ITicketEscalationRepository _ticketEscalationRepository;
         private readonly ITicketCategoryRepository _ticketCategoryRepository;
         private readonly IStateRepository _stateRepository;
         private readonly ITicketPriorityRepository _priorityRepository;
@@ -33,7 +35,7 @@ namespace UCS_CRM.Areas.Manager.Controllers
         private IWebHostEnvironment _env;
         public TicketsController(ITicketRepository ticketRepository, IMapper mapper, IUnitOfWork unitOfWork, 
             ITicketCategoryRepository ticketCategoryRepository, IStateRepository stateRepository, ITicketPriorityRepository priorityRepository,
-            IWebHostEnvironment env, ITicketCommentRepository ticketCommentRepository, IUserRepository userRepository, IMemberRepository memberRepository)
+            IWebHostEnvironment env, ITicketCommentRepository ticketCommentRepository, IUserRepository userRepository, IMemberRepository memberRepository, ITicketEscalationRepository ticketEscalationRepository)
         {
             _ticketRepository = ticketRepository;
             _mapper = mapper;
@@ -45,6 +47,7 @@ namespace UCS_CRM.Areas.Manager.Controllers
             _ticketCommentRepository = ticketCommentRepository;
             _userRepository = userRepository;
             _memberRepository = memberRepository;
+            _ticketEscalationRepository = ticketEscalationRepository;
         }
 
         // GET: TicketsController
@@ -173,6 +176,86 @@ namespace UCS_CRM.Areas.Manager.Controllers
 
             return Json(new { status = "error", message = "ticket could not be found from the system" });
         }
+
+        //escalate ticket
+        [HttpPost]
+        public async Task<ActionResult> Escalate(CreateTicketEscalationDTO createTicketEscalation)
+        {
+            //check for model validity
+
+            createTicketEscalation.DataInvalid = "true";
+
+            if (ModelState.IsValid)
+            {
+
+                createTicketEscalation.DataInvalid = "";
+                createTicketEscalation.EscalationLevel = 2;
+
+
+                //check for article title presence
+
+                var mappedTicketEscalation = this._mapper.Map<TicketEscalation>(createTicketEscalation);
+
+                var ticketEscalationPresence = this._ticketEscalationRepository.Exists(mappedTicketEscalation);
+
+
+
+                if (ticketEscalationPresence != null)
+                {
+                    createTicketEscalation.DataInvalid = "true";
+
+                    ModelState.AddModelError(nameof(mappedTicketEscalation.Ticket.Title), $"Another ticket exists with the parameters submitted'");
+
+                    return PartialView("_SecondTicketEscalationPartial", createTicketEscalation);
+                }
+
+
+                //save to the database
+
+                try
+                {
+                    var userClaims = (ClaimsIdentity)User.Identity;
+
+                    var claimsIdentitifier = userClaims.FindFirst(ClaimTypes.NameIdentifier);
+
+                    mappedTicketEscalation.CreatedById = claimsIdentitifier.Value;
+
+
+                    this._ticketEscalationRepository.Add(mappedTicketEscalation);
+                    await this._unitOfWork.SaveToDataStore();
+
+
+                    return PartialView("_SecondTicketEscalationPartial", createTicketEscalation);
+                }
+                catch (DbUpdateException ex)
+                {
+                    createTicketEscalation.DataInvalid = "true";
+
+                    ModelState.AddModelError(string.Empty, ex.InnerException.Message);
+
+                    return PartialView("_SecondTicketEscalationPartial", createTicketEscalation);
+                }
+
+                catch (Exception ex)
+                {
+
+                    createTicketEscalation.DataInvalid = "true";
+
+                    ModelState.AddModelError(string.Empty, ex.Message);
+
+                    return PartialView("_SecondTicketEscalationPartial", createTicketEscalation);
+                }
+
+
+
+
+            }
+
+
+
+            return PartialView("_SecondTicketEscalationPartial", createTicketEscalation);
+        }
+
 
         [HttpPost]
         public async Task<ActionResult> GetTickets()

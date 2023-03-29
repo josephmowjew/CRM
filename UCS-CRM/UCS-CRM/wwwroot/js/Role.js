@@ -33,7 +33,7 @@
             type: 'POST',
             data: userInput,
             success: function (data) {
-
+                console.log(data)
                 //parse whatever comes back to html
 
                 var parsedData = $.parseHTML(data)

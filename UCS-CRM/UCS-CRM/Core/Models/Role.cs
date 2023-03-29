@@ -11,6 +11,6 @@ namespace UCS_CRM.Core.Models
         [Required]
         [StringLength(100, MinimumLength = 2)]
         public override string Name { get; set; }
-        public string? DataInvalid { get; set; }
+        public string DataInvalid { get; set; } = "true";
     }
 }

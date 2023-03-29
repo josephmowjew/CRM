@@ -29,6 +29,11 @@
 <div class="modal fade" id="edit_ticket_modal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
     <partial name="_EditTicketPartial" />
 </div>
+
+<div class="modal fade" id="escalate_ticket_modal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <partial name="_FirstTicketEscalationPartial" />
+</div>
+
 <div class="card">
     <div class="card-header">
         <h4 class="text-center text-uppercase">My Tickets Available In The System</h4>
@@ -166,7 +171,7 @@
                                     name: "id",
                                     "orderable": false,
                                     render: function (data) {
-                                                    return "<a href='#' onclick=EditForm('" + data + "') type='button' class='feather icon-edit' title='edit' ></a> <a href='#' type='button' onclick=Delete('" +data + "') title='delete' class='feather icon-trash-2'></a><a href='tickets/details/"+data+"' class='mdi mdi-eye'></a>"
+                            return "<a href='#' onclick=EditForm('" + data + "') type='button' class='feather icon-edit' title='edit' ></a> <a href='#' type='button' onclick=Delete('" + data + "') title='delete' class='feather icon-trash-2'></a><a href='tickets/details/" + data + "' class='mdi mdi-eye'></a>  <a href='#' type='button' onclick=EscalationForm('" + data + "') title='Escalate' class='mdi mdi-arrow-up-bold'></a>"
                                     }
                                 },
 
