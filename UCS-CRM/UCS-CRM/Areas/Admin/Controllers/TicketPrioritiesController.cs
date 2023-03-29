@@ -182,7 +182,7 @@ namespace UCS_CRM.Areas.Admin.Controllers
                 }
                 //check if the role name isn't already taken
 
-                var ticketPriorityExist = this._ticketPriorityRepository.Exists(editTicketPriorityDTO.Name);
+                var ticketPriorityExist = this._ticketPriorityRepository.Exists(editTicketPriorityDTO.Name,editTicketPriorityDTO.Id);
 
 
 

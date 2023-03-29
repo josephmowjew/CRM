@@ -432,7 +432,7 @@ namespace UCS_CRM.Areas.Clerk.Controllers
             await this._unitOfWork.SaveToDataStore();
 
 
-            return Json(new { status = "success", message = "ticket added successfully" });
+            return Json(new { status = "success", message = "comment added successfully" });
 
 
         }
