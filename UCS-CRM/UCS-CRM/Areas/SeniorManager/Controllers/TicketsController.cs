@@ -58,6 +58,14 @@ namespace UCS_CRM.Areas.SeniorManager.Controllers
             return View();
         }
 
+        // GET: TicketsController
+        public async Task<ActionResult> Closed()
+        {
+            //await populateViewBags();
+
+            return View();
+        }
+
 
         // GET: TicketsController/Edit/5
         public async Task<ActionResult> Edit(int id)

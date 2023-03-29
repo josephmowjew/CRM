@@ -417,5 +417,106 @@ function DeleteComment(id) {
     });
 }
 
+//escalate ticket
+function EscalationForm(id, area = "") {
 
+    //get the input field inside the edit role modal form
+
+    $("#escalate_ticket_modal input[name ='TicketId']").val(id)
+
+    //hook up an event to the update role button
+
+    $("#escalate_ticket_modal button[name='escalate_ticket_btn']").unbind().click(function () { escalateTicket() })
+
+    var validator = $("#escalate_ticket_modal form").validate();
+
+    //validator.resetForm();
+
+    $("#escalate_ticket_modal").modal("show");
+
+}
+
+function escalateTicket() {
+    toastr.clear()
+
+    //get the authorisation token
+    //upDateRole
+    var authenticationToken = $("#escalate_ticket_modal input[name='__RequestVerificationToken']").val();
+
+    var form_url = $("#escalate_ticket_modal form").attr("action");
+
+    var form = $("#escalate_ticket_modal form")
+
+
+    let formData = new FormData(form[0]);
+
+
+    //send the request
+
+
+
+    $.ajax({
+        url: form_url,
+        type: 'POST',
+        data: formData,
+        processData: false,
+        contentType: false,
+        success: function (data) {
+
+
+            //parse whatever comes back to html
+
+            var parsedData = $.parseHTML(data)
+
+
+
+            //check if there is an error in the data that is coming back from the user
+
+            var isInvalid = $(parsedData).find("input[name='DataInvalid']").val() == "true"
+
+
+            if (isInvalid == true) {
+
+                //replace the form data with the data retrieved from the server
+                $("#escalate_ticket_modal").html(data)
+
+
+                //rewire the onclick event on the form
+
+                $("#escalate_ticket_modal button[name='escalate_ticket_btn']").unbind().click(function () { escalateTicket() });
+
+                var form = $("#escalate_ticket_modal")
+
+                $(form).removeData("validator")
+                $(form).removeData("unobtrusiveValidation")
+                $.validator.unobtrusive.parse(form)
+
+
+            }
+            else {
+
+
+                //show success message to the user
+                var dataTable = $('#my_table').DataTable();
+
+                toastr.success(data.message)
+
+                $("#escalate_ticket_modal").modal("hide")
+
+                dataTable.ajax.reload();
+
+            }
+
+
+
+        },
+        error: function (xhr, ajaxOtions, thrownError) {
+
+            console.error(thrownError + "r\n" + xhr.statusText + "r\n" + xhr.responseText)
+        }
+
+    });
+
+
+}
 

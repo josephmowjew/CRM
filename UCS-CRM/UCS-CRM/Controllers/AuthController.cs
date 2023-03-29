@@ -72,7 +72,7 @@ namespace UCS_CRM.Controllers
 
                         if (roles.Contains("Administrator"))
                         {
-                            return RedirectToAction("Index", "Users", new { Area = "Admin" });
+                            return RedirectToAction("Index", "Home", new { Area = "Admin" });
                         }
                         if (roles.Contains("Clerk"))
                         {
@@ -80,11 +80,11 @@ namespace UCS_CRM.Controllers
                         }
                         if (roles.Contains("Manager"))
                         {
-                            return RedirectToAction("Index", "Tickets", new { Area = "Manager" });
+                            return RedirectToAction("Index", "Home", new { Area = "Manager" });
                         }
                         if (roles.Contains("Senior Manager"))
                         {
-                            return RedirectToAction("Index", "Dashboard", new { Area = "Admin" });
+                            return RedirectToAction("Index", "Home", new { Area = "Admin" });
                         }
                         if (roles.Contains("Member"))
                         {
