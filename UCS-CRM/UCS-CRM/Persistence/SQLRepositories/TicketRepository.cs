@@ -69,9 +69,16 @@ namespace UCS_CRM.Persistence.SQLRepositories
                 {
                     //include search query
 
-                    var records = (from tblOb in await this._context.Tickets.OrderByDescending(t => t.Id).Include(t => t.AssignedTo).Include(t => t.TicketAttachments).Include(t => t.State).Include(t => t.TicketCategory).Include(t => t.TicketPriority)
-                                   .Where(t => t.Status != Lambda.Deleted
-                                        && t.Title.ToLower().Trim().Contains(@params.SearchTerm.ToLower()) ||
+                    var records = (from tblOb in await this._context.Tickets
+                                   .Where(t => t.Status != Lambda.Deleted)
+                                   .OrderByDescending(t => t.Id)
+                                   .Include(t => t.AssignedTo)
+                                   .Include(t => t.TicketAttachments)
+                                   .Include(t => t.State)
+                                   .Include(t => t.TicketCategory)
+                                   .Include(t => t.TicketPriority)
+                                   .Where(t => 
+                                           t.Title.ToLower().Trim().Contains(@params.SearchTerm.ToLower()) ||
                                            t.Description.ToLower().Trim().Contains(@params.SearchTerm.ToLower()) ||
                                            t.State.Name.ToLower().Trim().Contains(@params.SearchTerm.ToLower()) ||
                                            t.Member.FirstName.ToLower().Trim().Contains(@params.SearchTerm.ToLower()) ||
