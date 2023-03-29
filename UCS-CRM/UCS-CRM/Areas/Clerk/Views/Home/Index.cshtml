@@ -1,1 +1,55 @@
-﻿<h1>Helo</h1>
+﻿@*
+    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
+*@
+@{
+}
+
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+                <div class="card-body">
+                  <h4 class="card-title">Ticket Stats</h4>
+                  <div class="row mt-4">
+                    <!-- Column -->
+                    <div class="col-md-6 col-lg-3 col-xlg-3">
+                      <div class="card card-hover">
+                        <div class="p-2 rounded bg-light-primary text-center">
+                          <h1 class="fw-light text-primary">@ViewBag.allTicketsCount</h1>
+                          <h6 class="text-primary">Total Tickets</h6>
+                        </div>
+                      </div>
+                    </div>
+                    <!-- Column -->
+                    <div class="col-md-6 col-lg-3 col-xlg-3">
+                      <div class="card card-hover">
+                        <div class="p-2 rounded bg-light-warning text-center">
+                          <h1 class="fw-light text-warning">@ViewBag.waitingTicketsCount</h1>
+                          <h6 class="text-warning">Waiting For Support</h6>
+                        </div>
+                      </div>
+                    </div>
+                    <!-- Column -->
+                    <div class="col-md-6 col-lg-3 col-xlg-3">
+                      <div class="card card-hover">
+                        <div class="p-2 rounded bg-light-success text-center">
+                          <h1 class="fw-light text-success">@ViewBag.openedTicketsCount</h1>
+                          <h6 class="text-success">Opened</h6>
+                        </div>
+                      </div>
+                    </div>
+                    <!-- Column -->
+                    <div class="col-md-6 col-lg-3 col-xlg-3">
+                      <div class="card card-hover">
+                        <div class="p-2 rounded bg-light-danger text-center">
+                          <h1 class="fw-light text-danger">@ViewBag.closedTicketsCount</h1>
+                          <h6 class="text-danger">Closed</h6>
+                        </div>
+                      </div>
+                    </div>
+                    <!-- Column -->
+                  </div>
+
+                </div>
+              </div>
+    </div>
+</div>

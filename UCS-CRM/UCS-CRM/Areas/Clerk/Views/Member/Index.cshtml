@@ -8,7 +8,7 @@
 }
 @{
     ViewData["Title"] = "Members";
-    Layout = "~/Areas/Admin/Views/shared/_Layout.cshtml";
+    Layout = "~/Areas/Clerk/Views/shared/_Layout.cshtml";
 }
 
 
@@ -45,10 +45,7 @@
                     <th>
                         Date Of Birth
                     </th>
-                    <th>
-                        Action
-                    </th>
-
+                    
                   
 
                 </tr>
@@ -134,13 +131,7 @@
                                 className: "text-left",
                                 "orderable": false,
                             },
-                              {
-                                data: { state: "user.id"},
-                                mRender: function (data, type, full) {
-                                                                    return data.user != null && data.user.status != 'Deleted' ?  "<a href='#' onclick=removeUserAccount('" + data.id + "') type='button' class='mdi mdi-account-remove' title='Remove User Account' ></a>" : "<a href='#' onclick=set_email_modal('" + data.id + "') type='button' class='feather icon-user-plus' title='Create User Account' ></a>";
-                                }, "name": "user.name",
-                                className: "text-left"
-                            },
+                             
                             
                         ],
                         responsive: true,
