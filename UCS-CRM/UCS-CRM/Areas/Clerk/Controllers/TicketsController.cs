@@ -353,13 +353,15 @@ namespace UCS_CRM.Areas.Clerk.Controllers
             //create a cursor params based on the data coming from the datatable
             CursorParams CursorParameters = new CursorParams() { SearchTerm = searchValue, Skip = skip, SortColum = sortColumn, SortDirection = sortColumnAscDesc, Take = pageSize };
 
-            resultTotal = await this._ticketRepository.TotalCount();
+           
 
             var userClaims = (ClaimsIdentity)User.Identity;
 
             var claimsIdentitifier = userClaims.FindFirst(ClaimTypes.NameIdentifier);
 
-         
+            resultTotal = await this._ticketRepository.TotalCountByAssignedTo(claimsIdentitifier.Value);
+
+
             var result = await this._ticketRepository.GetAssignedToTickets(CursorParameters, claimsIdentitifier.Value);
             
            

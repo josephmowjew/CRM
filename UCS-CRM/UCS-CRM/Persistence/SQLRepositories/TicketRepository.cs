@@ -4,6 +4,7 @@ using UCS_CRM.Core.Models;
 using UCS_CRM.Data;
 using System.Linq.Dynamic.Core;
 using UCS_CRM.Persistence.Interfaces;
+using AutoMapper.Execution;
 
 namespace UCS_CRM.Persistence.SQLRepositories
 {
@@ -114,7 +115,7 @@ namespace UCS_CRM.Persistence.SQLRepositories
                                    .Include(t => t.State)
                                    .Include(t => t.TicketCategory)
                                    .Include(t => t.TicketPriority)
-                                   .Where(t => t.Status != Lambda.Deleted & t.MemberId == memberId)
+                                   .Where(t => t.Status != Lambda.Deleted && t.MemberId == memberId)
                                    .Take(@params.Take)
                                    .Skip(@params.Skip)
                                    .ToListAsync() select tblOb);
@@ -133,10 +134,16 @@ namespace UCS_CRM.Persistence.SQLRepositories
                 else
                 {
                     //include search query
-
-                    var records = (from tblOb in await this._context.Tickets.OrderByDescending(t => t.Id).Include(t => t.AssignedTo).Include(t => t.TicketAttachments).Include(t => t.State).Include(t => t.TicketCategory).Include(t => t.TicketPriority)
-                                   .Where(t => t.Status != Lambda.Deleted & t.MemberId == memberId
-                                        & t.Title.ToLower().Trim().Contains(@params.SearchTerm.ToLower()) ||
+                    /*
+                    var records = (from tblOb in await this._context.Tickets
+                                   .OrderByDescending(t => t.Id)
+                                   .Include(t => t.AssignedTo)
+                                   .Include(t => t.TicketAttachments)
+                                   .Include(t => t.State)
+                                   .Include(t => t.TicketCategory)
+                                   .Include(t => t.TicketPriority)
+                                   .Where(t => t.Status != Lambda.Deleted && t.MemberId == memberId
+                                        && t.Title.ToLower().Trim().Contains(@params.SearchTerm.ToLower()) ||
                                            t.Description.ToLower().Trim().Contains(@params.SearchTerm.ToLower()) ||
                                            t.State.Name.ToLower().Trim().Contains(@params.SearchTerm.ToLower()) ||
                                            t.Member.FirstName.ToLower().Trim().Contains(@params.SearchTerm.ToLower()) ||
@@ -145,17 +152,37 @@ namespace UCS_CRM.Persistence.SQLRepositories
                                    .Take(@params.Take)
                                    .Skip(@params.Skip)
                                    .ToListAsync()
-                                   select tblOb);
+                                   select tblOb);\
+                    */
+
+                    var records = await this._context.Tickets
+                                                   .Where(t => t.Status != Lambda.Deleted && t.MemberId == memberId)
+                                                   .Include(t => t.AssignedTo)
+                                                   .Include(t => t.TicketAttachments)
+                                                   .Include(t => t.State)
+                                                   .Include(t => t.TicketCategory)
+                                                   .Include(t => t.TicketPriority)
+                                                   .Where(t =>
+                                                               t.Title.ToLower().Trim().Contains(@params.SearchTerm.ToLower()) ||
+                                                               t.Description.ToLower().Trim().Contains(@params.SearchTerm.ToLower()) ||
+                                                               t.State.Name.ToLower().Trim().Contains(@params.SearchTerm.ToLower()) ||
+                                                               t.Member.FirstName.ToLower().Trim().Contains(@params.SearchTerm.ToLower()) ||
+                                                               t.Member.LastName.ToLower().Trim().Contains(@params.SearchTerm.ToLower()) ||
+                                                               t.TicketCategory.Name.ToLower().Trim().Contains(@params.SearchTerm.ToLower()))
+                                                   .OrderByDescending(t => t.Id)
+                                                   .Skip(@params.Skip)
+                                                   .Take(@params.Take)
+                                                   .ToListAsync();
 
                     //accountTypes.AsQueryable().OrderBy("gjakdgdag");
 
                     if (string.IsNullOrEmpty(@params.SortColum) && !string.IsNullOrEmpty(@params.SortDirection))
                     {
-                        records = records.AsQueryable().OrderBy(@params.SortColum + " " + @params.SortDirection);
+                        records = (List<Ticket>)records.AsQueryable().OrderBy(@params.SortColum + " " + @params.SortDirection);
 
                     }
 
-                    return records.ToList();
+                    return records;
                 }
             }
             else
@@ -180,7 +207,7 @@ namespace UCS_CRM.Persistence.SQLRepositories
                                    .Include(t => t.State)
                                    .Include(t => t.TicketCategory)
                                    .Include(t => t.TicketPriority)
-                                   .Where(t => t.Status != Lambda.Deleted & t.AssignedToId == assignedToId)
+                                   .Where(t => t.Status != Lambda.Deleted && t.AssignedToId == assignedToId)
                                    .Take(@params.Take)
                                    .Skip(@params.Skip)
                                    .ToListAsync()
@@ -201,28 +228,34 @@ namespace UCS_CRM.Persistence.SQLRepositories
                 {
                     //include search query
 
-                    var records = (from tblOb in await this._context.Tickets.OrderByDescending(t => t.Id).Include(t => t.AssignedTo).Include(t => t.TicketAttachments).Include(t => t.State).Include(t => t.TicketCategory).Include(t => t.TicketPriority)
-                                   .Where(t => t.Status != Lambda.Deleted & t.AssignedToId == assignedToId
-                                        & t.Title.ToLower().Trim().Contains(@params.SearchTerm.ToLower()) ||
-                                           t.Description.ToLower().Trim().Contains(@params.SearchTerm.ToLower()) ||
-                                           t.State.Name.ToLower().Trim().Contains(@params.SearchTerm.ToLower()) ||
-                                           t.Member.FirstName.ToLower().Trim().Contains(@params.SearchTerm.ToLower()) ||
-                                           t.Member.LastName.ToLower().Trim().Contains(@params.SearchTerm.ToLower()) ||
-                                           t.TicketCategory.Name.ToLower().Trim().Contains(@params.SearchTerm.ToLower()))
-                                   .Take(@params.Take)
-                                   .Skip(@params.Skip)
-                                   .ToListAsync()
-                                   select tblOb);
+                    var records = await this._context.Tickets
+                                                    .Where(t => t.Status != Lambda.Deleted && t.AssignedToId == assignedToId)
+                                                    .Include(t => t.AssignedTo)
+                                                    .Include(t => t.TicketAttachments)
+                                                    .Include(t => t.State)
+                                                    .Include(t => t.TicketCategory)
+                                                    .Include(t => t.TicketPriority)
+                                                    .Where(t =>
+                                                                t.Title.ToLower().Trim().Contains(@params.SearchTerm.ToLower()) ||
+                                                                t.Description.ToLower().Trim().Contains(@params.SearchTerm.ToLower()) ||
+                                                                t.State.Name.ToLower().Trim().Contains(@params.SearchTerm.ToLower()) ||
+                                                                t.Member.FirstName.ToLower().Trim().Contains(@params.SearchTerm.ToLower()) ||
+                                                                t.Member.LastName.ToLower().Trim().Contains(@params.SearchTerm.ToLower()) ||
+                                                                t.TicketCategory.Name.ToLower().Trim().Contains(@params.SearchTerm.ToLower()))
+                                                    .OrderByDescending(t => t.Id)
+                                                    .Skip(@params.Skip)
+                                                    .Take(@params.Take)
+                                                    .ToListAsync();
 
                     //accountTypes.AsQueryable().OrderBy("gjakdgdag");
 
                     if (string.IsNullOrEmpty(@params.SortColum) && !string.IsNullOrEmpty(@params.SortDirection))
                     {
-                        records = records.AsQueryable().OrderBy(@params.SortColum + " " + @params.SortDirection);
+                        records = (List<Ticket>)records.AsQueryable().OrderBy(@params.SortColum + " " + @params.SortDirection);
 
                     }
 
-                    return records.ToList();
+                    return records;
                 }
             }
             else
@@ -249,20 +282,20 @@ namespace UCS_CRM.Persistence.SQLRepositories
 
         public async Task<int> TotalCountByMember(int memberId)
         {
-            return await this._context.Tickets.CountAsync(t => t.Status != Lambda.Deleted & t.MemberId == memberId);
+            return await this._context.Tickets.CountAsync(t => t.Status != Lambda.Deleted && t.MemberId == memberId);
         }
         public async Task<int> TotalCountByAssignedTo(string assignedTo)
         {
-            return await this._context.Tickets.CountAsync(t => t.Status != Lambda.Deleted & t.AssignedToId == assignedTo);
+            return await this._context.Tickets.CountAsync(t => t.Status != Lambda.Deleted && t.AssignedToId == assignedTo);
         }
 
         public async Task<int> CountTicketsByStatusMember(string state, int memberId)
         {
-            return await this._context.Tickets.Include(t => t.State).CountAsync(t => t.Status != Lambda.Deleted & t.State.Name.Trim().ToLower() == state.Trim().ToLower() & t.MemberId == memberId);
+            return await this._context.Tickets.Include(t => t.State).CountAsync(t => t.Status != Lambda.Deleted & t.State.Name.Trim().ToLower() == state.Trim().ToLower() && t.MemberId == memberId);
         }
         public async Task<int> CountTicketsByStatusAssignedTo(string state, string assignedToId)
         {
-            return await this._context.Tickets.Include(t => t.State).CountAsync(t => t.Status != Lambda.Deleted & t.State.Name.Trim().ToLower() == state.Trim().ToLower() & t.AssignedToId == assignedToId);
+            return await this._context.Tickets.Include(t => t.State).CountAsync(t => t.Status != Lambda.Deleted & t.State.Name.Trim().ToLower() == state.Trim().ToLower() && t.AssignedToId == assignedToId);
         }
     }
 }

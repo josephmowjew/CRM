@@ -248,6 +248,7 @@ namespace UCS_CRM.Areas.Member.Controllers
 
                 var ticketExist = this._ticketRepository.Exists(mappedTicket);
 
+                editTicketDTO.MemberId = ticketDB.MemberId;
 
 
                 bool isTaken = (ticketExist != null);
@@ -384,13 +385,15 @@ namespace UCS_CRM.Areas.Member.Controllers
             //create a cursor params based on the data coming from the datatable
             CursorParams CursorParameters = new CursorParams() { SearchTerm = searchValue, Skip = skip, SortColum = sortColumn, SortDirection = sortColumnAscDesc, Take = pageSize };
 
-            resultTotal = await this._ticketRepository.TotalCount();
+            
 
             var userClaims = (ClaimsIdentity)User.Identity;
 
             var claimsIdentitifier = userClaims.FindFirst(ClaimTypes.NameIdentifier);
 
             var member = await this._memberRepository.GetMemberByUserId(claimsIdentitifier.Value);
+
+            resultTotal = await this._ticketRepository.TotalCountByMember(member.Id);
 
             List<Ticket?> result = new List<Ticket>();
 
