@@ -88,12 +88,12 @@ namespace UCS_CRM.Controllers
                         }
                         if (roles.Contains("Member"))
                         {
-                            return RedirectToAction("Index", "Tickets", new { Area = "Member" });
+                            return RedirectToAction("Index", "Home", new { Area = "Member" });
                         }
                         else
                         {
 
-                            return RedirectToAction("Index", "Tickets", new { Area = "Member" });
+                            return RedirectToAction("Index", "Home", new { Area = "Member" });
                         }
 
 
