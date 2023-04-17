@@ -102,24 +102,26 @@ namespace UCS_CRM.Persistence.SQLRepositories
             
         }
 
-        public async Task<List<Member>?> GetMembers(CursorParams cursorParams)
+        public async Task<List<Member>?> GetMembers(CursorParams @params)
         {
             //check if the request actually has a request of number of items to return
 
-            if(cursorParams.Take > 0) {
+            if(@params.Take > 0) {
 
                 //check if search parameter was used
 
-                if (string.IsNullOrEmpty(cursorParams.SearchTerm))
+                if (string.IsNullOrEmpty(@params.SearchTerm))
                 {
                    
-                    var records = (from tblOb in await this._context.Members.Include(m => m.User).Where(m => m.Status != Lambda.Deleted).Take(cursorParams.Take).Skip(cursorParams.Skip).ToListAsync() select tblOb);
+
+
+                    var records = (from tblOb in  this._context.Members.OrderBy(m => m.Id).Skip(@params.Skip).Take(@params.Take).ToList() select tblOb);
 
                     //accountTypes.AsQueryable().OrderBy("gjakdgdag");
 
-                    if (string.IsNullOrEmpty(cursorParams.SortColum) && !string.IsNullOrEmpty(cursorParams.SortDirection))
+                    if (string.IsNullOrEmpty(@params.SortColum) && !string.IsNullOrEmpty(@params.SortDirection))
                     {
-                        records = records.AsQueryable().OrderBy(cursorParams.SortColum + " " + cursorParams.SortDirection);
+                        records = records.AsQueryable().OrderBy(@params.SortColum + " " + @params.SortDirection);
 
                     }
 
@@ -132,19 +134,19 @@ namespace UCS_CRM.Persistence.SQLRepositories
 
                     var records = (from tblOb in await this._context.Members.Include(m => m.User)
                                    .Where(m => m.Status != Lambda.Deleted 
-                                        && m.FirstName.ToLower().Trim().Contains(cursorParams.SearchTerm) ||
-                                           m.LastName.ToLower().Trim().Contains(cursorParams.SearchTerm) ||
-                                           m.AccountNumber.ToLower().Trim().Contains(cursorParams.SearchTerm) ||
-                                           m.Address.ToLower().Trim().Contains(cursorParams.SearchTerm))
-                                   .Take(cursorParams.Take)
-                                   .Skip(cursorParams.Take)
+                                        && m.FirstName.ToLower().Trim().Contains(@params.SearchTerm) ||
+                                           m.LastName.ToLower().Trim().Contains(@params.SearchTerm) ||
+                                           m.AccountNumber.ToLower().Trim().Contains(@params.SearchTerm) ||
+                                           m.Address.ToLower().Trim().Contains(@params.SearchTerm))
+                                   .Skip(@params.Skip)
+                                   .Skip(@params.Take)
                                    .ToListAsync() select tblOb);
 
                     //accountTypes.AsQueryable().OrderBy("gjakdgdag");
 
-                    if (string.IsNullOrEmpty(cursorParams.SortColum) && !string.IsNullOrEmpty(cursorParams.SortDirection))
+                    if (string.IsNullOrEmpty(@params.SortColum) && !string.IsNullOrEmpty(@params.SortDirection))
                     {
-                        records = records.AsQueryable().OrderBy(cursorParams.SortColum + " " + cursorParams.SortDirection);
+                        records = records.AsQueryable().OrderBy(@params.SortColum + " " + @params.SortDirection);
 
                     }
 
