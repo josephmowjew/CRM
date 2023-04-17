@@ -1,14 +1,22 @@
-﻿using UCS_CRM.Core.Helpers;
+﻿using Microsoft.EntityFrameworkCore;
+using UCS_CRM.Core.Helpers;
 using UCS_CRM.Core.Models;
+using UCS_CRM.Data;
+using System.Linq.Dynamic.Core;
 using UCS_CRM.Persistence.Interfaces;
 
 namespace UCS_CRM.Persistence.SQLRepositories
 {
     public class MemberAccountRepository : IMemberAccountRepository
     {
+        private readonly ApplicationDbContext _context;
+        public MemberAccountRepository(ApplicationDbContext context)
+        {
+            this._context = context;
+        }
         public void Add(MemberAccount memberAccount)
         {
-            throw new NotImplementedException();
+             this._context.MemberAccounts.Add(memberAccount);
         }
 
         public MemberAccount Exists(MemberAccount memberAccount)
@@ -16,14 +24,60 @@ namespace UCS_CRM.Persistence.SQLRepositories
             throw new NotImplementedException();
         }
 
-        public Task<MemberAccount> GetMemberAccountAsync(int id)
+        public async Task<MemberAccount> GetMemberAccountAsync(int id)
         {
-            throw new NotImplementedException();
+            return await this._context.MemberAccounts.FirstOrDefaultAsync(m =>  m.Id == id && m.Status != Lambda.Deleted);
         }
 
-        public Task<List<MemberAccount>> GetMemberAccounts(int memberId)
+        public async Task<List<MemberAccount>> GetMemberAccounts(CursorParams @params)
         {
-            throw new NotImplementedException();
+            if (@params.Take > 0)
+            {
+                //check if there is a search term sent 
+
+                if (string.IsNullOrEmpty(@params.SearchTerm))
+                {
+                    var memberAccounts = (from tblOb in await this._context.MemberAccounts.Where(a => a.Status != Lambda.Deleted).Skip(@params.Skip).Take(@params.Take).ToListAsync() select tblOb);
+
+                    //accountTypes.AsQueryable().OrderBy("gjakdgdag");
+
+                    if (string.IsNullOrEmpty(@params.SortColum) && !string.IsNullOrEmpty(@params.SortDirection))
+                    {
+                        memberAccounts = memberAccounts.AsQueryable().OrderBy(@params.SortColum + " " + @params.SortDirection);
+
+                    }
+
+
+                    return memberAccounts.ToList();
+
+                }
+                else
+                {
+                    //include search text in the query
+                    var memberAccounts = (from tblOb in await this._context.MemberAccounts.Include(m => m.AccountType)
+                                        .Where(a => a.AccountType.Name.ToLower().Contains(@params.SearchTerm) & a.Status != Lambda.Deleted)
+                                        .Skip(@params.Skip)
+                                        .Take(@params.Take)
+                                        .ToListAsync()
+                                        select tblOb);
+
+                    memberAccounts = memberAccounts.AsQueryable().OrderBy(@params.SortColum + " " + @params.SortDirection);
+
+
+                    return memberAccounts.ToList();
+
+                }
+
+            }
+            else
+            {
+                return null;
+            }
+        }
+
+        public async Task<List<MemberAccount>?> GetMemberAccountsAsync(int memberId)
+        {
+            return await this._context.MemberAccounts.Include(m => m.AccountType).Where(m => m.MemberId == memberId).ToListAsync();
         }
 
         public void Remove(MemberAccount memberAccount)
@@ -34,9 +88,9 @@ namespace UCS_CRM.Persistence.SQLRepositories
             memberAccount.DeletedDate= DateTime.UtcNow;
         }
 
-        public Task<int> TotalCount()
+        public async Task<int> TotalCount()
         {
-            throw new NotImplementedException();
+            return await this._context.MemberAccounts.CountAsync(m => m.Status != Lambda.Deleted);
         }
     }
 }

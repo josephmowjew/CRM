@@ -113,7 +113,7 @@ namespace UCS_CRM.Persistence.SQLRepositories
                 if (string.IsNullOrEmpty(cursorParams.SearchTerm))
                 {
                    
-                    var records = (from tblOb in await this._context.Members.Include(m => m.User).Where(m => m.Status != Lambda.Deleted).Take(cursorParams.Take).Skip(cursorParams.Skip).ToListAsync() select tblOb);
+                    var records = (from tblOb in await this._context.Members.Include(m => m.User).Where(m => m.Status != Lambda.Deleted).Skip(cursorParams.Skip).Take(cursorParams.Take).ToListAsync() select tblOb);
 
                     //accountTypes.AsQueryable().OrderBy("gjakdgdag");
 
@@ -136,8 +136,8 @@ namespace UCS_CRM.Persistence.SQLRepositories
                                            m.LastName.ToLower().Trim().Contains(cursorParams.SearchTerm) ||
                                            m.AccountNumber.ToLower().Trim().Contains(cursorParams.SearchTerm) ||
                                            m.Address.ToLower().Trim().Contains(cursorParams.SearchTerm))
+                                   .Skip(cursorParams.Skip)
                                    .Take(cursorParams.Take)
-                                   .Skip(cursorParams.Take)
                                    .ToListAsync() select tblOb);
 
                     //accountTypes.AsQueryable().OrderBy("gjakdgdag");
