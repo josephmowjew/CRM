@@ -83,6 +83,57 @@ namespace UCS_CRM.Persistence.SQLRepositories
 
         }
 
+        public async Task<List<TicketEscalation>?> GetTicketEscalationsForUser(CursorParams @params, string memberId)
+        {
+            if (@params.Take > 0)
+            {
+                //check if there is a search term sent 
+
+                if (string.IsNullOrEmpty(@params.SearchTerm))
+                {
+                    var ticketEscalations = (from tblOb in await this._context.TicketEscalations.Include(t => t.Ticket).ThenInclude(m => m.Member).Include(a => a.Ticket.AssignedTo)
+                                             .Include(p => p.Ticket.TicketPriority).Where(a => a.Status != Lambda.Deleted && a.CreatedById == memberId
+                                             && a.Resolved == false).Skip(@params.Skip).Take(@params.Take).ToListAsync()
+                                             select tblOb);
+
+
+                    if (string.IsNullOrEmpty(@params.SortColum) && !string.IsNullOrEmpty(@params.SortDirection))
+                    {
+                        ticketEscalations = ticketEscalations.AsQueryable().OrderBy(@params.SortColum + " " + @params.SortDirection);
+
+                    }
+
+
+                    return ticketEscalations.ToList();
+
+                }
+                else
+                {
+                    //include search text in the query
+                    var ticketEscalations = (from tblOb in await this._context.TicketEscalations.Include(t => t.Ticket).
+                                             ThenInclude(m => m.Member).Include(a => a.Ticket.AssignedTo).Include(p => p.Ticket.TicketPriority)
+                                        .Where(a => a.Ticket.Title.ToLower().Contains(@params.SearchTerm) & a.Status != Lambda.Deleted && a.CreatedById == memberId)
+                                        .Skip(@params.Skip)
+                                        .Take(@params.Take)
+                                        .ToListAsync()
+                                             select tblOb);
+
+                    ticketEscalations = ticketEscalations.AsQueryable().OrderBy(@params.SortColum + " " + @params.SortDirection);
+
+
+                    return ticketEscalations.ToList();
+
+                }
+
+            }
+            else
+            {
+                return null;
+            }
+
+
+        }
+
         public async Task<List<TicketEscalation>?> GetTicketEscalations()
         {
             return await this._context.TicketEscalations.Include(t => t.Ticket).ThenInclude(m => m.Member).Include(a => a.Ticket.AssignedTo).Where(a => a.Status != Lambda.Deleted).ToListAsync();
@@ -99,6 +150,11 @@ namespace UCS_CRM.Persistence.SQLRepositories
         public Task<int> TotalCount()
         {
             return this._context.TicketEscalations.CountAsync(a => a.Status != Lambda.Deleted);
+        }
+
+        public Task<int> TotalCountForUser(string user)
+        {
+            return this._context.TicketEscalations.CountAsync(a => a.Status != Lambda.Deleted && a.CreatedById == user);
         }
     }
 }

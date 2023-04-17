@@ -111,9 +111,40 @@
     </body>
 
 @if (SignInManager.IsSignedIn(User))
-{
+{/*
             <script>
                     location.href = "admin/users"
             </script>
+            */
+    if (User.IsInRole("Administrator"))
+    {        
+        <script>
+            location.href = "admin/"
+        </script>
+    }
+    if (User.IsInRole("Clerk"))
+    {
+        <script>
+            location.href = "clerk/"
+        </script>
+    }
+    if (User.IsInRole("Manager"))
+    {
+        <script>
+            location.href = "Manager/"
+        </script>
+    }
+    if (User.IsInRole("Senior Manager"))
+    {
+        <script>
+            location.href = "SeniorManager/"
+        </script>
+    }
+    if (User.IsInRole("Member"))
+    {
+        <script>
+            location.href = "Member/"
+        </script>
+    }
 }
 </html>
