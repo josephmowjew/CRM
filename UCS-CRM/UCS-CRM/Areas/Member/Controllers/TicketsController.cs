@@ -574,7 +574,7 @@ namespace UCS_CRM.Areas.Member.Controllers
                 {
                     createTicketEscalation.DataInvalid = "true";
 
-                    ModelState.AddModelError(nameof(mappedTicketEscalation.Ticket.Title), $"Another ticket exists with the parameters submitted'");
+                    ModelState.AddModelError(nameof(mappedTicketEscalation.Reason), $"Another ticket exists with the parameters submitted'");
 
                     return PartialView("_FirstTicketEscalationPartial", createTicketEscalation);
                 }
@@ -595,7 +595,7 @@ namespace UCS_CRM.Areas.Member.Controllers
                     await this._unitOfWork.SaveToDataStore();
 
 
-                    return PartialView("_FirstTicketEscalationPartial", createTicketEscalation);
+                    return Json(new { status = "success", message = "ticket has been escalated successfully" });
                 }
                 catch (DbUpdateException ex)
                 {

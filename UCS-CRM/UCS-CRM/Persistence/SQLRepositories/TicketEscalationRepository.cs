@@ -27,7 +27,7 @@ namespace UCS_CRM.Persistence.SQLRepositories
 
         public TicketEscalation? Exists(TicketEscalation ticketEscalation)
         {
-            return this._context.TicketEscalations.Include(t => t.Ticket).FirstOrDefault(a => a.TicketId == ticketEscalation.TicketId && a.DateEscalated == ticketEscalation.DateEscalated & a.Status != Lambda.Deleted);
+            return this._context.TicketEscalations.Include(t => t.Ticket).FirstOrDefault(a => a.TicketId == ticketEscalation.TicketId && a.DateEscalated.Date == ticketEscalation.DateEscalated.Date & a.Status != Lambda.Deleted);
         }
 
         public async Task<TicketEscalation?> GetTicketEscalation(int id)
