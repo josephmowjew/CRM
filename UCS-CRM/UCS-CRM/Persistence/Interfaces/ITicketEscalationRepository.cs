@@ -10,7 +10,9 @@ namespace UCS_CRM.Persistence.Interfaces
         Task<TicketEscalation?> GetTicketEscalation(int id);
         Task<List<TicketEscalation>?> GetTicketEscalations();
         Task<List<TicketEscalation>?> GetTicketEscalations(int escalationLevel, CursorParams @params);
+        Task<List<TicketEscalation>?> GetTicketEscalationsForUser(CursorParams @params, string memberId);
         void Remove(TicketEscalation accountType);
         Task<int> TotalCount();
+        Task<int> TotalCountForUser(string user);
     }
 }
