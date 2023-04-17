@@ -214,7 +214,8 @@ namespace UCS_CRM.Persistence.SQLRepositories
                                    .Include(t => t.State)
                                    .Include(t => t.TicketCategory)
                                    .Include(t => t.TicketPriority)
-                                   .Where(t => t.Status != Lambda.Deleted && t.AssignedToId == assignedToId)
+                                   .Where(t => t.Status != Lambda.Deleted && t.AssignedToId == assignedToId
+                                   || t.CreatedById == assignedToId)
                                    .Take(@params.Take)
                                    .Skip(@params.Skip)
                                    .ToListAsync()
@@ -311,7 +312,7 @@ namespace UCS_CRM.Persistence.SQLRepositories
         }
         public async Task<int> TotalCountByAssignedTo(string assignedTo)
         {
-            return await this._context.Tickets.CountAsync(t => t.Status != Lambda.Deleted && t.AssignedToId == assignedTo);
+            return await this._context.Tickets.CountAsync(t => t.Status != Lambda.Deleted && t.AssignedToId == assignedTo || t.CreatedById == assignedTo);
         }
 
         public async Task<int> CountTicketsByStatusMember(string state, int memberId)
