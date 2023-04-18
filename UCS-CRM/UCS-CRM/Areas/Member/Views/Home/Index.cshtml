@@ -2,6 +2,7 @@
     For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 *@
 @{
+ 
 }
 
 <div class="row">
@@ -51,5 +52,26 @@
                  
                 </div>
               </div>
+        <div class="card">
+            <div class="card-body">
+               <h4 class="card-title">Account Balances</h4>
+                <div class="row mt-4">
+                    @foreach (var account in (List<UCS_CRM.Core.DTOs.MemberAccount.ReadMemberAccoutDTO>)@ViewBag.memberAccounts)
+                    {
+                         <!-- Column -->
+                        <div class="col-md-6 col-lg-3 col-xlg-3">
+                          <div class="card card-hover">
+                            <div class="p-2 rounded bg-light-primary text-center">
+                              
+                              <h6 class="text-primary">@account.AccountType.Name</h6>
+                              <h4 class="fw-light text-primary">@account.FormattedAmount</h4>
+                            </div>
+                          </div>
+                        </div>
+                    }
+                    
+                </div>
+            </div>
+        </div>
     </div>
 </div>

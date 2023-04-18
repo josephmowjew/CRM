@@ -5,15 +5,20 @@ using UCS_CRM.Data;
 using System.Linq.Dynamic.Core;
 using UCS_CRM.Persistence.Interfaces;
 using AutoMapper.Execution;
+using Microsoft.AspNetCore.Routing;
+using UCS_CRM.Core.Services;
 
 namespace UCS_CRM.Persistence.SQLRepositories
 {
     public class TicketRepository : ITicketRepository
     {
         private readonly ApplicationDbContext _context;
-        public TicketRepository(ApplicationDbContext context)
+        private readonly IEmailRepository _emailRepository;
+
+        public TicketRepository(ApplicationDbContext context, IEmailRepository emailRepository)
         {
             _context = context;
+            _emailRepository = emailRepository;
         }
 
         public void Add(Ticket ticket)
@@ -52,7 +57,18 @@ namespace UCS_CRM.Persistence.SQLRepositories
                 //check if there is a search parameter
                 if (string.IsNullOrEmpty(@params.SearchTerm))
                 {
-                    var records = (from tblOb in await this._context.Tickets.OrderByDescending(t =>t.Id).Include(t => t.Member).Include(t => t.AssignedTo).Include(t => t.TicketAttachments).Include(t => t.State).Include(t => t.TicketCategory).Include(t => t.TicketPriority).Where(t => t.Status != Lambda.Deleted).Take(@params.Take).Skip(@params.Skip).ToListAsync() select tblOb);
+                    var records = (from tblOb in await this._context.Tickets
+                                   .OrderByDescending(t =>t.Id)
+                                   .Include(t => t.Member)
+                                   .Include(t => t.AssignedTo)
+                                   .Include(t => t.TicketAttachments)
+                                   .Include(t => t.State)
+                                   .Include(t => t.TicketCategory)
+                                   .Include(t => t.TicketPriority)
+                                   .Include(t => t.TicketEscalations)
+                                   .Where(t => t.Status != Lambda.Deleted)
+                                   .Take(@params.Take).Skip(@params.Skip)
+                                   .ToListAsync() select tblOb);
 
                     //accountTypes.AsQueryable().OrderBy("gjakdgdag");
 
@@ -77,7 +93,86 @@ namespace UCS_CRM.Persistence.SQLRepositories
                                    .Include(t => t.State)
                                    .Include(t => t.TicketCategory)
                                    .Include(t => t.TicketPriority)
+                                   .Include(t => t.TicketEscalations)
                                    .Where(t => 
+                                           t.Title.ToLower().Trim().Contains(@params.SearchTerm.ToLower()) ||
+                                           t.Description.ToLower().Trim().Contains(@params.SearchTerm.ToLower()) ||
+                                           t.State.Name.ToLower().Trim().Contains(@params.SearchTerm.ToLower()) ||
+                                           t.Member.FirstName.ToLower().Trim().Contains(@params.SearchTerm.ToLower()) ||
+                                           t.Member.LastName.ToLower().Trim().Contains(@params.SearchTerm.ToLower()) ||
+                                           t.TicketCategory.Name.ToLower().Trim().Contains(@params.SearchTerm.ToLower()))
+                                   .Take(@params.Take)
+                                   .Skip(@params.Skip)
+                                   .ToListAsync()
+                                   select tblOb);
+
+                    //accountTypes.AsQueryable().OrderBy("gjakdgdag");
+
+                    if (string.IsNullOrEmpty(@params.SortColum) && !string.IsNullOrEmpty(@params.SortDirection))
+                    {
+                        records = records.AsQueryable().OrderBy(@params.SortColum + " " + @params.SortDirection);
+
+                    }
+
+                    return records.ToList();
+                }
+            }
+            else
+            {
+                return null;
+            }
+        }
+
+        public async Task<List<Ticket?>> GetClosedTickets(CursorParams @params)
+        {
+            //check if the count has a value in it above zero before proceeding
+            
+            if (@params.Take > 0)
+            {
+                //check if there is a search parameter
+                if (string.IsNullOrEmpty(@params.SearchTerm))
+                {
+                    var records = (from tblOb in await this._context.Tickets
+                                   .OrderByDescending(t => t.Id)
+                                   .Include(t => t.Member)
+                                   .Include(t => t.AssignedTo)
+                                   .Include(t => t.TicketAttachments)
+                                   .Include(t => t.State)
+                                   .Include(t => t.TicketCategory)
+                                   .Include(t => t.TicketPriority)
+                                   .Include(t => t.TicketEscalations)
+                                   .Where(t => t.Status != Lambda.Deleted)
+                                    .Where(t => t.ClosedDate != null)
+                                   .Take(@params.Take).Skip(@params.Skip)
+                                   .ToListAsync()
+                                   select tblOb);
+
+                    //accountTypes.AsQueryable().OrderBy("gjakdgdag");
+
+                    if (string.IsNullOrEmpty(@params.SortColum) && !string.IsNullOrEmpty(@params.SortDirection))
+                    {
+                        records = records.AsQueryable().OrderBy(@params.SortColum + " " + @params.SortDirection);
+
+                    }
+
+
+                    return records.ToList();
+                }
+                else
+                {
+                    //include search query
+
+                    var records = (from tblOb in await this._context.Tickets
+                                   .Where(t => t.Status != Lambda.Deleted)
+                                    .Where(t => t.ClosedDate != null)
+                                   .OrderByDescending(t => t.Id)
+                                   .Include(t => t.AssignedTo)
+                                   .Include(t => t.TicketAttachments)
+                                   .Include(t => t.State)
+                                   .Include(t => t.TicketCategory)
+                                   .Include(t => t.TicketPriority)
+                                   .Include(t => t.TicketEscalations)
+                                   .Where(t =>
                                            t.Title.ToLower().Trim().Contains(@params.SearchTerm.ToLower()) ||
                                            t.Description.ToLower().Trim().Contains(@params.SearchTerm.ToLower()) ||
                                            t.State.Name.ToLower().Trim().Contains(@params.SearchTerm.ToLower()) ||
@@ -122,6 +217,7 @@ namespace UCS_CRM.Persistence.SQLRepositories
                                    .Include(t => t.State)
                                    .Include(t => t.TicketCategory)
                                    .Include(t => t.TicketPriority)
+                                   .Include(t => t.TicketEscalations)
                                    .Where(t => t.Status != Lambda.Deleted && t.MemberId == memberId)
                                    .Take(@params.Take)
                                    .Skip(@params.Skip)
@@ -288,6 +384,11 @@ namespace UCS_CRM.Persistence.SQLRepositories
             return await this._context.Tickets.CountAsync(t => t.Status != Lambda.Deleted);
         }
 
+        public async Task<int> TotalClosedCount()
+        {
+            return await this._context.Tickets.CountAsync(t => t.Status != Lambda.Closed);
+        }
+
         // count tickets by state
         public async Task<int> CountTicketsByStatus(string state)
         {
@@ -322,6 +423,82 @@ namespace UCS_CRM.Persistence.SQLRepositories
         public async Task<int> CountTicketsByStatusAssignedTo(string state, string assignedToId)
         {
             return await this._context.Tickets.Include(t => t.State).CountAsync(t => t.Status != Lambda.Deleted & t.State.Name.Trim().ToLower() == state.Trim().ToLower() && t.AssignedToId == assignedToId);
+        }
+
+        
+        public async Task<string> UnAssignedTickets()
+        {
+            var tickets = new List<Ticket>();
+
+            tickets = await _context.Tickets.Where(i => i.AssignedToId == null || i.State.Name == Lambda.NewTicket && i.Status != Lambda.Deleted).ToListAsync();
+            
+            // sending emails for all the issues that have not been assigned yet or they are on waiting for support
+            string status = "";
+            try
+            {
+                foreach (var ticket in tickets)
+                {
+
+                    var emailAddress = await _context.EmailAddresses.FirstOrDefaultAsync(o => o.Owner == Lambda.Manager);
+
+                    if (emailAddress != null) {
+                        // sending the email 
+                        string title = "Un Assigned Tickets";
+                        var body = "Ticket number " + ticket.TicketNumber + " has not been assigned to an engineer yet and is still waiting for support";
+
+                        await _emailRepository.SendMail(emailAddress.Email, title, body);
+                    } 
+                }
+
+                
+                status = "Email sent";
+            }
+            catch (Exception)
+            {
+
+                status = "There was an error with this request";
+            }
+
+            return status;
+        }
+
+        public async Task<string> EscalatedTickets()
+        {
+            var tickets = new List<TicketEscalation>();
+
+            tickets = await _context.TicketEscalations.Include(t=>t.Ticket).Where(i => DateTime.Now > i.CreatedDate.AddHours(1) && i.Resolved == false && i.Status != Lambda.Deleted).ToListAsync();
+
+            // sending emails for all the issues that have not been assigned yet or they are on waiting for support
+            string status = "";
+            try
+            {
+                foreach (var ticket in tickets)
+                {
+                    //email to send to
+                    var levelTo = ticket.EscalationLevel == 1 ? Lambda.Manager : Lambda.SeniorManager;
+
+                    var emailAddress = await _context.EmailAddresses.FirstOrDefaultAsync(o => o.Owner == levelTo);
+
+                    if (emailAddress != null)
+                    {
+                        // sending the email 
+                        string title = "Escalated Tickets";
+                        var body = "Ticket number " + ticket.Ticket.TicketNumber + " was escalated and has not yet been resolved";
+
+                        await _emailRepository.SendMail(emailAddress.Email, title, body);
+                    }
+                }
+
+
+                status = "Email sent";
+            }
+            catch (Exception)
+            {
+
+                status = "There was an error with this request";
+            }
+
+            return status;
         }
     }
 }

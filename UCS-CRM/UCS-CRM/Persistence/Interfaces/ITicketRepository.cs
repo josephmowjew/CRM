@@ -21,5 +21,9 @@ namespace UCS_CRM.Persistence.Interfaces
         Task<int> CountTicketsByPriority(string priority);
         Task<int> CountTicketsByCategory(string category);
         Task<int> CountTicketsByStatus(string state);
+        Task<int> TotalClosedCount();
+        Task<List<Ticket?>> GetClosedTickets(CursorParams @params);
+        Task<string> UnAssignedTickets();
+        Task<string> EscalatedTickets();
     }
 }

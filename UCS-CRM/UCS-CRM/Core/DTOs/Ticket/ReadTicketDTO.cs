@@ -34,12 +34,14 @@ namespace UCS_CRM.Core.DTOs.Ticket
         public UCS_CRM.Core.Models.TicketPriority TicketPriority { get; set; }
 
         public ICollection<TicketAttachment> TicketAttachments { get; set; }
-        public ICollection<UCS_CRM.Core.Models.TicketComment> TicketComments { get; set; }
+        public ICollection<Models.TicketComment> TicketComments { get; set; }
+        public ICollection<Models.TicketEscalation> TicketEscalations { get; set; }
 
         public ReadTicketDTO()
         {
             TicketAttachments = new List<TicketAttachment>();
             TicketComments = new List<UCS_CRM.Core.Models.TicketComment>();
+            TicketEscalations = new List<Models.TicketEscalation>();
         }
     }
 }

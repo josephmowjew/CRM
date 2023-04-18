@@ -79,6 +79,9 @@
                             ajax: {
                                 url: '/seniormanager/tickets/GetTickets',
                                 type: 'post',
+                                data:{
+                                    status:"Active"
+                                },
                                 datatype: 'Json',
                                      error: function(XMLHttpRequest, textStatus, errorThrown) { 
                                             

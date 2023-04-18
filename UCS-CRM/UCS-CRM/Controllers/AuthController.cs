@@ -84,7 +84,7 @@ namespace UCS_CRM.Controllers
                         }
                         if (roles.Contains("Senior Manager"))
                         {
-                            return RedirectToAction("Index", "Home", new { Area = "Admin" });
+                            return RedirectToAction("Index", "Home", new { Area = "SeniorManager" });
                         }
                         if (roles.Contains("Member"))
                         {

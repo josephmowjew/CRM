@@ -108,7 +108,7 @@
                                              console.log(XMLHttpRequest.responseText)
                                            
                                             
-                                        }  
+                                        }
 
 
                           },
@@ -121,11 +121,32 @@
                             ],
                             columns: [
 
-                                {
-                                    data: "ticketNumber",
-                                    name: "ticketNumber",
-                                    className: "text-left",
-                                    "orderable": true,
+                              
+                                  {
+                                    data: { state: "ticketEscalations.id"},
+                                    mRender: function (data, type, full) {
+
+                                                if(data.ticketEscalations != null && data.ticketEscalations.status != 'Deleted'){
+                                                    if(data.ticketEscalations.length == 1)
+                                                    {
+                                                        return "<span class='bg-light-warning text-warning '>"+data.ticketNumber+"</span>"
+                                                    }
+                                                    if(data.ticketEscalations.length == 2)
+                                                    {
+                                                        return "<span class='bg-light-danger text-danger '>"+data.ticketNumber+"</span>"
+                                                    }
+                                                    else
+                                                    {
+                                                        return data.ticketNumber
+                                                    }
+
+                                                 }
+                                                else{
+                                                    return ticketNumber
+                                                }
+                                        
+                                        }, "name": "ticketNumber",
+                                    className: "text-left"
                                 },
                                 {
                                     data: "title",
@@ -158,22 +179,30 @@
                                     mRender: function (data, type, full) {
 
                                                 if(data.state != null && data.state.status != 'Deleted'){
-                                                    if(data.state.name == "Waiting For Support")
+                                                    if(data.state.name == "In Progress")
                                                     {
-                                                        return "<span class='badge bg-light-warning text-warning font-weight-medium'>Waiting for support</span>"
+                                                        return "<span class=' bg-light-warning text-warning '>In Progress</span>"
+                                                    }
+                                                    if(data.state.name == "Pending")
+                                                    {
+                                                        return "<span class=' text-primary '>Pending</span>"
+                                                    }
+                                                    if(data.state.name == "Resolved")
+                                                    {
+                                                        return "<span class=' text-success '>Resolved</span>"
                                                     }
                                                     if(data.state.name == "Closed")
                                                     {
-                                                        return "<span class='badge bg-light-danger text-danger font-weight-medium'>Closed</span>"
+                                                        return "<span class='  text-secondary '>Closed</span>"
                                                     }
-                                                    if(data.state.name == "Open")
+                                                      if(data.state.name == "Re-Opened")
                                                     {
-                                                        return "<span class='badge bg-light-success text-success font-weight-medium'>Open</span>"
+                                                        return "<span class='  text-warning '>Re-Opened</span>"
                                                     }
 
                                                  }
                                                 else{
-                                                    return "NA"
+                                                    return data.state.name
                                                 }
                                         
                                         }, "name": "state.name",

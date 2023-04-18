@@ -18,16 +18,16 @@ namespace UCS_CRM.Core.Helpers
 
         // roles
         public static string Administrator = "Administrator";
-        public static string External = "External";
+        public static string Member = "Member";
         public static string ExternalAdministrator = "External Administrator";
-        public static string Management = "Management";
-        public static string Engineers = "Engineers";
-        public static string SeniorEngineer = "Senior Engineer";
+        public static string Manager = "Manager";
+        public static string Clerk = "Clerk";
+        public static string SeniorManager = "Senior Manager";
 
         // default properties
         public static string Category = "Support";
         public static string Priority = "Level One";
-        public static string WaitingForSupport = "Waiting For Support";
+        public static string NewTicket = "New";
 
 
        
