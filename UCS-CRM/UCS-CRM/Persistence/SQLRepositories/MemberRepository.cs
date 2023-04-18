@@ -95,7 +95,7 @@ namespace UCS_CRM.Persistence.SQLRepositories
 
         public async Task<Member?> GetMemberAsync(int id)
         {
-            Member? databaseMember = await this._context.Members.Include(m => m.User).Include(m => m.MemberAccounts).FirstOrDefaultAsync(m =>m.Id == id);
+            Member? databaseMember = await this._context.Members.Include(m => m.User).Include(m => m.MemberAccounts).ThenInclude(a=>a.AccountType).FirstOrDefaultAsync(m =>m.Id == id);
 
             //return record if only it has been found or return null
             return databaseMember != null ? databaseMember : null;

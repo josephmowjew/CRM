@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using UCS_CRM.Areas.Admin.ViewModels;
 using UCS_CRM.Core.DTOs.Member;
+using UCS_CRM.Core.DTOs.Ticket;
 using UCS_CRM.Core.Helpers;
 using UCS_CRM.Core.Models;
 using UCS_CRM.Core.Services;
@@ -34,9 +35,24 @@ namespace UCS_CRM.Areas.Admin.Controllers
             return View();
         }
 
-      
 
-       
+
+        // GET: MemberController/Details/5
+        public async Task<ActionResult> Details(int id)
+        {
+            var MemberDB = await this._memberRepository.GetMemberAsync(id);
+
+            if (MemberDB == null)
+            {
+                return RedirectToAction("Index");
+            }
+
+
+            var mappedMember = this._mapper.Map<ReadMemberDTO>(MemberDB);
+
+            return View(mappedMember);
+        }
+
 
         // POST: MemberController/Edit/5
         [HttpPost]
