@@ -121,13 +121,26 @@ namespace UCS_CRM.Persistence.SQLRepositories
         public async Task<List<Ticket?>> GetClosedTickets(CursorParams @params)
         {
             //check if the count has a value in it above zero before proceeding
-
+            
             if (@params.Take > 0)
             {
                 //check if there is a search parameter
                 if (string.IsNullOrEmpty(@params.SearchTerm))
                 {
-                    var records = (from tblOb in await this._context.Tickets.OrderByDescending(t => t.Id).Include(t => t.Member).Include(t => t.AssignedTo).Include(t => t.TicketAttachments).Include(t => t.State).Include(t => t.TicketCategory).Include(t => t.TicketPriority).Where(t => t.Status != Lambda.Deleted &&  t.ClosedDate != null).Take(@params.Take).Skip(@params.Skip).ToListAsync() select tblOb);
+                    var records = (from tblOb in await this._context.Tickets
+                                   .OrderByDescending(t => t.Id)
+                                   .Include(t => t.Member)
+                                   .Include(t => t.AssignedTo)
+                                   .Include(t => t.TicketAttachments)
+                                   .Include(t => t.State)
+                                   .Include(t => t.TicketCategory)
+                                   .Include(t => t.TicketPriority)
+                                   .Include(t => t.TicketEscalations)
+                                   .Where(t => t.Status != Lambda.Deleted)
+                                    .Where(t => t.ClosedDate != null)
+                                   .Take(@params.Take).Skip(@params.Skip)
+                                   .ToListAsync()
+                                   select tblOb);
 
                     //accountTypes.AsQueryable().OrderBy("gjakdgdag");
 
@@ -146,13 +159,14 @@ namespace UCS_CRM.Persistence.SQLRepositories
 
                     var records = (from tblOb in await this._context.Tickets
                                    .Where(t => t.Status != Lambda.Deleted)
-                                   .Where(t => t.ClosedDate != null)
+                                    .Where(t => t.ClosedDate != null)
                                    .OrderByDescending(t => t.Id)
                                    .Include(t => t.AssignedTo)
                                    .Include(t => t.TicketAttachments)
                                    .Include(t => t.State)
                                    .Include(t => t.TicketCategory)
                                    .Include(t => t.TicketPriority)
+                                   .Include(t => t.TicketEscalations)
                                    .Where(t =>
                                            t.Title.ToLower().Trim().Contains(@params.SearchTerm.ToLower()) ||
                                            t.Description.ToLower().Trim().Contains(@params.SearchTerm.ToLower()) ||
