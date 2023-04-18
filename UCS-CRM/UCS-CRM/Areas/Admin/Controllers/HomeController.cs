@@ -21,7 +21,7 @@ namespace UCS_CRM.Areas.Admin.Controllers
             ViewBag.allTicketsCount = await this.CountAllMyTickets();
             ViewBag.closedTicketsCount = await this.CountTicketsByStatus("Closed");
             ViewBag.openedTicketsCount = await this.CountTicketsByStatus("Open");
-            ViewBag.waitingTicketsCount = await this.CountTicketsByStatus("Waiting For Support");
+            ViewBag.waitingTicketsCount = await this.CountTicketsByStatus("New");
             return View();
         }
 
