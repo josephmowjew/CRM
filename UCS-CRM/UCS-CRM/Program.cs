@@ -10,6 +10,8 @@ using UCS_CRM.Core.Services;
 using UCS_CRM.Data;
 using UCS_CRM.Persistence.Interfaces;
 using UCS_CRM.Persistence.SQLRepositories;
+using Hangfire;
+using Hangfire.MemoryStorage;
 
 
 var builder = WebApplication.CreateBuilder(args);
@@ -48,7 +50,13 @@ builder.Services.AddIdentity<ApplicationUser,IdentityRole>(options =>
     .AddDefaultUI()
     .AddDefaultTokenProviders();
 
+builder.Services.AddHangfire(config =>
+           config.SetDataCompatibilityLevel(CompatibilityLevel.Version_170)
+           .UseSimpleAssemblyNameTypeSerializer()
+           .UseDefaultTypeSerializer()
+           .UseMemoryStorage());
 
+builder.Services.AddHangfireServer();
 
 //configure services
 builder.Services.AddControllersWithViews().AddNewtonsoftJson(x => x.SerializerSettings.ReferenceLoopHandling = Newtonsoft.Json.ReferenceLoopHandling.Ignore);
@@ -56,6 +64,7 @@ builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 builder.Services.AddScoped<IAccountTypeRepository, AccountTypeRepository>();
 builder.Services.AddScoped<ITicketCategoryRepository, TicketCategoryRepository>();
 builder.Services.AddScoped<ITicketPriorityRepository, TicketPriorityRepository>();
+builder.Services.AddScoped<IEmailRepository, EmailRepository>();
 builder.Services.AddScoped<ITicketRepository, TicketRepository>();
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 builder.Services.AddScoped<IUserRepository, UserRepository>();
@@ -99,5 +108,15 @@ app.MapControllerRoute(
 
 
 app.MapRazorPages();
+
+app.UseHangfireDashboard();
+
+using var scope = app.Services.CreateScope();
+ITicketRepository ticket = scope.ServiceProvider.GetRequiredService<ITicketRepository>();
+
+
+BackgroundJob.Schedule(() => ticket.UnAssignedTickets(), TimeSpan.FromHours(1));
+BackgroundJob.Schedule(() => ticket.EscalatedTickets(), TimeSpan.FromHours(1));
+
 
 app.Run();

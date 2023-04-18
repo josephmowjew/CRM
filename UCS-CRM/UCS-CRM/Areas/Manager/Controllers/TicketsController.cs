@@ -159,7 +159,7 @@ namespace UCS_CRM.Areas.Manager.Controllers
             {
                 //only execute remove if the state is not pending
 
-                if (ticketRecordDb.State.Name.ToLower() != Lambda.WaitingForSupport.ToLower())
+                if (ticketRecordDb.State.Name.ToLower() != Lambda.NewTicket.ToLower())
                 {
                     return Json(new { status = "error", message = "ticket could not be found from the system at the moment as it has been responded to, consider closing it instead" });
                 }

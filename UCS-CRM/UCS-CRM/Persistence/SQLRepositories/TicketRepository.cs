@@ -13,9 +13,12 @@ namespace UCS_CRM.Persistence.SQLRepositories
     public class TicketRepository : ITicketRepository
     {
         private readonly ApplicationDbContext _context;
-        public TicketRepository(ApplicationDbContext context)
+        private readonly IEmailRepository _emailRepository;
+
+        public TicketRepository(ApplicationDbContext context, IEmailRepository emailRepository)
         {
             _context = context;
+            _emailRepository = emailRepository;
         }
 
         public void Add(Ticket ticket)
@@ -422,63 +425,32 @@ namespace UCS_CRM.Persistence.SQLRepositories
             return await this._context.Tickets.Include(t => t.State).CountAsync(t => t.Status != Lambda.Deleted & t.State.Name.Trim().ToLower() == state.Trim().ToLower() && t.AssignedToId == assignedToId);
         }
 
-        /*
-        public async Task<string> UnAssignedCases()
+        
+        public async Task<string> UnAssignedTickets()
         {
-            var issues = new List<Ticket>();
-            issues = await _context.Tickets.Where(i => i.AssignedToId == null || i.State.Name == Lambda.WaitingForSupport && i.Status != Lambda.Deleted).ToListAsync();
+            var tickets = new List<Ticket>();
+
+            tickets = await _context.Tickets.Where(i => i.AssignedToId == null || i.State.Name == Lambda.NewTicket && i.Status != Lambda.Deleted).ToListAsync();
+            
             // sending emails for all the issues that have not been assigned yet or they are on waiting for support
             string status = "";
             try
             {
-                foreach (var issue in issues)
+                foreach (var ticket in tickets)
                 {
-                    var broadcastEmail = new BroadcastEmail();
 
-                    var category = issue.CategoryId > 0 ? context.Categories.Find(issue.CategoryId) : null;
+                    var emailAddress = await _context.EmailAddresses.FirstOrDefaultAsync(o => o.Owner == Lambda.Manager);
 
-                    issue.RecordControl = 1;
+                    if (emailAddress != null) {
+                        // sending the email 
+                        string title = "Un Assigned Tickets";
+                        var body = "Ticket number " + ticket.TicketNumber + " has not been assigned to an engineer yet and is still waiting for support";
 
-                    context.SaveChanges();
-
-
-
-                    var pathToFile = webHostingEnvironment.WebRootPath + Path.DirectorySeparatorChar.ToString()
-                      + "email-templates/case-update.html";
-
-                    var messages = await context.Messages.Where(a => a.Action == Lambda.TicketEscalation).FirstOrDefaultAsync();
-                    string htmlBody = string.Empty;
-
-                    messages = (issue.AssigneeId == null) ? await context.Messages.Where(a => a.Action == Lambda.TicketUnassigned).FirstOrDefaultAsync()
-                        : await context.Messages.Where(a => a.Action == Lambda.TicketNeedAttention).FirstOrDefaultAsync();
-
-
-                    using (StreamReader streamReader = File.OpenText(pathToFile))
-                    {
-                        htmlBody = await streamReader.ReadToEndAsync();
-                    }
-
-                    htmlBody = htmlBody.Replace("{title}", " Case number " + issue.IssueNumber + " with the title " + issue.Title);
-                    htmlBody = htmlBody.Replace("{description}", messages.Description);
-                    htmlBody = htmlBody.Replace("{link}", "https://support.sparcsystems.africa/");
-                    htmlBody = htmlBody.Replace("{case}", issue.Description);
-
-                    //getting email
-                    if (category != null)
-                        broadcastEmail = context.BroadcastEmails.Find(category.BroadcastEmailId);
-                    else
-                        broadcastEmail = context.BroadcastEmails.Where(e => e.Department == Lambda.General).FirstOrDefault();
-
-                    // sending the email 
-                    if (broadcastEmail != null)
-                    {
-                        var part = "Case number " + issue.IssueNumber;
-                        string body = (issue.AssigneeId == null) ? part + " has not been assigned to an engineer yet" : part + " is still waiting for support";
-
-                        await emailService.SendMail(broadcastEmail.Email, messages.Title, htmlBody);
-                    }
-
+                        await _emailRepository.SendMail(emailAddress.Email, title, body);
+                    } 
                 }
+
+                
                 status = "Email sent";
             }
             catch (Exception)
@@ -489,7 +461,45 @@ namespace UCS_CRM.Persistence.SQLRepositories
 
             return status;
         }
-        */
+
+        public async Task<string> EscalatedTickets()
+        {
+            var tickets = new List<TicketEscalation>();
+
+            tickets = await _context.TicketEscalations.Include(t=>t.Ticket).Where(i => DateTime.Now > i.CreatedDate.AddHours(1) && i.Resolved == false && i.Status != Lambda.Deleted).ToListAsync();
+
+            // sending emails for all the issues that have not been assigned yet or they are on waiting for support
+            string status = "";
+            try
+            {
+                foreach (var ticket in tickets)
+                {
+                    //email to send to
+                    var levelTo = ticket.EscalationLevel == 1 ? Lambda.Manager : Lambda.SeniorManager;
+
+                    var emailAddress = await _context.EmailAddresses.FirstOrDefaultAsync(o => o.Owner == levelTo);
+
+                    if (emailAddress != null)
+                    {
+                        // sending the email 
+                        string title = "Escalated Tickets";
+                        var body = "Ticket number " + ticket.Ticket.TicketNumber + " was escalated and has not yet been resolved";
+
+                        await _emailRepository.SendMail(emailAddress.Email, title, body);
+                    }
+                }
+
+
+                status = "Email sent";
+            }
+            catch (Exception)
+            {
+
+                status = "There was an error with this request";
+            }
+
+            return status;
+        }
     }
 }
 
