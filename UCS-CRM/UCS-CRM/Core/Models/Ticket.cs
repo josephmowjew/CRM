@@ -31,10 +31,13 @@ namespace UCS_CRM.Core.Models
         public ICollection<TicketAttachment>? TicketAttachments { get; set; }
         public ICollection<TicketComment>? TicketComments { get; set; }
 
+        public List<TicketEscalation> TicketEscalations { get; set; }
+
         public Ticket()
         {
             TicketAttachments = new List<TicketAttachment>();
             TicketComments  = new List<TicketComment>();
+            TicketEscalations = new List<TicketEscalation>();
         }
 
     }
