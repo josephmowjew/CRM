@@ -95,7 +95,7 @@ namespace UCS_CRM.Persistence.SQLRepositories
 
         public async Task<Member?> GetMemberAsync(int id)
         {
-            Member? databaseMember = await this._context.Members.Include(m => m.User).FirstOrDefaultAsync(m =>m.Id == id);
+            Member? databaseMember = await this._context.Members.Include(m => m.User).Include(m => m.MemberAccounts).FirstOrDefaultAsync(m =>m.Id == id);
 
             //return record if only it has been found or return null
             return databaseMember != null ? databaseMember : null;
@@ -115,7 +115,7 @@ namespace UCS_CRM.Persistence.SQLRepositories
                    
 
 
-                    var records = (from tblOb in  this._context.Members.OrderBy(m => m.Id).Skip(@params.Skip).Take(@params.Take).ToList() select tblOb);
+                    var records = (from tblOb in  this._context.Members.Include(m => m.MemberAccounts).OrderBy(m => m.Id).Skip(@params.Skip).Take(@params.Take).ToList() select tblOb);
 
                     //accountTypes.AsQueryable().OrderBy("gjakdgdag");
 
@@ -132,7 +132,7 @@ namespace UCS_CRM.Persistence.SQLRepositories
                 {
                     //include search query
 
-                    var records = (from tblOb in await this._context.Members.Include(m => m.User)
+                    var records = (from tblOb in await this._context.Members.Include(m => m.User).Include(m => m.MemberAccounts)
                                    .Where(m => m.Status != Lambda.Deleted 
 
                                         && m.FirstName.ToLower().Trim().Contains(@params.SearchTerm) ||
@@ -160,7 +160,7 @@ namespace UCS_CRM.Persistence.SQLRepositories
 
         public async Task<List<Member>?> GetMembers()
         {
-            return await this._context.Members.Where(a => a.Status != Lambda.Deleted).ToListAsync();
+            return await this._context.Members.Include(m => m.MemberAccounts).Where(a => a.Status != Lambda.Deleted).ToListAsync();
         }
 
 

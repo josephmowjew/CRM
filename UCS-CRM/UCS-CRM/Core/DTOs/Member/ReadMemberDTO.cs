@@ -6,6 +6,12 @@ namespace UCS_CRM.Core.DTOs.Member
 {
     public class ReadMemberDTO
     {
+
+        public ReadMemberDTO()
+        {
+            MemberAccounts = new List<Models.MemberAccount>();
+
+        }
         TextInfo myTI = new CultureInfo("en-US", false).TextInfo;
         public int Id { get; set; }
         [Display(Name = "First Name")]
@@ -37,5 +43,7 @@ namespace UCS_CRM.Core.DTOs.Member
         public string formattedDateOfBirth => DateOfBirth?.ToString("dd-MM-yyyy");
 
         public ApplicationUser User { get; set; }
+
+        public List<Models.MemberAccount> MemberAccounts { get; set; }
     }
 }

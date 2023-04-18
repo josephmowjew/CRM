@@ -5,6 +5,10 @@ namespace UCS_CRM.Core.Models
 {
     public class Member : Meta
     {
+        public Member()
+        {
+            MemberAccounts = new List<MemberAccount>();
+        }
         public int Id { get; set; }
         [Display(Name = "First Name")]
         public string? FirstName { get; set; }
@@ -25,10 +29,12 @@ namespace UCS_CRM.Core.Models
         [StringLength(maximumLength: 200, MinimumLength = 5)]
         public string? Address { get; set; }
         public ApplicationUser User { get; set; }
+
         [StringLength(maximumLength:20)]
         public string? PhoneNumber { get; set; }
         public string? Branch { get; set; }
         public string? Employer { get; set; }
+        public List<MemberAccount> MemberAccounts { get; set; }
 
         [NotMapped]
         public String FullName
