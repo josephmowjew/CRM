@@ -117,6 +117,70 @@ namespace UCS_CRM.Persistence.SQLRepositories
                 return null;
             }
         }
+
+        public async Task<List<Ticket?>> GetClosedTickets(CursorParams @params)
+        {
+            //check if the count has a value in it above zero before proceeding
+
+            if (@params.Take > 0)
+            {
+                //check if there is a search parameter
+                if (string.IsNullOrEmpty(@params.SearchTerm))
+                {
+                    var records = (from tblOb in await this._context.Tickets.OrderByDescending(t => t.Id).Include(t => t.Member).Include(t => t.AssignedTo).Include(t => t.TicketAttachments).Include(t => t.State).Include(t => t.TicketCategory).Include(t => t.TicketPriority).Where(t => t.Status != Lambda.Deleted &&  t.ClosedDate != null).Take(@params.Take).Skip(@params.Skip).ToListAsync() select tblOb);
+
+                    //accountTypes.AsQueryable().OrderBy("gjakdgdag");
+
+                    if (string.IsNullOrEmpty(@params.SortColum) && !string.IsNullOrEmpty(@params.SortDirection))
+                    {
+                        records = records.AsQueryable().OrderBy(@params.SortColum + " " + @params.SortDirection);
+
+                    }
+
+
+                    return records.ToList();
+                }
+                else
+                {
+                    //include search query
+
+                    var records = (from tblOb in await this._context.Tickets
+                                   .Where(t => t.Status != Lambda.Deleted)
+                                   .Where(t => t.ClosedDate != null)
+                                   .OrderByDescending(t => t.Id)
+                                   .Include(t => t.AssignedTo)
+                                   .Include(t => t.TicketAttachments)
+                                   .Include(t => t.State)
+                                   .Include(t => t.TicketCategory)
+                                   .Include(t => t.TicketPriority)
+                                   .Where(t =>
+                                           t.Title.ToLower().Trim().Contains(@params.SearchTerm.ToLower()) ||
+                                           t.Description.ToLower().Trim().Contains(@params.SearchTerm.ToLower()) ||
+                                           t.State.Name.ToLower().Trim().Contains(@params.SearchTerm.ToLower()) ||
+                                           t.Member.FirstName.ToLower().Trim().Contains(@params.SearchTerm.ToLower()) ||
+                                           t.Member.LastName.ToLower().Trim().Contains(@params.SearchTerm.ToLower()) ||
+                                           t.TicketCategory.Name.ToLower().Trim().Contains(@params.SearchTerm.ToLower()))
+                                   .Take(@params.Take)
+                                   .Skip(@params.Skip)
+                                   .ToListAsync()
+                                   select tblOb);
+
+                    //accountTypes.AsQueryable().OrderBy("gjakdgdag");
+
+                    if (string.IsNullOrEmpty(@params.SortColum) && !string.IsNullOrEmpty(@params.SortDirection))
+                    {
+                        records = records.AsQueryable().OrderBy(@params.SortColum + " " + @params.SortDirection);
+
+                    }
+
+                    return records.ToList();
+                }
+            }
+            else
+            {
+                return null;
+            }
+        }
         public async Task<List<Ticket?>> GetMemberTickets(CursorParams @params, int memberId)
         {
             //check if the count has a value in it above zero before proceeding
@@ -299,6 +363,11 @@ namespace UCS_CRM.Persistence.SQLRepositories
         public async Task<int> TotalCount()
         {
             return await this._context.Tickets.CountAsync(t => t.Status != Lambda.Deleted);
+        }
+
+        public async Task<int> TotalClosedCount()
+        {
+            return await this._context.Tickets.CountAsync(t => t.Status != Lambda.Closed);
         }
 
         // count tickets by state

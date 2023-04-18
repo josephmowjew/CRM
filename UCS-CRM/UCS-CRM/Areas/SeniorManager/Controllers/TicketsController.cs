@@ -266,7 +266,7 @@ namespace UCS_CRM.Areas.SeniorManager.Controllers
 
 
         [HttpPost]
-        public async Task<ActionResult> GetTickets()
+        public async Task<ActionResult> GetTickets(string status)
         {
             //datatable stuff
             var draw = HttpContext.Request.Form["draw"].FirstOrDefault();
@@ -284,8 +284,8 @@ namespace UCS_CRM.Areas.SeniorManager.Controllers
             //create a cursor params based on the data coming from the datatable
             CursorParams CursorParameters = new CursorParams() { SearchTerm = searchValue, Skip = skip, SortColum = sortColumn, SortDirection = sortColumnAscDesc, Take = pageSize };
 
-            resultTotal = await this._ticketRepository.TotalCount();
-            var result = await this._ticketRepository.GetTickets(CursorParameters);
+            resultTotal = status == Lambda.Closed ? await this._ticketRepository.TotalClosedCount() : await this._ticketRepository.TotalCount();
+            var result = status == Lambda.Closed ? await this._ticketRepository.GetClosedTickets(CursorParameters) : await this._ticketRepository.GetTickets(CursorParameters);
 
             //map the results to a read DTO
 
