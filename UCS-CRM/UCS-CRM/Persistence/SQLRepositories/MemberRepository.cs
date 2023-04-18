@@ -113,13 +113,9 @@ namespace UCS_CRM.Persistence.SQLRepositories
                 if (string.IsNullOrEmpty(@params.SearchTerm))
                 {
                    
-<<<<<<< HEAD
-                    var records = (from tblOb in await this._context.Members.Include(m => m.User).Where(m => m.Status != Lambda.Deleted).Skip(cursorParams.Skip).Take(cursorParams.Take).ToListAsync() select tblOb);
-=======
 
 
                     var records = (from tblOb in  this._context.Members.OrderBy(m => m.Id).Skip(@params.Skip).Take(@params.Take).ToList() select tblOb);
->>>>>>> 61a690038978a3946c4cf626df308169d08ed254
 
                     //accountTypes.AsQueryable().OrderBy("gjakdgdag");
 
@@ -138,21 +134,13 @@ namespace UCS_CRM.Persistence.SQLRepositories
 
                     var records = (from tblOb in await this._context.Members.Include(m => m.User)
                                    .Where(m => m.Status != Lambda.Deleted 
-<<<<<<< HEAD
-                                        && m.FirstName.ToLower().Trim().Contains(cursorParams.SearchTerm) ||
-                                           m.LastName.ToLower().Trim().Contains(cursorParams.SearchTerm) ||
-                                           m.AccountNumber.ToLower().Trim().Contains(cursorParams.SearchTerm) ||
-                                           m.Address.ToLower().Trim().Contains(cursorParams.SearchTerm))
-                                   .Skip(cursorParams.Skip)
-                                   .Take(cursorParams.Take)
-=======
+
                                         && m.FirstName.ToLower().Trim().Contains(@params.SearchTerm) ||
                                            m.LastName.ToLower().Trim().Contains(@params.SearchTerm) ||
                                            m.AccountNumber.ToLower().Trim().Contains(@params.SearchTerm) ||
                                            m.Address.ToLower().Trim().Contains(@params.SearchTerm))
                                    .Skip(@params.Skip)
-                                   .Skip(@params.Take)
->>>>>>> 61a690038978a3946c4cf626df308169d08ed254
+                                   .Take(@params.Take)
                                    .ToListAsync() select tblOb);
 
                     //accountTypes.AsQueryable().OrderBy("gjakdgdag");
