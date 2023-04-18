@@ -5,6 +5,8 @@ using UCS_CRM.Data;
 using System.Linq.Dynamic.Core;
 using UCS_CRM.Persistence.Interfaces;
 using AutoMapper.Execution;
+using Microsoft.AspNetCore.Routing;
+using UCS_CRM.Core.Services;
 
 namespace UCS_CRM.Persistence.SQLRepositories
 {
@@ -419,6 +421,75 @@ namespace UCS_CRM.Persistence.SQLRepositories
         {
             return await this._context.Tickets.Include(t => t.State).CountAsync(t => t.Status != Lambda.Deleted & t.State.Name.Trim().ToLower() == state.Trim().ToLower() && t.AssignedToId == assignedToId);
         }
+
+        /*
+        public async Task<string> UnAssignedCases()
+        {
+            var issues = new List<Ticket>();
+            issues = await _context.Tickets.Where(i => i.AssignedToId == null || i.State.Name == Lambda.WaitingForSupport && i.Status != Lambda.Deleted).ToListAsync();
+            // sending emails for all the issues that have not been assigned yet or they are on waiting for support
+            string status = "";
+            try
+            {
+                foreach (var issue in issues)
+                {
+                    var broadcastEmail = new BroadcastEmail();
+
+                    var category = issue.CategoryId > 0 ? context.Categories.Find(issue.CategoryId) : null;
+
+                    issue.RecordControl = 1;
+
+                    context.SaveChanges();
+
+
+
+                    var pathToFile = webHostingEnvironment.WebRootPath + Path.DirectorySeparatorChar.ToString()
+                      + "email-templates/case-update.html";
+
+                    var messages = await context.Messages.Where(a => a.Action == Lambda.TicketEscalation).FirstOrDefaultAsync();
+                    string htmlBody = string.Empty;
+
+                    messages = (issue.AssigneeId == null) ? await context.Messages.Where(a => a.Action == Lambda.TicketUnassigned).FirstOrDefaultAsync()
+                        : await context.Messages.Where(a => a.Action == Lambda.TicketNeedAttention).FirstOrDefaultAsync();
+
+
+                    using (StreamReader streamReader = File.OpenText(pathToFile))
+                    {
+                        htmlBody = await streamReader.ReadToEndAsync();
+                    }
+
+                    htmlBody = htmlBody.Replace("{title}", " Case number " + issue.IssueNumber + " with the title " + issue.Title);
+                    htmlBody = htmlBody.Replace("{description}", messages.Description);
+                    htmlBody = htmlBody.Replace("{link}", "https://support.sparcsystems.africa/");
+                    htmlBody = htmlBody.Replace("{case}", issue.Description);
+
+                    //getting email
+                    if (category != null)
+                        broadcastEmail = context.BroadcastEmails.Find(category.BroadcastEmailId);
+                    else
+                        broadcastEmail = context.BroadcastEmails.Where(e => e.Department == Lambda.General).FirstOrDefault();
+
+                    // sending the email 
+                    if (broadcastEmail != null)
+                    {
+                        var part = "Case number " + issue.IssueNumber;
+                        string body = (issue.AssigneeId == null) ? part + " has not been assigned to an engineer yet" : part + " is still waiting for support";
+
+                        await emailService.SendMail(broadcastEmail.Email, messages.Title, htmlBody);
+                    }
+
+                }
+                status = "Email sent";
+            }
+            catch (Exception)
+            {
+
+                status = "There was an error with this request";
+            }
+
+            return status;
+        }
+        */
     }
 }
 

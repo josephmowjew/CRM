@@ -66,6 +66,7 @@ builder.Services.AddScoped<IStateRepository, StateRepository>();
 builder.Services.AddScoped<ITicketCommentRepository, TicketCommentRepository>();
 builder.Services.AddScoped<ITicketEscalationRepository, TicketEscalationRepository>();
 builder.Services.AddScoped<IMemberAccountRepository, MemberAccountRepository>();
+builder.Services.AddScoped<IEmailAddressRepository, EmailAddressRepository>();
 
 
 var app = builder.Build();

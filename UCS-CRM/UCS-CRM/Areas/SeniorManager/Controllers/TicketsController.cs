@@ -284,7 +284,7 @@ namespace UCS_CRM.Areas.SeniorManager.Controllers
             //create a cursor params based on the data coming from the datatable
             CursorParams CursorParameters = new CursorParams() { SearchTerm = searchValue, Skip = skip, SortColum = sortColumn, SortDirection = sortColumnAscDesc, Take = pageSize };
 
-            resultTotal = status == Lambda.Closed ? await this._ticketRepository.TotalClosedCount() : await this._ticketRepository.TotalCount();
+            resultTotal = status == Lambda.Closed ? await this._ticketRepository.CountTicketsByStatus(status) : await this._ticketRepository.TotalCount();
             var result = status == Lambda.Closed ? await this._ticketRepository.GetClosedTickets(CursorParameters) : await this._ticketRepository.GetTickets(CursorParameters);
 
             //map the results to a read DTO

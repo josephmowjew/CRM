@@ -26,6 +26,7 @@ namespace UCS_CRM.Data
         public DbSet<State> States { get; set; }
         public DbSet<Message> Messages { get; set; }
         public DbSet<TicketEscalation> TicketEscalations { get; set; } 
+        public DbSet<EmailAddress> EmailAddresses { get; set; }
 
 
         protected override void OnModelCreating(ModelBuilder builder)
