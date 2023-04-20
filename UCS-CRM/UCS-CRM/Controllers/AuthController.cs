@@ -1,10 +1,13 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Build.Framework;
+using System.ComponentModel.DataAnnotations;
 using UCS_CRM.Core.Models;
 using UCS_CRM.Core.Services;
 using UCS_CRM.Core.ViewModels;
 using UCS_CRM.Data;
+using UCS_CRM.Models;
 using UCS_CRM.Persistence.Interfaces;
 
 namespace UCS_CRM.Controllers
@@ -218,6 +221,83 @@ namespace UCS_CRM.Controllers
             }
 
             return View("Register", clientRegisterViewModel);
+        }
+        [HttpGet]
+        [AllowAnonymous]
+        public  IActionResult ForgotPassword()
+        {
+            return View();
+
+        }
+
+        [HttpPost]
+        [AllowAnonymous]
+        public async Task<IActionResult> ForgotPassword([System.ComponentModel.DataAnnotations.Required] string email)
+        {
+            var user = await _userManager.FindByEmailAsync(email);
+            if (user != null)
+            {
+                var token = await _userManager.GeneratePasswordResetTokenAsync(user);
+
+                var link = Url.Action(nameof(ResetPassword), "Auth", new { token, email = email }, Request.Scheme);
+
+                //send email
+
+                _emailService.SendMail(user.Email, "Password reset details", $"Good day, please use the following link to reset your password\n <br/> {link}");
+
+                TempData["response"] = $"Password change request has been sent to your email {email}. Please open your email";
+                return RedirectToAction("Create");
+            }
+            else
+            {
+                TempData["response"] = $"Could not send link to email. Please try again later";
+                return RedirectToAction("Create");
+            }
+        }
+        [HttpGet("reset-password")]
+        public async Task<IActionResult> ResetPassword(string token, string email)
+        {
+            var model = new ResetPassword { Token= token, Email= email};
+
+            return View(model);
+
+        }
+
+        [HttpPost("reset-password")]
+        [AllowAnonymous]
+        [Route("reset-password")]
+        public async Task<IActionResult> ResetPassword(ResetPassword resetPassword)
+        {
+            var user = await _userManager.FindByEmailAsync(resetPassword.Email);
+
+            if(user != null)
+            {
+
+                //reset the password
+
+                var resetPasswordResult = await this._userManager.ResetPasswordAsync(user, resetPassword.Token, resetPassword.Password);
+
+                if(resetPasswordResult.Succeeded)
+                {
+                    TempData["response"] = $"Your account password has been reset successfully, You can try loging in using your new credentials";
+                    return RedirectToAction("Create");
+                }
+                else
+                {
+
+                    TempData["response"] = $"Failed to reset the password";
+                    return RedirectToAction("Create");
+                }
+            }
+            else
+            {
+
+                TempData["response"] = $"Failed to reset the password";
+                return RedirectToAction("Create");
+            }
+
+           
+
         }
     }
 }
