@@ -5,15 +5,20 @@ using UCS_CRM.Data;
 using System.Linq.Dynamic.Core;
 using UCS_CRM.Persistence.Interfaces;
 using AutoMapper.Execution;
+using Microsoft.AspNetCore.Routing;
+using UCS_CRM.Core.Services;
 
 namespace UCS_CRM.Persistence.SQLRepositories
 {
     public class TicketRepository : ITicketRepository
     {
         private readonly ApplicationDbContext _context;
-        public TicketRepository(ApplicationDbContext context)
+        private readonly IEmailRepository _emailRepository;
+
+        public TicketRepository(ApplicationDbContext context, IEmailRepository emailRepository)
         {
             _context = context;
+            _emailRepository = emailRepository;
         }
 
         public void Add(Ticket ticket)
@@ -418,6 +423,82 @@ namespace UCS_CRM.Persistence.SQLRepositories
         public async Task<int> CountTicketsByStatusAssignedTo(string state, string assignedToId)
         {
             return await this._context.Tickets.Include(t => t.State).CountAsync(t => t.Status != Lambda.Deleted & t.State.Name.Trim().ToLower() == state.Trim().ToLower() && t.AssignedToId == assignedToId);
+        }
+
+        
+        public async Task<string> UnAssignedTickets()
+        {
+            var tickets = new List<Ticket>();
+
+            tickets = await _context.Tickets.Where(i => i.AssignedToId == null || i.State.Name == Lambda.NewTicket && i.Status != Lambda.Deleted).ToListAsync();
+            
+            // sending emails for all the issues that have not been assigned yet or they are on waiting for support
+            string status = "";
+            try
+            {
+                foreach (var ticket in tickets)
+                {
+
+                    var emailAddress = await _context.EmailAddresses.FirstOrDefaultAsync(o => o.Owner == Lambda.Manager);
+
+                    if (emailAddress != null) {
+                        // sending the email 
+                        string title = "Un Assigned Tickets";
+                        var body = "Ticket number " + ticket.TicketNumber + " has not been assigned to an engineer yet and is still waiting for support";
+
+                        await _emailRepository.SendMail(emailAddress.Email, title, body);
+                    } 
+                }
+
+                
+                status = "Email sent";
+            }
+            catch (Exception)
+            {
+
+                status = "There was an error with this request";
+            }
+
+            return status;
+        }
+
+        public async Task<string> EscalatedTickets()
+        {
+            var tickets = new List<TicketEscalation>();
+
+            tickets = await _context.TicketEscalations.Include(t=>t.Ticket).Where(i => DateTime.Now > i.CreatedDate.AddHours(1) && i.Resolved == false && i.Status != Lambda.Deleted).ToListAsync();
+
+            // sending emails for all the issues that have not been assigned yet or they are on waiting for support
+            string status = "";
+            try
+            {
+                foreach (var ticket in tickets)
+                {
+                    //email to send to
+                    var levelTo = ticket.EscalationLevel == 1 ? Lambda.Manager : Lambda.SeniorManager;
+
+                    var emailAddress = await _context.EmailAddresses.FirstOrDefaultAsync(o => o.Owner == levelTo);
+
+                    if (emailAddress != null)
+                    {
+                        // sending the email 
+                        string title = "Escalated Tickets";
+                        var body = "Ticket number " + ticket.Ticket.TicketNumber + " was escalated and has not yet been resolved";
+
+                        await _emailRepository.SendMail(emailAddress.Email, title, body);
+                    }
+                }
+
+
+                status = "Email sent";
+            }
+            catch (Exception)
+            {
+
+                status = "There was an error with this request";
+            }
+
+            return status;
         }
     }
 }

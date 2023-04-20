@@ -1,0 +1,36 @@
+﻿@model UCS_CRM.Core.DTOs.EmailAddress.UpdateEmailAddressDTO
+<!-- Modal -->
+
+<div class="modal-dialog" role="document">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h5 class="modal-title" id="exampleModalLabel">Update Email Address Form</h5>
+            <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+            </button>
+        </div>
+        <div class="modal-body">
+            <form asp-action="Edit">
+                <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+                <input type="hidden" asp-for="DataInvalid" />
+                <input type="hidden" asp-for="Id" />
+                <div class="form-group">
+                    <label asp-for="Email" class="control-label"></label>
+                    <input asp-for="Email" placeholder="Enter Email" class="form-control" />
+                    <span asp-validation-for="Email" class="text-danger"></span>
+                </div>
+
+                <div class="form-group">
+                    <label asp-for="Owner" class="control-label"></label>
+                    <input asp-for="Owner" placeholder="Enter Owner" class="form-control" />
+                    <span asp-validation-for="Owner" class="text-danger"></span>
+                </div>
+
+            </form>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            <button type="button" class="btn btn-primary" id="update_emailAddress_btn" name="update_emailAddress_btn">Update Email Address</button>
+        </div>
+    </div>
+</div>
