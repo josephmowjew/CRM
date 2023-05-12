@@ -1,19 +1,23 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using UCS_CRM.Core.Models;
 
 namespace UCS_CRM.Core.DTOs.MemberAccount
 {
-    public class ReadMemberAccoutDTO
+    public class ReadMemberAccountDTO 
     {
         public int Id { get; set; }
-        
-        public decimal AccountBalance { get; set; }
-        [Required]
-        public int AccountTypeId { get; set; }
-        [Required]
-        public int MemberId { get; set; }
-        public UCS_CRM.Core.Models.Member Member { get; set; }
-        public UCS_CRM.Core.Models.AccountType AccountType { get; set; }
 
-        public string FormattedAmount => AccountBalance.ToString("MWK 0.00");
+        public ReadMemberAccountDTO()
+        {
+            RelatedAccounts = new();
+        }
+        public string? MemberId { get; set; }
+        public string? AccountNumber { get; set; }
+        public string? AccountName { get; set; }
+        public decimal Balance { get; set; }
+        public List<ReadRelatedAccountDTO>? RelatedAccounts { get; set; }
+        public Models.AccountType? AccountType { get; set; }
+
+        public string FormattedAmount => Balance.ToString("MWK 0.00");
     }
 }

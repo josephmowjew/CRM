@@ -27,6 +27,7 @@
     <PackageReference Include="MimeKit" Version="3.5.0" />
     <PackageReference Include="Pomelo.EntityFrameworkCore.MySql" Version="7.0.0" />
     <PackageReference Include="System.Linq.Dynamic.Core" Version="1.2.25" />
+    <PackageReference Include="System.Net.Http" Version="4.3.4" />
   </ItemGroup>
 
   <ItemGroup>

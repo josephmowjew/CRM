@@ -8,7 +8,7 @@ namespace UCS_CRM.Core.Mapping
     {
         public MemberAccountProfile()
         {
-            CreateMap<MemberAccount, ReadMemberAccoutDTO>();
+            CreateMap<MemberAccount, ReadMemberAccountDTO>();
             CreateMap<CreateMemberAccountDTO, MemberAccount>();
             CreateMap<EditMemberAccountDTO, MemberAccount>();
         }

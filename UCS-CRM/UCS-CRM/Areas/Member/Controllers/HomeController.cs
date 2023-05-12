@@ -35,7 +35,7 @@ namespace UCS_CRM.Areas.Member.Controllers
 
             var accounts = await this.GetMemberAccountsAsync();
 
-            ViewBag.memberAccounts = this._mapper.Map<List<ReadMemberAccoutDTO>>(accounts);
+            ViewBag.memberAccounts = this._mapper.Map<List<ReadMemberAccountDTO>>(accounts);
             return View();
         }
 

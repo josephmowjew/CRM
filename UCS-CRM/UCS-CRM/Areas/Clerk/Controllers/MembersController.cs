@@ -3,8 +3,14 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Converters;
+using Newtonsoft.Json.Linq;
+using System.Globalization;
+using System.Text.Json;
 using UCS_CRM.Areas.Admin.ViewModels;
 using UCS_CRM.Core.DTOs.Member;
+using UCS_CRM.Core.DTOs.MemberAccount;
 using UCS_CRM.Core.DTOs.Ticket;
 using UCS_CRM.Core.Helpers;
 using UCS_CRM.Core.Models;
@@ -21,12 +27,14 @@ namespace UCS_CRM.Areas.Admin.Controllers
         private readonly IMapper _mapper;
         private readonly IUnitOfWork _unitOfWork;
         private readonly IEmailService _emailService;
-        public MemberController(IMemberRepository memberRepository, IMapper mapper, IUnitOfWork unitOfWork, IEmailService emailService)
+        private readonly HttpClient _httpClient;
+        public MemberController(IMemberRepository memberRepository, IMapper mapper, IUnitOfWork unitOfWork, IEmailService emailService, HttpClient httpClient)
         {
             _memberRepository = memberRepository;
             _emailService = emailService;
             _mapper = mapper;
             _unitOfWork = unitOfWork;
+            _httpClient = httpClient;
         }
 
         // GET: MemberController
@@ -38,18 +46,85 @@ namespace UCS_CRM.Areas.Admin.Controllers
 
 
         // GET: MemberController/Details/5
-        public async Task<ActionResult> Details(int id)
+        public async Task<ActionResult> oDetails(int id)
         {
+
+          
+
             var MemberDB = await this._memberRepository.GetMemberAsync(id);
 
             if (MemberDB == null)
             {
                 return RedirectToAction("Index");
-            }
-
+            }           
 
             var mappedMember = this._mapper.Map<ReadMemberDTO>(MemberDB);
 
+            return View(mappedMember);
+        }
+
+        public async Task<ActionResult> Details(int id)
+        {
+
+
+
+            var member = await _memberRepository.GetMemberAsync(id);
+
+            if (member == null)
+            {
+                return RedirectToAction("Index");
+            }
+
+            var baseAccountResponse = await _httpClient.GetAsync($"http://41.77.8.30:8081/api/BaseAccount/{member.AccountNumber}");
+
+            if (!baseAccountResponse.IsSuccessStatusCode)
+            {
+                return RedirectToAction("Index");
+            }
+
+            var json = await baseAccountResponse.Content.ReadAsStringAsync();
+            var document = JsonDocument.Parse(json);
+
+            var status = document.RootElement.GetProperty("status").GetInt32();
+
+            if (status == 404)
+            {
+                return RedirectToAction("Index");
+            }
+
+            var baseAccountElement = document.RootElement.GetProperty("data").GetProperty("baseAccount");
+
+            var baseAccount = new ReadMemberDTO()
+            {
+                MemberId = int.Parse(baseAccountElement.GetProperty("member_id").GetString()),
+                AccountNumber = baseAccountElement.GetProperty("accountNumber").GetString(),
+                AccountName = baseAccountElement.GetProperty("accountName").GetString(),
+                Balance = baseAccountElement.GetProperty("balance").GetDecimal(),
+                FirstName = member.FirstName,
+                LastName = member.LastName,
+                Address = member.Address,
+                NationalId = member.NationalId
+            };
+
+            var relatedAccounts = baseAccountElement.GetProperty("related_accounts");
+
+            if (relatedAccounts.ValueKind == JsonValueKind.Array)
+            {
+                foreach (var relatedAccount in relatedAccounts.EnumerateArray())
+                {
+                    baseAccount.MemberAccounts.Add(new MemberAccount()
+                    {
+                        MemberId = int.Parse(relatedAccount.GetProperty("member_id").GetString()),
+                        AccountNumber = relatedAccount.GetProperty("accountNumber").GetString(),
+                        AccountName = relatedAccount.GetProperty("accountName").GetString(),
+                        Balance = relatedAccount.GetProperty("balance").GetDecimal()
+                    });
+                }
+            }
+
+            var mappedMember = _mapper.Map<ReadMemberDTO>(baseAccount);
+
+           
             return View(mappedMember);
         }
 
