@@ -31,7 +31,7 @@ namespace UCS_CRM.Core.Helpers
         public static string NewTicket = "New";
 
         //link
-        public static string systemLink = "<a href='http://129.151.141.178/'>UCS Sacco System</a>";
+        public static string systemLink = "<a href='http://ucsscrm.sparcsystems.africa/'>UCS Sacco System</a>";
 
 
         // issues filters
