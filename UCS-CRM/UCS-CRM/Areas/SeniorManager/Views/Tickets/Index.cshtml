@@ -153,7 +153,7 @@
                                     name: "id",
                                     "orderable": false,
                                     render: function (data) {
-                                                    return "<a href='tickets/details/"+data+"' class='mdi mdi-eye'></a>"
+                            return "<a href='tickets/details/" + data + "' class='mdi mdi-eye'></a> <a href='#' type='button' onclick=Close('" + data + "') title='Close' class='mdi mdi-checkbox-marked-circle'></a>"
                                     }
                                 },
 

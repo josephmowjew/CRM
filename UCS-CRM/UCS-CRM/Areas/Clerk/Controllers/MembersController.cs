@@ -89,6 +89,7 @@ namespace UCS_CRM.Areas.Admin.Controllers
 
             if (status == 404)
             {
+                 Json(new { error = "error", message = "failed to create the user account from the member" });
                 return RedirectToAction("Index");
             }
 

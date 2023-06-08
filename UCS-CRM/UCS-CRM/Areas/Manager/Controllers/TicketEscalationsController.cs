@@ -6,10 +6,13 @@ using Microsoft.EntityFrameworkCore;
 using NuGet.Packaging;
 using System.Security.Claims;
 using UCS_CRM.Core.DTOs.Ticket;
+using UCS_CRM.Core.DTOs.TicketComment;
 using UCS_CRM.Core.DTOs.TicketEscalation;
 using UCS_CRM.Core.Helpers;
 using UCS_CRM.Core.Models;
+using UCS_CRM.Core.Services;
 using UCS_CRM.Persistence.Interfaces;
+using UCS_CRM.Persistence.SQLRepositories;
 
 namespace UCS_CRM.Areas.Manager.Controllers
 {
@@ -27,9 +30,12 @@ namespace UCS_CRM.Areas.Manager.Controllers
         private readonly IMemberRepository _memberRepository;
         private readonly IUserRepository _userRepository;
         private readonly ITicketCategoryRepository _ticketCategoryRepository;
-        public TicketEscalationsController(ITicketEscalationRepository ticketEscalationRepository, IMapper mapper, IUnitOfWork unitOfWork, ITicketRepository ticketRepository, 
-            IWebHostEnvironment env, IStateRepository stateRepository, ITicketPriorityRepository priorityRepository, IMemberRepository memberRepository, IUserRepository userRepository, 
-            ITicketCategoryRepository ticketCategoryRepository)
+        private readonly IEmailAddressRepository _addressRepository;
+        private readonly IEmailService _emailService;
+        private readonly ITicketCommentRepository _ticketCommentRepository;
+        public TicketEscalationsController(ITicketEscalationRepository ticketEscalationRepository, IMapper mapper, IUnitOfWork unitOfWork, ITicketRepository ticketRepository, IEmailService emailService,
+            IWebHostEnvironment env, IStateRepository stateRepository, ITicketPriorityRepository priorityRepository, IMemberRepository memberRepository, IUserRepository userRepository, IEmailAddressRepository addressRepository,
+            ITicketCategoryRepository ticketCategoryRepository, ITicketCommentRepository ticketCommentRepository)
         {
             this._ticketEscalationRepository = ticketEscalationRepository;
             this._mapper = mapper;
@@ -41,6 +47,9 @@ namespace UCS_CRM.Areas.Manager.Controllers
             _memberRepository = memberRepository;
             _userRepository = userRepository;
             _ticketCategoryRepository = ticketCategoryRepository;
+            _emailService = emailService;
+            _addressRepository = addressRepository;
+            _ticketCommentRepository = ticketCommentRepository;
         }
 
         // GET: TicketEscalationsController
@@ -75,6 +84,7 @@ namespace UCS_CRM.Areas.Manager.Controllers
         [ValidateAntiForgeryToken]
         public async Task<ActionResult> Create(CreateTicketEscalationDTO createAcccountTypeDTO)
         {
+            
             //check for model validity
 
             createAcccountTypeDTO.DataInvalid = "true";
@@ -117,6 +127,13 @@ namespace UCS_CRM.Areas.Manager.Controllers
                     this._ticketEscalationRepository.Add(mappedTicketEscalation);
                     await this._unitOfWork.SaveToDataStore();
 
+
+                    string emailBody = "A ticket has been escalated in the system. </b> check the system for more details by clicking here " + Lambda.systemLink + "<br /> ";
+
+                    //email to send to support
+                    var emailAddress = await _addressRepository.GetEmailAddressByOwner(Lambda.SeniorManager);
+
+                    _emailService.SendMail(emailAddress.Email, "Ticket Escalation", emailBody);
 
                     return PartialView("_CreateTicketEscalationPartial", createAcccountTypeDTO);
                 }
@@ -274,6 +291,20 @@ namespace UCS_CRM.Areas.Manager.Controllers
                     await this._unitOfWork.SaveToDataStore();
                 }
 
+                string emailBody = "A ticket has been modified in the system. </b> check the system for more details by clicking here " + Lambda.systemLink + "<br /> ";
+
+                //email to send to support
+
+                var user = await _userRepository.GetSingleUser(ticketDB.CreatedById);
+
+                if (user != null)
+                {
+                    _emailService.SendMail(user.Email, "Ticket Escalation", emailBody);
+                }
+                var emailAddress = await _addressRepository.GetEmailAddressByOwner(Lambda.SeniorManager);
+
+                _emailService.SendMail(emailAddress.Email, "Ticket Escalation", emailBody);
+
                 return Json(new { status = "success", message = "user ticket updated successfully" });
             }
 
@@ -298,6 +329,104 @@ namespace UCS_CRM.Areas.Manager.Controllers
                 await this._unitOfWork.SaveToDataStore();
 
                 return Json(new { status = "success", message = "ticket removed from the system successfully" });
+            }
+
+            return Json(new { status = "error", message = "ticket could not be found from the system" });
+        }
+
+        //escalate ticket
+        [HttpPost]
+        public async Task<ActionResult> Escalate(CreateTicketEscalationDTO createTicketEscalation)
+        {
+            //check for model validity
+
+            createTicketEscalation.DataInvalid = "true";
+
+            if (ModelState.IsValid)
+            {
+
+                createTicketEscalation.DataInvalid = "";
+                createTicketEscalation.EscalationLevel = 2;
+
+
+                //check for article title presence
+
+                var mappedTicketEscalation = this._mapper.Map<TicketEscalation>(createTicketEscalation);
+
+                var ticketEscalationPresence = this._ticketEscalationRepository.Exists(mappedTicketEscalation);
+
+
+
+                if (ticketEscalationPresence != null)
+                {
+                    createTicketEscalation.DataInvalid = "true";
+
+                    ModelState.AddModelError(nameof(mappedTicketEscalation.Ticket.Title), $"Another ticket exists with the parameters submitted'");
+
+                    return PartialView("_SecondTicketEscalationPartial", createTicketEscalation);
+                }
+
+
+                //save to the database
+
+                try
+                {
+                    var userClaims = (ClaimsIdentity)User.Identity;
+
+                    var claimsIdentitifier = userClaims.FindFirst(ClaimTypes.NameIdentifier);
+
+                    mappedTicketEscalation.CreatedById = claimsIdentitifier.Value;
+
+
+                    this._ticketEscalationRepository.Add(mappedTicketEscalation);
+                    await this._unitOfWork.SaveToDataStore();
+
+
+                    return PartialView("_SecondTicketEscalationPartial", createTicketEscalation);
+                }
+                catch (DbUpdateException ex)
+                {
+                    createTicketEscalation.DataInvalid = "true";
+
+                    ModelState.AddModelError(string.Empty, ex.InnerException.Message);
+
+                    return PartialView("_SecondTicketEscalationPartial", createTicketEscalation);
+                }
+
+                catch (Exception ex)
+                {
+
+                    createTicketEscalation.DataInvalid = "true";
+
+                    ModelState.AddModelError(string.Empty, ex.Message);
+
+                    return PartialView("_SecondTicketEscalationPartial", createTicketEscalation);
+                }
+
+
+
+
+            }
+
+
+
+            return PartialView("_SecondTicketEscalationPartial", createTicketEscalation);
+        }
+
+        public async Task<ActionResult> MarkDone(int id)
+        {
+            //check if the role name isn't already taken
+
+            var ticketEscalationDb = await this._ticketEscalationRepository.GetTicketEscalation(id);
+
+            if (ticketEscalationDb != null)
+            {
+                //this._ticketEscalationRepository.Remove(ticketEscalationDb);
+
+                ticketEscalationDb.Resolved = true;
+                await this._unitOfWork.SaveToDataStore();
+
+                return Json(new { status = "success", message = "ticket has been marked done successfully" });
             }
 
             return Json(new { status = "error", message = "ticket could not be found from the system" });
@@ -352,7 +481,36 @@ namespace UCS_CRM.Areas.Manager.Controllers
 
         }
 
+        public async Task<ActionResult> GetTicketComments(string ticketId)
+        {
+            //datatable stuff
+            var draw = HttpContext.Request.Form["draw"].FirstOrDefault();
+            var start = HttpContext.Request.Form["start"].FirstOrDefault();
+            var length = HttpContext.Request.Form["length"].FirstOrDefault();
 
+            var sortColumn = HttpContext.Request.Form["columns[" + HttpContext.Request.Form["order[0][column]"].FirstOrDefault() + "][name]"].FirstOrDefault();
+            var sortColumnAscDesc = Request.Form["order[0][dir]"].FirstOrDefault();
+            var searchValue = Request.Form["search[value]"].FirstOrDefault();
+
+            int pageSize = length != null ? Convert.ToInt32(length) : 0;
+            int skip = start != null ? Convert.ToInt32(start) : 0;
+            int resultTotal = 0;
+
+            //create a cursor params based on the data coming from the datatable
+            CursorParams CursorParameters = new CursorParams() { SearchTerm = searchValue, Skip = skip, SortColum = sortColumn, SortDirection = sortColumnAscDesc, Take = pageSize };
+
+            resultTotal = await this._ticketCommentRepository.TotalActiveCount(int.Parse(ticketId));
+            var result = await this._ticketCommentRepository.GetTicketCommentsAsync(int.Parse(ticketId), CursorParameters);
+
+            //map the results to a read DTO
+
+            var mappedResult = this._mapper.Map<List<ReadTicketCommentDTO>>(result);
+
+
+
+            return Json(new { draw = draw, recordsFiltered = result.Count, recordsTotal = resultTotal, data = mappedResult });
+
+        }
         private async Task<List<SelectListItem>> GetTicketCategories()
         {
             var ticketCategories = await this._ticketCategoryRepository.GetTicketCategories();

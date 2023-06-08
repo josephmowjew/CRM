@@ -224,6 +224,25 @@ namespace UCS_CRM.Areas.SeniorManager.Controllers
             return Json(new { status = "error", message = "ticket could not be found from the system" });
         }
 
+        public async Task<ActionResult> MarkDone(int id)
+        {
+            //check if the role name isn't already taken
+
+            var ticketEscalationDb = await this._ticketEscalationRepository.GetTicketEscalation(id);
+
+            if (ticketEscalationDb != null)
+            {
+                //this._ticketEscalationRepository.Remove(ticketEscalationDb);
+
+                ticketEscalationDb.Resolved = true;
+                await this._unitOfWork.SaveToDataStore();
+
+                return Json(new { status = "success", message = "ticket has been marked done successfully" });
+            }
+
+            return Json(new { status = "error", message = "ticket could not be found from the system" });
+        }
+
 
 
         [HttpPost]

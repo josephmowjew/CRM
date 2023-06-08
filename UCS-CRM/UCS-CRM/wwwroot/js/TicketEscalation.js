@@ -130,22 +130,27 @@ function EditForm(id, area = "") {
 }
 
 
-function EscalationForm(id, area = "") {
+function EscalationForm(id, area="") {
 
     //get the input field inside the edit role modal form
 
-    $("#escalate_ticket_modal input[name ='TicketId']").val(id)
+    $.ajax({
+        url: area + 'edit/' + id,
+        type: 'GET'
+    }).done(function (data) {
+
+        $("#escalate_ticket_modal input[name ='TicketId']").val(data.ticket.id)
 
     //hook up an event to the update role button
 
-    $("#escalate_ticket_modal button[name='escalate_ticket_btn']").unbind().click(function () { EscalateTicket() })
+    $("#escalate_ticket_modal button[name='escalate_ticket_btn']").unbind().click(function () { escalateTicket() })
 
     var validator = $("#escalate_ticket_modal form").validate();
 
     //validator.resetForm();
 
     $("#escalate_ticket_modal").modal("show");
-
+    })
 }
 
 
@@ -243,6 +248,45 @@ function Delete(id) {
         if (result) {
             $.ajax({
                 url: 'tickets/delete/' + id,
+                type: 'POST',
+
+            }).done(function (data) {
+
+                if (data.status == "success") {
+
+                    toastr.success(data.message)
+                }
+                else {
+                    toastr.error(data.message)
+                }
+
+
+
+
+                datatable.ajax.reload();
+
+
+            }).fail(function (response) {
+
+                toastr.error(response.responseText)
+
+                datatable.ajax.reload();
+            });
+        }
+
+
+    });
+}
+
+
+function MarkDone(id) {
+
+    bootbox.confirm("Are you sure you want to mark this ticket done?", function (result) {
+
+
+        if (result) {
+            $.ajax({
+                url: 'MarkDone/' + id,
                 type: 'POST',
 
             }).done(function (data) {

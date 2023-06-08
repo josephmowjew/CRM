@@ -13,6 +13,7 @@ using UCS_CRM.Core.DTOs.TicketComment;
 using UCS_CRM.Core.DTOs.TicketEscalation;
 using UCS_CRM.Core.Helpers;
 using UCS_CRM.Core.Models;
+using UCS_CRM.Core.Services;
 using UCS_CRM.Persistence.Interfaces;
 using UCS_CRM.Persistence.SQLRepositories;
 
@@ -32,8 +33,10 @@ namespace UCS_CRM.Areas.Clerk.Controllers
         private readonly IMemberRepository _memberRepository;
         private readonly IMapper _mapper;
         private readonly IUnitOfWork _unitOfWork;
+        private readonly IEmailService _emailService;
         private IWebHostEnvironment _env;
-        public TicketsController(ITicketRepository ticketRepository, IMapper mapper, IUnitOfWork unitOfWork, 
+        private readonly IEmailAddressRepository _addressRepository;
+        public TicketsController(ITicketRepository ticketRepository, IMapper mapper, IUnitOfWork unitOfWork, IEmailService emailService, IEmailAddressRepository addressRepository,
             ITicketCategoryRepository ticketCategoryRepository, IStateRepository stateRepository, ITicketPriorityRepository priorityRepository,
             IWebHostEnvironment env, ITicketCommentRepository ticketCommentRepository, IUserRepository userRepository, IMemberRepository memberRepository, ITicketEscalationRepository ticketEscalationRepository)
         {
@@ -48,6 +51,8 @@ namespace UCS_CRM.Areas.Clerk.Controllers
             _userRepository = userRepository;
             _memberRepository = memberRepository;
             _ticketEscalationRepository = ticketEscalationRepository;
+            _emailService = emailService;
+            _addressRepository = addressRepository;
         }
 
         // GET: TicketsController
@@ -64,7 +69,7 @@ namespace UCS_CRM.Areas.Clerk.Controllers
         [ValidateAntiForgeryToken]
         public async Task<ActionResult> Create(CreateTicketDTO createTicketDTO)
         {
-
+            await populateViewBags();
 
             createTicketDTO.DataInvalid = "true";
 
@@ -163,6 +168,14 @@ namespace UCS_CRM.Areas.Clerk.Controllers
                         mappedTicket.TicketAttachments.AddRange(mappedAttachments);
 
                         await this._unitOfWork.SaveToDataStore();
+
+                        string emailBody = "A ticket request for " + mappedTicket.Member.FullName + " has been submitted in the system. </b> check the system for more details by clicking here " + Lambda.systemLink + "<br /> ";
+
+
+                        //email to send to support
+                        var emailAddress = await _addressRepository.GetEmailAddressByOwner(Lambda.Support);
+
+                        _emailService.SendMail(emailAddress.Email, "Ticket Creation", emailBody);
                     }
 
 
@@ -279,6 +292,20 @@ namespace UCS_CRM.Areas.Clerk.Controllers
                     mappedTicket.TicketAttachments.AddRange(mappedAttachments);
 
                     await this._unitOfWork.SaveToDataStore();
+
+
+                }
+
+
+                string emailBody = "A ticket has been modified in the system. </b> check the system for more details by clicking here " + Lambda.systemLink + "<br /> ";
+
+                //email to send to support
+
+                var user = await _userRepository.GetSingleUser(ticketDB.CreatedById);
+
+                if (user != null)
+                {
+                    _emailService.SendMail(user.Email, "Ticket Escalation", emailBody);
                 }
 
                 return Json(new { status = "success", message = "user ticket updated successfully" });

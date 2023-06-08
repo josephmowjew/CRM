@@ -1,9 +1,7 @@
-﻿@*
-    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
-*@
-@{
- 
-}
+﻿@using UCS_CRM.Core.Models;
+@using Microsoft.Extensions.Configuration
+@inject IConfiguration Configuration
+@model UCS_CRM.Core.Models.MemberAccount;
 
 <div class="row">
     <div class="col-12">
@@ -56,15 +54,17 @@
             <div class="card-body">
                <h4 class="card-title">Account Balances</h4>
                 <div class="row mt-4">
-                    @foreach (var account in (List<UCS_CRM.Core.DTOs.MemberAccount.ReadMemberAccountDTO>)@ViewBag.memberAccounts)
+                   @* @foreach (var account in (List<UCS_CRM.Core.DTOs.MemberAccount.ReadMemberAccountDTO>)@ViewBag.memberAccounts)
+                    {  *@
+                    @foreach (var account in ViewBag.accounts)
                     {
                          <!-- Column -->
                         <div class="col-md-6 col-lg-3 col-xlg-3">
                           <div class="card card-hover">
                             <div class="p-2 rounded bg-light-primary text-center">
                               
-                              <h6 class="text-primary">@account.AccountType.Name</h6>
-                              <h4 class="fw-light text-primary">@account.FormattedAmount</h4>
+                              <h6 class="text-primary">@account.AccountNumber</h6>
+                                    <h4 class="fw-light text-primary">@account.Balance.ToString("MWK 0.00")</h4>
                             </div>
                           </div>
                         </div>

@@ -185,6 +185,37 @@ namespace UCS_CRM.Areas.SeniorManager.Controllers
             return Json(new { status = "error", message = "ticket could not be found from the system" });
         }
 
+        // POST: TicketsController/close/5
+        [HttpPost]
+        public async Task<ActionResult> Close(int id)
+        {
+            //check if the role name isn't already taken
+
+            var ticketRecordDb = await this._ticketRepository.GetTicket(id);
+
+            if (ticketRecordDb != null)
+            {
+                //only execute remove if the state is not pending
+
+                if (ticketRecordDb.State.Name.ToLower() != Lambda.NewTicket.ToLower())
+                {
+                    return Json(new { status = "error", message = "ticket could not be found from the system at the moment as it has been responded to, consider closing it instead" });
+                }
+                else
+                {
+                    ticketRecordDb.ClosedDate = DateTime.Now;              
+
+                    await this._unitOfWork.SaveToDataStore();
+
+                    return Json(new { status = "success", message = "ticket has been closed successfully" });
+                }
+
+            }
+
+            return Json(new { status = "error", message = "ticket could not be found from the system" });
+        }
+
+
         //escalate ticket
         [HttpPost]
         public async Task<ActionResult> Escalate(CreateTicketEscalationDTO createTicketEscalation)

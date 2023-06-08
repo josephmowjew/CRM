@@ -46,6 +46,7 @@ namespace UCS_CRM.Core.DTOs.Member
         public string FormattedAddress => (!string.IsNullOrEmpty(Address)) ? myTI.ToTitleCase(Address) : "";
         public string FormattedGender => (!string.IsNullOrEmpty(Gender)) ? myTI.ToTitleCase(Gender) : "";
         public string formattedDateOfBirth => DateOfBirth?.ToString("dd-MM-yyyy");
+        public string FormattedAmount => Balance.ToString("MWK 0.00");
 
         public ApplicationUser User { get; set; }
 

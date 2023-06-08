@@ -178,6 +178,81 @@ function Delete(id) {
     });
 }
 
+function Close(id) {
+
+    bootbox.confirm("Are you sure you want to close this ticket?", function (result) {
+
+
+        if (result) {
+            $.ajax({
+                url: 'tickets/close/' + id,
+                type: 'POST',
+
+            }).done(function (data) {
+
+                if (data.status == "success") {
+
+                    toastr.success(data.message)
+                }
+                else {
+                    toastr.error(data.message)
+                }
+
+
+
+
+                datatable.ajax.reload();
+
+
+            }).fail(function (response) {
+
+                toastr.error(response.responseText)
+
+                datatable.ajax.reload();
+            });
+        }
+
+
+    });
+}
+
+function MarkDone(id) {
+
+    bootbox.confirm("Are you sure you want to mark this ticket resolved?", function (result) {
+
+
+        if (result) {
+            $.ajax({
+                url: 'tickets/MarkDone/' + id,
+                type: 'POST',
+
+            }).done(function (data) {
+
+                if (data.status == "success") {
+
+                    toastr.success(data.message)
+                }
+                else {
+                    toastr.error(data.message)
+                }
+
+
+
+
+                datatable.ajax.reload();
+
+
+            }).fail(function (response) {
+
+                toastr.error(response.responseText)
+
+                datatable.ajax.reload();
+            });
+        }
+
+
+    });
+}
 
 function updateTicket() {
     toastr.clear()
