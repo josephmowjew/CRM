@@ -143,8 +143,9 @@
                         data: "id",
                         name: "id",
                         "orderable": false,
-                        render: function (data) {
-                            return "<a href='#' type='button' onclick=Delete('" + data + "') title='delete' class='mdi mdi-checkbox-multiple-marked-outline'></a><a href='tickets/details/" + data.ticketId + "' class='mdi mdi-eye'></a>"
+                        render: function (data, type, full) {
+                            return "<a href='#' type='button' onclick=MarkDone('" + data + "') title='Marked Resovled' class='mdi mdi-checkbox-marked-circle'></a>"
+                           // return "<a href='#' type='button' onclick=Delete('" + data + "') title='delete' class='mdi mdi-checkbox-multiple-marked-outline'></a><a href='tickets/details/" + data.ticketId + "' class='mdi mdi-eye'></a>"
                         }
                     },
 

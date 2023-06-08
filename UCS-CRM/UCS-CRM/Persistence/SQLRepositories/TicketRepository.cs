@@ -370,7 +370,7 @@ namespace UCS_CRM.Persistence.SQLRepositories
 
         public async Task<Ticket> LastTicket()
         {
-            return await this._context.Tickets.OrderByDescending(t => t.Id).LastOrDefaultAsync();
+            return await this._context.Tickets.OrderByDescending(t => t.CreatedDate).FirstOrDefaultAsync();
         }
 
         public void Remove(Ticket ticket)

@@ -26,11 +26,13 @@ namespace UCS_CRM.Core.Helpers
 
         // default properties
         public static string Category = "Support";
+        public static string Support = "Support";
         public static string Priority = "Level One";
         public static string NewTicket = "New";
 
+        //link
+        public static string systemLink = "<a href='http://129.151.141.178/'>UCS Sacco System</a>";
 
-       
 
         // issues filters
         public static string Categories = "Categories";

@@ -54,8 +54,8 @@ namespace UCS_CRM.Persistence.SQLRepositories
                 else
                 {
                     //include search text in the query
-                    var memberAccounts = (from tblOb in await this._context.MemberAccounts.Include(m => m.AccountType)
-                                        .Where(a => a.AccountType.Name.ToLower().Contains(@params.SearchTerm) & a.Status != Lambda.Deleted)
+                    var memberAccounts = (from tblOb in await this._context.MemberAccounts
+                                        .Where(a => a.Status != Lambda.Deleted)
                                         .Skip(@params.Skip)
                                         .Take(@params.Take)
                                         .ToListAsync()
@@ -77,7 +77,7 @@ namespace UCS_CRM.Persistence.SQLRepositories
 
         public async Task<List<MemberAccount>?> GetMemberAccountsAsync(int memberId)
         {
-            return await this._context.MemberAccounts.Include(m => m.AccountType).Where(m => m.MemberId == memberId).ToListAsync();
+            return await this._context.MemberAccounts.Where(m => m.MemberId == memberId).ToListAsync();
         }
 
         public void Remove(MemberAccount memberAccount)

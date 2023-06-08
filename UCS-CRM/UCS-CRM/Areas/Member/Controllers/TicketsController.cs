@@ -13,6 +13,7 @@ using UCS_CRM.Core.DTOs.TicketComment;
 using UCS_CRM.Core.DTOs.TicketEscalation;
 using UCS_CRM.Core.Helpers;
 using UCS_CRM.Core.Models;
+using UCS_CRM.Core.Services;
 using UCS_CRM.Persistence.Interfaces;
 using UCS_CRM.Persistence.SQLRepositories;
 
@@ -32,7 +33,9 @@ namespace UCS_CRM.Areas.Member.Controllers
         private readonly IMapper _mapper;
         private readonly IUnitOfWork _unitOfWork;
         private IWebHostEnvironment _env;
-        public TicketsController(ITicketRepository ticketRepository, IMapper mapper, IUnitOfWork unitOfWork, 
+        private readonly IEmailService _emailService;
+        private readonly IEmailAddressRepository _addressRepository;
+        public TicketsController(ITicketRepository ticketRepository, IMapper mapper, IUnitOfWork unitOfWork, IEmailService emailService, IEmailAddressRepository addressRepository,
             ITicketCategoryRepository ticketCategoryRepository, IStateRepository stateRepository, ITicketPriorityRepository priorityRepository, 
             IWebHostEnvironment env, ITicketCommentRepository ticketCommentRepository, IMemberRepository memberRepository, ITicketEscalationRepository ticketEscalationRepository)
         {
@@ -46,6 +49,8 @@ namespace UCS_CRM.Areas.Member.Controllers
             _ticketCommentRepository = ticketCommentRepository;
             _memberRepository = memberRepository;
             _ticketEscalationRepository = ticketEscalationRepository;
+            _emailService = emailService;
+            _addressRepository = addressRepository;
         }
 
         // GET: TicketsController
@@ -62,12 +67,6 @@ namespace UCS_CRM.Areas.Member.Controllers
         [ValidateAntiForgeryToken]
         public async Task<ActionResult> Create(CreateTicketDTO createTicketDTO)
         {
-
-          
-
-
-
-
             if (ModelState.IsValid)
             {
 
@@ -122,7 +121,7 @@ namespace UCS_CRM.Areas.Member.Controllers
 
                     mappedTicket.CreatedById = claimsIdentitifier.Value;
 
-                    var member = this._memberRepository.GetMemberByUserId(mappedTicket.CreatedById);
+                    var member = await this._memberRepository.GetMemberByUserId(mappedTicket.CreatedById);
 
                     //set up the member id
                     mappedTicket.MemberId = member.Id;
@@ -169,6 +168,13 @@ namespace UCS_CRM.Areas.Member.Controllers
                         mappedTicket.TicketAttachments.AddRange(mappedAttachments);
 
                         await this._unitOfWork.SaveToDataStore();
+
+                        //email to send to support
+                        var emailAddress = await _addressRepository.GetEmailAddressByOwner(Lambda.Support);
+
+                        string emailBody = "Your ticket request for has been submitted in the system. </b> check the system for more details by clicking here " + Lambda.systemLink + "<br /> ";
+                        _emailService.SendMail(mappedTicket.Member.Address, "Ticket Creation", emailBody);
+
                     }
 
                     await populateViewBags();

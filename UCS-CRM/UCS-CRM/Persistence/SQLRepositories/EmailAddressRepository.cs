@@ -97,5 +97,17 @@ namespace UCS_CRM.Persistence.SQLRepositories
         {
             return await this._context.EmailAddresses.CountAsync(s => s.Status == Lambda.Deleted);
         }
+
+        public async Task<EmailAddress?> GetEmailAddress(int id)
+        {
+            return await this._context.EmailAddresses.FirstOrDefaultAsync(x => x.Id == id & x.Status != Lambda.Deleted);
+        }
+
+        // get by account 
+        public async Task<EmailAddress?> GetEmailAddressByOwner(string owner)
+        {
+            return await this._context.EmailAddresses.FirstOrDefaultAsync(x => x.Owner == owner & x.Status != Lambda.Deleted);
+        }
+
     }
 }

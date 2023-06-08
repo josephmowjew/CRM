@@ -12,7 +12,7 @@ using UCS_CRM.Persistence.Interfaces;
 using UCS_CRM.Persistence.SQLRepositories;
 using Hangfire;
 using Hangfire.MemoryStorage;
-
+using UCS_CRM.Areas.Admin.Controllers;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -76,6 +76,7 @@ builder.Services.AddScoped<ITicketCommentRepository, TicketCommentRepository>();
 builder.Services.AddScoped<ITicketEscalationRepository, TicketEscalationRepository>();
 builder.Services.AddScoped<IMemberAccountRepository, MemberAccountRepository>();
 builder.Services.AddScoped<IEmailAddressRepository, EmailAddressRepository>();
+builder.Services.AddHttpClient(); 
 
 
 var app = builder.Build();

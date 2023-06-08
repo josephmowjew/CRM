@@ -8,6 +8,8 @@ namespace UCS_CRM.Persistence.Interfaces
         void Add(EmailAddress emailAddress);
         EmailAddress? DefaultEmailAddress(string name);
         EmailAddress? Exists(string name);
+        Task<EmailAddress?> GetEmailAddress(int id);
+        Task<EmailAddress?> GetEmailAddressByOwner(string owner);
         Task<EmailAddress?> GetEmailAddressAsync(int id);
         Task<List<EmailAddress>?> GetEmailAddresses();
         Task<List<EmailAddress>?> GetEmailAddresses(CursorParams @params);

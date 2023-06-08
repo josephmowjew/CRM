@@ -36,11 +36,17 @@ namespace UCS_CRM.Core.DTOs.Member
 
         public string? Employer { get; set; }
 
+          public int MemberId { get; set; }
+        public string? AccountName { get; set; }
+        public decimal Balance { get; set; }
+        //public List<RelatedAccount> RelatedAccounts { get; set; }
+
         public string FormattedFirstName => (!string.IsNullOrEmpty(FirstName)) ? myTI.ToTitleCase(FirstName) : "";
         public string FormattedLastName => (!string.IsNullOrEmpty(LastName)) ? myTI.ToTitleCase(LastName) : "";
         public string FormattedAddress => (!string.IsNullOrEmpty(Address)) ? myTI.ToTitleCase(Address) : "";
         public string FormattedGender => (!string.IsNullOrEmpty(Gender)) ? myTI.ToTitleCase(Gender) : "";
         public string formattedDateOfBirth => DateOfBirth?.ToString("dd-MM-yyyy");
+        public string FormattedAmount => Balance.ToString("MWK 0.00");
 
         public ApplicationUser User { get; set; }
 
