@@ -66,8 +66,8 @@ namespace UCS_CRM.Persistence.SQLRepositories
                                    .Include(t => t.TicketCategory)
                                    .Include(t => t.TicketPriority)
                                    .Include(t => t.TicketEscalations)
-                                   .Where(t => t.Status != Lambda.Deleted)
-                                   .Take(@params.Take).Skip(@params.Skip)
+                                   .Where(t => t.Status != Lambda.Deleted).Skip(@params.Skip)
+                                   .Take(@params.Take)
                                    .ToListAsync() select tblOb);
 
                     //accountTypes.AsQueryable().OrderBy("gjakdgdag");
@@ -101,8 +101,9 @@ namespace UCS_CRM.Persistence.SQLRepositories
                                            t.Member.FirstName.ToLower().Trim().Contains(@params.SearchTerm.ToLower()) ||
                                            t.Member.LastName.ToLower().Trim().Contains(@params.SearchTerm.ToLower()) ||
                                            t.TicketCategory.Name.ToLower().Trim().Contains(@params.SearchTerm.ToLower()))
+                                     .Skip(@params.Skip)
                                    .Take(@params.Take)
-                                   .Skip(@params.Skip)
+                                 
                                    .ToListAsync()
                                    select tblOb);
 
@@ -142,8 +143,9 @@ namespace UCS_CRM.Persistence.SQLRepositories
                                    .Include(t => t.TicketPriority)
                                    .Include(t => t.TicketEscalations)
                                    .Where(t => t.Status != Lambda.Deleted)
-                                    .Where(t => t.ClosedDate != null)
-                                   .Take(@params.Take).Skip(@params.Skip)
+                                    .Where(t => t.ClosedDate != null || t.State.Name == Lambda.Closed)
+                                      .Skip(@params.Skip)
+                                   .Take(@params.Take)                                 
                                    .ToListAsync()
                                    select tblOb);
 
@@ -179,8 +181,9 @@ namespace UCS_CRM.Persistence.SQLRepositories
                                            t.Member.FirstName.ToLower().Trim().Contains(@params.SearchTerm.ToLower()) ||
                                            t.Member.LastName.ToLower().Trim().Contains(@params.SearchTerm.ToLower()) ||
                                            t.TicketCategory.Name.ToLower().Trim().Contains(@params.SearchTerm.ToLower()))
+                                    .Skip(@params.Skip)
                                    .Take(@params.Take)
-                                   .Skip(@params.Skip)
+                             
                                    .ToListAsync()
                                    select tblOb);
 
@@ -219,8 +222,8 @@ namespace UCS_CRM.Persistence.SQLRepositories
                                    .Include(t => t.TicketPriority)
                                    .Include(t => t.TicketEscalations)
                                    .Where(t => t.Status != Lambda.Deleted && t.MemberId == memberId)
-                                   .Take(@params.Take)
-                                   .Skip(@params.Skip)
+                                     .Skip(@params.Skip)
+                                   .Take(@params.Take)                                
                                    .ToListAsync() select tblOb);
 
                     //accountTypes.AsQueryable().OrderBy("gjakdgdag");
@@ -272,7 +275,7 @@ namespace UCS_CRM.Persistence.SQLRepositories
                                                                t.Member.FirstName.ToLower().Trim().Contains(@params.SearchTerm.ToLower()) ||
                                                                t.Member.LastName.ToLower().Trim().Contains(@params.SearchTerm.ToLower()) ||
                                                                t.TicketCategory.Name.ToLower().Trim().Contains(@params.SearchTerm.ToLower()))
-                                                   .OrderByDescending(t => t.Id)
+                                                   .OrderByDescending(t => t.Id)                                                     
                                                    .Skip(@params.Skip)
                                                    .Take(@params.Take)
                                                    .ToListAsync();
@@ -312,8 +315,8 @@ namespace UCS_CRM.Persistence.SQLRepositories
                                    .Include(t => t.TicketPriority)
                                    .Where(t => t.Status != Lambda.Deleted && t.AssignedToId == assignedToId
                                    || t.CreatedById == assignedToId)
+                                     .Skip(@params.Skip)
                                    .Take(@params.Take)
-                                   .Skip(@params.Skip)
                                    .ToListAsync()
                                    select tblOb);
 
