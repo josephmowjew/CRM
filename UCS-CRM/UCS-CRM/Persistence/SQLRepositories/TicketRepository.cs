@@ -389,12 +389,19 @@ namespace UCS_CRM.Persistence.SQLRepositories
 
         public async Task<int> TotalClosedCount()
         {
-            return await this._context.Tickets.CountAsync(t => t.Status != Lambda.Closed);
+            return await this._context.Tickets.CountAsync(t => t.Status == Lambda.Closed || t.ClosedDate != null);
         }
 
         // count tickets by state
         public async Task<int> CountTicketsByStatus(string state)
         {
+            if (state == Lambda.Closed)
+            {
+                return await this._context.Tickets.Include(t => t.State).CountAsync(t => t.Status != Lambda.Deleted & (t.State.Name.Trim().ToLower() == state.Trim().ToLower() || t.ClosedDate != null));
+            }
+            else {
+
+            }
             return await this._context.Tickets.Include(t => t.State).CountAsync(t => t.Status != Lambda.Deleted & t.State.Name.Trim().ToLower() == state.Trim().ToLower());
         }
 
@@ -421,7 +428,16 @@ namespace UCS_CRM.Persistence.SQLRepositories
 
         public async Task<int> CountTicketsByStatusMember(string state, int memberId)
         {
-            return await this._context.Tickets.Include(t => t.State).CountAsync(t => t.Status != Lambda.Deleted & t.State.Name.Trim().ToLower() == state.Trim().ToLower() && t.MemberId == memberId);
+            if (state == Lambda.Closed)
+            {
+                return await this._context.Tickets.Include(t => t.State).CountAsync(t => t.Status == Lambda.Deleted & (t.State.Name.Trim().ToLower() == state.Trim().ToLower() || t.ClosedDate != null) && t.MemberId == memberId);
+
+            }
+            else
+            {
+                return await this._context.Tickets.Include(t => t.State).CountAsync(t => t.Status != Lambda.Deleted & t.State.Name.Trim().ToLower() == state.Trim().ToLower() && t.MemberId == memberId);
+            }
+          
         }
         public async Task<int> CountTicketsByStatusAssignedTo(string state, string assignedToId)
         {
