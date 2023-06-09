@@ -139,6 +139,7 @@ namespace UCS_CRM.Areas.Clerk.Controllers
                     //assign ticket number to the mapped record
 
                     mappedTicket.TicketNumber = ticketNumber;
+                    mappedTicket.AssignedToId = claimsIdentitifier.Value;
 
 
                     this._ticketRepository.Add(mappedTicket);
@@ -248,6 +249,9 @@ namespace UCS_CRM.Areas.Clerk.Controllers
                 editTicketDTO.StateId = editTicketDTO.StateId == null ? ticketDB.StateId : editTicketDTO.StateId;
 
                 editTicketDTO.TicketNumber = ticketDB.TicketNumber;
+                var claimsIdentitifier = User.FindFirst(ClaimTypes.NameIdentifier);
+
+                editTicketDTO.AssignedToId = claimsIdentitifier.Value;
                 //check if the role name isn't already taken
                 var mappedTicket = this._mapper.Map<Ticket>(editTicketDTO);
 
@@ -266,7 +270,7 @@ namespace UCS_CRM.Areas.Clerk.Controllers
                     return PartialView("_EditTicketPartial", editTicketDTO);
                 }
 
-
+               // var userClaims = (ClaimsIdentity)User.Identity;
 
                 this._mapper.Map(editTicketDTO, ticketDB);
 
@@ -410,7 +414,8 @@ namespace UCS_CRM.Areas.Clerk.Controllers
 
 
 
-            return Json(new { draw = draw, recordsFiltered = result.Count, recordsTotal = resultTotal, data = mappedResult });
+            //return Json(new { draw = draw, recordsFiltered = result.Count, recordsTotal = resultTotal, data = mappedResult });
+            return Json(new { draw = draw, recordsFiltered = resultTotal, recordsTotal = resultTotal, data = mappedResult });
 
 
 

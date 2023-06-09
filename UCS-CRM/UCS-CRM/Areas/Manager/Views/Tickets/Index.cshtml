@@ -177,8 +177,14 @@
                                                     {
                                                         return "<span class='  text-warning '>Re-Opened</span>"
                                                     }
+                                if (data.state.name == "New") {
+                                    return "<span class='  text-danger '>New</span>"
+                                } if (data.state.name == "Open") {
+                                    return "<span class='  text-info '>Open</span>"
+                                }
 
-                                                 }
+
+                            }
                                                 else{
                                                     return data.state.name
                                                 }
