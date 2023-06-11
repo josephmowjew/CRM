@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
 using UCS_CRM.Core.DTOs.Ticket;
+using UCS_CRM.Core.DTOs.TicketComment;
 using UCS_CRM.Core.DTOs.TicketEscalation;
 using UCS_CRM.Core.Helpers;
 using UCS_CRM.Core.Models;
@@ -19,12 +20,16 @@ namespace UCS_CRM.Areas.SeniorManager.Controllers
         private readonly ITicketRepository _ticketRepository;
         private readonly IMapper _mapper;
         private readonly IUnitOfWork _unitOfWork;
-        public TicketEscalationsController(ITicketEscalationRepository ticketEscalationRepository, IMapper mapper, IUnitOfWork unitOfWork, ITicketRepository ticketRepository)
+        private readonly ITicketCommentRepository _ticketCommentRepository;
+
+        public TicketEscalationsController(ITicketEscalationRepository ticketEscalationRepository, IMapper mapper, IUnitOfWork unitOfWork, ITicketRepository ticketRepository,
+            ITicketCommentRepository ticketCommentRepository)
         {
             this._ticketEscalationRepository = ticketEscalationRepository;
             this._mapper = mapper;
             _unitOfWork = unitOfWork;
             _ticketRepository = ticketRepository;
+            this._ticketCommentRepository = ticketCommentRepository;
         }
 
         // GET: TicketEscalationsController/Details/5
@@ -42,7 +47,14 @@ namespace UCS_CRM.Areas.SeniorManager.Controllers
         // GET: TicketController/Details/5
         public async Task<ActionResult> Details(int id)
         {
-            var ticketDB = await this._ticketRepository.GetTicket(id);
+            var esca = await _ticketEscalationRepository.GetTicketEscalation(id);
+
+            if (esca == null)
+            {
+                return RedirectToAction("First");
+            }
+            var ticketDB = await this._ticketRepository.GetTicket(esca.TicketId);
+
 
             if (ticketDB == null)
             {
@@ -289,6 +301,37 @@ namespace UCS_CRM.Areas.SeniorManager.Controllers
 
 
             //return Json(identityRolesList.ToList());
+
+        }
+
+        public async Task<ActionResult> GetTicketComments(string ticketId)
+        {
+            //datatable stuff
+            var draw = HttpContext.Request.Form["draw"].FirstOrDefault();
+            var start = HttpContext.Request.Form["start"].FirstOrDefault();
+            var length = HttpContext.Request.Form["length"].FirstOrDefault();
+
+            var sortColumn = HttpContext.Request.Form["columns[" + HttpContext.Request.Form["order[0][column]"].FirstOrDefault() + "][name]"].FirstOrDefault();
+            var sortColumnAscDesc = Request.Form["order[0][dir]"].FirstOrDefault();
+            var searchValue = Request.Form["search[value]"].FirstOrDefault();
+
+            int pageSize = length != null ? Convert.ToInt32(length) : 0;
+            int skip = start != null ? Convert.ToInt32(start) : 0;
+            int resultTotal = 0;
+
+            //create a cursor params based on the data coming from the datatable
+            CursorParams CursorParameters = new CursorParams() { SearchTerm = searchValue, Skip = skip, SortColum = sortColumn, SortDirection = sortColumnAscDesc, Take = pageSize };
+
+            resultTotal = await this._ticketCommentRepository.TotalActiveCount(int.Parse(ticketId));
+            var result = await this._ticketCommentRepository.GetTicketCommentsAsync(int.Parse(ticketId), CursorParameters);
+
+            //map the results to a read DTO
+
+            var mappedResult = this._mapper.Map<List<ReadTicketCommentDTO>>(result);
+
+
+
+            return Json(new { draw = draw, recordsFiltered = result.Count, recordsTotal = resultTotal, data = mappedResult });
 
         }
     }
