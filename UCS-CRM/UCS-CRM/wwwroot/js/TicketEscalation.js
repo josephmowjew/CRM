@@ -112,8 +112,8 @@ function EditForm(id, area = "") {
         $("#edit_ticket_modal select[name ='TicketCategoryId']").val(data.ticket.ticketCategoryId)
         $("#edit_ticket_modal select[name ='TicketPriorityId']").val(data.ticket.ticketPriorityId)
         $("#edit_ticket_modal select[name ='StateId']").val(data.ticket.stateId)
-        $("#create_ticket_modal select[name ='AssignedToId']").val(data.ticket.assignedToId)
-        $("#create_ticket_modal select[name ='MemberId']").val(data.ticket.memberId)
+        $("#edit_ticket_modal select[name ='AssignedToId']").val(data.ticket.assignedToId)
+        $("#edit_ticket_modal select[name ='MemberId']").val(data.ticket.memberId)
         $("#edit_ticket_modal input[name='Id']").val(data.ticket.id)
 
         //hook up an event to the update role button
@@ -218,7 +218,7 @@ function escalateTicket() {
                 //show success message to the user
                 var dataTable = $('#my_table').DataTable();
 
-                toastr.success(data.message)
+                toastr.success(" Ticket Escalated")
 
                 $("#escalate_ticket_modal").modal("hide")
 
