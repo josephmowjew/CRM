@@ -10,6 +10,7 @@ namespace UCS_CRM.Core.Models
         public ApplicationUser()
         {
             Members = new List<Member>();
+            Departments = new List<Department>();
         }
         [Required]
         [StringLength(maximumLength: 70, MinimumLength = 2)]
@@ -20,24 +21,23 @@ namespace UCS_CRM.Core.Models
         [Display(Name = "Last Name")]
         public string LastName { get; set; }
         [Required]
-       
         public string Gender { get; set; }
-
         [StringLength(maximumLength:15, MinimumLength = 10)]
         [Display(Name = "Phone Number")]
         public string PhoneNumber { get; set; }
-
         [Required]
         public DateTime CreatedDate { get; set; } = DateTime.Now;
-
         public DateTime? UpdatedDate { get; set; } = DateTime.Now;
-
         public DateTime? DeletedDate { get; set; }
-
         public string Status { get; set; } = Lambda.Active;
-
         public DateTime LastLogin { get; set; }
+        public ICollection<Member> Members { get; set; }
+        public int? MemberId { get; set; }
+        public Member? Member { get; set; }
+        public int? DepartmentId { get; set; }
+        public Department? Department { get; set; }
 
+        public ICollection<Department> Departments { get; set; }
         [NotMapped]
         public String FullName
         {
@@ -46,9 +46,6 @@ namespace UCS_CRM.Core.Models
                 return FirstName + " " + LastName;
             }
         }
-        public ICollection<Member> Members { get; set; }
-        public int? MemberId { get; set; }
-        public Member? Member { get; set; }
 
     }
 }

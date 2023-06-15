@@ -43,7 +43,14 @@ namespace UCS_CRM.Data
             builder.Entity<ApplicationUser>()
             .HasMany(a => a.Members)
             .WithOne(i => i.CreatedBy);
+
+            builder.Entity<ApplicationUser>()
+            .HasOne(i => i.Department)
+            .WithMany(d => d.Users);
             
+            builder.Entity<ApplicationUser>()
+                .HasMany(u => u.Departments)
+                .WithOne( i => i.CreatedBy);
 
             builder.Entity<ApplicationUser>(entity =>
             {
@@ -80,8 +87,6 @@ namespace UCS_CRM.Data
                 entity.Property(m => m.ProviderDisplayName).HasMaxLength(85);
                 entity.Property(m => m.LoginProvider).HasMaxLength(85);
                 entity.Property(m => m.ProviderKey).HasMaxLength(85);
-
-
             });
             builder.Entity<IdentityRoleClaim<string>>(entity =>
             {
