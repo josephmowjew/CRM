@@ -28,6 +28,8 @@ namespace UCS_CRM.Data
         public DbSet<TicketEscalation> TicketEscalations { get; set; } 
         public DbSet<EmailAddress> EmailAddresses { get; set; }
 
+        public DbSet<Department> Departments { get; set; }
+
 
         protected override void OnModelCreating(ModelBuilder builder)
         {

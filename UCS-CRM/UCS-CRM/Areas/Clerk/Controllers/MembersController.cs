@@ -249,7 +249,7 @@ namespace UCS_CRM.Areas.Admin.Controllers
             int skip = start != null ? Convert.ToInt32(start) : 0;
             int resultTotal = 0;
 
-            //create a cursor params based on the data coming from the datatable
+            //create a cursor params based on the data coming from the data-table
             CursorParams CursorParameters = new CursorParams() { SearchTerm = searchValue, Skip = skip, SortColum = sortColumn, SortDirection = sortColumnAscDesc, Take = pageSize };
 
             resultTotal = await this._memberRepository.TotalCount();
