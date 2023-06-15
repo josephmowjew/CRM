@@ -34,6 +34,7 @@ namespace UCS_CRM.Core.Models
         public ICollection<Member> Members { get; set; }
         public int? MemberId { get; set; }
         public Member? Member { get; set; }
+        [Display(Name = "Department Name")]
         public int? DepartmentId { get; set; }
         public Department? Department { get; set; }
 

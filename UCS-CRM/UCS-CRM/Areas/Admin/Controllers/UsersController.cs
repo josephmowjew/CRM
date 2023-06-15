@@ -20,23 +20,26 @@ namespace UCS_CRM.Areas.Admin.Controllers
         private readonly IUserRepository _userRepository;
         private readonly IEmailService _emailService;
         private readonly IUnitOfWork _unitOfWork;
+        private readonly IDepartmentRepository _departmentRepository;
         private RoleManager<IdentityRole> _roleManager;
         private readonly UserManager<ApplicationUser> _userManager;
         public UsersController(IUserRepository userRepository, IEmailService emailService, RoleManager<IdentityRole> roleManager,
-            UserManager<ApplicationUser> userManager, IUnitOfWork unitOfWork)
+            UserManager<ApplicationUser> userManager, IUnitOfWork unitOfWork, IDepartmentRepository departmentRepository)
         {
             this._userRepository = userRepository;
             this._emailService = emailService;
             this._roleManager = roleManager;
             this._userManager = userManager;
             _unitOfWork = unitOfWork;
+            _departmentRepository = departmentRepository;
         }
 
         // GET: UsersController
-        public ActionResult Index()
+        public async Task<ActionResult> Index()
         {
             List<SelectListItem> roles = new List<SelectListItem>();
             UserViewModel newUser = new UserViewModel();
+
             this._roleManager.Roles.ToList().ForEach(r =>
             {
                 roles.Add(new SelectListItem { Text = r.Name, Value = r.Name });
@@ -44,6 +47,7 @@ namespace UCS_CRM.Areas.Admin.Controllers
 
             ViewBag.rolesList = roles;
             ViewBag.genderList = newUser.GenderList;
+            ViewBag.departmentsList = await GetDepartments();
 
             return View();
         }
@@ -82,6 +86,7 @@ namespace UCS_CRM.Areas.Admin.Controllers
                     PhoneNumber = userViewModel.PhoneNumber,
                     UserName= userViewModel.Email,
                     EmailConfirmed = true,
+                    DepartmentId = userViewModel.DepartmentId
 
 
                 };
@@ -108,7 +113,7 @@ namespace UCS_CRM.Areas.Admin.Controllers
                 }
                 else
                 {
-                    //preactivate the account
+                    //pre-activate the account
 
                     applicationUser.EmailConfirmed= true;
                     //save the record to the database
@@ -209,6 +214,8 @@ namespace UCS_CRM.Areas.Admin.Controllers
                 Gender = user.Gender,
                 PhoneNumber = user.PhoneNumber,
                 Email = user.Email,
+                DepartmentId = user.DepartmentId,
+                Department = user.Department,
                 Id = user.Id,
 
             };
@@ -252,6 +259,7 @@ namespace UCS_CRM.Areas.Admin.Controllers
                     dbUser.Gender = applicationViewModel.Gender;
                     dbUser.Email = applicationViewModel.Email;
                     dbUser.PhoneNumber = applicationViewModel.PhoneNumber;
+                    dbUser.DepartmentId = applicationViewModel.DepartmentId;
 
                     IdentityResult result = await this._userRepository.UpdateAsync(dbUser);
 
@@ -512,6 +520,23 @@ namespace UCS_CRM.Areas.Admin.Controllers
             }
 
             return Json(new { status = "error", message = "user not found" });
+        }
+        private async Task<List<SelectListItem>> GetDepartments()
+        {
+            List<SelectListItem> departments = new() { new SelectListItem() { Text = "Select Department", Value=""} };
+
+            var departmentDb = await this._departmentRepository.GetDepartments();
+
+            if(departmentDb != null)
+            {
+                departmentDb.ForEach(d =>
+                {
+                    departments.Add(new SelectListItem() { Text = d.Name, Value = d.Id.ToString() });
+                });
+            }
+
+            return departments;
+
         }
     }
 }
