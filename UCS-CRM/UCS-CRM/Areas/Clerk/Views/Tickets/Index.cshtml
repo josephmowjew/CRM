@@ -192,13 +192,17 @@
                                                     {
                                                         return "<span class='  text-secondary '>Closed</span>"
                                                     }
-                                                      if(data.state.name == "Re-Opened")
+                                                      if(data.state.name == "New")
                                                     {
-                                                        return "<span class='  text-warning '>Re-Opened</span>"
+                                                        return "<span class='  text-danger '>New</span>"
                                                     }
-                                                    else{
-                                                        return data.state.name
-                                                    }
+                                if (data.state.name == "Open") {
+                                    return "<span class='  text-info '>Open</span>"
+                                }
+
+                                if (data.state.name == "Re-Opened") {
+                                    return "<span class='  text-warning '>Re-Opened</span>"
+                                }
 
                                                  }
                                                 else{

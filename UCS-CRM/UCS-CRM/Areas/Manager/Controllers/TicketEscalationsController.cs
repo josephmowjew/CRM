@@ -66,7 +66,13 @@ namespace UCS_CRM.Areas.Manager.Controllers
         // GET: TicketController/Details/5
         public async Task<ActionResult> Details(int id)
         {
-            var ticketDB = await this._ticketRepository.GetTicket(id);
+            var esca = await _ticketEscalationRepository.GetTicketEscalation(id);
+
+            if (esca == null)
+            {
+                return RedirectToAction("First");
+            }
+            var ticketDB = await this._ticketRepository.GetTicket(esca.TicketId);
 
             if (ticketDB == null)
             {
@@ -357,14 +363,14 @@ namespace UCS_CRM.Areas.Manager.Controllers
 
 
 
-                if (ticketEscalationPresence != null)
-                {
-                    createTicketEscalation.DataInvalid = "true";
+                //if (ticketEscalationPresence != null)
+                //{
+                //    createTicketEscalation.DataInvalid = "true";
 
-                    ModelState.AddModelError(nameof(mappedTicketEscalation.Ticket.Title), $"Another ticket exists with the parameters submitted'");
+                //    ModelState.AddModelError(nameof(mappedTicketEscalation.Ticket.Title), $"Another ticket exists with the parameters submitted'");
 
-                    return PartialView("_SecondTicketEscalationPartial", createTicketEscalation);
-                }
+                //    return PartialView("_SecondTicketEscalationPartial", createTicketEscalation);
+                //}
 
 
                 //save to the database
