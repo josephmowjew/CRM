@@ -29,6 +29,8 @@ namespace UCS_CRM.Core.Helpers
         public static string Support = "Support";
         public static string Priority = "Level One";
         public static string NewTicket = "New";
+        public static string Medium = "Medium";
+        public static string Lowest = "Lowest";
 
         //link
         public static string systemLink = "<a href='http://ucsscrm.sparcsystems.africa/'>UCS Sacco System</a>";

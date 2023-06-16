@@ -75,12 +75,14 @@ namespace UCS_CRM.Areas.Member.Controllers
                 //search for the default state
 
                 var defaultState =  this._stateRepository.DefaultState(Lambda.NewTicket);
+                var defaultPriority = this._priorityRepository.DefaultPriority(Lambda.Lowest);
 
-                if(defaultState == null)
+
+                if (defaultState == null || defaultPriority == null)
                 {
                     createTicketDTO.DataInvalid = "true";
 
-                    ModelState.AddModelError("", "Sorry but the application failed to log your ticket because of a missing state, please contact administrator for assistance");
+                    ModelState.AddModelError("", "Sorry but the application failed to log your ticket because of a missing state or priority, please contact administrator for assistance");
 
                     await populateViewBags();
 
@@ -89,9 +91,10 @@ namespace UCS_CRM.Areas.Member.Controllers
                 else
                 {
                     createTicketDTO.StateId = defaultState.Id;
-                    
+                    createTicketDTO.TicketPriorityId = defaultPriority.Id;
                 }
 
+                
 
                 //check for article title presence
 
@@ -173,7 +176,9 @@ namespace UCS_CRM.Areas.Member.Controllers
                         var emailAddress = await _addressRepository.GetEmailAddressByOwner(Lambda.Support);
 
                         string emailBody = "Your ticket request for has been submitted in the system. </b> check the system for more details by clicking here " + Lambda.systemLink + "<br /> ";
+                        string emailBod2y = "A ticket request for has been submitted in the system. </b> check the system for more details by clicking here " + Lambda.systemLink + "<br /> ";
                         _emailService.SendMail(mappedTicket.Member.Address, "Ticket Creation", emailBody);
+                        //_emailService.SendMail(mappedTicket.Member.Address, "Ticket Creation", emailBody);
 
                     }
 

@@ -226,7 +226,7 @@ namespace UCS_CRM.Areas.Clerk.Controllers
         }
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<ActionResult> Edit(int id, EditTicketDTO editTicketDTO)
+        public async Task<ActionResult> Edit(int id, EditManagerTicketDTO editTicketDTO)
         {
             editTicketDTO.DataInvalid = "true";
 
@@ -251,7 +251,12 @@ namespace UCS_CRM.Areas.Clerk.Controllers
                 editTicketDTO.TicketNumber = ticketDB.TicketNumber;
                 var claimsIdentitifier = User.FindFirst(ClaimTypes.NameIdentifier);
 
-                editTicketDTO.AssignedToId = claimsIdentitifier.Value;
+                //if (editTicketDTO.AssignedToId == null)
+                //{
+                //    editTicketDTO.AssignedToId = claimsIdentitifier.Value;
+                //}
+
+                
                 //check if the role name isn't already taken
                 var mappedTicket = this._mapper.Map<Ticket>(editTicketDTO);
 
@@ -264,7 +269,7 @@ namespace UCS_CRM.Areas.Clerk.Controllers
                 {
 
                     editTicketDTO.DataInvalid = "true";
-                    ModelState.AddModelError(nameof(editTicketDTO.Title), $"The title {editTicketDTO.Title} is already taken");
+                    ModelState.AddModelError("Error", $"This title is already taken");
 
 
                     return PartialView("_EditTicketPartial", editTicketDTO);
@@ -656,7 +661,8 @@ namespace UCS_CRM.Areas.Clerk.Controllers
 
             members.ForEach(member =>
             {
-                membersList.Add(new SelectListItem() { Text = member.FullName, Value = member.Id.ToString() });
+                membersList.Add(new SelectListItem() { Text = member.FullName +" (" + member.AccountNumber +
+                    ")", Value = member.Id.ToString() });
             });
 
             return membersList;
@@ -669,6 +675,7 @@ namespace UCS_CRM.Areas.Clerk.Controllers
             ViewBag.categories = await GetTicketCategories();
             ViewBag.states = await GetTicketStates();
             ViewBag.members = await GetMembers();
+            ViewBag.assignees = await GetAssignees();
         }
 
 

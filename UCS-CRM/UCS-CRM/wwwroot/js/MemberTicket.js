@@ -23,7 +23,7 @@
         var title = $("#create_ticket_modal input[name ='Title']").val()
         var description = $("#create_ticket_modal textarea[name ='Description']").val()
         var ticketCategoryId = $("#create_ticket_modal select[name ='TicketCategoryId']").val()
-        var ticketPriorityId = $("#create_ticket_modal select[name ='TicketPriorityId']").val()
+       // var ticketPriorityId = $("#create_ticket_modal select[name ='TicketPriorityId']").val()
         var files = $("#create_ticket_modal input[name = 'Attachments']")[0].files;
 
         //prepare data for request pushing
