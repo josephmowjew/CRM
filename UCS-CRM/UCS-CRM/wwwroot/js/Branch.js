@@ -74,6 +74,8 @@
 
                     $("#create_branch_modal").modal("hide")
 
+                    $("#create_branch_modal form")[0].reset();
+
                     dataTable.ajax.reload();
 
                 }
