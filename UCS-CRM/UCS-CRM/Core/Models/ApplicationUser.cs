@@ -11,6 +11,8 @@ namespace UCS_CRM.Core.Models
         {
             Members = new List<Member>();
             Departments = new List<Department>();
+            Branches = new List<Branch>();
+            Positions = new List<Position>();
         }
         [Required]
         [StringLength(maximumLength: 70, MinimumLength = 2)]
@@ -37,8 +39,14 @@ namespace UCS_CRM.Core.Models
         [Display(Name = "Department Name")]
         public int? DepartmentId { get; set; }
         public Department? Department { get; set; }
-
         public ICollection<Department> Departments { get; set; }
+        public int? BranchId { get; set; }
+        public Branch? Branch { get; set; }
+        public ICollection<Branch> Branches { get; set; }
+        public int? PositionId { get; set; }
+        public Position? Position { get; set; }
+        public ICollection<Position> Positions { get; set; }
+
         [NotMapped]
         public String FullName
         {

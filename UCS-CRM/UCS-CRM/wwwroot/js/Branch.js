@@ -2,22 +2,22 @@
 
     //hook up a click event to the login button
 
-    var createGroupbutton = $("#create_department_modal button[name='create_department_btn']").unbind().click(OnCreateClick);
+    var createGroupbutton = $("#create_branch_modal button[name='create_branch_btn']").unbind().click(OnCreateClick);
 
     function OnCreateClick() {
 
         //get the form url
 
-        var form_url = $("#create_department_modal form").attr("action");
+        var form_url = $("#create_branch_modal form").attr("action");
 
         //get the authentication token
 
-        var authenticationToken = $("#create_department_modal input[name='__RequestVerificationToken']").val();
+        var authenticationToken = $("#create_branch_modal input[name='__RequestVerificationToken']").val();
 
         //get the form fields
 
-        //var account_typeId = $("#create_department_modal input[name ='AccountTypeId']").val()
-        var name = $("#create_department_modal input[name ='Name']").val()
+        //var account_typeId = $("#create_branch_modal input[name ='AccountTypeId']").val()
+        var name = $("#create_branch_modal input[name ='Name']").val()
        
 
         var formData = new FormData();
@@ -51,14 +51,14 @@
                 if (isInvalid == true) {
 
                     //replace the form data with the data retrieved from the server
-                    $("#create_department_modal").html(data)
+                    $("#create_branch_modal").html(data)
 
 
                     //rewire the onclick event on the form
 
-                    $("#edit_department_modal button[name='update_department_btn']").unbind().click(function () { updateDepartment(id) })
+                    $("#edit_branch_modal button[name='update_branch_btn']").unbind().click(function () { updateBranch(id) })
 
-                    var form = $("#create_department_modal")
+                    var form = $("#create_branch_modal")
 
                     $(form).removeData("validator")
                     $(form).removeData("unobtrusiveValidation")
@@ -70,11 +70,11 @@
                     var dataTable = $('#my_table').DataTable();
 
                     //send success message
-                    toastr.success("Department added successfully")
+                    toastr.success("Branch added successfully")
 
-                    $("#create_department_modal").modal("hide")
+                    $("#create_branch_modal").modal("hide")
 
-                    $("#create_department_modal form")[0].reset();
+                    $("#create_branch_modal form")[0].reset();
 
                     dataTable.ajax.reload();
 
@@ -103,30 +103,30 @@ function EditForm(id) {
 
 
     $.ajax({
-        url: 'Departments/edit/' + id,
+        url: 'Branches/edit/' + id,
         type: 'GET'
     }).done(function (data) {
 
         //get the form url
 
-        var form_url = $("#edit_department_modal form").attr("action");
+        var form_url = $("#edit_branch_modal form").attr("action");
 
         //get the authentication token
 
         //get the form fields
 
-        var name = $("#edit_department_modal input[name ='Name']").val(data.name)
-        var id = $("#edit_department_modal input[name ='Id']").val(data.id)
+        var name = $("#edit_branch_modal input[name ='Name']").val(data.name)
+        var id = $("#edit_branch_modal input[name ='Id']").val(data.id)
 
 
 
 
         //hook up an event to the update role button
 
-        $("#edit_department_modal button[name='update_department_btn']").unbind().click(function () { updateDepartment(id) })
+        $("#edit_branch_modal button[name='update_branch_btn']").unbind().click(function () { updateBranch(id) })
 
 
-        $("#edit_department_modal").modal("show");
+        $("#edit_branch_modal").modal("show");
 
     })
 }
@@ -138,7 +138,7 @@ function Delete(id) {
 
         if (result) {
             $.ajax({
-                url: 'Departments/delete/' + id,
+                url: 'Branches/delete/' + id,
                 type: 'POST',
 
             }).done(function (data) {
@@ -170,17 +170,17 @@ function Delete(id) {
 }
 
 
-function updateDepartment(id) {
+function updateBranch(id) {
 
     toastr.clear()
 
     //get the authorisation token
     //upDateRole
-    var authenticationToken = $("#edit_department_modal input[name='__RequestVerificationToken']").val();
-    var name = $("#edit_department_modal input[name ='Name']").val()
-    var id = $("#edit_department_modal input[name='Id']").val()
+    var authenticationToken = $("#edit_branch_modal input[name='__RequestVerificationToken']").val();
+    var name = $("#edit_branch_modal input[name ='Name']").val()
+    var id = $("#edit_branch_modal input[name='Id']").val()
 
-    var form_url = $("#edit_department_modal form").attr("action");
+    var form_url = $("#edit_branch_modal form").attr("action");
 
 
     var formData = new FormData();
@@ -217,14 +217,14 @@ function updateDepartment(id) {
             if (isInvalid == true) {
 
                 //replace the form data with the data retrieved from the server
-                $("#edit_department_modal").html(data)
+                $("#edit_branch_modal").html(data)
 
 
                 //rewire the onclick event on the form
 
-                $("#edit_department_modal button[name='update_department_btn']").unbind().click(function () { updateDepartment(id) });
+                $("#edit_branch_modal button[name='update_branch_btn']").unbind().click(function () { updateBranch(id) });
 
-                var form = $("#edit_department_modal")
+                var form = $("#edit_branch_modal")
 
                 $(form).removeData("validator")
                 $(form).removeData("unobtrusiveValidation")
@@ -252,7 +252,7 @@ function updateDepartment(id) {
 
                 dataTable.ajax.reload();
 
-                $("#edit_department_modal").modal("hide")
+                $("#edit_branch_modal").modal("hide")
 
             }
 

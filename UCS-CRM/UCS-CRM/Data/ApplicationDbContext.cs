@@ -27,8 +27,9 @@ namespace UCS_CRM.Data
         public DbSet<Message> Messages { get; set; }
         public DbSet<TicketEscalation> TicketEscalations { get; set; } 
         public DbSet<EmailAddress> EmailAddresses { get; set; }
-
+        public DbSet<Branch> Branches { get; set; }
         public DbSet<Department> Departments { get; set; }
+        public DbSet<Position> Positions { get; set; }
 
 
         protected override void OnModelCreating(ModelBuilder builder)
@@ -44,6 +45,7 @@ namespace UCS_CRM.Data
             .HasMany(a => a.Members)
             .WithOne(i => i.CreatedBy);
 
+            //manual annotations for department
             builder.Entity<ApplicationUser>()
             .HasOne(i => i.Department)
             .WithMany(d => d.Users);
@@ -51,6 +53,25 @@ namespace UCS_CRM.Data
             builder.Entity<ApplicationUser>()
                 .HasMany(u => u.Departments)
                 .WithOne( i => i.CreatedBy);
+
+            //manual annotations for branch
+
+            builder.Entity<ApplicationUser>()
+                .HasOne(i => i.Branch)
+                .WithMany(d => d.Users);
+
+            builder.Entity<ApplicationUser>()
+                .HasMany(u => u.Branches)
+                .WithOne(i => i.CreatedBy);
+
+            //manual annotation for position
+            builder.Entity<ApplicationUser>()
+               .HasOne(i => i.Position)
+               .WithMany(d => d.Users);
+
+            builder.Entity<ApplicationUser>()
+                .HasMany(u => u.Positions)
+                .WithOne(i => i.CreatedBy);
 
             builder.Entity<ApplicationUser>(entity =>
             {

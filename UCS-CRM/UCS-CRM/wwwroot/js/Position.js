@@ -2,22 +2,23 @@
 
     //hook up a click event to the login button
 
-    var createGroupbutton = $("#create_department_modal button[name='create_department_btn']").unbind().click(OnCreateClick);
+    var createGroupbutton = $("#create_position_modal button[name='create_position_btn']").unbind().click(OnCreateClick);
 
     function OnCreateClick() {
 
         //get the form url
 
-        var form_url = $("#create_department_modal form").attr("action");
+        var form_url = $("#create_position_modal form").attr("action");
 
         //get the authentication token
 
-        var authenticationToken = $("#create_department_modal input[name='__RequestVerificationToken']").val();
+        var authenticationToken = $("#create_position_modal input[name='__RequestVerificationToken']").val();
 
         //get the form fields
 
-        //var account_typeId = $("#create_department_modal input[name ='AccountTypeId']").val()
-        var name = $("#create_department_modal input[name ='Name']").val()
+        //var account_typeId = $("#create_position_modal input[name ='AccountTypeId']").val()
+        var name = $("#create_position_modal input[name ='Name']").val()
+        var rating = $("#create_position_modal input[name ='Rating']").val()
        
 
         var formData = new FormData();
@@ -25,6 +26,7 @@
         //append the file to the formdata 
 
         formData.append("Name", name);
+        formData.append("Rating", rating);
         formData.append("__RequestVerificationToken", authenticationToken)
         //send the request
 
@@ -36,7 +38,6 @@
             contentType: false,
             success: function (data) {
 
-                console.log(data)
                 toastr.clear()
                 //parse whatever comes back to html
 
@@ -51,14 +52,14 @@
                 if (isInvalid == true) {
 
                     //replace the form data with the data retrieved from the server
-                    $("#create_department_modal").html(data)
+                    $("#create_position_modal").html(data)
 
 
                     //rewire the onclick event on the form
 
-                    $("#edit_department_modal button[name='update_department_btn']").unbind().click(function () { updateDepartment(id) })
+                    $("#edit_position_modal button[name='update_position_btn']").unbind().click(function () { updatePosition(id) })
 
-                    var form = $("#create_department_modal")
+                    var form = $("#create_position_modal")
 
                     $(form).removeData("validator")
                     $(form).removeData("unobtrusiveValidation")
@@ -70,11 +71,11 @@
                     var dataTable = $('#my_table').DataTable();
 
                     //send success message
-                    toastr.success("Department added successfully")
+                    toastr.success("Position added successfully")
 
-                    $("#create_department_modal").modal("hide")
+                    $("#create_position_modal").modal("hide")
 
-                    $("#create_department_modal form")[0].reset();
+                    $("#create_position_modal form")[0].reset();
 
                     dataTable.ajax.reload();
 
@@ -103,30 +104,31 @@ function EditForm(id) {
 
 
     $.ajax({
-        url: 'Departments/edit/' + id,
+        url: 'Positions/edit/' + id,
         type: 'GET'
     }).done(function (data) {
 
         //get the form url
 
-        var form_url = $("#edit_department_modal form").attr("action");
+        var form_url = $("#edit_position_modal form").attr("action");
 
         //get the authentication token
 
         //get the form fields
 
-        var name = $("#edit_department_modal input[name ='Name']").val(data.name)
-        var id = $("#edit_department_modal input[name ='Id']").val(data.id)
+        var name = $("#edit_position_modal input[name ='Name']").val(data.name)
+        var rating = $("#edit_position_modal input[name ='Rating']").val(data.rating)
+        var id = $("#edit_position_modal input[name ='Id']").val(data.id)
 
 
 
 
         //hook up an event to the update role button
 
-        $("#edit_department_modal button[name='update_department_btn']").unbind().click(function () { updateDepartment(id) })
+        $("#edit_position_modal button[name='update_position_btn']").unbind().click(function () { updatePosition(id) })
 
 
-        $("#edit_department_modal").modal("show");
+        $("#edit_position_modal").modal("show");
 
     })
 }
@@ -138,7 +140,7 @@ function Delete(id) {
 
         if (result) {
             $.ajax({
-                url: 'Departments/delete/' + id,
+                url: 'Positions/delete/' + id,
                 type: 'POST',
 
             }).done(function (data) {
@@ -170,17 +172,18 @@ function Delete(id) {
 }
 
 
-function updateDepartment(id) {
+function updatePosition(id) {
 
     toastr.clear()
 
     //get the authorisation token
     //upDateRole
-    var authenticationToken = $("#edit_department_modal input[name='__RequestVerificationToken']").val();
-    var name = $("#edit_department_modal input[name ='Name']").val()
-    var id = $("#edit_department_modal input[name='Id']").val()
+    var authenticationToken = $("#edit_position_modal input[name='__RequestVerificationToken']").val();
+    var name = $("#edit_position_modal input[name ='Name']").val()
+    var rating = $("#edit_position_modal input[name ='Rating']").val()
+    var id = $("#edit_position_modal input[name='Id']").val()
 
-    var form_url = $("#edit_department_modal form").attr("action");
+    var form_url = $("#edit_position_modal form").attr("action");
 
 
     var formData = new FormData();
@@ -190,6 +193,7 @@ function updateDepartment(id) {
     var userInput = {
         __RequestVerificationToken: authenticationToken,
         Name: name,
+        Rating: rating,
         Id: id
     }
 
@@ -217,14 +221,14 @@ function updateDepartment(id) {
             if (isInvalid == true) {
 
                 //replace the form data with the data retrieved from the server
-                $("#edit_department_modal").html(data)
+                $("#edit_position_modal").html(data)
 
 
                 //rewire the onclick event on the form
 
-                $("#edit_department_modal button[name='update_department_btn']").unbind().click(function () { updateDepartment(id) });
+                $("#edit_position_modal button[name='update_position_btn']").unbind().click(function () { updatePosition(id) });
 
-                var form = $("#edit_department_modal")
+                var form = $("#edit_position_modal")
 
                 $(form).removeData("validator")
                 $(form).removeData("unobtrusiveValidation")
@@ -246,13 +250,14 @@ function updateDepartment(id) {
                     toastr.success("nothing to update")
 
                 } else {
+
                     toastr.success(data.message)
                 }
 
 
                 dataTable.ajax.reload();
 
-                $("#edit_department_modal").modal("hide")
+                $("#edit_position_modal").modal("hide")
 
             }
 

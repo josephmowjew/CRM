@@ -77,6 +77,8 @@ builder.Services.AddScoped<ITicketEscalationRepository, TicketEscalationReposito
 builder.Services.AddScoped<IMemberAccountRepository, MemberAccountRepository>();
 builder.Services.AddScoped<IEmailAddressRepository, EmailAddressRepository>();
 builder.Services.AddScoped<IDepartmentRepository, DepartmentRepository>();
+builder.Services.AddScoped<IBranchRepository, BranchRepository>();
+builder.Services.AddScoped<IPositionRepository, PositionRepository>();
 builder.Services.AddHttpClient(); 
 
 
