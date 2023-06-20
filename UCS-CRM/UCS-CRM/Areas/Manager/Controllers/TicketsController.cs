@@ -490,7 +490,8 @@ namespace UCS_CRM.Areas.Manager.Controllers
 
             members.ForEach(member =>
             {
-                membersList.Add(new SelectListItem() { Text = member.FullName, Value = member.Id.ToString() });
+                membersList.Add(new SelectListItem() { Text = member.FullName + " (" + member.AccountNumber +
+                    ")", Value = member.Id.ToString() });
             });
 
             return membersList;

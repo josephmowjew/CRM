@@ -42,12 +42,12 @@
                 </div>
                 <div class="form-group">
                     <label asp-for="MemberId"></label>
-                    <select asp-for="MemberId" asp-items="@ViewBag.members" class="form-control"></select>
+                    <select asp-for="MemberId" asp-items="@ViewBag.members" class="form-control select2-single" style="width:100%"></select>
                     <span asp-validation-for="MemberId" class="text-danger"></span>
                 </div>
                 <div class="form-group">
                     <label asp-for="AssignedToId"></label>
-                    <select asp-for="AssignedToId" asp-items="@ViewBag.Assignees" class="form-control"></select>
+                    <select asp-for="AssignedToId" asp-items="@ViewBag.Assignees" class="form-control" style="width:100%"></select>
                     <span asp-validation-for="AssignedToId" class="text-danger"></span>
                 </div>
                 <div class="form-group">

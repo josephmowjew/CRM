@@ -121,6 +121,7 @@ function EditForm(id, area = "") {
             Description: 'description',
             TicketCategoryId: 'ticketCategoryId',
             TicketPriorityId: 'ticketPriorityId',
+            AssignedToId: 'assignedToId',
             MemberId: 'memberId',
             StateId: 'stateId',
             Id: 'id',

@@ -17,6 +17,11 @@ namespace UCS_CRM.Persistence.SQLRepositories
             _context = context;
         }
 
+        public TicketPriority? DefaultPriority(string name)
+        {
+            return this._context.TicketPriorities.FirstOrDefault(s => name.ToLower().Trim() == s.Name.Trim().ToLower() && s.Status != Lambda.Deleted);
+        }
+
         public void Add(TicketPriority ticketPriority)
         {
             this._context.TicketPriorities.Add(ticketPriority);
