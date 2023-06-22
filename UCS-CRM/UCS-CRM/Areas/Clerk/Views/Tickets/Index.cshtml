@@ -61,7 +61,10 @@
 
                     <th>
                        State
-                    </th>
+                        </th>
+                        <th>
+                            Period
+                        </th>
 
                     <th>
                         Assigned To
@@ -213,7 +216,12 @@
                                     className: "text-left"
                                 },
 
-
+                    {
+                        data: "period",
+                        name: "period",
+                        className: "text-left",
+                        "orderable": true,
+                    },
                                  {
                                         data: { state: "assignedTo.fullName"},
                                         mRender: function (data, type, full) {

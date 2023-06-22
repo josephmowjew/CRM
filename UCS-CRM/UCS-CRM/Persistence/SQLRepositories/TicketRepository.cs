@@ -58,7 +58,7 @@ namespace UCS_CRM.Persistence.SQLRepositories
                 if (string.IsNullOrEmpty(@params.SearchTerm))
                 {
                     var records = (from tblOb in await this._context.Tickets
-                                   .OrderByDescending(t =>t.Id)
+                                   .OrderBy(t =>t.CreatedDate)
                                    .Include(t => t.Member)
                                    .Include(t => t.AssignedTo)
                                    .Include(t => t.TicketAttachments)
@@ -87,7 +87,7 @@ namespace UCS_CRM.Persistence.SQLRepositories
 
                     var records = (from tblOb in await this._context.Tickets
                                    .Where(t => t.Status != Lambda.Deleted)
-                                   .OrderByDescending(t => t.Id)
+                                   .OrderBy(t => t.CreatedDate)
                                    .Include(t => t.AssignedTo)
                                    .Include(t => t.TicketAttachments)
                                    .Include(t => t.State)
@@ -134,7 +134,7 @@ namespace UCS_CRM.Persistence.SQLRepositories
                 if (string.IsNullOrEmpty(@params.SearchTerm))
                 {
                     var records = (from tblOb in await this._context.Tickets
-                                   .OrderByDescending(t => t.Id)
+                                   .OrderBy(t => t.CreatedDate)
                                    .Include(t => t.Member)
                                    .Include(t => t.AssignedTo)
                                    .Include(t => t.TicketAttachments)
@@ -167,7 +167,7 @@ namespace UCS_CRM.Persistence.SQLRepositories
                     var records = (from tblOb in await this._context.Tickets
                                    .Where(t => t.Status != Lambda.Deleted)
                                     .Where(t => t.ClosedDate != null)
-                                   .OrderByDescending(t => t.Id)
+                                   .OrderBy(t => t.CreatedDate)
                                    .Include(t => t.AssignedTo)
                                    .Include(t => t.TicketAttachments)
                                    .Include(t => t.State)
@@ -213,7 +213,7 @@ namespace UCS_CRM.Persistence.SQLRepositories
                 if (string.IsNullOrEmpty(@params.SearchTerm))
                 {
                     var records = (from tblOb in await this._context.Tickets
-                                   .OrderByDescending(t => t.Id)
+                                   .OrderBy(t => t.CreatedDate)
                                    .Include(t => t.Member)
                                    .Include(t => t.AssignedTo)
                                    .Include(t => t.TicketAttachments)
@@ -275,7 +275,7 @@ namespace UCS_CRM.Persistence.SQLRepositories
                                                                t.Member.FirstName.ToLower().Trim().Contains(@params.SearchTerm.ToLower()) ||
                                                                t.Member.LastName.ToLower().Trim().Contains(@params.SearchTerm.ToLower()) ||
                                                                t.TicketCategory.Name.ToLower().Trim().Contains(@params.SearchTerm.ToLower()))
-                                                   .OrderByDescending(t => t.Id)                                                     
+                                                   .OrderBy(t => t.CreatedDate)                                                     
                                                    .Skip(@params.Skip)
                                                    .Take(@params.Take)
                                                    .ToListAsync();
@@ -306,7 +306,7 @@ namespace UCS_CRM.Persistence.SQLRepositories
                 if (string.IsNullOrEmpty(@params.SearchTerm))
                 {
                     var records = (from tblOb in await this._context.Tickets
-                                   .OrderByDescending(t => t.Id)
+                                   .OrderBy(t => t.CreatedDate)
                                    .Include(t => t.Member)
                                    .Include(t => t.AssignedTo)
                                    .Include(t => t.TicketAttachments)
@@ -349,7 +349,7 @@ namespace UCS_CRM.Persistence.SQLRepositories
                                                                 t.Member.FirstName.ToLower().Trim().Contains(@params.SearchTerm.ToLower()) ||
                                                                 t.Member.LastName.ToLower().Trim().Contains(@params.SearchTerm.ToLower()) ||
                                                                 t.TicketCategory.Name.ToLower().Trim().Contains(@params.SearchTerm.ToLower()))
-                                                    .OrderByDescending(t => t.Id)
+                                                    .OrderBy(t => t.CreatedDate)
                                                     .Skip(@params.Skip)
                                                     .Take(@params.Take)
                                                     .ToListAsync();

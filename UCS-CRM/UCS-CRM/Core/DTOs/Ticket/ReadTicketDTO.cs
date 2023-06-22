@@ -15,6 +15,7 @@ namespace UCS_CRM.Core.DTOs.Ticket
         public string Description { get; set; }
         [Required]
         public string Status { get; set; }
+        public DateTime CreatedDate { get; set; }
         public DateTime? ClosedDate { get; set; }
         [Required]
         public string AssignedToId { get; set; }
@@ -37,11 +38,43 @@ namespace UCS_CRM.Core.DTOs.Ticket
         public ICollection<Models.TicketComment> TicketComments { get; set; }
         public ICollection<Models.TicketEscalation> TicketEscalations { get; set; }
 
+      
+
         public ReadTicketDTO()
         {
             TicketAttachments = new List<TicketAttachment>();
             TicketComments = new List<UCS_CRM.Core.Models.TicketComment>();
             TicketEscalations = new List<Models.TicketEscalation>();
         }
+
+        public string Period
+        {
+            get
+            {
+              TimeSpan diff = DateTime.Now - CreatedDate;
+
+                string period = string.Empty;
+
+                if (diff.TotalDays > 24)
+                    period = string.Format("{0:%d} days ago", diff);
+                if (diff.TotalDays == 24)
+                    period = string.Format("{0:%d} day ago", diff);
+                else if (diff.TotalHours < 24 && diff.TotalHours > 1)
+                    period = string.Format("{0:%h} hours ago", diff);
+                else if (diff.TotalHours < 24 && diff.TotalHours == 1)
+                    period = string.Format("{0:%h} hour ago", diff);
+                else if (diff.TotalMinutes < 60 && diff.TotalSeconds > 60)
+                    period = string.Format("{0:%m} minutes  ago", diff);
+
+                else if (diff.TotalSeconds < 60)
+                    period = string.Format("{0:%m} seconds  ago", diff);
+
+                return period;
+            
+            }
+
+
+        }
+
     }
 }
