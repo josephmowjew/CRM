@@ -27,7 +27,7 @@ namespace UCS_CRM.Persistence.SQLRepositories
 
         public Task<Department?> GetDepartment(int id)
         {
-            return this._context.Departments.FirstOrDefaultAsync(d => d.Id == id);
+            return this._context.Departments.Include(d => d.Positions).FirstOrDefaultAsync(d => d.Id == id);
         }
 
         public async Task<List<Department>?> GetDepartments(CursorParams @params)

@@ -1,0 +1,32 @@
+﻿@model UCS_CRM.ViewModel.DepartmentPositionViewModel
+<!-- Modal -->
+
+<div class="modal-dialog" role="document">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h5 class="modal-title" id="exampleModalLabel">Add Position To Department Form</h5>
+            <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+            </button>
+        </div>
+        <div class="modal-body">
+            <form asp-action="AddPositionDepartment">
+                <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+                <input type="hidden" asp-for="DataInvalid" />
+                <div class="form-group">
+                    <input asp-for="DepartmentId" type="hidden" value="@ViewBag.department.Id" class="form-control" />
+                </div>
+                <div class="form-group">
+                    <label asp-for="PositionId" class="control-label"></label>
+                     <select asp-for="PositionId" asp-items="@ViewBag.positionsList" class="form-control"></select>
+                    <span asp-validation-for="PositionId" class="text-danger"></span>
+                </div>
+
+            </form>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            <button type="button" class="btn btn-primary" id="add_position_to_department_btn" name="add_position_to_department_btn">Add to department</button>
+        </div>
+    </div>
+</div>

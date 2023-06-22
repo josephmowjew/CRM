@@ -9,8 +9,8 @@
 <p>
 
     <!-- Button trigger modal -->
-    <button type="button" class="btn btn-info" data-bs-toggle="modal" data-bs-target="#create_department_modal">
-        Create Department
+    <button type="button" class="btn btn-info" data-bs-toggle="modal" data-bs-target="#add_position_to_department_modal">
+        Add Position To Department
     </button>
 
 
@@ -18,17 +18,16 @@
 </p>
 
 
-<div class="modal fade" id="create_department_modal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
-    <partial name="_CreateDepartmentPartial" />
+<div class="modal fade" id="add_position_to_department_modal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <partial name="_AddPositionToDepartmentPartial" />
 </div>
 
-<div class="modal fade" id="edit_department_modal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
-    <partial name="_EditDepartmentPartial" />
-</div>
+
 
 <div class="card">
     <div class="card-header">
-        <h4 class="text-center text-uppercase">Departments Available In The System</h4>
+        <h4 class="text-center text-uppercase">Positions Available In The @ViewBag.department.Name Department</h4>
+        <span style="display:none" id="departmentId">@ViewBag.department.Id</span>
     </div>
     <div class="card-body">
         <table class="table table-bordered table-responsive-sm" id="my_table">
@@ -55,10 +54,11 @@
 @section Scripts{
 
         <script>
+
             var datatable;
             
         </script>
-        <script src="../js/Departments.js" asp-append-version="true"></script>
+        <script src="~/js/Departments.js" asp-append-version="true"></script>
         
         
         <script>
@@ -70,9 +70,9 @@
 
                     "processing" : true,
                     "serverSide": true,
-                    "order": [[0, "desc"]],
+                    
                     ajax: {
-                        url: 'Departments/GetDepartments',
+                        url: '/Admin/Departments/GetDepartmentPositions/'+@ViewBag.department.Id,
                         type: 'post',
                         datatype: 'Json',
 
@@ -83,7 +83,7 @@
                         {
                             defaultContent: "",
                             targets: "_all",
-                           'orderable': true
+                           'orderable': false
                         },
                     ],
                     columns: [
@@ -91,7 +91,7 @@
                             data: "name",
                             name: "name",
                             className: "text-left",
-                            "orderable": true,
+                            "orderable": false,
                               render: function(data)
                             {
                                 return toTitleCase(data);
@@ -102,7 +102,7 @@
                             name: "id",
                             "orderable": false,
                             render: function (data) {
-                                return "<a href='Departments/ViewDepartmentPositions/"+data+"' class='mdi mdi-eye' title='view positions'></a> <a href='#' onclick=EditForm('" + data + "') type='button' class='feather icon-edit' title='edit' ></a> <a href='#' type='button' onclick=Delete('" +data + "') title='delete' class='feather icon-trash-2'></a>"
+                                return "<a href='#' type='button' onclick=DeletePositionFromDepartment('"+data + "') title='delete' class='feather icon-trash-2'></a>"
                             }
                         }
 
