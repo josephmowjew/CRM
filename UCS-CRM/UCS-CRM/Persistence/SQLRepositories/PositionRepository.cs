@@ -48,7 +48,7 @@ namespace UCS_CRM.Persistence.SQLRepositories
                     var positions = (from tblOb in await this._context.Positions.Where(d => d.Status != Lambda.Deleted).Skip(@params.Skip).Take(@params.Take).ToListAsync() select tblOb);
 
 
-                    if (string.IsNullOrEmpty(@params.SortColum) && !string.IsNullOrEmpty(@params.SortDirection))
+                    if (!string.IsNullOrEmpty(@params.SortColum) && !string.IsNullOrEmpty(@params.SortDirection))
                     {
                         positions = positions.AsQueryable().OrderBy(@params.SortColum + " " + @params.SortDirection);
 
@@ -67,8 +67,11 @@ namespace UCS_CRM.Persistence.SQLRepositories
                                         .Take(@params.Take)
                                         .ToListAsync()
                                        select tblOb);
+                    if (!string.IsNullOrEmpty(@params.SortColum) && !string.IsNullOrEmpty(@params.SortDirection))
+                    {
 
-                    positions = positions.AsQueryable().OrderBy(@params.SortColum + " " + @params.SortDirection);
+                        positions = positions.AsQueryable().OrderBy(@params.SortColum + " " + @params.SortDirection);
+                    }
 
 
                     return positions.ToList();
