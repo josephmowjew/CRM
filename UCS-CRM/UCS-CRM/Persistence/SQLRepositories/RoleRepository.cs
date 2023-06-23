@@ -4,34 +4,43 @@ using UCS_CRM.Core.Helpers;
 using UCS_CRM.Data;
 using System.Linq.Dynamic.Core;
 using UCS_CRM.Persistence.Interfaces;
+using UCS_CRM.Core.Models;
 
 namespace UCS_CRM.Persistence.SQLRepositories
 {
     public class RoleRepository : IRoleRepositorycs
     {
         private readonly ApplicationDbContext _context;
-        private readonly RoleManager<IdentityRole> _roleManager;
-        public RoleRepository(ApplicationDbContext context, RoleManager<IdentityRole> roleManager)
+        private readonly RoleManager<Role> _roleManager;
+        public RoleRepository(ApplicationDbContext context, RoleManager<Role> roleManager)
         {
             _context = context;
             _roleManager = roleManager;
         }
-        public async Task<IdentityResult> AddRole(IdentityRole identityRole)
+        public void AddRole(Role identityRole)
         {
-            return await this._roleManager.CreateAsync(identityRole);
+              this._context.Roles.Add(identityRole);
+            //return await this._roleManager.CreateAsync(identityRole);
         }
 
-        public async Task<IdentityResult> UpdateRoleAsync(IdentityRole identityRole)
+        public async Task<IdentityResult> UpdateRoleAsync(Role identityRole)
         {
             return await this._roleManager.UpdateAsync(identityRole);
         }
-        public IQueryable<IdentityRole> GetRoles(CursorParams @params)
+
+        public async Task<List<Role>> GetRolesAsync()
+        {
+            var roles =  await this._context.Roles.ToListAsync();
+
+            return roles;
+        }
+        public IQueryable<Role> GetRoles(CursorParams @params)
         {
             if (@params.Take > 0)
             {
                 if (string.IsNullOrEmpty(@params.SearchTerm))
                 {
-                    var identityRolesList = (from tblObj in _roleManager.Roles.Skip(@params.Skip).Take(@params.Take) select tblObj);
+                    var identityRolesList = (from tblObj in this._context.Roles.Skip(@params.Skip).Take(@params.Take) select tblObj);
 
                     if (string.IsNullOrEmpty(@params.SortColum) && !string.IsNullOrEmpty(@params.SortDirection))
                     {
@@ -80,7 +89,7 @@ namespace UCS_CRM.Persistence.SQLRepositories
             
         }
 
-        public async Task<IdentityRole> GetRoleAsync(string id)
+        public async Task<Role> GetRoleAsync(string id)
         {
             return await this._roleManager.FindByIdAsync(id);
         }

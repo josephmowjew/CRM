@@ -14,8 +14,8 @@ namespace UCS_CRM.Persistence.SQLRepositories
     {
         private readonly ApplicationDbContext _context;
         private readonly UserManager<ApplicationUser> _userManager;
-        private readonly RoleManager<IdentityRole> _roleManager;
-        public UserRepository(ApplicationDbContext context, UserManager<ApplicationUser> userManager, RoleManager<IdentityRole> roleManager)
+        private readonly RoleManager<Role> _roleManager;
+        public UserRepository(ApplicationDbContext context, UserManager<ApplicationUser> userManager, RoleManager<Role> roleManager)
         {
             _context = context;
             this._userManager = userManager;
@@ -40,7 +40,7 @@ namespace UCS_CRM.Persistence.SQLRepositories
 
         public async Task<ApplicationUser?> FindByEmailsync(string email)
         {
-            return await this._context.Users.Include(u => u.Department).Include(u => u.Position).FirstOrDefaultAsync(u => u.Email.ToLower().Trim() == email.ToLower().Trim());
+            return await this._context.Users.Include(u => u.Department).FirstOrDefaultAsync(u => u.Email.ToLower().Trim() == email.ToLower().Trim());
         }
 
         public async Task<ApplicationUser?> FindByIdAsync(string id)

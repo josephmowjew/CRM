@@ -4,7 +4,7 @@
 
     var createGroupbutton = $("#create_department_modal button[name='create_department_btn']").unbind().click(OnCreateClick);
 
-    $("#add_position_to_department_modal button[name='add_position_to_department_btn']").unbind().click(OnAddPositionToDepartment);
+    $("#add_role_to_department_modal button[name='add_role_to_department_btn']").unbind().click(OnAddRoleToDepartment);
 
 
     function OnCreateClick() {
@@ -95,21 +95,21 @@
         });
     }
 
-    function OnAddPositionToDepartment() {
+    function OnAddRoleToDepartment() {
 
         //get the form url
 
-        var form_url = $("#add_position_to_department_modal form").attr("action");
+        var form_url = $("#add_role_to_department_modal form").attr("action");
 
         //get the authentication token
 
-        var authenticationToken = $("#add_position_to_department_modal input[name='__RequestVerificationToken']").val();
+        var authenticationToken = $("#add_role_to_department_modal input[name='__RequestVerificationToken']").val();
 
         //get the form fields
 
         //var account_typeId = $("#create_department_modal input[name ='AccountTypeId']").val()
-        var departmentId = $("#add_position_to_department_modal input[name ='DepartmentId']").val()
-        var positionId = $("#add_position_to_department_modal select[name ='PositionId']").val()
+        var departmentId = $("#add_role_to_department_modal input[name ='DepartmentId']").val()
+        var roleId = $("#add_role_to_department_modal select[name ='RoleId']").val()
 
 
 
@@ -118,7 +118,7 @@
         //append the file to the formdata 
 
         formData.append("DepartmentId", departmentId);
-        formData.append("PositionId", positionId);
+        formData.append("RoleId", roleId);
         formData.append("__RequestVerificationToken", authenticationToken)
         //send the request
 
@@ -144,10 +144,10 @@
                 if (isInvalid == true) {
 
                     //replace the form data with the data retrieved from the server
-                    $("#add_position_to_department_modal").html(data)
+                    $("#add_role_to_department_modal").html(data)
 
 
-                    var form = $("#add_position_to_department_modal")
+                    var form = $("#add_role_to_department_modal")
 
                     $(form).removeData("validator")
                     $(form).removeData("unobtrusiveValidation")
@@ -159,11 +159,11 @@
                     var dataTable = $('#my_table').DataTable();
 
                     //send success message
-                    toastr.success("position added to department successfully")
+                    toastr.success("role added to department successfully")
 
-                    $("#add_position_to_department_modal").modal("hide")
+                    $("#add_role_to_department_modal").modal("hide")
 
-                    $("#add_position_to_department_modal form")[0].reset();
+                    $("#add_role_to_department_modal form")[0].reset();
 
                     dataTable.ajax.reload();
 
@@ -262,7 +262,7 @@ function Delete(id) {
     });
 }
 
-function DeletePositionFromDepartment(id) {
+function DeleteRoleFromDepartment(id) {
 
     let departmentId = $("#departmentId").text();
 
@@ -272,7 +272,7 @@ function DeletePositionFromDepartment(id) {
 
         if (result) {
             $.ajax({
-                url: '/Admin/Departments/DeletePositionOnDepartment?positionId=' + id + '&departmentId=' + departmentId,
+                url: '/Admin/Departments/DeleteRoleOnDepartment?positionId=' + id + '&departmentId=' + departmentId,
                 type: 'GET',
 
             }).done(function (data) {

@@ -14,9 +14,11 @@ namespace UCS_CRM.Areas.Admin.Controllers
     public class RolesController : Controller
     {
         private readonly IRoleRepositorycs _roleRepository;
-        public RolesController(IRoleRepositorycs roleRepository)
+        private readonly IUnitOfWork _unitOfWork;
+        public RolesController(IRoleRepositorycs roleRepository, IUnitOfWork unitOfWork)
         {
             _roleRepository = roleRepository;
+            _unitOfWork = unitOfWork;
         }
 
         // GET: RolesController
@@ -57,10 +59,13 @@ namespace UCS_CRM.Areas.Admin.Controllers
 
                     return PartialView("_CreateRolePartial", role);
                 }
-                var identityRole = new IdentityRole();
+                var identityRole = new Role();
                 identityRole.Name = role.Name;
+                identityRole.NormalizedName = role.Name;
 
-                var result = await _roleRepository.AddRole(identityRole);
+               _roleRepository.AddRole(identityRole);
+
+                await _unitOfWork.SaveToDataStore();
 
                 role.DataInvalid = "";
 

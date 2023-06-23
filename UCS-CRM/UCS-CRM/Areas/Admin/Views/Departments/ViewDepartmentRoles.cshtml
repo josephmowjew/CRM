@@ -9,8 +9,8 @@
 <p>
 
     <!-- Button trigger modal -->
-    <button type="button" class="btn btn-info" data-bs-toggle="modal" data-bs-target="#add_position_to_department_modal">
-        Add Position To Department
+    <button type="button" class="btn btn-info" data-bs-toggle="modal" data-bs-target="#add_role_to_department_modal">
+        Add Role To Department
     </button>
 
 
@@ -18,15 +18,15 @@
 </p>
 
 
-<div class="modal fade" id="add_position_to_department_modal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
-    <partial name="_AddPositionToDepartmentPartial" />
+<div class="modal fade" id="add_role_to_department_modal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <partial name="_AddRoleToDepartmentPartial" />
 </div>
 
 
 
 <div class="card">
     <div class="card-header">
-        <h4 class="text-center text-uppercase">Positions Available In The @ViewBag.department.Name Department</h4>
+        <h4 class="text-center text-uppercase">Roles Available In The @ViewBag.department.Name Department</h4>
         <span style="display:none" id="departmentId">@ViewBag.department.Id</span>
     </div>
     <div class="card-body">
@@ -72,7 +72,7 @@
                     "serverSide": true,
                     
                     ajax: {
-                        url: '/Admin/Departments/GetDepartmentPositions/'+@ViewBag.department.Id,
+                        url: '/Admin/Departments/GetDepartmentRoles/'+@ViewBag.department.Id,
                         type: 'post',
                         datatype: 'Json',
 
@@ -102,7 +102,7 @@
                             name: "id",
                             "orderable": false,
                             render: function (data) {
-                                return "<a href='#' type='button' onclick=DeletePositionFromDepartment('"+data + "') title='delete' class='feather icon-trash-2'></a>"
+                                return "<a href='#' type='button' onclick=DeleteRoleFromDepartment('"+data + "') title='delete' class='feather icon-trash-2'></a>"
                             }
                         }
 

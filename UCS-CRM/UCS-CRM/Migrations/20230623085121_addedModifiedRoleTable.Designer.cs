@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using UCS_CRM.Data;
 
@@ -10,14 +11,31 @@ using UCS_CRM.Data;
 namespace UCS_CRM.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20230623085121_addedModifiedRoleTable")]
+    partial class addedModifiedRoleTable
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
                 .HasAnnotation("ProductVersion", "7.0.3")
                 .HasAnnotation("Relational:MaxIdentifierLength", 64);
+
+            modelBuilder.Entity("DepartmentPosition", b =>
+                {
+                    b.Property<int>("DepartmentsId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("PositionsId")
+                        .HasColumnType("int");
+
+                    b.HasKey("DepartmentsId", "PositionsId");
+
+                    b.HasIndex("PositionsId");
+
+                    b.ToTable("DepartmentPosition");
+                });
 
             modelBuilder.Entity("DepartmentRole", b =>
                 {
@@ -296,6 +314,9 @@ namespace UCS_CRM.Migrations
                     b.Property<bool>("PhoneNumberConfirmed")
                         .HasColumnType("tinyint(1)");
 
+                    b.Property<int?>("PositionId")
+                        .HasColumnType("int");
+
                     b.Property<string>("SecurityStamp")
                         .HasColumnType("longtext");
 
@@ -329,6 +350,8 @@ namespace UCS_CRM.Migrations
                     b.HasIndex("NormalizedUserName")
                         .IsUnique()
                         .HasDatabaseName("UserNameIndex");
+
+                    b.HasIndex("PositionId");
 
                     b.ToTable("Users", (string)null);
                 });
@@ -598,6 +621,44 @@ namespace UCS_CRM.Migrations
                     b.HasIndex("CreatedById");
 
                     b.ToTable("Messages");
+                });
+
+            modelBuilder.Entity("UCS_CRM.Core.Models.Position", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    b.Property<string>("CreatedById")
+                        .IsRequired()
+                        .HasColumnType("varchar(200)");
+
+                    b.Property<DateTime>("CreatedDate")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<DateTime?>("DeletedDate")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("varchar(150)");
+
+                    b.Property<int>("Rating")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<DateTime>("UpdatedDate")
+                        .HasColumnType("datetime(6)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CreatedById");
+
+                    b.ToTable("Positions");
                 });
 
             modelBuilder.Entity("UCS_CRM.Core.Models.State", b =>
@@ -907,6 +968,21 @@ namespace UCS_CRM.Migrations
                     b.HasDiscriminator().HasValue("Role");
                 });
 
+            modelBuilder.Entity("DepartmentPosition", b =>
+                {
+                    b.HasOne("UCS_CRM.Core.Models.Department", null)
+                        .WithMany()
+                        .HasForeignKey("DepartmentsId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("UCS_CRM.Core.Models.Position", null)
+                        .WithMany()
+                        .HasForeignKey("PositionsId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("DepartmentRole", b =>
                 {
                     b.HasOne("UCS_CRM.Core.Models.Department", null)
@@ -998,11 +1074,17 @@ namespace UCS_CRM.Migrations
                         .WithOne("User")
                         .HasForeignKey("UCS_CRM.Core.Models.ApplicationUser", "MemberId");
 
+                    b.HasOne("UCS_CRM.Core.Models.Position", "Position")
+                        .WithMany("Users")
+                        .HasForeignKey("PositionId");
+
                     b.Navigation("Branch");
 
                     b.Navigation("Department");
 
                     b.Navigation("Member");
+
+                    b.Navigation("Position");
                 });
 
             modelBuilder.Entity("UCS_CRM.Core.Models.Branch", b =>
@@ -1070,6 +1152,17 @@ namespace UCS_CRM.Migrations
                 {
                     b.HasOne("UCS_CRM.Core.Models.ApplicationUser", "CreatedBy")
                         .WithMany()
+                        .HasForeignKey("CreatedById")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("CreatedBy");
+                });
+
+            modelBuilder.Entity("UCS_CRM.Core.Models.Position", b =>
+                {
+                    b.HasOne("UCS_CRM.Core.Models.ApplicationUser", "CreatedBy")
+                        .WithMany("Positions")
                         .HasForeignKey("CreatedById")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -1213,6 +1306,8 @@ namespace UCS_CRM.Migrations
                     b.Navigation("Departments");
 
                     b.Navigation("Members");
+
+                    b.Navigation("Positions");
                 });
 
             modelBuilder.Entity("UCS_CRM.Core.Models.Branch", b =>
@@ -1231,6 +1326,11 @@ namespace UCS_CRM.Migrations
 
                     b.Navigation("User")
                         .IsRequired();
+                });
+
+            modelBuilder.Entity("UCS_CRM.Core.Models.Position", b =>
+                {
+                    b.Navigation("Users");
                 });
 
             modelBuilder.Entity("UCS_CRM.Core.Models.State", b =>

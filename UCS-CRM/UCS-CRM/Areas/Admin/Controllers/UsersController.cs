@@ -21,17 +21,20 @@ namespace UCS_CRM.Areas.Admin.Controllers
         private readonly IEmailService _emailService;
         private readonly IUnitOfWork _unitOfWork;
         private readonly IDepartmentRepository _departmentRepository;
-        private RoleManager<IdentityRole> _roleManager;
+        //private readonly IPositionRepository _positionRepository;
+        private RoleManager<Role> _roleManager;
+        private readonly IRoleRepositorycs _roleRepositorycs;
         private readonly UserManager<ApplicationUser> _userManager;
-        public UsersController(IUserRepository userRepository, IEmailService emailService, RoleManager<IdentityRole> roleManager,
-            UserManager<ApplicationUser> userManager, IUnitOfWork unitOfWork, IDepartmentRepository departmentRepository)
+        public UsersController(IUserRepository userRepository, IEmailService emailService, RoleManager<Role> roleManager,
+            UserManager<ApplicationUser> userManager, IUnitOfWork unitOfWork, IDepartmentRepository departmentRepository, IRoleRepositorycs roleRepositorycs)
         {
             this._userRepository = userRepository;
             this._emailService = emailService;
             this._roleManager = roleManager;
             this._userManager = userManager;
-            _unitOfWork = unitOfWork;
-            _departmentRepository = departmentRepository;
+            this._unitOfWork = unitOfWork;
+            this._departmentRepository = departmentRepository;
+            this._roleRepositorycs = roleRepositorycs;
         }
 
         // GET: UsersController
@@ -40,12 +43,14 @@ namespace UCS_CRM.Areas.Admin.Controllers
             List<SelectListItem> roles = new List<SelectListItem>();
             UserViewModel newUser = new UserViewModel();
 
-            this._roleManager.Roles.ToList().ForEach(r =>
+            var rolesDb = await this._roleRepositorycs.GetRolesAsync();
+
+            rolesDb.ForEach(r =>
             {
                 roles.Add(new SelectListItem { Text = r.Name, Value = r.Name });
             });
 
-            ViewBag.rolesList = roles;
+            //ViewBag.rolesList = roles;
             ViewBag.genderList = newUser.GenderList;
             ViewBag.departmentsList = await GetDepartments();
 
@@ -139,7 +144,7 @@ namespace UCS_CRM.Areas.Admin.Controllers
 
                             _emailService.SendMail(applicationUser.Email, "Login Details", UserNameBody);
                             _emailService.SendMail(applicationUser.Email, "Login Details", PasswordBody);
-                            return Json(new { response = "User account created succefully" });
+                            return Json(new { response = "User account created successfully" });
                         }
                         else
                         {
@@ -521,9 +526,16 @@ namespace UCS_CRM.Areas.Admin.Controllers
 
             return Json(new { status = "error", message = "user not found" });
         }
+
+        public async Task<ActionResult> FetchRolesOnDepartment(int selectedValue)
+        {
+            var listOfRoles = await GetRoles(selectedValue);
+
+            return Json(listOfRoles);
+        }
         private async Task<List<SelectListItem>> GetDepartments()
         {
-            List<SelectListItem> departments = new() { new SelectListItem() { Text = "Select Department", Value=""} };
+            List<SelectListItem> departments = new() { new SelectListItem() { Text = "---Select Department---", Value=""} };
 
             var departmentDb = await this._departmentRepository.GetDepartments();
 
@@ -537,6 +549,62 @@ namespace UCS_CRM.Areas.Admin.Controllers
 
             return departments;
 
+        }
+
+        private async Task<List<SelectListItem>> GetRoles(int departmentId = 0)
+        {
+            List<SelectListItem> rolesList = new();
+
+            //fetch positions from the datastore
+            if(departmentId > 0)
+            {
+                var department = await this._departmentRepository.GetDepartment(departmentId);
+
+                if (department != null)
+                {
+                    //fetch all positions associated with the department
+
+                    department.Roles.ForEach(p =>
+                    {
+                        rolesList.Add(new SelectListItem() { Text = p.Name, Value = p.Name.ToString() });
+                    });
+                }
+            }
+            else
+            {
+                //get all positions if department wasn't specified
+                var roles = await this._roleRepositorycs.GetRolesAsync();
+
+                if (roles != null)
+                {
+                    roles.ForEach(p =>
+                    {
+                        rolesList.Add(new SelectListItem() { Text = p.Name, Value = p.Name.ToString() });
+                    });
+                }
+            }
+
+
+
+            return rolesList;
+        }
+
+
+
+        private async Task populateViewBags()
+        {
+            List<SelectListItem> roles = new List<SelectListItem>();
+            UserViewModel newUser = new UserViewModel();
+
+            this._roleManager.Roles.ToList().ForEach(r =>
+            {
+                roles.Add(new SelectListItem { Text = r.Name, Value = r.Name });
+            });
+
+            ViewBag.rolesList = roles;
+            ViewBag.genderList = newUser.GenderList;
+            ViewBag.departmentsList = await GetDepartments();
+            
         }
     }
 }

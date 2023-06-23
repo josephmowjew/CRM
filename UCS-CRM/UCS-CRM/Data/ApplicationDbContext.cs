@@ -29,7 +29,9 @@ namespace UCS_CRM.Data
         public DbSet<EmailAddress> EmailAddresses { get; set; }
         public DbSet<Branch> Branches { get; set; }
         public DbSet<Department> Departments { get; set; }
-        public DbSet<Position> Positions { get; set; }
+        //public DbSet<Position> Positions { get; set; }
+
+        public DbSet<Role> Roles { get; set; }
 
 
         protected override void OnModelCreating(ModelBuilder builder)
@@ -65,13 +67,13 @@ namespace UCS_CRM.Data
                 .WithOne(i => i.CreatedBy);
 
             //manual annotation for position
-            builder.Entity<ApplicationUser>()
-               .HasOne(i => i.Position)
-               .WithMany(d => d.Users);
+            //builder.Entity<ApplicationUser>()
+            //   .HasOne(i => i.Position)
+            //   .WithMany(d => d.Users);
 
-            builder.Entity<ApplicationUser>()
-                .HasMany(u => u.Positions)
-                .WithOne(i => i.CreatedBy);
+            //builder.Entity<ApplicationUser>()
+            //    .HasMany(u => u.Positions)
+            //    .WithOne(i => i.CreatedBy);
 
             builder.Entity<ApplicationUser>(entity =>
             {

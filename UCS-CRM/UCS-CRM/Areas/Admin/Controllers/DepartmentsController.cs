@@ -19,15 +19,17 @@ namespace UCS_CRM.Areas.Admin.Controllers
     public class DepartmentsController : Controller
     {
         private readonly IDepartmentRepository _departmentRepository;
-        private readonly IPositionRepository _positionRepository;
+        private readonly IRoleRepositorycs _roleRepositorycs;
+        //private readonly IPositionRepository _positionRepository;
         private readonly IMapper _mapper;
         private readonly IUnitOfWork _unitOfWork;
-        public DepartmentsController(IDepartmentRepository departmentRepository, IMapper mapper, IUnitOfWork unitOfWork, IPositionRepository positionRepository)
+        public DepartmentsController(IDepartmentRepository departmentRepository, IMapper mapper, IUnitOfWork unitOfWork, IRoleRepositorycs roleRepositorycs)
         {
             this._departmentRepository = departmentRepository;
             this._mapper = mapper;
             this._unitOfWork = unitOfWork;
-            this._positionRepository = positionRepository;
+            //this._positionRepository = positionRepository;
+            this._roleRepositorycs = roleRepositorycs;
 
         }
         // GET: DepartmentController
@@ -220,23 +222,23 @@ namespace UCS_CRM.Areas.Admin.Controllers
             return Json(new { status = "error", message = "department could not be found from the system" });
         }
      
-        public async Task<ActionResult> DeletePositionOnDepartment(int positionId, int departmentId)
+        public async Task<ActionResult> DeleteRoleOnDepartment(string roleId, int departmentId)
         {
             var departmentDb = await this._departmentRepository.GetDepartment(departmentId);
 
             if (departmentDb != null)
             {
-                var position = await this._positionRepository.GetPosition(positionId);
-                if(position != null)
+                var role = await this._roleRepositorycs.GetRoleAsync(roleId);
+                if(role != null)
                 {
-                    departmentDb.Positions.Remove(position);
+                    departmentDb.Roles.Remove(role);
                     await this._unitOfWork.SaveToDataStore();
                 }
 
-                return Json(new { status = "success", message = "position removed from the department successfully" });
+                return Json(new { status = "success", message = "role removed from the department successfully" });
             }
 
-            return Json(new { status = "error", message = "position could not be removed from the department" });
+            return Json(new { status = "error", message = "role could not be removed from the department" });
         }
 
         [HttpPost]
@@ -286,11 +288,11 @@ namespace UCS_CRM.Areas.Admin.Controllers
 
         }
         [HttpGet]
-        public async Task<ActionResult> ViewDepartmentPositions([FromRoute]int id)
+        public async Task<ActionResult> ViewDepartmentRoles([FromRoute]int id)
         {
             Department? departmentDb = new();
 
-            var positions = await this.GetPositions(id);
+            var roles = await this.GetRoles(id);
 
 
             if (id != 0)
@@ -302,7 +304,7 @@ namespace UCS_CRM.Areas.Admin.Controllers
                 {
                     ViewBag.department = departmentDb;
 
-                    ViewBag.positionsList = positions;
+                    ViewBag.rolesList = roles;
                   
                 }
 
@@ -312,7 +314,7 @@ namespace UCS_CRM.Areas.Admin.Controllers
         }
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<ActionResult> AddPositionDepartment(DepartmentPositionViewModel viewModel)
+        public async Task<ActionResult> AddRoleToDepartment(DepartmentRoleViewModel viewModel)
         {
             //check for model validity
 
@@ -328,11 +330,11 @@ namespace UCS_CRM.Areas.Admin.Controllers
 
                 if(departmentDb != null )
                 {
-                    var position = await this._positionRepository.GetPosition(viewModel.PositionId);
+                    var role = await this._roleRepositorycs.GetRoleAsync(viewModel.RoleId);
 
-                    if(position != null)
+                    if(role != null)
                     {
-                        departmentDb.Positions.Add(position);
+                        departmentDb.Roles.Add(role);
 
                         await _unitOfWork.SaveToDataStore();
                     }
@@ -342,7 +344,7 @@ namespace UCS_CRM.Areas.Admin.Controllers
                     }
                 }
 
-                ViewBag.positionsList = await this.GetPositions(viewModel.DepartmentId);
+                ViewBag.positionsList = await this.GetRoles(viewModel.DepartmentId);
                 ViewBag.department = departmentDb;
 
 
@@ -350,11 +352,11 @@ namespace UCS_CRM.Areas.Admin.Controllers
 
            
 
-            return PartialView("_AddPositionToDepartmentPartial", viewModel);
+            return PartialView("_AddRoleToDepartmentPartial", viewModel);
         }
 
         [HttpPost]
-        public async Task<ActionResult> GetDepartmentPositions([FromRoute]int id)
+        public async Task<ActionResult> GetDepartmentRoles([FromRoute]int id)
         {
 
             try
@@ -376,7 +378,7 @@ namespace UCS_CRM.Areas.Admin.Controllers
 
                 Department? departmentDb = new();
 
-                List<Position> positions = new();
+                List<Role> roles = new();
 
                 if (id != 0)
                 {
@@ -385,13 +387,13 @@ namespace UCS_CRM.Areas.Admin.Controllers
 
                     if (departmentDb != null)
                     {
-                        positions = departmentDb.Positions;
+                        roles = departmentDb.Roles;
 
                         //sort the positions by rating if variable is not null
 
-                        if (positions != null)
+                        if (roles != null)
                         {
-                            positions = positions.OrderByDescending(p => p.Rating).ToList();
+                            roles = roles.OrderByDescending(p => p.Rating).ToList();
                         }
 
                         
@@ -401,8 +403,8 @@ namespace UCS_CRM.Areas.Admin.Controllers
 
 
                 //get total records from the database
-                resultTotal = positions.Count;
-                var result = positions;
+                resultTotal = roles.Count;
+                var result = roles;
                 return Json(new { draw = draw, recordsFiltered = resultTotal, recordsTotal = resultTotal, data = result });
             }
             catch (Exception ex)
@@ -414,38 +416,38 @@ namespace UCS_CRM.Areas.Admin.Controllers
 
         }
 
-        private async Task<List<SelectListItem>> GetPositions(int departmentId)
+        private async Task<List<SelectListItem>> GetRoles(int departmentId)
         {
-            List<SelectListItem> positionsList = new() { new SelectListItem() { Text = "Select Position", Value = "" } };
+            List<SelectListItem> rolesList = new() { new SelectListItem() { Text = "Select Role", Value = "" } };
 
             var departmentDb = await this._departmentRepository.GetDepartment(departmentId);
 
-            List<Position> freshPositions = new();
+            List<Role> freshRoles = new();
 
-            List<Position> departmentPositions = new();
+            List<Role> departmentRoles = new();
 
             if (departmentDb != null)
             {
-                departmentPositions = departmentDb.Positions;
+                departmentRoles = departmentDb.Roles;
             }
 
-            var positions = await this._positionRepository.GetPositions();
+            var roles = await this._roleRepositorycs.GetRolesAsync();
 
-            if(positions != null && positions.Count > 0)
+            if(roles != null && roles.Count > 0)
             {
-                freshPositions = positions.Except(departmentPositions).ToList();
+                freshRoles = roles.Except(departmentRoles).ToList();
             }
 
-            if(freshPositions != null && freshPositions.Count > 0)
+            if(freshRoles != null && freshRoles.Count > 0)
             {
-                freshPositions.ForEach(position =>
+                freshRoles.ForEach(role =>
                 {
-                    positionsList.Add(new SelectListItem() { Text = position.Name, Value = position.Id.ToString() });   
+                    rolesList.Add(new SelectListItem() { Text = role.Name, Value = role.Id.ToString() });   
                 });
             }
 
 
-            return positionsList;
+            return rolesList;
 
         }
 

@@ -1,16 +1,24 @@
 ﻿using Microsoft.AspNetCore.Identity;
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace UCS_CRM.Core.Models
 {
     public class Role: IdentityRole
     {
-        [MaxLength(255)]
-        public override string Id { get; set; } = "";
-        [Display(Name = "Role Name")]
-        [Required]
-        [StringLength(100, MinimumLength = 2)]
-        public override string Name { get; set; }
+        public Role():base()
+        {
+            Departments = new List<Department>();
+
+        }
+
+       
+
+        [NotMapped]
         public string DataInvalid { get; set; } = "true";
+
+        public int Rating { get; set; }
+
+        public List<Department> Departments { get; set; }
     }
 }

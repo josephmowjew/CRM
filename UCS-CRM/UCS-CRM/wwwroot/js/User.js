@@ -100,6 +100,43 @@
         });
     }
 
+    //events section
+
+    $("#create_user_modal select[name ='DepartmentId']").on('change', function () {
+        // Get the selected value
+        var selectedValue = $(this).val();
+
+        // Send a GET request to the endpoint with the selected value
+        $.get('users/FetchRolesOnDepartment', { selectedValue: selectedValue }, function (data) {
+            // Clear the options of the second dropdown list
+            $("#create_user_modal select[name ='RoleName']").empty();
+
+            // Iterate through the received JSON data and create options for the second dropdown list
+            $.each(data, function (index, item) {
+                var option = $('<option>').val(item.value).text(item.text);
+                $("#create_user_modal select[name ='RoleName']").append(option);
+            });
+        });
+    });
+
+
+    $("#edit_user_modal select[name ='DepartmentId']").on('change', function () {
+        // Get the selected value
+        var selectedValue = $(this).val();
+
+        // Send a GET request to the endpoint with the selected value
+        $.get('users/FetchRolesOnDepartment', { selectedValue: selectedValue }, function (data) {
+            // Clear the options of the second dropdown list
+            $("#edit_user_modal select[name ='RoleName']").empty();
+
+            // Iterate through the received JSON data and create options for the second dropdown list
+            $.each(data, function (index, item) {
+                var option = $('<option>').val(item.value).text(item.text);
+                $("#edit_user_modal select[name ='RoleName']").append(option);
+            });
+        });
+    });
+
 
 })
 

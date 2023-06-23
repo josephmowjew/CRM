@@ -1,17 +1,20 @@
 ﻿using Microsoft.AspNetCore.Identity;
 using UCS_CRM.Core.Helpers;
+using UCS_CRM.Core.Models;
 
 namespace UCS_CRM.Persistence.Interfaces
 {
     public interface IRoleRepositorycs
     {
-        IQueryable<IdentityRole> GetRoles(CursorParams @params);
+        IQueryable<Role> GetRoles(CursorParams @params);
 
-        Task<IdentityRole> GetRoleAsync(string id);
+        Task<Role> GetRoleAsync(string id);
+
+        Task<List<Role>> GetRolesAsync();
         Task<bool> Exists(string name);
         Task<IdentityResult> remove(string id);
-        Task<IdentityResult> AddRole(IdentityRole identityRole);
-        Task<IdentityResult> UpdateRoleAsync(IdentityRole identityRole);
+        void AddRole(Role identityRole);
+        Task<IdentityResult> UpdateRoleAsync(Role identityRole);
         int TotalCount();
     }
 }
