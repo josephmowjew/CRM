@@ -51,26 +51,35 @@ namespace UCS_CRM.Core.DTOs.Ticket
         {
             get
             {
-              TimeSpan diff = DateTime.Now - CreatedDate;
-
+                TimeSpan diff = DateTime.Now - CreatedDate;
                 string period = string.Empty;
 
-                if (diff.TotalDays > 24)
-                    period = string.Format("{0:%d} days ago", diff);
-                if (diff.TotalDays == 24)
-                    period = string.Format("{0:%d} day ago", diff);
-                else if (diff.TotalHours < 24 && diff.TotalHours > 1)
-                    period = string.Format("{0:%h} hours ago", diff);
-                else if (diff.TotalHours < 24 && diff.TotalHours == 1)
-                    period = string.Format("{0:%h} hour ago", diff);
-                else if (diff.TotalMinutes < 60 && diff.TotalSeconds > 60)
-                    period = string.Format("{0:%m} minutes  ago", diff);
-
-                else if (diff.TotalSeconds < 60)
-                    period = string.Format("{0:%m} seconds  ago", diff);
+                if (diff.TotalDays >= 1)
+                {
+                    if (diff.TotalDays > 1)
+                        period = string.Format("{0:%d} days ago", diff);
+                    else
+                        period = string.Format("{0:%d} day ago", diff);
+                }
+                else if (diff.TotalHours >= 1)
+                {
+                    if (diff.TotalHours > 1)
+                        period = string.Format("{0:%h} hours ago", diff);
+                    else
+                        period = string.Format("{0:%h} hour ago", diff);
+                }
+                else if (diff.TotalMinutes >= 1)
+                {
+                    period = string.Format("{0:%m} minutes ago", diff);
+                }
+                else
+                {
+                    period = string.Format("{0:%s} seconds ago", diff);
+                }
 
                 return period;
-            
+
+
             }
 
 
