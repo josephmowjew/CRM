@@ -33,6 +33,7 @@ namespace UCS_CRM.Core.Models
         public DateTime? DeletedDate { get; set; }
         public string Status { get; set; } = Lambda.Active;
         public DateTime LastLogin { get; set; }
+        public DateTime? LastPasswordChangedDate { get; set; }  
         public ICollection<Member> Members { get; set; }
         public int? MemberId { get; set; }
         public Member? Member { get; set; }

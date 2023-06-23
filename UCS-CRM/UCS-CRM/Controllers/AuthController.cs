@@ -130,47 +130,55 @@ namespace UCS_CRM.Controllers
 
                 if (findUserDb != null)
                 {
-
-
-                    var result = await _signInManager.PasswordSignInAsync(loginModel.Email, loginModel.Password, loginModel.RememberMe, lockoutOnFailure: false);
-
-
-
-                    //get the result of the login attemp
-
-                    if (result.Succeeded)
+                    if (findUserDb.LastPasswordChangedDate < DateTime.Now)
                     {
-                        int pin = _memberRepository.RandomNumber();
+                        var model = new ResetPassword { Token = "", Email = findUserDb.Email };
 
-                        var user = await this._userManager.FindByNameAsync(loginModel.Email);
-                        var roles = _userManager.GetRolesAsync(user).Result.ToList();
-                        if (user != null)
+                        var token = await _userManager.GeneratePasswordResetTokenAsync(findUserDb);
+
+                        return RedirectToActionPermanent("ResetPassword", new { token = token, email = findUserDb.Email });
+                    }
+                    else
+                    {
+
+                        var result = await _signInManager.PasswordSignInAsync(loginModel.Email, loginModel.Password, loginModel.RememberMe, lockoutOnFailure: false);
+
+                        //get the result of the login attemp
+
+                        if (result.Succeeded)
                         {
-                            user.LastLogin = DateTime.Now;
-                            user.Pin = pin;
-                        }
+                            int pin = _memberRepository.RandomNumber();
 
-                        await this._context.SaveChangesAsync();
+                            var user = await this._userManager.FindByNameAsync(loginModel.Email);
+                            var roles = _userManager.GetRolesAsync(user).Result.ToList();
+                            if (user != null)
+                            {
+                                user.LastLogin = DateTime.Now;
+                                user.Pin = pin;
+                            }
 
-                        string UserNameBody = "Your confirmation code is " + "<b>" +pin + " <br /> Enter this to login in";                       
+                            await this._context.SaveChangesAsync();
+
+                            string UserNameBody = "Your confirmation code is " + "<b>" + pin + " <br /> Enter this to login in";
 
 
                             _emailService.SendMail(user.Email, "Login Details", UserNameBody);
 
+                            TempData["response"] = $"Check your email for the code";
+                            return RedirectToAction("MFA", "Auth");
 
-                        return RedirectToAction("MFA", "Auth");
 
+                        }
+                        else
+                        {
+                            //flag an error message back the user
 
+                            ModelState.AddModelError(String.Empty, "Invalid login credentials");
+
+                            return View("Create", loginModel);
+                        }
                     }
-                    else
-                    {
-                        //flag an error message back the user
-
-                        ModelState.AddModelError(String.Empty, "Invalid login credentials");
-
-                        return View("Create", loginModel);
-                    }
-
+                   
                 }
                 else
                 {
@@ -356,13 +364,14 @@ namespace UCS_CRM.Controllers
             }
         }
         [HttpGet("reset-password")]
-        public async Task<IActionResult> ResetPassword(string token, string email)
+        public ActionResult ResetPassword(string token, string email)
         {
             var model = new ResetPassword { Token= token, Email= email};
 
             return View(model);
 
         }
+    
 
         [HttpPost("reset-password")]
         [AllowAnonymous]
@@ -380,6 +389,9 @@ namespace UCS_CRM.Controllers
 
                 if(resetPasswordResult.Succeeded)
                 {
+                    user.LastPasswordChangedDate = DateTime.Now.AddDays(90);
+                    await this._context.SaveChangesAsync();
+
                     TempData["response"] = $"Your account password has been reset successfully, You can try loging in using your new credentials";
                     return RedirectToAction("Create");
                 }
@@ -400,5 +412,7 @@ namespace UCS_CRM.Controllers
            
 
         }
+
+
     }
 }

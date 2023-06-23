@@ -50,6 +50,7 @@ namespace UCS_CRM.Persistence.SQLRepositories
                 MemberId = member.Id,
                 EmailConfirmed = false,
                 Pin = pin,
+                LastPasswordChangedDate= DateTime.Now,
             };
 
 

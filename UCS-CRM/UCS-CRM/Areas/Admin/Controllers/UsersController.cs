@@ -86,8 +86,8 @@ namespace UCS_CRM.Areas.Admin.Controllers
                     PhoneNumber = userViewModel.PhoneNumber,
                     UserName= userViewModel.Email,
                     EmailConfirmed = true,
-                    DepartmentId = userViewModel.DepartmentId
-
+                    DepartmentId = userViewModel.DepartmentId,
+                    LastPasswordChangedDate = DateTime.Now,
 
                 };
 
