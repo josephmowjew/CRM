@@ -15,6 +15,7 @@ namespace UCS_CRM.Persistence.Interfaces
         Task<List<UserViewModel>> GetUsersWithRoles(CursorParams @params);
 
         Task<UserViewModel> GetUserWithRole(string email);
+        Task<List<UserViewModel>> GetStuff();
         ApplicationUser? Exists(ApplicationUser applicationUser);
         Task<ApplicationUser?> GetSingleUser(string id, bool includeRelated = true);
         void Remove(ApplicationUser applicationUser);

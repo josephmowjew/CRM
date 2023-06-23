@@ -49,10 +49,19 @@
                     <br>
                     <p class="text-muted">@Model.TicketPriority.Name</p>
                 </div>
-                <div class="col-md-3 col-xs-6">
+                <div class="col-md-3 col-xs-6 b-r">
                     <strong>TICKET DESCRIPTION</strong>
                     <br>
                     <p class="text-muted">@Model.Description</p>
+                </div>
+                 <div class="col-md-3 col-xs-6 ">
+                    <strong>Department</strong>
+                    <br>
+                    <p class="text-muted">
+                         @{
+                            var department = Model.AssignedTo != null ? Model.AssignedTo.Department.Name : "";
+                        } @department
+                    </p>
                 </div>
             </div>
             <hr />
