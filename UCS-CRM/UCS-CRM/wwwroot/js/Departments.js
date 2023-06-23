@@ -181,6 +181,10 @@
         });
     }
 
+    //events section
+
+
+
 
 })
 
@@ -298,7 +302,6 @@ function DeletePositionFromDepartment(id) {
 
     });
 }
-
 
 function updateDepartment(id) {
 

@@ -40,7 +40,7 @@ namespace UCS_CRM.Persistence.SQLRepositories
 
         public async Task<ApplicationUser?> FindByEmailsync(string email)
         {
-            return await this._userManager.FindByEmailAsync(email);
+            return await this._context.Users.Include(u => u.Department).Include(u => u.Position).FirstOrDefaultAsync(u => u.Email.ToLower().Trim() == email.ToLower().Trim());
         }
 
         public async Task<ApplicationUser?> FindByIdAsync(string id)
@@ -204,6 +204,57 @@ namespace UCS_CRM.Persistence.SQLRepositories
 
         }
 
+        public async Task<List<UserViewModel>> GetStuff()
+        {
+            //Initialize the mapper
+            var config = new MapperConfiguration(cfg =>
+                    cfg.CreateMap<ApplicationUser, UserViewModel>()
+                );
+
+            List<ApplicationUser> users = new List<ApplicationUser>();
+
+            Mapper mapper = new Mapper(config);
+
+            //check if the search term has been provided
+
+          
+            users = await this._context.Users.Where(u => u.Status != Lambda.Deleted && u.EmailConfirmed == true).ToListAsync();
+
+
+
+            //convert the list of users records to a list of UserViewModels
+
+            var userViewModelUnFiltered = mapper.Map<List<UserViewModel>>(users);
+            List<UserViewModel> userViewModels = new();
+
+            userViewModelUnFiltered.ForEach(u => {
+                //get a list of roles of the particular user
+                var roles = this.GetRolesAsync(u.Id).Result;
+
+                if (roles.Count > 0)
+                {
+                    u.RoleName = roles.First();
+
+                    string currentRole = roles.First();
+
+                    //add the updated user to the userViewModels class
+
+                    if (currentRole.ToLower().Trim() != "Member".ToLower().Trim() && currentRole.Trim().ToLower() != "Administrator".Trim().ToLower())
+                    {
+                        userViewModels.Add(u);
+                    }
+
+                }
+
+
+            });
+
+            return userViewModels;
+
+
+
+        }
+
         public async Task<List<UserViewModel>> GetUsersWithRoles(CursorParams @params)
         {
             //Initialize the mapper
@@ -331,6 +382,9 @@ namespace UCS_CRM.Persistence.SQLRepositories
             return await this._userManager.UpdateAsync(applicationUser);
         }
 
+
+
+       
         //find user if pin is correct
         public async Task<ApplicationUser?> ConfirmUserPin(string id, int pin)
         {

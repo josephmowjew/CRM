@@ -30,6 +30,7 @@ namespace UCS_CRM.Areas.Clerk.Controllers
         private readonly ITicketCategoryRepository _ticketCategoryRepository;
         private readonly IStateRepository _stateRepository;
         private readonly ITicketPriorityRepository _priorityRepository;
+        private readonly IDepartmentRepository _departmentRepository;
         private readonly IMemberRepository _memberRepository;
         private readonly IMapper _mapper;
         private readonly IUnitOfWork _unitOfWork;
@@ -38,7 +39,7 @@ namespace UCS_CRM.Areas.Clerk.Controllers
         private readonly IEmailAddressRepository _addressRepository;
         public TicketsController(ITicketRepository ticketRepository, IMapper mapper, IUnitOfWork unitOfWork, IEmailService emailService, IEmailAddressRepository addressRepository,
             ITicketCategoryRepository ticketCategoryRepository, IStateRepository stateRepository, ITicketPriorityRepository priorityRepository,
-            IWebHostEnvironment env, ITicketCommentRepository ticketCommentRepository, IUserRepository userRepository, IMemberRepository memberRepository, ITicketEscalationRepository ticketEscalationRepository)
+            IWebHostEnvironment env, ITicketCommentRepository ticketCommentRepository, IUserRepository userRepository, IMemberRepository memberRepository, ITicketEscalationRepository ticketEscalationRepository, IDepartmentRepository departmentRepository)
         {
             _ticketRepository = ticketRepository;
             _mapper = mapper;
@@ -53,6 +54,7 @@ namespace UCS_CRM.Areas.Clerk.Controllers
             _ticketEscalationRepository = ticketEscalationRepository;
             _emailService = emailService;
             _addressRepository = addressRepository;
+            _departmentRepository = departmentRepository;
         }
 
         // GET: TicketsController
@@ -505,6 +507,35 @@ namespace UCS_CRM.Areas.Clerk.Controllers
             return Json(new { draw = draw, recordsFiltered = result.Count, recordsTotal = resultTotal, data = mappedResult });
 
         }
+
+        [HttpGet]
+        public async Task<ActionResult> FetchReassignList(int selectedValue)
+        {
+
+            //get users from the selected value department
+
+            Department? department = await this._departmentRepository.GetDepartment(selectedValue);
+
+            if (department == null)
+                return BadRequest();
+
+
+            //var users = await this._userRepository.GetUsers();
+
+            var staff = department.Users.Where(u => u.Email.Trim().ToLower() != User.Identity.Name.Trim().ToLower()).ToList();
+
+            var usersList = new List<SelectListItem>();
+
+
+            //usersList.Add(new SelectListItem() { Text = "---- Select Assignee -------", Value = "" });
+
+            staff.ForEach(user =>
+            {
+                usersList.Add(new SelectListItem() { Text = user.FullName, Value = user.Id.ToString() });
+            });
+
+            return Json(usersList);
+        }
         private async Task<List<SelectListItem>> GetTicketCategories()
         {
             var ticketCategories = await this._ticketCategoryRepository.GetTicketCategories();
@@ -558,19 +589,55 @@ namespace UCS_CRM.Areas.Clerk.Controllers
 
         private async Task<List<SelectListItem>> GetAssignees()
         {
-            var users = await this._userRepository.GetUsers();
+            //var users = await this._userRepository.GetUsers();
+
+            var staff = await this._userRepository.GetStuff();
 
             var usersList = new List<SelectListItem>();
 
             usersList.Add(new SelectListItem() { Text = "---- Select Assignee -------", Value = "" });
 
-            users.ForEach(user =>
+            //exclude myself from the list
+
+            staff = staff.Where(s => s.Email.ToLower().Trim() != User.Identity.Name.ToLower().Trim()).ToList();
+
+            staff.ForEach(user =>
             {
                 usersList.Add(new SelectListItem() { Text = user.FullName, Value = user.Id.ToString() });
             });
 
             return usersList;
 
+        }
+
+        private async Task<List<SelectListItem>> GetDepartments()
+        {
+            var departmentsList = new List<SelectListItem>();
+
+            string currentUserDepartment = string.Empty;
+
+            //fetch all departments from the system.
+
+            var dbDepartments = await this._departmentRepository.GetDepartments();
+
+            //get the current department of the logged in clerk
+
+            ApplicationUser? currentUser = await this._userRepository.FindByEmailsync(User.Identity.Name);
+
+            if (currentUser != null)
+            {
+                currentUserDepartment = currentUser.Department.Name;
+            }
+
+            //filter the department list from the database to remove the current user department
+           var filteredDepartmentList = dbDepartments.ToList();
+
+            filteredDepartmentList.ForEach(d =>
+            {
+                departmentsList.Add(new SelectListItem() { Text = d.Name, Value = d.Id.ToString() });
+            });
+
+            return departmentsList;
         }
 
         //escalate ticket
@@ -662,7 +729,7 @@ namespace UCS_CRM.Areas.Clerk.Controllers
             members.ForEach(member =>
             {
                 membersList.Add(new SelectListItem() { Text = member.FullName +" (" + member.AccountNumber +
-                    ")", Value = member.Id.ToString() });
+                    ")" +" -- "+ member.Branch, Value = member.Id.ToString() });
             });
 
             return membersList;
@@ -676,6 +743,7 @@ namespace UCS_CRM.Areas.Clerk.Controllers
             ViewBag.states = await GetTicketStates();
             ViewBag.members = await GetMembers();
             ViewBag.assignees = await GetAssignees();
+            ViewBag.departments = await GetDepartments();
         }
 
 

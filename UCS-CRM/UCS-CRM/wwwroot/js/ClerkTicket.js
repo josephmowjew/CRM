@@ -91,6 +91,26 @@
         });
     }
 
+    //events
+
+
+    $('#DepartmentId').on('change', function () {
+        // Get the selected value
+        var selectedValue = $(this).val();
+
+        // Send a GET request to the endpoint with the selected value
+        $.get('tickets/FetchReassignList', { selectedValue: selectedValue }, function (data) {
+            // Clear the options of the second dropdown list
+            $('#AssignedToId').empty();
+
+            // Iterate through the received JSON data and create options for the second dropdown list
+            $.each(data, function (index, item) {
+                var option = $('<option>').val(item.value).text(item.text);
+                $('#AssignedToId').append(option);
+            });
+        });
+    });
+
 
 })
 

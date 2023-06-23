@@ -18,7 +18,7 @@ namespace UCS_CRM.Core.DTOs.Ticket
         [Required]
         public string Status { get; set; } = Lambda.Active;
         public DateTime? ClosedDate { get; set; }
-        [Display(Name = "Assignee")]
+        [Display(Name = "Reassign")]
         public string? AssignedToId { get; set; }
 
         [Display(Name = "Member")]
@@ -35,7 +35,8 @@ namespace UCS_CRM.Core.DTOs.Ticket
         public ICollection<IFormFile>? Attachments { get; set; }
 
         public string? DataInvalid { get; set; } = "true";
-
+        [Display(Name = "Department")]
+        public int DepartmentId { get; set; }
         public EditTicketDTO()
         {
             Attachments = new List<IFormFile>();

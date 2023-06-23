@@ -40,11 +40,11 @@ namespace UCS_CRM.Persistence.SQLRepositories
             return await this._context.Tickets
                 .Include(t=> t.TicketCategory)
                 .Include(t => t.State)
-                .Include(t => t.AssignedTo)
                 .Include(t => t.Member)
                 .Include(t => t.TicketComments)
                 .Include(t => t.TicketAttachments)
                 .Include(t => t.TicketPriority)
+                .Include(t => t.AssignedTo).ThenInclude(a => a.Department)
                 .FirstOrDefaultAsync(t => t.Id == id);
         }
 
