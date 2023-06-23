@@ -270,6 +270,46 @@ function Delete(id) {
     });
 }
 
+
+function ConfirmUser(id) {
+
+    bootbox.confirm("Are you sure you want to confirm this user from the system?", function (result) {
+
+
+        if (result) {
+            $.ajax({
+                url: 'users/ConfirmUser/' + id,
+                type: 'POST',
+
+            }).done(function (data) {
+
+                if (data.status == "success") {
+
+                    toastr.success(data.message)
+                }
+                else {
+                    toastr.error(data.message)
+                }
+
+
+
+
+                datatable.ajax.reload();
+
+
+            }).fail(function (response) {
+
+                toastr.error(response.responseText)
+
+                datatable.ajax.reload();
+            });
+        }
+
+
+    });
+}
+
+
 function Reactivate(id) {
 
     bootbox.confirm("Are you sure you want to reactivate this user account?", function (result) {

@@ -8,6 +8,7 @@ using UCS_CRM.Core.DTOs.Member;
 using UCS_CRM.Core.Helpers;
 using UCS_CRM.Core.Models;
 using UCS_CRM.Core.Services;
+using UCS_CRM.Core.ViewModels;
 using UCS_CRM.Persistence.Interfaces;
 
 namespace UCS_CRM.Areas.Admin.Controllers
@@ -17,20 +18,24 @@ namespace UCS_CRM.Areas.Admin.Controllers
     public class MembersController : Controller
     {
         private readonly IMemberRepository _memberRepository;
+        private readonly IUserRepository _userRepository;
         private readonly IMapper _mapper;
         private readonly IUnitOfWork _unitOfWork;
         private readonly IEmailService _emailService;
-        public MembersController(IMemberRepository memberRepository, IMapper mapper, IUnitOfWork unitOfWork, IEmailService emailService)
+        public MembersController(IMemberRepository memberRepository, IMapper mapper, IUnitOfWork unitOfWork, IEmailService emailService, IUserRepository userRepository)
         {
             _memberRepository = memberRepository;
             _emailService = emailService;
             _mapper = mapper;
             _unitOfWork = unitOfWork;
+            _userRepository = userRepository;
         }
 
         // GET: MemberController
         public ActionResult Index()
         {
+            UserViewModel newUser = new UserViewModel();
+            ViewBag.genderList = newUser.GenderList;
             return View();
         }
 
@@ -48,9 +53,13 @@ namespace UCS_CRM.Areas.Admin.Controllers
 
                 UCS_CRM.Core.Models.Member? databaseMemberRecord = await this._memberRepository.GetMemberAsync(model.Id);
 
+                int pin = _memberRepository.RandomNumber();
+
                 if (databaseMemberRecord != null)
                 {
                     ApplicationUser? user =  await this._memberRepository.CreateUserAccount(databaseMemberRecord, model.Email);
+
+                    user.Pin = pin;
 
                     if (user == null)
                     {

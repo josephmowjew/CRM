@@ -47,6 +47,8 @@ namespace UCS_CRM.Core.Models
         public Position? Position { get; set; }
         public ICollection<Position> Positions { get; set; }
 
+        public int Pin { get; set; }
+
         [NotMapped]
         public String FullName
         {

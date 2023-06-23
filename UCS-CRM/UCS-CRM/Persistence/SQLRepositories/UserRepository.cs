@@ -53,6 +53,11 @@ namespace UCS_CRM.Persistence.SQLRepositories
             return await this._context.Users.FirstOrDefaultAsync(u => u.Id == id);
         }
 
+        public async Task<ApplicationUser?> FindUnconfirmedUserByIdAsync(string id)
+        {
+            return await this._context.Users.FirstOrDefaultAsync(u => u.Id == id);
+        }
+
         public async Task<string> GenerateEmailConfirmationTokenAsync(ApplicationUser applicationUser)
         {
             return await _userManager.GenerateEmailConfirmationTokenAsync(applicationUser);
@@ -326,6 +331,23 @@ namespace UCS_CRM.Persistence.SQLRepositories
             return await this._userManager.UpdateAsync(applicationUser);
         }
 
-       
+        //find user if pin is correct
+        public async Task<ApplicationUser?> ConfirmUserPin(string id, int pin)
+        {
+
+            return await this._context.Users.FirstOrDefaultAsync(u => u.Id == id && u.Pin == pin && u.DeletedDate == null);
+
+        }
+
+        //generating a 6 digit number
+        public int RandomNumber()
+        {
+            // generating a random number
+            Random generator = new Random();
+            int number = generator.Next(100000, 999999);
+
+            return number;
+        }
+
     }
 }
