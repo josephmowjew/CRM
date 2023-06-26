@@ -33,6 +33,7 @@ namespace UCS_CRM.Core.Models
         public DateTime? DeletedDate { get; set; }
         public string Status { get; set; } = Lambda.Active;
         public DateTime LastLogin { get; set; }
+        public DateTime? LastPasswordChangedDate { get; set; }  
         public ICollection<Member> Members { get; set; }
         public int? MemberId { get; set; }
         public Member? Member { get; set; }
@@ -46,6 +47,8 @@ namespace UCS_CRM.Core.Models
         //public int? PositionId { get; set; }
         //public Position? Position { get; set; }
         //public ICollection<Position> Positions { get; set; }
+
+        public int Pin { get; set; }
 
         [NotMapped]
         public String FullName

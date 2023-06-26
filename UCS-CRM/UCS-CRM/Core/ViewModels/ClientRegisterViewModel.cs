@@ -13,5 +13,11 @@ namespace UCS_CRM.Core.ViewModels
 
         [Compare("Password", ErrorMessage = "Confirm  Password doesn't match, Try again !")]
         public string ConfirmPassword { get; set; }
+        public string Gender { get; set; } = string.Empty;
+    }
+
+    public class ConfirmPin
+    {
+        public int Pin { get; set; } 
     }
 }

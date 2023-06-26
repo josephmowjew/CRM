@@ -43,5 +43,8 @@ namespace UCS_CRM.Persistence.Interfaces
         Task<int> TotalDeletedCount();
         Task<IdentityResult> RemoveFromRolesAsync(ApplicationUser applicationUser, IEnumerable<string> roleNames);
         Task<List<ApplicationUser>> GetUsers();
+        Task<ApplicationUser?> FindUnconfirmedUserByIdAsync(string id);
+        int RandomNumber();
+        Task<ApplicationUser?> ConfirmUserPin(string id, int pin);
     }
 }

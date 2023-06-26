@@ -19,6 +19,7 @@ namespace UCS_CRM.Core.Models
         public DateTime? DateOfBirth { get; set; }
         [Required]
         public string? Gender { get; set; }
+        public bool EmailConfirmed { get; set; } = false;
 
         [StringLength(maximumLength: 10, MinimumLength = 2)]
         [Display(Name = "Account Number")]

@@ -6,6 +6,7 @@ using System.Linq.Dynamic.Core;
 using UCS_CRM.Persistence.Interfaces;
 using UCS_CRM.Core.ViewModels;
 using Microsoft.AspNetCore.Identity;
+using NuGet.Protocol.Core.Types;
 
 namespace UCS_CRM.Persistence.SQLRepositories
 {
@@ -36,6 +37,8 @@ namespace UCS_CRM.Persistence.SQLRepositories
             string DEFAULT_PASSWORD = "P@$$w0rd";
             //create a user record from the member information
 
+            int pin = RandomNumber();   
+
             ApplicationUser user = new()
             {
                 FirstName = member.FirstName,
@@ -45,7 +48,9 @@ namespace UCS_CRM.Persistence.SQLRepositories
                 PhoneNumber = member.PhoneNumber,
                 UserName = email,
                 MemberId = member.Id,
-                EmailConfirmed = true,
+                EmailConfirmed = false,
+                Pin = pin,
+                LastPasswordChangedDate= DateTime.Now,
             };
 
 
@@ -184,6 +189,16 @@ namespace UCS_CRM.Persistence.SQLRepositories
         {
             return await this._context.Members.FirstOrDefaultAsync(m => m.User.Id == userId);
 
+        }
+
+        //generating a 6 digit number
+        public int RandomNumber()
+        {
+            // generating a random number
+            Random generator = new Random();
+            int number = generator.Next(100000, 999999);
+
+            return number;
         }
     }
 }

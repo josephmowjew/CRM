@@ -3,12 +3,19 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Build.Framework;
 using System.ComponentModel.DataAnnotations;
+using System.Configuration;
+using System.Data;
+using System.Net.Http;
+using System.Security.Claims;
+using System.Text.Json;
+using UCS_CRM.Core.DTOs.Member;
 using UCS_CRM.Core.Models;
 using UCS_CRM.Core.Services;
 using UCS_CRM.Core.ViewModels;
 using UCS_CRM.Data;
 using UCS_CRM.Models;
 using UCS_CRM.Persistence.Interfaces;
+using static Org.BouncyCastle.Math.EC.ECCurve;
 
 namespace UCS_CRM.Controllers
 {
@@ -22,7 +29,10 @@ namespace UCS_CRM.Controllers
         private readonly IUnitOfWork _unitOfWork;
         private readonly IEmailService _emailService;
         private ApplicationDbContext _context;
-        public AuthController(UserManager<ApplicationUser> userManager, SignInManager<ApplicationUser> signInManager, IUserRepository userRepository, ApplicationDbContext context, IMemberRepository memberRepository, IUnitOfWork unitOfWork, IEmailService emailService)
+        private readonly HttpClient _httpClient;
+        private readonly IConfiguration _config;
+        public AuthController(UserManager<ApplicationUser> userManager, SignInManager<ApplicationUser> signInManager, IUserRepository userRepository, ApplicationDbContext context,
+            IMemberRepository memberRepository, IUnitOfWork unitOfWork, IEmailService emailService, HttpClient httpClient, IConfiguration config)
         {
             _userManager = userManager;
             _signInManager = signInManager;
@@ -31,12 +41,78 @@ namespace UCS_CRM.Controllers
             _memberRepository = memberRepository;
             _unitOfWork = unitOfWork;
             _emailService = emailService;
+            _httpClient = httpClient;
+            _config = config;
         }
 
         public async Task<IActionResult> Create()
         {
             return View();
         }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ConfirmCode(ConfirmPin confirmPin) 
+        {
+            var userClaims = (ClaimsIdentity)User.Identity;
+
+            var claimsIdentitifier = userClaims.FindFirst(ClaimTypes.NameIdentifier);
+
+            var userId = claimsIdentitifier.Value;
+
+            //var findUserDb = await this._userRepository.GetUserWithRole(userId);
+
+            var confirmedUser= await this._userRepository.ConfirmUserPin(userId, confirmPin.Pin);
+
+            if (confirmedUser != null)
+            {
+                var roles = _userManager.GetRolesAsync(confirmedUser).Result.ToList();
+
+                confirmedUser.Pin = 0;
+
+
+                await this._context.SaveChangesAsync();
+
+                if (roles.Contains("Administrator"))
+                {
+                    return RedirectToAction("Index", "Home", new { Area = "Admin" });
+                }
+                if (roles.Contains("Clerk"))
+                {
+                    return RedirectToAction("Index", "Home", new { Area = "Clerk" });
+                }
+                if (roles.Contains("Manager"))
+                {
+                    return RedirectToAction("Index", "Home", new { Area = "Manager" });
+                }
+                if (roles.Contains("Senior Manager"))
+                {
+                    return RedirectToAction("Index", "Home", new { Area = "SeniorManager" });
+                }
+                if (roles.Contains("Member"))
+                {
+                    return RedirectToAction("Index", "Home", new { Area = "Member" });
+                }
+                else
+                {
+
+                    return RedirectToAction("Index", "Home", new { Area = "Member" });
+                }
+            }
+            else
+            {
+                ModelState.AddModelError("", "Wrong pin");
+                return View("MFA", confirmPin);
+            }
+
+          
+        }
+
+        public ActionResult MFA()
+        {
+            return View();
+        }
+
         [AllowAnonymous]
         [HttpPost]
         [ValidateAntiForgeryToken]
@@ -54,63 +130,55 @@ namespace UCS_CRM.Controllers
 
                 if (findUserDb != null)
                 {
-
-
-                    var result = await _signInManager.PasswordSignInAsync(loginModel.Email, loginModel.Password, loginModel.RememberMe, lockoutOnFailure: false);
-
-
-
-                    //get the result of the login attemp
-
-                    if (result.Succeeded)
+                    if (findUserDb.LastPasswordChangedDate < DateTime.Now)
                     {
-                        var user = await this._userManager.FindByNameAsync(loginModel.Email);
-                        var roles = _userManager.GetRolesAsync(user).Result.ToList();
-                        if (user != null)
-                        {
-                            user.LastLogin = DateTime.Now;
-                        }
+                        var model = new ResetPassword { Token = "", Email = findUserDb.Email };
 
-                        await this._context.SaveChangesAsync();
+                        var token = await _userManager.GeneratePasswordResetTokenAsync(findUserDb);
 
-                        if (roles.Contains("Administrator"))
-                        {
-                            return RedirectToAction("Index", "Home", new { Area = "Admin" });
-                        }
-                        if (roles.Contains("Clerk"))
-                        {
-                            return RedirectToAction("Index", "Home", new { Area = "Clerk" });
-                        }
-                        if (roles.Contains("Manager"))
-                        {
-                            return RedirectToAction("Index", "Home", new { Area = "Manager" });
-                        }
-                        if (roles.Contains("Senior Manager"))
-                        {
-                            return RedirectToAction("Index", "Home", new { Area = "SeniorManager" });
-                        }
-                        if (roles.Contains("Member"))
-                        {
-                            return RedirectToAction("Index", "Home", new { Area = "Member" });
-                        }
-                        else
-                        {
-
-                            return RedirectToAction("Index", "Home", new { Area = "Member" });
-                        }
-
-
-
+                        return RedirectToActionPermanent("ResetPassword", new { token = token, email = findUserDb.Email });
                     }
                     else
                     {
-                        //flag an error message back the user
 
-                        ModelState.AddModelError(String.Empty, "Invalid login credentials");
+                        var result = await _signInManager.PasswordSignInAsync(loginModel.Email, loginModel.Password, loginModel.RememberMe, lockoutOnFailure: false);
 
-                        return View("Create", loginModel);
+                        //get the result of the login attemp
+
+                        if (result.Succeeded)
+                        {
+                            int pin = _memberRepository.RandomNumber();
+
+                            var user = await this._userManager.FindByNameAsync(loginModel.Email);
+                            var roles = _userManager.GetRolesAsync(user).Result.ToList();
+                            if (user != null)
+                            {
+                                user.LastLogin = DateTime.Now;
+                                user.Pin = pin;
+                            }
+
+                            await this._context.SaveChangesAsync();
+
+                            string UserNameBody = "Your confirmation code is " + "<b>" + pin + " <br /> Enter this to login in";
+
+
+                            _emailService.SendMail(user.Email, "Login Details", UserNameBody);
+
+                            TempData["response"] = $"Check your email for the code";
+                            return RedirectToAction("MFA", "Auth");
+
+
+                        }
+                        else
+                        {
+                            //flag an error message back the user
+
+                            ModelState.AddModelError(String.Empty, "Invalid login credentials");
+
+                            return View("Create", loginModel);
+                        }
                     }
-
+                   
                 }
                 else
                 {
@@ -146,6 +214,8 @@ namespace UCS_CRM.Controllers
         [HttpGet]
         public IActionResult Register()
         {
+            UserViewModel newUser = new UserViewModel();          
+            ViewBag.genderList = newUser.GenderList;
             return View();
         }
 
@@ -158,15 +228,52 @@ namespace UCS_CRM.Controllers
             {
                 //check if there is a member with the following national Id
 
-                Member? member = await this._memberRepository.GetMemberByNationalId(clientRegisterViewModel.NationalId);
+               // Member? member = await this._memberRepository.GetMemberByNationalId(clientRegisterViewModel.NationalId);
+              
+                var protocol = _config.GetSection("APIURL")["link"];
 
-                if (member == null)
+                var response = await _httpClient.GetAsync(protocol + $"BioDataByNIN/{clientRegisterViewModel.NationalId}");
+
+                if (!response.IsSuccessStatusCode)
                 {
                     ModelState.AddModelError("", "No member was found with the National Id that was provided");
                 }
+
+                var json = await response.Content.ReadAsStringAsync();
+                var document = JsonDocument.Parse(json);
+
+                var status = document.RootElement.GetProperty("status").GetInt32();
+
+                if (status == 404)
+                {
+                    ModelState.AddModelError("", "No member was found with the National Id that was provided");
+                }
+
+                //if (member == null)
+                //{
+                //    ModelState.AddModelError("", "No member was found with the National Id that was provided");
+                //}
                 else
                 {
                     //check if there is an account with the email being provided
+
+                    var baseAccountElement = document.RootElement.GetProperty("data");
+
+
+                    var member = new Member()
+                    {
+                        Id = (baseAccountElement.GetProperty("id").GetInt32()),
+                        // AccountNumber = baseAccountElement.GetProperty("accountNumber").GetString(),
+                        Branch = baseAccountElement.GetProperty("branch").GetString(),
+                        PhoneNumber = baseAccountElement.GetProperty("phoneNumber").GetString(),
+                        FirstName = baseAccountElement.GetProperty("firstName").GetString(),
+                        LastName = baseAccountElement.GetProperty("lastName").GetString(),
+                        Address = baseAccountElement.GetProperty("employer").GetString(),
+                        DateOfBirth = baseAccountElement.GetProperty("dateOfBirth").GetDateTime(),
+                        NationalId = baseAccountElement.GetProperty("nationalID").GetString(),
+                        EmailConfirmed = false,
+                        Gender = baseAccountElement.GetProperty("nationalID").GetString()
+                    };
 
                     var accountPresent = await this._userRepository.FindByEmailsync(clientRegisterViewModel.Email);
 
@@ -196,6 +303,7 @@ namespace UCS_CRM.Controllers
                     //send emails
 
                     string UserNameBody = "An account has been created on UCS SACCO. Your email is " + "<b>" + user.Email + " <br /> ";
+                   // string pin = "An account has been created on UCS SACCO. Your pin is " + "<b>" + user.Pin + " <br /> ";
                     string PasswordBody = "An account has been created on UCS SACCO App. Your password is " + "<b> P@$$w0rd <br />";
 
 
@@ -208,6 +316,7 @@ namespace UCS_CRM.Controllers
                     else
                     {
                         _emailService.SendMail(user.Email, "Login Details", UserNameBody);
+                        //_emailService.SendMail(user.Email, "Login Details", pin);
                         _emailService.SendMail(user.Email, "Login Details", PasswordBody);
                         _emailService.SendMail(user.Email, "Account Details", $"Good day, for those who have not yet registered with Gravator, please do so so that you may upload an avatar of yourself that can be associated with your email address and displayed on your profile in the Mental Lab application.\r\nPlease visit https://en.gravatar.com/ to register with Gravatar. ");
 
@@ -255,13 +364,14 @@ namespace UCS_CRM.Controllers
             }
         }
         [HttpGet("reset-password")]
-        public async Task<IActionResult> ResetPassword(string token, string email)
+        public ActionResult ResetPassword(string token, string email)
         {
             var model = new ResetPassword { Token= token, Email= email};
 
             return View(model);
 
         }
+    
 
         [HttpPost("reset-password")]
         [AllowAnonymous]
@@ -279,6 +389,9 @@ namespace UCS_CRM.Controllers
 
                 if(resetPasswordResult.Succeeded)
                 {
+                    user.LastPasswordChangedDate = DateTime.Now.AddDays(90);
+                    await this._context.SaveChangesAsync();
+
                     TempData["response"] = $"Your account password has been reset successfully, You can try loging in using your new credentials";
                     return RedirectToAction("Create");
                 }
@@ -299,5 +412,7 @@ namespace UCS_CRM.Controllers
            
 
         }
+
+
     }
 }

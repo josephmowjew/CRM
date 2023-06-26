@@ -91,8 +91,8 @@ namespace UCS_CRM.Areas.Admin.Controllers
                     PhoneNumber = userViewModel.PhoneNumber,
                     UserName= userViewModel.Email,
                     EmailConfirmed = true,
-                    DepartmentId = userViewModel.DepartmentId
-
+                    DepartmentId = userViewModel.DepartmentId,
+                    LastPasswordChangedDate = DateTime.Now,
 
                 };
 
@@ -120,7 +120,7 @@ namespace UCS_CRM.Areas.Admin.Controllers
                 {
                     //pre-activate the account
 
-                    applicationUser.EmailConfirmed= true;
+                    applicationUser.EmailConfirmed= false;
                     //save the record to the database
                     var result = await this._userRepository.CreateUserAsync(applicationUser, "P@$$w0rd");
 
@@ -140,9 +140,11 @@ namespace UCS_CRM.Areas.Admin.Controllers
 
                             //_emailService.SendMail(applicationUser.Email, "UCS SACCO ACCOUNT INFO", $"Good day, for those who have not yet registered with Gravator, please do so so that you may upload an avatar of yourself that can be associated with your email address and displayed on your profile in the Mental Lab application.\r\nPlease visit https://en.gravatar.com/ to register with Gravatar. ");
                             string UserNameBody = "An account has been created on UCS SACCO. Your email is " + "<b>" + applicationUser.Email + " <br /> ";
+                            //string pin = "An account has been created on UCS SACCO. Your pin is " + "<b>" + applicationUser.Pin + " <br /> ";
                             string PasswordBody = "An account has been created on UCS SACCO App. Your password is " + "<b> P@$$w0rd <br />";
 
                             _emailService.SendMail(applicationUser.Email, "Login Details", UserNameBody);
+                            //_emailService.SendMail(applicationUser.Email, "Login Details", pin);
                             _emailService.SendMail(applicationUser.Email, "Login Details", PasswordBody);
                             return Json(new { response = "User account created successfully" });
                         }
@@ -374,7 +376,7 @@ namespace UCS_CRM.Areas.Admin.Controllers
 
         [HttpGet]
         [Route("admin/unconfirmedUsers")]
-        public async Task<ActionResult> UnconfirmedUsersAsync()
+        public async Task<ActionResult> UnconfirmedUsers() 
         {
             UserViewModel user = new UserViewModel();
 
@@ -443,6 +445,35 @@ namespace UCS_CRM.Areas.Admin.Controllers
 
                 return Json(new { error = ex.Message });
             }
+        }
+
+        // Confirm
+        public async Task<ActionResult> ConfirmUser(string id)
+        {
+
+            //find the user with the Id provided
+
+            var user = await this._userRepository.FindUnconfirmedUserByIdAsync(id);
+
+            if (user != null)
+            {
+                user.DeletedDate = null;
+                user.Status = Lambda.Active;
+                user.EmailConfirmed = true;
+
+                //update the user
+
+                await this._userRepository.UpdateAsync(user);
+
+                await this._unitOfWork.SaveToDataStore();
+
+                _emailService.SendMail(user.Email, "Account Confirmation", "Congratulations!! your account has been confirmed  on UCS SACCO.");
+
+
+                return Json(new { status = "success", message = "user confirmed from the system successfully" });
+            }
+
+            return Json(new { status = "error", message = "user not found" });
         }
 
         public ActionResult DeletedUsers()
@@ -526,6 +557,7 @@ namespace UCS_CRM.Areas.Admin.Controllers
 
             return Json(new { status = "error", message = "user not found" });
         }
+    
 
         public async Task<ActionResult> FetchRolesOnDepartment(int selectedValue)
         {
