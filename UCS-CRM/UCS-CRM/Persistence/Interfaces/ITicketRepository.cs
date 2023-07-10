@@ -29,5 +29,10 @@ namespace UCS_CRM.Persistence.Interfaces
         Task<string> SendTicketEscalationEmail(Ticket ticket, TicketEscalation ticketEscalation, string previousAssigneeEmail);
         Task<string> EscalateTicket(Ticket ticket, string sender, string escalationReason);
         Task SendTicketReminders();
+        Task<string> SendTicketClosureNotifications(Ticket ticket, string reason);
+
+        Task<string> SendTicketReopenedNotifications(Ticket ticket, string reason);
+
+        Task<int> CountTicketsByStatusCreatedByOrAssignedTo(string state, string identifier);
     }
 }

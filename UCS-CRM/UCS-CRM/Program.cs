@@ -78,6 +78,7 @@ builder.Services.AddScoped<IMemberAccountRepository, MemberAccountRepository>();
 builder.Services.AddScoped<IEmailAddressRepository, EmailAddressRepository>();
 builder.Services.AddScoped<IDepartmentRepository, DepartmentRepository>();
 builder.Services.AddScoped<IBranchRepository, BranchRepository>();
+builder.Services.AddScoped<ITicketStateTrackerRepository, TicketStateTrackerRepository>();
 //builder.Services.AddScoped<IPositionRepository, PositionRepository>();
 builder.Services.AddHttpClient(); 
 
@@ -119,9 +120,9 @@ using var scope = app.Services.CreateScope();
 ITicketRepository ticket = scope.ServiceProvider.GetRequiredService<ITicketRepository>();
 
 
-BackgroundJob.Schedule(() => ticket.UnAssignedTickets(), TimeSpan.FromSeconds(10));
+//BackgroundJob.Schedule(() => ticket.UnAssignedTickets(), TimeSpan.FromSeconds(10));
 //BackgroundJob.Schedule(() => ticket.EscalatedTickets(), TimeSpan.FromHours(1));
-RecurringJob.AddOrUpdate("TicketReminder", () => ticket.SendTicketReminders(), Cron.MinuteInterval(15));
+//RecurringJob.AddOrUpdate("TicketReminder", () => ticket.SendTicketReminders(), Cron.MinuteInterval(15));
 //RecurringJob.AddOrUpdate("EscalatedTickets", () => ticket.EscalatedTickets(), "* 15 * * * *");
 
 

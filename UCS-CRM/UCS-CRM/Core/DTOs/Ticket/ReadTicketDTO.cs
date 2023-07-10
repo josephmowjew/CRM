@@ -38,7 +38,7 @@ namespace UCS_CRM.Core.DTOs.Ticket
         public ICollection<Models.TicketComment> TicketComments { get; set; }
         public ICollection<Models.TicketEscalation> TicketEscalations { get; set; }
 
-      
+        public string CreatedById { get; set; }
 
         public ReadTicketDTO()
         {
