@@ -38,6 +38,9 @@
                         Name
                     </th>
                     <th>
+                        Email
+                    </th>
+                    <th>
                         Action
                     </th>
 
@@ -90,6 +93,16 @@
                         {
                             data: "name",
                             name: "name",
+                            className: "text-left",
+                            "orderable": true,
+                              render: function(data)
+                            {
+                                return toTitleCase(data);
+                            }
+                        },
+                         {
+                            data: "email",
+                            name: "email",
                             className: "text-left",
                             "orderable": true,
                               render: function(data)

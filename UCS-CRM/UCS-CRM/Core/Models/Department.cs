@@ -15,7 +15,9 @@ namespace UCS_CRM.Core.Models
         public string Name { get; set; }
         public List<ApplicationUser> Users { get; set; }
         //public List<Position> Positions { get; set; }
-
         public List<Role> Roles { get; set; }
+        [Required]
+        [StringLength(maximumLength:200)]
+        public string Email { get; set; }
     }
 }
