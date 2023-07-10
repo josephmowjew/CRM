@@ -21,6 +21,7 @@
 
         //var account_typeId = $("#create_department_modal input[name ='AccountTypeId']").val()
         var name = $("#create_department_modal input[name ='Name']").val()
+        var email = $("#create_department_modal input[name ='Email']").val()
        
 
         var formData = new FormData();
@@ -28,6 +29,7 @@
         //append the file to the formdata 
 
         formData.append("Name", name);
+        formData.append("Email", email);
         formData.append("__RequestVerificationToken", authenticationToken)
         //send the request
 
@@ -209,6 +211,7 @@ function EditForm(id) {
         //get the form fields
 
         var name = $("#edit_department_modal input[name ='Name']").val(data.name)
+        var email = $("#edit_department_modal input[name ='Email']").val(data.email)
         var id = $("#edit_department_modal input[name ='Id']").val(data.id)
 
 
@@ -311,6 +314,7 @@ function updateDepartment(id) {
     //upDateRole
     var authenticationToken = $("#edit_department_modal input[name='__RequestVerificationToken']").val();
     var name = $("#edit_department_modal input[name ='Name']").val()
+    var email = $("#edit_department_modal input[name ='Email']").val()
     var id = $("#edit_department_modal input[name='Id']").val()
 
     var form_url = $("#edit_department_modal form").attr("action");
@@ -323,6 +327,7 @@ function updateDepartment(id) {
     var userInput = {
         __RequestVerificationToken: authenticationToken,
         Name: name,
+        Email: email,
         Id: id
     }
 
