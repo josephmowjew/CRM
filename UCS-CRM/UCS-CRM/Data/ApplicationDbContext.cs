@@ -71,9 +71,9 @@ namespace UCS_CRM.Data
             //   .HasOne(i => i.Position)
             //   .WithMany(d => d.Users);
 
-            //builder.Entity<ApplicationUser>()
-            //    .HasMany(u => u.Positions)
-            //    .WithOne(i => i.CreatedBy);
+            builder.Entity<ApplicationUser>()
+                .HasMany(u => u.Escalations)
+                .WithOne(i => i.EscalatedTo);
 
             builder.Entity<ApplicationUser>(entity =>
             {

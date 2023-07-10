@@ -15,11 +15,13 @@ namespace UCS_CRM.Persistence.SQLRepositories
         private readonly ApplicationDbContext _context;
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly RoleManager<Role> _roleManager;
-        public UserRepository(ApplicationDbContext context, UserManager<ApplicationUser> userManager, RoleManager<Role> roleManager)
+        private readonly IRoleRepositorycs roleRepositorycs;
+        public UserRepository(ApplicationDbContext context, UserManager<ApplicationUser> userManager, RoleManager<Role> roleManager, IRoleRepositorycs roleRepositorycs)
         {
             _context = context;
             this._userManager = userManager;
             this._roleManager = roleManager;
+            this.roleRepositorycs = roleRepositorycs;
         }
 
         public async Task<IdentityResult> AddUserToRoleAsync(ApplicationUser applicationUser, string roleName)
@@ -31,6 +33,8 @@ namespace UCS_CRM.Persistence.SQLRepositories
         public async Task<IdentityResult> CreateUserAsync(ApplicationUser applicationUser, string password)
         {
             return await this._userManager.CreateAsync(applicationUser, password);
+
+          
         }
 
         public ApplicationUser? Exists(ApplicationUser applicationUser)
@@ -133,6 +137,21 @@ namespace UCS_CRM.Persistence.SQLRepositories
 
 
             return await this._userManager.GetRolesAsync(user);
+        }
+
+
+
+        public async Task<Role> GetRoleAsync(string userId)
+        {
+            //find user based on the id provided
+
+            var user = await this._userManager.FindByIdAsync(userId);
+
+
+            var roleId =  this._userManager.GetRolesAsync(user).Result.FirstOrDefault();
+
+
+            return await this.roleRepositorycs.GetRoleAsync(roleId);
         }
 
         public async Task<ApplicationUser?> GetSingleUser(string id, bool includeRelated = true)
@@ -351,10 +370,19 @@ namespace UCS_CRM.Persistence.SQLRepositories
             return userViewModel;
         }
 
+       
+
         public void Remove(ApplicationUser applicationUser)
         {
             applicationUser.DeletedDate = DateTime.Now;
-            //save changes 
+            //save changes
+
+           
+        }
+
+        public async Task<List<ApplicationUser>?> GetUsersInRole(string roleName)
+        {
+            return this._userManager.GetUsersInRoleAsync(roleName).Result.ToList();
         }
 
         public async Task<IdentityResult> RemoveFromRolesAsync(ApplicationUser applicationUser, IEnumerable<string> roleNames)
@@ -381,9 +409,6 @@ namespace UCS_CRM.Persistence.SQLRepositories
         {
             return await this._userManager.UpdateAsync(applicationUser);
         }
-
-
-
        
         //find user if pin is correct
         public async Task<ApplicationUser?> ConfirmUserPin(string id, int pin)
@@ -401,6 +426,12 @@ namespace UCS_CRM.Persistence.SQLRepositories
             int number = generator.Next(100000, 999999);
 
             return number;
+        }
+
+        public async Task<List<ApplicationUser>> GetUsersByDepartmentAsync(int departmentId)
+        {
+
+            return await this._context.Users.Include(u => u.Department).Where(u => u.Department.Id == departmentId).ToListAsync();
         }
 
     }

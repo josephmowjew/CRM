@@ -330,7 +330,7 @@ namespace UCS_CRM.Areas.Admin.Controllers
 
                 if(departmentDb != null )
                 {
-                    var role = await this._roleRepositorycs.GetRoleAsync(viewModel.RoleId);
+                    var role = await this._roleRepositorycs.GetRoleByIdAsync(viewModel.RoleId);
 
                     if(role != null)
                     {

@@ -119,8 +119,10 @@ using var scope = app.Services.CreateScope();
 ITicketRepository ticket = scope.ServiceProvider.GetRequiredService<ITicketRepository>();
 
 
-BackgroundJob.Schedule(() => ticket.UnAssignedTickets(), TimeSpan.FromHours(1));
-BackgroundJob.Schedule(() => ticket.EscalatedTickets(), TimeSpan.FromHours(1));
+BackgroundJob.Schedule(() => ticket.UnAssignedTickets(), TimeSpan.FromSeconds(10));
+//BackgroundJob.Schedule(() => ticket.EscalatedTickets(), TimeSpan.FromHours(1));
+RecurringJob.AddOrUpdate("TicketReminder", () => ticket.SendTicketReminders(), Cron.MinuteInterval(15));
+//RecurringJob.AddOrUpdate("EscalatedTickets", () => ticket.EscalatedTickets(), "* 15 * * * *");
 
 
 app.Run();

@@ -12,6 +12,7 @@ namespace UCS_CRM.Core.Helpers
         public static string Disabled = "Disabled";
         public static string Voided = "Voided";
         public static string Closed = "Closed";
+        public static string Archived = "Archived";
         public static string IssuePrefix = "REF-0000";
         public static string RequestPrefix = "REQ-0000";
         public static string Pending = "Pending";
@@ -23,6 +24,7 @@ namespace UCS_CRM.Core.Helpers
         public static string Manager = "Manager";
         public static string Clerk = "Clerk";
         public static string SeniorManager = "Senior Manager";
+        public static string CustomerServiceMemberEngagementManager = "Customer Service and Member Engagement Manager";
 
         // default properties
         public static string Category = "Support";

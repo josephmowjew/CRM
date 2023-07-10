@@ -290,7 +290,7 @@ function escalateTicket() {
                 //show success message to the user
                 var dataTable = $('#my_table').DataTable();
 
-                toastr.success(data.message)
+                toastr.success("Ticket has been escalated successfully")
 
                 $("#escalate_ticket_modal").modal("hide")
 

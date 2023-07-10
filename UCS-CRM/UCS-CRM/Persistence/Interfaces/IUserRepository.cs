@@ -46,5 +46,11 @@ namespace UCS_CRM.Persistence.Interfaces
         Task<ApplicationUser?> FindUnconfirmedUserByIdAsync(string id);
         int RandomNumber();
         Task<ApplicationUser?> ConfirmUserPin(string id, int pin);
+
+        Task<List<ApplicationUser>> GetUsersByDepartmentAsync(int departmentId);
+
+        Task<Role> GetRoleAsync(string userId);
+
+        Task<List<ApplicationUser>?> GetUsersInRole(string roleName);
     }
 }

@@ -25,5 +25,9 @@ namespace UCS_CRM.Persistence.Interfaces
         Task<List<Ticket?>> GetClosedTickets(CursorParams @params);
         Task<string> UnAssignedTickets();
         Task<string> EscalatedTickets();
+        Task<string> SendUnassignedTicketEmail(Ticket ticket);
+        Task<string> SendTicketEscalationEmail(Ticket ticket, TicketEscalation ticketEscalation, string previousAssigneeEmail);
+        Task<string> EscalateTicket(Ticket ticket, string sender, string escalationReason);
+        Task SendTicketReminders();
     }
 }

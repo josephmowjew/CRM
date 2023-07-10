@@ -4,7 +4,9 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 using NuGet.Packaging;
+using System.Data;
 using System.Security.Claims;
 using UCS_CRM.Core.DTOs.Member;
 using UCS_CRM.Core.DTOs.State;
@@ -649,73 +651,249 @@ namespace UCS_CRM.Areas.Clerk.Controllers
 
             if (ModelState.IsValid)
             {
-
+                ApplicationUser currentAssignedUser = null;
+                string currentAssignedUserEmail = string.Empty;
+                Role currentAssignedUserRole = null;
+                Department? currentAssignedUserDepartment = null;
+                List<Role> rolesOfCurrentUserDepartment = new();
+                List<Role> SortedrolesOfCurrentUserDepartment = new();
                 createTicketEscalation.DataInvalid = "";
-                createTicketEscalation.EscalationLevel = 1;
+                bool ticketAssignedToNewUser = false;
+                //createTicketEscalation.EscalationLevel = 1;
 
+                //get the ticket in question
 
-                //check for article title presence
+                var ticket = await this._ticketRepository.GetTicket(createTicketEscalation.TicketId);
 
-                var mappedTicketEscalation = this._mapper.Map<TicketEscalation>(createTicketEscalation);
+                //get the current user id
 
-                var ticketEscalationPresence = this._ticketEscalationRepository.Exists(mappedTicketEscalation);
+                var userClaims = (ClaimsIdentity)User.Identity;
 
+                var claimsIdentitifier = userClaims.FindFirst(ClaimTypes.NameIdentifier);
 
-
-                if (ticketEscalationPresence != null)
+                if(ticket != null)
                 {
+                    string result = await this._ticketRepository.EscalateTicket(ticket, claimsIdentitifier.Value, createTicketEscalation.Reason);
+                    
+
+                    if (result != null)
+                    {
+                        if(result.Equals("Could not find a user to escalate the ticket to", StringComparison.OrdinalIgnoreCase))
+                        {
+                            createTicketEscalation.DataInvalid = "true";
+
+                            ModelState.AddModelError("", "Could not find a user to escalate the ticket to");
+
+                            return PartialView("_FirstTicketEscalationPartial", createTicketEscalation);
+                        }
+                        if(result.Equals("ticket escalated", StringComparison.OrdinalIgnoreCase))
+                        {
+                            createTicketEscalation.DataInvalid = "";
+
+
+                            return PartialView("_FirstTicketEscalationPartial", createTicketEscalation);
+                        }
+                    }
+                    else
+                    {
+                        createTicketEscalation.DataInvalid = "true";
+
+                        ModelState.AddModelError("","An error occurred while trying to escalate the ticket");
+
+                        return PartialView("_FirstTicketEscalationPartial", createTicketEscalation);
+                    }
+                }
+                }
+                else
+                {
+
                     createTicketEscalation.DataInvalid = "true";
 
-                    ModelState.AddModelError(nameof(mappedTicketEscalation.Ticket.Title), $"Another ticket exists with the parameters submitted'");
-
-                    return PartialView("_FirstTicketEscalationPartial", createTicketEscalation);
-                }
-
-
-                //save to the database
-
-                try
-                {
-                    var userClaims = (ClaimsIdentity)User.Identity;
-
-                    var claimsIdentitifier = userClaims.FindFirst(ClaimTypes.NameIdentifier);
-
-                    mappedTicketEscalation.CreatedById = claimsIdentitifier.Value;
-
-
-                    this._ticketEscalationRepository.Add(mappedTicketEscalation);
-                    await this._unitOfWork.SaveToDataStore();
-
-
-                    return PartialView("_FirstTicketEscalationPartial", createTicketEscalation);
-                }
-                catch (DbUpdateException ex)
-                {
-                    createTicketEscalation.DataInvalid = "true";
-
-                    ModelState.AddModelError(string.Empty, ex.InnerException.Message);
-
-                    return PartialView("_FirstTicketEscalationPartial", createTicketEscalation);
-                }
-
-                catch (Exception ex)
-                {
-
-                    createTicketEscalation.DataInvalid = "true";
-
-                    ModelState.AddModelError(string.Empty, ex.Message);
+                    ModelState.AddModelError("", "Could not find a ticket with the identifier sent");
 
                     return PartialView("_FirstTicketEscalationPartial", createTicketEscalation);
                 }
 
 
 
+            //if(ticket != null)
+            //{
+            //    //get the user assigned to the ticket if available
+            //    currentAssignedUser = ticket.AssignedTo;
 
-            }
+            //    currentAssignedUserEmail = currentAssignedUser.Email;
+
+            //    if (currentAssignedUser != null)
+            //    {
+            //         currentAssignedUserRole = await this._userRepository.GetRoleAsync(currentAssignedUser.Id);
+
+            //        //check if the role of the user has been returned 
+
+            //        if(currentAssignedUserRole  != null)
+            //        {
+
+            //            //get the department of the current assigned user
+            //            currentAssignedUserDepartment = await this._departmentRepository.GetDepartment(currentAssignedUser.Department.Id);
+
+            //            //get roles that are associated with this department
+            //            rolesOfCurrentUserDepartment = currentAssignedUserDepartment.Roles;
+
+            //            //order the roles according to rating
+
+            //            SortedrolesOfCurrentUserDepartment = rolesOfCurrentUserDepartment.OrderBy(d => d.Rating).ToList();
 
 
+            //            //loop through the list of roles in the current department
+
+            //            if(SortedrolesOfCurrentUserDepartment.Count > 0)
+            //            {
+            //                //remove roles that are less than the one that the current assigned user is already in
+            //                SortedrolesOfCurrentUserDepartment = SortedrolesOfCurrentUserDepartment.Where(r => r.Rating > currentAssignedUserRole.Rating).ToList();
+
+            //                if(SortedrolesOfCurrentUserDepartment.Count > 0)
+            //                {
+            //                    for (int i = 0; i < SortedrolesOfCurrentUserDepartment.Count; i++)
+            //                    {
+
+            //                        var listOfUsers = await this._userRepository.GetUsersInRole(SortedrolesOfCurrentUserDepartment[i].Name);
+
+            //                        //filter users to only those on the same branch
+            //                        listOfUsers = listOfUsers.Where(u => u.BranchId == currentAssignedUser.BranchId).ToList();
+
+            //                        //get the first user if available
+
+            //                        var newTicketHandler = listOfUsers.FirstOrDefault();
+
+            //                        if (newTicketHandler != null)
+            //                        {
+            //                            //assign the ticket this person and break out of the loop
+
+            //                            ticket.AssignedToId = newTicketHandler.Id;
+
+            //                            ticketAssignedToNewUser = true;
+
+            //                            //break out of the loop
+            //                            break;
+            //                        }
+
+            //                    }
+
+            //                }
+            //                else
+            //                {
+            //                    //assign the ticket to a manager with a role rating higher than the current user even if the manager is in a different department but same branch
+
+
+            //                    //check if the ticket is already in the the branch networks and satellites department
+
+            //                    if(currentAssignedUserDepartment.Name.Trim().ToLower() == "Branch Networks and satellites Department".Trim().ToLower())
+            //                    {
+            //                        ticket.AssignedToId = await this.AssignTicketToDepartment("Executive suite");
+
+            //                        if(!string.IsNullOrEmpty(ticket.AssignedToId))
+            //                        {
+            //                            ticketAssignedToNewUser = true;
+            //                        }
+
+            //                    }
+            //                    else
+            //                    {
+            //                        ticket.AssignedToId = await this.AssignTicketToDepartment("Branch Networks and satellites Department");
+
+            //                        if (!string.IsNullOrEmpty(ticket.AssignedToId))
+            //                        {
+            //                            ticketAssignedToNewUser = true;
+            //                        }
+
+            //                    }
+
+
+            //                }
+
+            //            }
+
+            //        }
+            //        else
+            //        {
+            //            //Do something if the current user has no role
+            //        }
+            //    }
+            //    else
+            //    {
+            //        //do something is the ticket is not assigned to anyone
+
+            //        string result = await this._ticketRepository.SendUnassignedTicketEmail(ticket);
+            //    }
+
+            //}
+
+            //if (ticketAssignedToNewUser != true)
+            //{
+
+
+            //    createTicketEscalation.DataInvalid = "true";
+
+            //    ModelState.AddModelError("", $"Could not find a user to escalate the ticket to'");
+
+            //    return PartialView("_FirstTicketEscalationPartial", createTicketEscalation);
+            //}
+            //else
+            //{
+            //    //map the create ticket escalation DTO to ticket escalation
+
+            //    var mappedTicketEscalation = this._mapper.Map<TicketEscalation>(createTicketEscalation);
+
+            //    //update the escalated to to reflect to new user assigned to the ticket
+
+            //    mappedTicketEscalation.EscalatedTo = ticket.AssignedTo;
+
+
+            //    //save to the database
+
+            //    try
+            //    {
+            //        var userClaims = (ClaimsIdentity)User.Identity;
+
+            //        var claimsIdentitifier = userClaims.FindFirst(ClaimTypes.NameIdentifier);
+
+            //        mappedTicketEscalation.CreatedById = claimsIdentitifier.Value;
+
+
+            //        this._ticketEscalationRepository.Add(mappedTicketEscalation);
+
+
+            //        await this._unitOfWork.SaveToDataStore();
+
+
+            //        //send emails to previous assignee and the new assignee
+
+            //        string emails_response = await this._ticketRepository.SendTicketEscalationEmail(ticket, mappedTicketEscalation, currentAssignedUserEmail);
+
+
+            //        return PartialView("_FirstTicketEscalationPartial", createTicketEscalation);
+            //    }
+            //    catch (DbUpdateException ex)
+            //    {
+            //        createTicketEscalation.DataInvalid = "true";
+
+            //        ModelState.AddModelError(string.Empty, ex.InnerException.Message);
+
+            //        return PartialView("_FirstTicketEscalationPartial", createTicketEscalation);
+            //    }
+
+            //    catch (Exception ex)
+            //    {
+
+            //        createTicketEscalation.DataInvalid = "true";
+
+            //        ModelState.AddModelError(string.Empty, ex.Message);
+
+            //        return PartialView("_FirstTicketEscalationPartial", createTicketEscalation);
+            //    }
+            //}
 
             return PartialView("_FirstTicketEscalationPartial", createTicketEscalation);
+
         }
 
         private async Task<List<SelectListItem>> GetMembers()
@@ -744,6 +922,57 @@ namespace UCS_CRM.Areas.Clerk.Controllers
             ViewBag.members = await GetMembers();
             ViewBag.assignees = await GetAssignees();
             ViewBag.departments = await GetDepartments();
+        }
+
+        private async Task<string> AssignTicketToDepartment(string departmentName)
+        {
+            string assignedToId = string.Empty;
+
+            ApplicationUser currentAssignedUser = null;
+            Role currentAssignedUserRole = null;
+            Department? newDepartment = null;
+            List<Role> rolesOfCurrentUserDepartment = new();
+            List<Role> SortedrolesOfCurrentUserDepartment = new();
+
+            newDepartment = this._departmentRepository.Exists(departmentName);
+
+            if(newDepartment == null)
+            {
+                return assignedToId;
+            }
+
+            //get roles that are associated with this department
+            rolesOfCurrentUserDepartment = newDepartment.Roles;
+
+            //order the roles according to rating
+
+            SortedrolesOfCurrentUserDepartment = rolesOfCurrentUserDepartment.OrderBy(d => d.Rating).ToList();
+            //remove roles that are less than the one that the current assigned user is already in
+            //SortedrolesOfCurrentUserDepartment = SortedrolesOfCurrentUserDepartment.Where(r => r.Rating > currentAssignedUserRole.Rating).ToList();
+
+            if (SortedrolesOfCurrentUserDepartment.Count > 0)
+            {
+                for (int i = 0; i < SortedrolesOfCurrentUserDepartment.Count; i++)
+                {
+
+                    var listOfUsers = await this._userRepository.GetUsersInRole(SortedrolesOfCurrentUserDepartment[i].Name);
+
+                    //get the first user if available
+
+                    var newTicketHandler = listOfUsers.FirstOrDefault();
+
+                    if (newTicketHandler != null)
+                    {
+                        //assign the ticket this person and break out of the loop
+
+                        assignedToId = newTicketHandler.Id;
+                    }
+
+                }
+
+            }
+
+            return assignedToId;
         }
 
 

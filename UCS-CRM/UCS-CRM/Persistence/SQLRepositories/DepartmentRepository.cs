@@ -79,7 +79,7 @@ namespace UCS_CRM.Persistence.SQLRepositories
 
         public async Task<List<Department>?> GetDepartments()
         {
-            return await this._context.Departments.Where(d => d.Status != Lambda.Deleted).ToListAsync();
+            return await this._context.Departments.Include(d => d.Roles).Where(d => d.Status != Lambda.Deleted).ToListAsync();
         }
 
         public void Remove(Department department)

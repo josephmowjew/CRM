@@ -28,6 +28,11 @@ namespace UCS_CRM.Persistence.SQLRepositories
             return await this._roleManager.UpdateAsync(identityRole);
         }
 
+        public async Task<Role> GetRole(string id)
+        {
+            return await this._context.Roles.FirstOrDefaultAsync(r => r.Id == id);
+        }
+
         public async Task<List<Role>> GetRolesAsync()
         {
             var roles =  await this._context.Roles.ToListAsync();
@@ -89,12 +94,19 @@ namespace UCS_CRM.Persistence.SQLRepositories
             
         }
 
-        public async Task<Role> GetRoleAsync(string id)
+        public async Task<Role> GetRoleAsync(string roleName)
         {
-            return await this._roleManager.FindByIdAsync(id);
+            return await this._roleManager.FindByNameAsync(roleName);
         }
 
-         public int TotalCount()
+        public async Task<Role> GetRoleByIdAsync(string roleId)
+        {
+            return await this._roleManager.FindByIdAsync(roleId);
+        }
+
+
+
+        public int TotalCount()
         {
             return  this._roleManager.Roles.Count();
         }

@@ -9,8 +9,10 @@ namespace UCS_CRM.Core.Models
         public int TicketId { get; set; }
         public DateTime DateEscalated { get; set; }
         public string? Reason { get; set; }
-        public string? SecondEscalationReason { get; set; }
-        public int EscalationLevel { get; set; }
+        //public string? SecondEscalationReason { get; set; }
+        //public int EscalationLevel { get; set; }
+        public string EscalatedToId { get; set; }
+        public ApplicationUser EscalatedTo { get; set; }
         public bool Resolved { get; set; } = false;
 
         [NotMapped]

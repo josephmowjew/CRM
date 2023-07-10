@@ -43,7 +43,7 @@ namespace UCS_CRM.Persistence.SQLRepositories
 
                 if (string.IsNullOrEmpty(@params.SearchTerm))
                 {
-                    var ticketEscalations = (from tblOb in await this._context.TicketEscalations.Include(t => t.Ticket).ThenInclude(m => m.Member).Include(a => a.Ticket.AssignedTo).Include(p => p.Ticket.TicketPriority).Where(a => a.Status != Lambda.Deleted && a.EscalationLevel == escalationLevel
+                    var ticketEscalations = (from tblOb in await this._context.TicketEscalations.Include(t => t.Ticket).ThenInclude(m => m.Member).Include(a => a.Ticket.AssignedTo).Include(p => p.Ticket.TicketPriority).Where(a => a.Status != Lambda.Deleted
                                              && a.Resolved == false).Skip(@params.Skip).Take(@params.Take).ToListAsync() select tblOb);
 
 

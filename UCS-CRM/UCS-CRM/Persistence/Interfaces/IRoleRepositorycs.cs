@@ -9,12 +9,15 @@ namespace UCS_CRM.Persistence.Interfaces
         IQueryable<Role> GetRoles(CursorParams @params);
 
         Task<Role> GetRoleAsync(string id);
-
         Task<List<Role>> GetRolesAsync();
         Task<bool> Exists(string name);
         Task<IdentityResult> remove(string id);
         void AddRole(Role identityRole);
         Task<IdentityResult> UpdateRoleAsync(Role identityRole);
         int TotalCount();
+
+        Task<Role> GetRole(string name);
+        Task<Role> GetRoleByIdAsync(string roleId);
+
     }
 }

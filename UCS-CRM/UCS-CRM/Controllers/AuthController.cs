@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Authorization;
+﻿using Bogus;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Build.Framework;
@@ -7,6 +8,7 @@ using System.Configuration;
 using System.Data;
 using System.Net.Http;
 using System.Security.Claims;
+using System.Security.Policy;
 using System.Text.Json;
 using UCS_CRM.Core.DTOs.Member;
 using UCS_CRM.Core.Models;
@@ -25,14 +27,18 @@ namespace UCS_CRM.Controllers
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly SignInManager<ApplicationUser> _signInManager;
         private readonly IMemberRepository _memberRepository;
+        private readonly IDepartmentRepository _departmentRepository;
         private readonly IUserRepository _userRepository;
+        private readonly IBranchRepository _branchRepository;
         private readonly IUnitOfWork _unitOfWork;
         private readonly IEmailService _emailService;
         private ApplicationDbContext _context;
         private readonly HttpClient _httpClient;
         private readonly IConfiguration _config;
+
+       
         public AuthController(UserManager<ApplicationUser> userManager, SignInManager<ApplicationUser> signInManager, IUserRepository userRepository, ApplicationDbContext context,
-            IMemberRepository memberRepository, IUnitOfWork unitOfWork, IEmailService emailService, HttpClient httpClient, IConfiguration config)
+            IMemberRepository memberRepository, IUnitOfWork unitOfWork, IEmailService emailService, HttpClient httpClient, IConfiguration config, IDepartmentRepository departmentRepository, IBranchRepository branchRepository)
         {
             _userManager = userManager;
             _signInManager = signInManager;
@@ -43,6 +49,8 @@ namespace UCS_CRM.Controllers
             _emailService = emailService;
             _httpClient = httpClient;
             _config = config;
+            _departmentRepository = departmentRepository;
+            _branchRepository = branchRepository;
         }
 
         public async Task<IActionResult> Create()
@@ -66,30 +74,30 @@ namespace UCS_CRM.Controllers
 
             if (confirmedUser != null)
             {
-                var roles = _userManager.GetRolesAsync(confirmedUser).Result.ToList();
+                var roles = _userManager.GetRolesAsync(confirmedUser).Result.FirstOrDefault();
 
                 confirmedUser.Pin = 0;
 
 
                 await this._context.SaveChangesAsync();
 
-                if (roles.Contains("Administrator"))
+                if (roles.Contains("Administrator", StringComparison.OrdinalIgnoreCase))
                 {
                     return RedirectToAction("Index", "Home", new { Area = "Admin" });
                 }
-                if (roles.Contains("Clerk"))
+                if (roles.Contains("Clerk", StringComparison.OrdinalIgnoreCase) || roles.Contains("Member Engagements officer", StringComparison.OrdinalIgnoreCase))
                 {
                     return RedirectToAction("Index", "Home", new { Area = "Clerk" });
                 }
-                if (roles.Contains("Manager"))
+                if (roles.Contains("Manager", StringComparison.OrdinalIgnoreCase))
                 {
                     return RedirectToAction("Index", "Home", new { Area = "Manager" });
                 }
-                if (roles.Contains("Senior Manager"))
+                if (roles.Contains("Senior Manager", StringComparison.OrdinalIgnoreCase))
                 {
                     return RedirectToAction("Index", "Home", new { Area = "SeniorManager" });
                 }
-                if (roles.Contains("Member"))
+                if (roles.Contains("Member", StringComparison.OrdinalIgnoreCase))
                 {
                     return RedirectToAction("Index", "Home", new { Area = "Member" });
                 }
@@ -410,6 +418,79 @@ namespace UCS_CRM.Controllers
             }
 
            
+
+        }
+
+
+        public async Task<IActionResult> GenerateUserData()
+        {
+            List<Department>? departments = await this._departmentRepository.GetDepartments();
+            List<Branch>? branches  = await this._branchRepository.GetBranches();
+            List<ApplicationUser> users = new List<ApplicationUser>();
+            List<ApplicationUser> addedUsers = new();
+            string[] gender = { "Male", "Female" };
+
+
+
+            var testUsers = new Faker<ApplicationUser>()
+                    .RuleFor(u => u.Gender, f => f.PickRandom<string>(gender))
+                    .RuleFor(u => u.FirstName, (f, u) => f.Name.FirstName())
+                    .RuleFor(u => u.LastName, (f, u) => f.Name.LastName())
+                    .RuleFor(u => u.PhoneNumber, (f, u) => f.Phone.PhoneNumber())
+                    .RuleFor(u => u.Email, (f, u) => f.Internet.Email())
+                    .RuleFor(u => u.UserName, (f, u) => u.Email)
+                    .RuleFor(u => u.Status, (f, u) => "Active")
+                    .RuleFor(u => u.DepartmentId, 6)
+                    .RuleFor(u => u.BranchId, (f, u) => f.PickRandom<Branch>(branches).Id);
+
+          var generatedUser = testUsers.Generate(50);
+
+          //create a random class 
+          Random rnd = new Random();
+
+
+            Department departmentFullRecord = await this._departmentRepository.GetDepartment(6);
+
+            var departmentRoles = departmentFullRecord.Roles;
+            for (int i = 0; i < generatedUser.Count; i++)
+            {
+
+                //try adding a new user
+
+                var result = await this._userRepository.CreateUserAsync(generatedUser[i], "P@$$w0rd");
+
+                try
+                {
+                    if (result.Succeeded)
+                    {
+
+                        //pick a random role in the department
+
+
+                        int randomRoleIndex = rnd.Next(departmentRoles.Count);
+
+                        string roleName = departmentRoles[randomRoleIndex].Name;
+                        //associate user to role
+                        var dbResult = await this._userRepository.AddUserToRoleAsync(generatedUser[i], roleName);
+
+                        addedUsers.Add(generatedUser[i]);
+                    }
+
+                    await this._unitOfWork.SaveToDataStore();
+                }
+                catch (Exception ex)
+                {
+
+                    throw;
+                }
+
+              
+            }
+
+            return Json(generatedUser);
+                   
+
+
 
         }
 

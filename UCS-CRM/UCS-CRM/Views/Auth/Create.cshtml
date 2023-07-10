@@ -123,7 +123,7 @@
             location.href = "admin/"
         </script>
     }
-    if (User.IsInRole("Clerk"))
+    if (User.IsInRole("Clerk") || User.IsInRole("Member Engagements officer"))
     {
         <script>
             location.href = "clerk/"

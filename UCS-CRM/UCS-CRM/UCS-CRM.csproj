@@ -10,6 +10,7 @@
 
   <ItemGroup>
     <PackageReference Include="AutoMapper.Extensions.Microsoft.DependencyInjection" Version="12.0.0" />
+    <PackageReference Include="Bogus" Version="34.0.2" />
     <PackageReference Include="GravatarHelper.AspNetCore" Version="1.1.0" />
     <PackageReference Include="Hangfire" Version="1.7.34" />
     <PackageReference Include="Hangfire.MemoryStorage" Version="1.7.0" />

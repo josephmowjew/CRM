@@ -20,5 +20,6 @@ namespace UCS_CRM.Core.Models
         public int Rating { get; set; }
 
         public List<Department> Departments { get; set; }
+
     }
 }
