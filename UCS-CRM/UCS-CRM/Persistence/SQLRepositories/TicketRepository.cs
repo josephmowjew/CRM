@@ -245,7 +245,7 @@ namespace UCS_CRM.Persistence.SQLRepositories
 
         public async Task SendTicketReminders()
         {
-            string emails = string.Empty;
+          
             //get all active tickets
             List<Ticket> tickets = await this._context.Tickets
                 .Include(t => t.State)
@@ -278,11 +278,11 @@ namespace UCS_CRM.Persistence.SQLRepositories
 
                      _emailRepository.SendMail(ticket.AssignedTo.Email, title, body).Wait();
 
-                    emails = emails  + ticket.AssignedTo.Email + "\n";
+                    
                 }
             }
 
-            Console.WriteLine(emails.ToString());
+          
         }
 
         private async Task<string> AssignTicketToDepartment(string departmentName)
@@ -340,14 +340,100 @@ namespace UCS_CRM.Persistence.SQLRepositories
             return await this._context.Tickets
                 .Include(t=> t.TicketCategory)
                 .Include(t => t.State)
-                .Include(t => t.Member)
                 .Include(t => t.TicketComments)
                 .Include(t => t.TicketAttachments)
                 .Include(t => t.TicketPriority)
+                .Include(t => t.CreatedBy)
                 .Include(t => t.AssignedTo).ThenInclude(a => a.Department)
+                .Include(t => t.Member).ThenInclude(t => t.User)
                 .FirstOrDefaultAsync(t => t.Id == id);
         }
+        public async Task<string> SendTicketClosureNotifications(Ticket ticket, string reason)
+        {
+            string status = string.Empty;
+            //get the member email address
 
+            var memberEmailAddress = ticket?.Member?.User?.Email ?? null;
+            var ticketCreatorAddress = ticket.CreatedBy.Email;
+
+            if(!string.IsNullOrEmpty(memberEmailAddress))
+            {
+                string title = "Ticket Closure Alert";
+                var bodyBuilder = new StringBuilder();
+                bodyBuilder.Append("Your ticket with reference number: ");
+                bodyBuilder.Append(ticket.TicketNumber);
+                bodyBuilder.Append($" has been closed because {reason}\nBut if you are not satisfied with the outcome. you have a chance to re-open it");
+                string body = bodyBuilder.ToString();
+
+                _emailRepository.SendMail(ticket.AssignedTo.Email, title, body).Wait();
+
+                status = "email sent";
+            }
+
+            if(!string.IsNullOrEmpty(ticketCreatorAddress) && memberEmailAddress != ticketCreatorAddress)
+            {
+                string title = "Ticket Closure Alert";
+                var bodyBuilder = new StringBuilder();
+                bodyBuilder.Append("You have closed ticket: ");
+                bodyBuilder.Append(ticket.TicketNumber);
+                bodyBuilder.Append($" has been closed because {reason}\n");
+                string body = bodyBuilder.ToString();
+
+                _emailRepository.SendMail(ticket.AssignedTo.Email, title, body).Wait();
+
+                status = "email sent";
+            }
+
+
+
+
+
+            return status;
+
+        }
+        public async Task<string> SendTicketReopenedNotifications(Ticket ticket, string reason)
+        {
+            string status = string.Empty;
+            //get the member email address
+
+            var memberEmailAddress = ticket?.Member?.User?.Email ?? null;
+            var ticketCreatorAddress = ticket.CreatedBy.Email;
+
+            if (!string.IsNullOrEmpty(memberEmailAddress))
+            {
+                string title = "Ticket Reopened Alert";
+                var bodyBuilder = new StringBuilder();
+                bodyBuilder.Append("Your ticket with reference number: ");
+                bodyBuilder.Append(ticket.TicketNumber);
+                bodyBuilder.Append($" has been reopened because {reason}\n");
+                string body = bodyBuilder.ToString();
+
+                _emailRepository.SendMail(ticket.AssignedTo.Email, title, body).Wait();
+
+                status = "email sent";
+            }
+
+            if (!string.IsNullOrEmpty(ticketCreatorAddress) && memberEmailAddress != ticketCreatorAddress)
+            {
+                string title = "Ticket Reopened Alert";
+                var bodyBuilder = new StringBuilder();
+                bodyBuilder.Append("You have reopened ticket: ");
+                bodyBuilder.Append(ticket.TicketNumber);
+                bodyBuilder.Append($" has been reopened because {reason}\n");
+                string body = bodyBuilder.ToString();
+
+                _emailRepository.SendMail(ticket.AssignedTo.Email, title, body).Wait();
+
+                status = "email sent";
+            }
+
+
+
+
+
+            return status;
+
+        }
         public async Task<List<Ticket?>> GetTickets(CursorParams @params)
         {
             //check if the count has a value in it above zero before proceeding
@@ -686,12 +772,10 @@ namespace UCS_CRM.Persistence.SQLRepositories
         {
             return await this._context.Tickets.CountAsync(t => t.Status != Lambda.Deleted);
         }
-
         public async Task<int> TotalClosedCount()
         {
             return await this._context.Tickets.CountAsync(t => t.Status == Lambda.Closed || t.ClosedDate != null);
         }
-
         // count tickets by state
         public async Task<int> CountTicketsByStatus(string state)
         {
@@ -704,19 +788,16 @@ namespace UCS_CRM.Persistence.SQLRepositories
             }
             return await this._context.Tickets.Include(t => t.State).CountAsync(t => t.Status != Lambda.Deleted & t.State.Name.Trim().ToLower() == state.Trim().ToLower());
         }
-
         // count tickets by category
         public async Task<int> CountTicketsByCategory(string category)
         {
             return await this._context.Tickets.Include(t => t.TicketCategory).CountAsync(t => t.Status != Lambda.Deleted & t.TicketCategory.Name.Trim().ToLower() == category.Trim().ToLower());
         }
-
         // count tickets by category
         public async Task<int> CountTicketsByPriority(string priority)
         {
             return await this._context.Tickets.Include(t => t.TicketPriority).CountAsync(t => t.Status != Lambda.Deleted & t.TicketPriority.Name.Trim().ToLower() == priority.Trim().ToLower());
         }
-
         public async Task<int> TotalCountByMember(int memberId)
         {
             return await this._context.Tickets.CountAsync(t => t.Status != Lambda.Deleted && t.MemberId == memberId);
@@ -725,7 +806,6 @@ namespace UCS_CRM.Persistence.SQLRepositories
         {
             return await this._context.Tickets.CountAsync(t => t.Status != Lambda.Deleted && t.AssignedToId == assignedTo || t.CreatedById == assignedTo);
         }
-
         public async Task<int> CountTicketsByStatusMember(string state, int memberId)
         {
             if (state == Lambda.Closed)
@@ -743,8 +823,10 @@ namespace UCS_CRM.Persistence.SQLRepositories
         {
             return await this._context.Tickets.Include(t => t.State).CountAsync(t => t.Status != Lambda.Deleted & t.State.Name.Trim().ToLower() == state.Trim().ToLower() && t.AssignedToId == assignedToId);
         }
-
-        
+        public async Task<int> CountTicketsByStatusCreatedByOrAssignedTo(string state, string identifier)
+        {
+            return await this._context.Tickets.Include(t => t.State).CountAsync(t => t.Status != Lambda.Deleted & t.State.Name.Trim().ToLower() == state.Trim().ToLower() && t.CreatedById == identifier || t.AssignedToId == identifier);
+        }
         public async Task<string> UnAssignedTickets()
         {
             var tickets = new List<Ticket>();

@@ -56,7 +56,7 @@ namespace UCS_CRM.Areas.Clerk.Controllers
 
             var claimsIdentitifier = userClaims.FindFirst(ClaimTypes.NameIdentifier);
 
-            int myTickets = await this._ticketRepository.CountTicketsByStatusAssignedTo(status, claimsIdentitifier.Value);
+            int myTickets = await this._ticketRepository.CountTicketsByStatusCreatedByOrAssignedTo(status, claimsIdentitifier.Value);
 
             if (myTickets > 0)
             {
