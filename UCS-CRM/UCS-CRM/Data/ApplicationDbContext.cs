@@ -29,7 +29,7 @@ namespace UCS_CRM.Data
         public DbSet<EmailAddress> EmailAddresses { get; set; }
         public DbSet<Branch> Branches { get; set; }
         public DbSet<Department> Departments { get; set; }
-        //public DbSet<Position> Positions { get; set; }
+        public DbSet<Feedback> Feedbacks { get; set; }
 
         public DbSet<Role> Roles { get; set; }
 
