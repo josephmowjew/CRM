@@ -34,5 +34,7 @@ namespace UCS_CRM.Persistence.Interfaces
         Task<string> SendTicketReopenedNotifications(Ticket ticket, string reason);
 
         Task<int> CountTicketsByStatusCreatedByOrAssignedTo(string state, string identifier);
+
+        Task<string> SendDepartmentEmail(Department department, string emailSubject, string emailBody);
     }
 }

@@ -252,6 +252,7 @@ namespace UCS_CRM.Persistence.SQLRepositories
                 .Include(t => t.TicketPriority)
                 .Include(t => t.TicketEscalations)
                 .Include(t => t.AssignedTo)
+                .ThenInclude(u => u.Department)
                 .Where(t => t.AssignedTo != null && t.State.Name != Lambda.Closed && t.State.Name != Lambda.Archived)
                 .ToListAsync();
 
@@ -273,10 +274,15 @@ namespace UCS_CRM.Persistence.SQLRepositories
                     var bodyBuilder = new StringBuilder();
                     bodyBuilder.Append("Please be reminded that ticket number ");
                     bodyBuilder.Append(ticket.TicketNumber);
-                    bodyBuilder.Append(" has been assigned to you and a response is still pending");
+                    bodyBuilder.Append($"has been assigned to you({ticket.AssignedTo.Email}) and a response is still pending");
                     string body = bodyBuilder.ToString();
 
                      _emailRepository.SendMail(ticket.AssignedTo.Email, title, body).Wait();
+
+
+                    //send to department
+
+                     this.SendDepartmentEmail(ticket.AssignedTo.Department,title,body).Wait();
 
                     
                 }
@@ -906,6 +912,9 @@ namespace UCS_CRM.Persistence.SQLRepositories
                 }
             }
 
+            //send email to the department
+            this.SendDepartmentEmail(ticket.AssignedTo.Department, title, body).Wait();
+
             return string.Empty;
         }
         public async Task<string> EscalatedTickets()
@@ -945,6 +954,30 @@ namespace UCS_CRM.Persistence.SQLRepositories
             }
 
             return status;
+        }
+        public async Task<string> SendDepartmentEmail(Department department, string emailSubject, string emailBody)
+        {
+            // Send an email to the previous assignee
+            string title = emailSubject;
+            string body = emailBody;
+
+            var emailAddress = department.Email;
+
+            if (!string.IsNullOrEmpty(emailAddress))
+            {
+                string emailResponse = await _emailRepository.SendMail(emailAddress, title, body);
+
+                if (string.Equals(emailResponse, "message sent", StringComparison.OrdinalIgnoreCase))
+                {
+
+                    return "message sent";
+
+                }
+            }
+
+
+
+            return string.Empty;
         }
 
        
