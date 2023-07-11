@@ -1,20 +1,16 @@
 ﻿using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using NuGet.Packaging;
 using System.Security.Claims;
-using UCS_CRM.Core.DTOs.Member;
-using UCS_CRM.Core.DTOs.State;
 using UCS_CRM.Core.DTOs.Ticket;
 using UCS_CRM.Core.DTOs.TicketComment;
 using UCS_CRM.Core.DTOs.TicketEscalation;
 using UCS_CRM.Core.Helpers;
 using UCS_CRM.Core.Models;
 using UCS_CRM.Persistence.Interfaces;
-using UCS_CRM.Persistence.SQLRepositories;
 
 namespace UCS_CRM.Areas.Manager.Controllers
 {
