@@ -35,9 +35,10 @@ namespace UCS_CRM.Areas.Member.Controllers
         private IWebHostEnvironment _env;
         private readonly IEmailService _emailService;
         private readonly IEmailAddressRepository _addressRepository;
+        private readonly ITicketStateTrackerRepository _ticketStateTrackerRepository;
         public TicketsController(ITicketRepository ticketRepository, IMapper mapper, IUnitOfWork unitOfWork, IEmailService emailService, IEmailAddressRepository addressRepository,
             ITicketCategoryRepository ticketCategoryRepository, IStateRepository stateRepository, ITicketPriorityRepository priorityRepository, 
-            IWebHostEnvironment env, ITicketCommentRepository ticketCommentRepository, IMemberRepository memberRepository, ITicketEscalationRepository ticketEscalationRepository)
+            IWebHostEnvironment env, ITicketCommentRepository ticketCommentRepository, IMemberRepository memberRepository, ITicketEscalationRepository ticketEscalationRepository, ITicketStateTrackerRepository ticketStateTrackerRepository)
         {
             _ticketRepository = ticketRepository;
             _mapper = mapper;
@@ -51,6 +52,7 @@ namespace UCS_CRM.Areas.Member.Controllers
             _ticketEscalationRepository = ticketEscalationRepository;
             _emailService = emailService;
             _addressRepository = addressRepository;
+            _ticketStateTrackerRepository = ticketStateTrackerRepository;
         }
 
         // GET: TicketsController
@@ -324,6 +326,13 @@ namespace UCS_CRM.Areas.Member.Controllers
                 return RedirectToAction("Index");
             }
 
+            var userClaims = (ClaimsIdentity)User.Identity;
+
+            var claimsIdentitifier = userClaims.FindFirst(ClaimTypes.NameIdentifier);
+
+            var currentUserId = claimsIdentitifier.Value;
+
+            ViewBag.CurrentUserId = currentUserId;
 
             var mappedTicket = this._mapper.Map<ReadTicketDTO>(ticketDB);
 
@@ -380,6 +389,132 @@ namespace UCS_CRM.Areas.Member.Controllers
             }
 
             return Json(new { status = "error", message = "comment could not be found from the system" });
+        }
+
+        [HttpPost]
+        public async Task<ActionResult> CloseTicket(CloseTicketDTO closeTicketDTO)
+        {
+            //check for model validity
+
+            closeTicketDTO.DataInvalid = "true";
+
+            if (ModelState.IsValid)
+            {
+                //find the ticket with the id sent
+
+                var ticket = await this._ticketRepository.GetTicket(closeTicketDTO.Id);
+
+                if (ticket == null)
+                {
+                    return Json(new { status = "error", message = "Could not close ticket, try again or contact administrator if the error persist" });
+                }
+                else
+                {
+                    //check if the ticket was opened by the current user
+                    //get the current user id
+
+                    var userClaims = (ClaimsIdentity)User.Identity;
+
+                    var claimsIdentitifier = userClaims.FindFirst(ClaimTypes.NameIdentifier);
+
+                    var currentUserId = claimsIdentitifier.Value;
+
+                    string currentState = ticket.State.Name;
+
+                    if (ticket.CreatedById == currentUserId)
+                    {
+                        ticket.State.Name = Lambda.Closed;
+
+                        //sync changes to the datastore
+
+                        await this._unitOfWork.SaveToDataStore();
+
+                        UCS_CRM.Core.Models.TicketStateTracker ticketStateTracker = new TicketStateTracker() { CreatedById = currentUserId, TicketId = ticket.Id, NewState = ticket.State.Name, PreviousState = currentState, Reason = closeTicketDTO.Reason };
+
+                        this._ticketStateTrackerRepository.Add(ticketStateTracker);
+
+                        await this._unitOfWork.SaveToDataStore();
+
+                        //send alert emails
+
+                        string result = await this._ticketRepository.SendTicketClosureNotifications(ticket, closeTicketDTO.Reason);
+
+                        return Json(new { status = "success", message = $"Ticket {ticket.TicketNumber} has been closed successfully" });
+
+                    }
+                    else
+                    {
+                        return Json(new { status = "error", message = $"Could not close ticket as it can only be closed by{ticket.CreatedBy.Email} " });
+
+                    }
+                }
+            }
+
+            return Json(new { status = "error", message = "Could not close ticket" });
+        }
+
+        [HttpPost]
+        public async Task<ActionResult> ReopenTicket(CloseTicketDTO closeTicketDTO)
+        {
+            //check for model validity
+
+            closeTicketDTO.DataInvalid = "true";
+
+            if (ModelState.IsValid)
+            {
+                //find the ticket with the id sent
+
+                var ticket = await this._ticketRepository.GetTicket(closeTicketDTO.Id);
+
+                if (ticket == null)
+                {
+                    return Json(new { status = "error", message = "Could not re-open ticket, try again or contact administrator if the error persist" });
+                }
+                else
+                {
+                    //check if the ticket was opened by the current user
+                    //get the current user id
+
+                    var userClaims = (ClaimsIdentity)User.Identity;
+
+                    var claimsIdentitifier = userClaims.FindFirst(ClaimTypes.NameIdentifier);
+
+                    var currentUserId = claimsIdentitifier.Value;
+
+                    string currentState = ticket.State.Name;
+
+                    if (ticket.CreatedById == currentUserId)
+                    {
+                        ticket.State.Name = Lambda.ReOpened;
+
+                        //sync changes to the datastore
+
+                        await this._unitOfWork.SaveToDataStore();
+
+                        //update the ticket change state 
+
+                        UCS_CRM.Core.Models.TicketStateTracker ticketStateTracker = new TicketStateTracker() { CreatedById = currentUserId, TicketId = ticket.Id, NewState = ticket.State.Name, PreviousState = currentState, Reason = closeTicketDTO.Reason };
+
+                        this._ticketStateTrackerRepository.Add(ticketStateTracker);
+
+                        await this._unitOfWork.SaveToDataStore();
+
+                        //send alert emails
+
+                        string result = await this._ticketRepository.SendTicketReopenedNotifications(ticket, closeTicketDTO.Reason);
+
+                        return Json(new { status = "success", message = $"Ticket {ticket.TicketNumber} has been reopened successfully" });
+
+                    }
+                    else
+                    {
+                        return Json(new { status = "error", message = $"Could not reopen ticket as it can only by{ticket.CreatedBy.Email} " });
+
+                    }
+                }
+            }
+
+            return Json(new { status = "error", message = "Could not reopen ticket" });
         }
 
         [HttpPost]

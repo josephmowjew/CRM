@@ -557,8 +557,6 @@ namespace UCS_CRM.Areas.Admin.Controllers
 
             return Json(new { status = "error", message = "user not found" });
         }
-    
-
         public async Task<ActionResult> FetchRolesOnDepartment(int selectedValue)
         {
             var listOfRoles = await GetRoles(selectedValue);
@@ -582,7 +580,6 @@ namespace UCS_CRM.Areas.Admin.Controllers
             return departments;
 
         }
-
         private async Task<List<SelectListItem>> GetRoles(int departmentId = 0)
         {
             List<SelectListItem> rolesList = new();
@@ -620,9 +617,6 @@ namespace UCS_CRM.Areas.Admin.Controllers
 
             return rolesList;
         }
-
-
-
         private async Task populateViewBags()
         {
             List<SelectListItem> roles = new List<SelectListItem>();

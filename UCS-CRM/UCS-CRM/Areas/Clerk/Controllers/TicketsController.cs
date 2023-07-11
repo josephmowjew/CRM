@@ -251,10 +251,14 @@ namespace UCS_CRM.Areas.Clerk.Controllers
                     return PartialView("_EditTicketPartial", editTicketDTO);
                 }
 
+                //get the current state of the ticket 
+
+                string currentState = ticketDB.State.Name;
 
                 editTicketDTO.StateId = editTicketDTO.StateId == null ? ticketDB.StateId : editTicketDTO.StateId;
 
                 editTicketDTO.TicketNumber = ticketDB.TicketNumber;
+
                 var claimsIdentitifier = User.FindFirst(ClaimTypes.NameIdentifier);
 
                 //if (editTicketDTO.AssignedToId == null)
@@ -267,7 +271,6 @@ namespace UCS_CRM.Areas.Clerk.Controllers
                 var mappedTicket = this._mapper.Map<Ticket>(editTicketDTO);
 
                 var ticketExist = this._ticketRepository.Exists(mappedTicket);
-
 
 
                 bool isTaken = (ticketExist != null);
@@ -288,6 +291,19 @@ namespace UCS_CRM.Areas.Clerk.Controllers
                 //save changes to data store
 
                 await this._unitOfWork.SaveToDataStore();
+
+                //check if the state changed
+
+                if(ticketDB.State.Name.Trim().ToLower() != currentState.Trim().ToLower()) {
+
+                    //update the ticket change state 
+
+                    UCS_CRM.Core.Models.TicketStateTracker ticketStateTracker = new TicketStateTracker() { CreatedById = claimsIdentitifier.Value, TicketId = ticketDB.Id, NewState = ticketDB.State.Name, PreviousState = currentState, Reason = closeTicketDTO.Reason };
+
+                    this._ticketStateTrackerRepository.Add(ticketStateTracker);
+
+                    await this._unitOfWork.SaveToDataStore();
+                }
 
                 if (editTicketDTO.Attachments.Count > 0)
                 {
