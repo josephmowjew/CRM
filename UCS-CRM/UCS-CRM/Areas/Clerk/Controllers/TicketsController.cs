@@ -298,7 +298,7 @@ namespace UCS_CRM.Areas.Clerk.Controllers
 
                     //update the ticket change state 
 
-                    UCS_CRM.Core.Models.TicketStateTracker ticketStateTracker = new TicketStateTracker() { CreatedById = claimsIdentitifier.Value, TicketId = ticketDB.Id, NewState = ticketDB.State.Name, PreviousState = currentState, Reason = closeTicketDTO.Reason };
+                    UCS_CRM.Core.Models.TicketStateTracker ticketStateTracker = new TicketStateTracker() { CreatedById = claimsIdentitifier.Value, TicketId = ticketDB.Id, NewState = ticketDB.State.Name, PreviousState = currentState, Reason = "Ticket Update" };
 
                     this._ticketStateTrackerRepository.Add(ticketStateTracker);
 
