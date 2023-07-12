@@ -1006,6 +1006,32 @@ namespace UCS_CRM.Persistence.SQLRepositories
 
             return string.Empty;
         }
+
+        public async Task<string> SendTicketDeEscalationEmail(Ticket ticket,  string previousAssigneeEmail)
+        {
+            // Send an email to the previous assignee
+            string title = "Ticket De-Escalation";
+            string body = $"Your ticket {ticket.TicketNumber} has been de-escalated to {ticket.AssignedTo.Email}";
+
+            string emailResponse = await _emailRepository.SendMail(previousAssigneeEmail, title, body);
+
+            if (string.Equals(emailResponse, "Message sent", StringComparison.OrdinalIgnoreCase))
+            {
+                body = $"A ticket {ticket.TicketNumber} previously escalated to {previousAssigneeEmail} has been de-escalated to you {ticket.AssignedTo.Email}. Please take note and respond to it accordingly";
+
+                emailResponse = await _emailRepository.SendMail(previousAssigneeEmail, title, body);
+
+                if (string.Equals(emailResponse, "Message sent", StringComparison.OrdinalIgnoreCase))
+                {
+                    return "messages sent";
+                }
+            }
+
+            //send email to the department
+            this.SendDepartmentEmail(ticket.AssignedTo.Department, title, body).Wait();
+
+            return string.Empty;
+        }
         public async Task<string> EscalatedTickets()
         {
             var tickets = new List<TicketEscalation>();

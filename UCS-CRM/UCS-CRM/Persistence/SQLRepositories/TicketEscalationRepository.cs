@@ -32,7 +32,7 @@ namespace UCS_CRM.Persistence.SQLRepositories
 
         public async Task<TicketEscalation?> GetTicketEscalation(int id)
         {
-            return await this._context.TicketEscalations.Include(t=>t.Ticket).ThenInclude(m=>m.Member).Include(p => p.Ticket.TicketPriority).Include(a => a.Ticket.AssignedTo).FirstOrDefaultAsync(x => x.Id == id & x.Status != Lambda.Deleted);
+            return await this._context.TicketEscalations.Include(t => t.EscalatedTo).Include(t=>t.Ticket).ThenInclude(m=>m.Member).Include(p => p.Ticket.TicketPriority).Include(a => a.Ticket.AssignedTo).FirstOrDefaultAsync(x => x.Id == id & x.Status != Lambda.Deleted);
         }
 
         public async Task<List<TicketEscalation>?> GetTicketEscalations(int escalationLevel, CursorParams @params)
