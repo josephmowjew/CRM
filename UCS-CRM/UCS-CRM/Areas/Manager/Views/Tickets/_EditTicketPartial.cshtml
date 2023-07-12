@@ -10,10 +10,10 @@
             </button>
         </div>
         <div class="modal-body">
-            <input asp-for="DataInvalid" type="hidden"/>
+           
             <form asp-action="Edit" enctype="multipart/form-data">
                 <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-                
+                <input asp-for="DataInvalid" type="hidden" />
                 <input type="hidden" asp-for="Id" />
                 <div class="form-group">
                     <label asp-for="Title" class="control-label"></label>
