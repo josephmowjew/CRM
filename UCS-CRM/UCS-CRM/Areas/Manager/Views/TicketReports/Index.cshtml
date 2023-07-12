@@ -1,5 +1,166 @@
-﻿@model UCS_CRM.Core.Models.Ticket
+﻿@model UCS_CRM.Core.DTOs.Report.TicketReportDTO
 
-<h2>@Model.Title</h2>
-<p>@Model.Description</p>
-<!-- Add HTML markup for the rest of your report -->
+<div class="row">
+    <div class="col-lg-6">
+        <div class="card">
+            <div class="card-body">
+                <h4 class="card-title">Report By Status</h4>
+                <p class="text-muted">
+                    <code></code>
+                </p>
+               <div>
+                    <form asp-action="TicketReport" enctype="multipart/form-data">
+                        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+                       
+                        <div class="form-group">
+                            <label asp-for="StateId"></label>
+                            <select asp-for="StateId" asp-items="@ViewBag.states" class="form-control"></select>
+                            <span asp-validation-for="StateId" class="text-danger"></span>
+                        </div>
+
+                        <div class="form-group">
+                            <label asp-for="Branch"></label>
+                            <select asp-for="Branch" asp-items="@ViewBag.branches" class="form-control"></select>
+                            <span asp-validation-for="Branch" class="text-danger"></span>
+                        </div>
+
+                        <div class="form-group">
+                            <label asp-for="StartDate"></label>
+                            <input asp-for="StartDate" placeholder="Enter Start Date" class="form-control"/>
+                            <span asp-validation-for="StartDate" class="text-danger"></span>
+                        </div>
+
+                        <div class="form-group">
+                            <label asp-for="EndDate"></label>
+                            <input asp-for="EndDate" placeholder="Enter End Date" class="form-control" />
+                            <span asp-validation-for="EndDate" class="text-danger"></span>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary" >Generate</button>
+
+                    </form>
+               </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-6">
+        <div class="card">
+            <div class="card-body">
+                <h4 class="card-title">Report By Category</h4>
+                <p class="text-muted">
+                    <code></code>
+                </p>
+                <div>
+                    <form asp-action="TicketReport" enctype="multipart/form-data">
+                        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+                        <div class="form-group">
+                            <label asp-for="CategoryId"></label>
+                            <select asp-for="CategoryId" asp-items="@ViewBag.categories" class="form-control"></select>
+                            <span asp-validation-for="CategoryId" class="text-danger"></span>
+                        </div>
+                        <div class="form-group">
+                            <label asp-for="Branch"></label>
+                            <select asp-for="Branch" asp-items="@ViewBag.branches" class="form-control"></select>
+                            <span asp-validation-for="Branch" class="text-danger"></span>
+                        </div>
+
+
+                        <div class="form-group">
+                            <label asp-for="StartDate"></label>
+                            <input asp-for="StartDate" placeholder="Enter Start Date" class="form-control" />
+                            <span asp-validation-for="StartDate" class="text-danger"></span>
+                        </div>
+
+                        <div class="form-group">
+                            <label asp-for="EndDate"></label>
+                            <input asp-for="EndDate" placeholder="Enter End Date" class="form-control" />
+                            <span asp-validation-for="EndDate" class="text-danger"></span>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary">Generate</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-6">
+        <div class="card">
+            <div class="card-body">
+                <h4 class="card-title">Perfomance Report</h4>
+                <p class="text-muted">
+                    <code></code>
+                </p>
+                <div>
+                    <form asp-action="Perfomance" enctype="multipart/form-data">
+                        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+                     
+                        <div class="form-group">
+                            <label asp-for="CategoryId"></label>
+                            <select asp-for="CategoryId" asp-items="@ViewBag.categories" class="form-control"></select>
+                            <span asp-validation-for="CategoryId" class="text-danger"></span>
+                        </div>
+                        <div class="form-group">
+                            <label asp-for="Branch"></label>
+                            <select asp-for="Branch" asp-items="@ViewBag.branches" class="form-control"></select>
+                            <span asp-validation-for="Branch" class="text-danger"></span>
+                        </div>
+
+                        <div class="form-group">
+                            <label asp-for="StartDate"></label>
+                            <input asp-for="StartDate" placeholder="Enter Start Date" class="form-control" />
+                            <span asp-validation-for="StartDate" class="text-danger"></span>
+                        </div>
+
+                        <div class="form-group">
+                            <label asp-for="EndDate"></label>
+                            <input asp-for="EndDate" placeholder="Enter End Date" class="form-control" />
+                            <span asp-validation-for="EndDate" class="text-danger"></span>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary">Generate</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-6">
+        <div class="card">
+            <div class="card-body">
+                <h4 class="card-title">Report Of Escalated Tickets</h4>
+                <p class="text-muted">
+                    <code></code>
+                </p>
+                <div>
+                    <form asp-action="Escalated" enctype="multipart/form-data">
+                        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+                        <div class="form-group">
+                            <label asp-for="CategoryId"></label>
+                            <select asp-for="CategoryId" asp-items="@ViewBag.categories" class="form-control"></select>
+                            <span asp-validation-for="CategoryId" class="text-danger"></span>
+                        </div>
+                        <div class="form-group">
+                            <label asp-for="Branch"></label>
+                            <select asp-for="Branch" asp-items="@ViewBag.branches" class="form-control"></select>
+                            <span asp-validation-for="Branch" class="text-danger"></span>
+                        </div>
+
+                        <div class="form-group">
+                            <label asp-for="StartDate"></label>
+                            <input asp-for="StartDate" placeholder="Enter Start Date" class="form-control" />
+                            <span asp-validation-for="StartDate" class="text-danger"></span>
+                        </div>
+
+                        <div class="form-group">
+                            <label asp-for="EndDate"></label>
+                            <input asp-for="EndDate" placeholder="Enter End Date" class="form-control" />
+                            <span asp-validation-for="EndDate" class="text-danger"></span>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Generate</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

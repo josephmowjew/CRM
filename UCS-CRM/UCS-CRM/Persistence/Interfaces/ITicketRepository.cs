@@ -35,5 +35,6 @@ namespace UCS_CRM.Persistence.Interfaces
 
         Task<int> CountTicketsByStatusCreatedByOrAssignedTo(string state, string identifier);
         Task<List<Ticket?>> GetTicketReports(CursorParams @params, DateTime? startDate, DateTime? endDate, string branch = "", int stateId = 0, int categoryId = 0);
+        Task<int> GetTicketReportsCount(CursorParams cursorParams, DateTime? startDate, DateTime? endDate, string branch = "", int stateId = 0, int categoryId = 0);
     }
 }
