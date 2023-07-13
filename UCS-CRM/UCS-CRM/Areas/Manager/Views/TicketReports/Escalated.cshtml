@@ -15,7 +15,8 @@
     Layout = "~/Areas/Admin/Views/shared/_Layout.cshtml";
 }
 
-
+<link href="~/css/datatable/css/buttons.bootstrap5.min.css" rel="stylesheet" />
+<link href="~/css/datatable/css/buttons.datatables.min.css" rel="stylesheet" />
 <div class="card">
     <div class="card-header">
         <h4 class="text-center text-uppercase">Escalated Ticket Report</h4>
@@ -73,6 +74,17 @@
     </script>
 
     <script src="~/js/ManagerTicket.js"></script>
+    <script src="~/js/ManagerTicket.js"></script>
+    <script src="~/css/datatable/js/jquery.datatables.min.js"></script>
+    <script src="~/css/datatable/js/datatables.bootstrap5.min.js"></script>
+    <script src="~/css/datatable/js/datatables.buttons.min.js"></script>
+    <script src="~/css/datatable/js/buttons.bootstrap5.min.js"></script>
+    <script src="~/css/datatable/js/jszip.min.js"></script>
+    <script src="~/css/datatable/js/pdfmake.min.js"></script>
+    <script src="~/css/datatable/js/vfs_fonts.js"></script>
+    <script src="~/css/datatable/js/buttons.html5.min.js"></script>
+    <script src="~/css/datatable/js/buttons.print.min.js"></script>
+    <script src="~/css/datatable/js/buttons.colvis.min.js"></script>
     <script>
         $(document).ready(function () {
             datatable = $('#my_table').DataTable({
@@ -223,6 +235,31 @@
                 ],
                 responsive: true,
                 "autoWidth": false,
+                dom: 'Blfrtip',
+                buttons: [
+                    //'copy', 'csv', 'excel', 'pdf', 'print',
+                    {
+                        extend: "copy",
+                        className: "btn btn-block btn-success btn-primary"
+                    },
+                    {
+                        extend: "csv",
+                        className: "btn btn-block btn-info"
+                    },
+                    {
+                        extend: "excel",
+                        className: "btn btn-block btn-secondary"
+                    },
+                    {
+                        extend: "pdfHtml5",
+                        className: "btn btn-block btn-danger"
+                    },
+                   
+                    {
+                        extend: "print",
+                        className: "btn btn-block btn-warning"
+                    },
+                ]
             });
         });
     </script>

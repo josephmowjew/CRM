@@ -188,7 +188,8 @@ html.dark div.dt-button-info {
 }
 
 div.dt-buttons {
-    float: left
+
+    float: none
 }
 
     div.dt-buttons.buttons-right {
