@@ -541,12 +541,12 @@ namespace UCS_CRM.Persistence.SQLRepositories
 
                 if (startDate !=null)
                 {
-                    query = query.Where(t => t.CreatedDate > startDate);
+                    query = query.Where(t => t.CreatedDate >= startDate);
                 }
 
                 if (endDate != null)
                 {
-                    query = query.Where(t => t.CreatedDate < endDate);
+                    query = query.Where(t => t.CreatedDate <= endDate);
                 }
 
                 if (!string.IsNullOrEmpty(cursorParams.SearchTerm))
@@ -613,12 +613,69 @@ namespace UCS_CRM.Persistence.SQLRepositories
 
                 if (startDate != null)
                 {
-                    query = query.Where(t => t.CreatedDate > startDate);
+                    query = query.Where(t => t.CreatedDate >= startDate);
                 }
 
                 if (endDate != null)
                 {
-                    query = query.Where(t => t.CreatedDate < endDate);
+                    query = query.Where(t => t.CreatedDate <= endDate);
+                }
+
+                if (!string.IsNullOrEmpty(cursorParams.SearchTerm))
+                {
+                    string searchTermLower = cursorParams.SearchTerm.ToLower().Trim();
+                    query = query.Where(t =>
+                        t.Title.ToLower().Trim().Contains(searchTermLower) ||
+                        t.Description.ToLower().Trim().Contains(searchTermLower) ||
+                        t.State.Name.ToLower().Trim().Contains(searchTermLower) ||
+                        t.Member.FirstName.ToLower().Trim().Contains(searchTermLower) ||
+                        t.Member.LastName.ToLower().Trim().Contains(searchTermLower) ||
+                        t.TicketCategory.Name.ToLower().Trim().Contains(searchTermLower));
+                }
+
+                if (!string.IsNullOrEmpty(branch))
+                {
+                    query = query.Where(t => t.Member.Branch == branch);
+                }
+
+                query = query.OrderBy(t => t.CreatedDate);
+
+                if (!string.IsNullOrEmpty(cursorParams.SortColum) && !string.IsNullOrEmpty(cursorParams.SortDirection))
+                {
+                    query = query.OrderBy(cursorParams.SortColum + " " + cursorParams.SortDirection);
+                }
+
+               
+                finalRecords = await query.CountAsync();
+            }
+
+            return finalRecords;
+        }
+
+        //ticket reports
+        public async Task<List<Ticket?>> GetEscalatedTicketsData(CursorParams cursorParams, DateTime? startDate, DateTime? endDate, string branch = "", int categoryId = 0)
+        {
+            List<Ticket?> finalRecords = new List<Ticket?>();
+
+            if (cursorParams.Take > 0)
+            {
+                IQueryable<Ticket> query = this._context.Tickets
+                    .Where(t => t.Status != Lambda.Deleted);
+
+                if (categoryId > 0)
+                {
+                    query = query.Where(t => t.TicketCategoryId == categoryId);
+                }
+
+               
+                if (startDate != null)
+                {
+                    query = query.Where(t => t.CreatedDate >= startDate);
+                }
+
+                if (endDate != null)
+                {
+                    query = query.Where(t => t.CreatedDate <= endDate);
                 }
 
                 if (!string.IsNullOrEmpty(cursorParams.SearchTerm))
@@ -650,14 +707,79 @@ namespace UCS_CRM.Persistence.SQLRepositories
                     query = query.Skip(cursorParams.Skip);
                 }
 
-                finalRecords = await query.CountAsync();
+                finalRecords = await query.Take(cursorParams.Take)
+                    .Include(t => t.Member)
+                    .Include(t => t.AssignedTo)
+                    .Include(t => t.TicketAttachments)
+                    .Include(t => t.State)
+                    .Include(t => t.TicketCategory)
+                    .Include(t => t.TicketPriority)
+                    .Include(t => t.CreatedBy)
+                    .Include(t => t.TicketEscalations)
+                    .ThenInclude(ts => ts.EscalatedTo)
+                    .ToListAsync();
             }
 
             return finalRecords;
         }
 
+        public async Task<int> GetEscalatedTicketsDataCountAsync(CursorParams cursorParams, DateTime? startDate, DateTime? endDate, string branch = "", int categoryId = 0)
+        {
+            int finalRecords = 0;
+
+            if (cursorParams.Take > 0)
+            {
+                IQueryable<Ticket> query = this._context.Tickets
+                    .Where(t => t.Status != Lambda.Deleted);
+
+                if (categoryId > 0)
+                {
+                    query = query.Where(t => t.TicketCategoryId == categoryId);
+                }
 
 
+                if (startDate != null)
+                {
+                    query = query.Where(t => t.CreatedDate >= startDate);
+                }
+
+                if (endDate != null)
+                {
+                    query = query.Where(t => t.CreatedDate <= endDate);
+                }
+
+                if (!string.IsNullOrEmpty(cursorParams.SearchTerm))
+                {
+                    string searchTermLower = cursorParams.SearchTerm.ToLower().Trim();
+                    query = query.Where(t =>
+                        t.Title.ToLower().Trim().Contains(searchTermLower) ||
+                        t.Description.ToLower().Trim().Contains(searchTermLower) ||
+                        t.State.Name.ToLower().Trim().Contains(searchTermLower) ||
+                        t.Member.FirstName.ToLower().Trim().Contains(searchTermLower) ||
+                        t.Member.LastName.ToLower().Trim().Contains(searchTermLower) ||
+                        t.TicketCategory.Name.ToLower().Trim().Contains(searchTermLower));
+                }
+
+                if (!string.IsNullOrEmpty(branch))
+                {
+                    query = query.Where(t => t.Member.Branch == branch);
+                }
+
+                query = query.OrderBy(t => t.CreatedDate);
+
+                if (!string.IsNullOrEmpty(cursorParams.SortColum) && !string.IsNullOrEmpty(cursorParams.SortDirection))
+                {
+                    query = query.OrderBy(cursorParams.SortColum + " " + cursorParams.SortDirection);
+                }
+
+
+                finalRecords = await query.CountAsync();
+                    
+                   
+            }
+
+            return finalRecords;
+        }
         public async Task<List<Ticket?>> GetClosedTickets(CursorParams @params)
         {
             //check if the count has a value in it above zero before proceeding

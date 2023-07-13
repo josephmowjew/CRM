@@ -1,0 +1,234 @@
+﻿@using Microsoft.Extensions.Configuration
+@inject IConfiguration Configuration
+@{
+    var host = Configuration.GetSection("HostingSettings")["Host"];
+    var path = Configuration.GetSection("HostingSettings")["path"];
+    var protocol = Configuration.GetSection("HostingSettings")["Protocol"];
+
+    var branch = ViewBag.branch;
+    var stateId = ViewBag.stateId;
+    var categoryId = ViewBag.categoryId;
+    var startDate = ViewBag.startDate;
+    var endDate = ViewBag.endDate;
+
+    ViewData["Title"] = "Report";
+    Layout = "~/Areas/Admin/Views/shared/_Layout.cshtml";
+}
+
+
+<div class="card">
+    <div class="card-header">
+        <h4 class="text-center text-uppercase">Escalated Ticket Report</h4>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-bordered " id="my_table">
+                <thead>
+                    <tr>
+                        <th>
+                            Ticket Number
+                        </th>
+                        <th>
+                            Title
+                        </th>
+                        <th>
+                            Number of Escalations
+                        </th>
+                        <th>
+                            Handled By so far
+                        </th>
+                        <th>
+                            Member Account
+                        </th>
+
+                        <th>
+                            State
+                        </th>
+                       
+                        <th>
+                            Last Assigned To
+                        </th>
+                       
+
+
+                    </tr>
+                </thead>
+                <tbody>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+
+@section Scripts{
+
+    <script>
+        var datatable;
+        var stateId = @Html.Raw(Json.Serialize(stateId));
+        var categoryId = @Html.Raw(Json.Serialize(categoryId));
+        var branch = @Html.Raw(Json.Serialize(branch));
+        var startDate = @Html.Raw(Json.Serialize(startDate));
+        var endDate = @Html.Raw(Json.Serialize(endDate));
+    </script>
+
+    <script src="~/js/ManagerTicket.js"></script>
+    <script>
+        $(document).ready(function () {
+            datatable = $('#my_table').DataTable({
+
+
+                "processing": true,
+                "serverSide": true,
+                "order": [[0, "desc"]],
+                ajax: {
+                    url: '/manager/TicketReports/GetEscalateReportData',
+                    type: 'post',
+                    datatype: 'Json',
+                    data:{
+                        stateId: stateId,
+                        categoryId: categoryId,
+                        branch: branch,
+                        startDate: startDate,
+                        endDate: endDate
+                    },
+                    error: function (XMLHttpRequest, textStatus, errorThrown) {
+
+                        console.log(XMLHttpRequest.responseText)
+
+
+                    }
+
+
+                },
+                columnDefs: [
+                    {
+                        defaultContent: "",
+                        targets: "_all",
+                        'orderable': true
+                    },
+                ],
+                columns: [
+
+                    {
+                        data: { state: "ticketEscalations.id" },
+                        mRender: function (data, type, full) {
+
+                            if (data.ticketEscalations != null && data.ticketEscalations.status != 'Deleted') {
+                                if (data.ticketEscalations.length == 1) {
+                                    return "<span class='bg-light-warning text-warning '>" + data.ticketNumber + "</span>"
+                                }
+                                if (data.ticketEscalations.length == 2) {
+                                    return "<span class='bg-light-danger text-danger '>" + data.ticketNumber + "</span>"
+                                }
+                                else {
+                                    return data.ticketNumber
+                                }
+
+                            }
+                            else {
+                                return ticketNumber
+                            }
+
+                        }, "name": "ticketNumber",
+                        className: "text-left"
+                    },
+                    {
+                        data: "title",
+                        name: "title",
+                        className: "text-left",
+                        "orderable": true,
+                    },
+                    {
+                    data: { state: "ticketEscalations.count" },
+                        mRender: function (data, type, full) {
+
+                            return data.ticketEscalations.length
+
+                        }, "name": "ticketEscalations",
+                        className: "text-left"
+                    },
+                    {
+                        data: { state: "ticketEscalations.id" },
+                        mRender: function (data, type, full) {
+                         var assignedToList = '<ul>';
+                         var firstValue = '<li>'+data.createdBy.email+'</li>'
+                          var assignedToSet = new Set(); // Store unique assignedTo values
+                          assignedToSet.add(firstValue)
+                          for (var i = 0; i < data.ticketEscalations.length; i++) {
+                            var assignedTo = data.ticketEscalations[i].escalatedTo.email;
+                            if (!assignedToSet.has(assignedTo)) {
+                              assignedToList += '<li>' + assignedTo + '</li>';
+                              assignedToSet.add(assignedTo); // Add the assignedTo value to the set
+                            }
+                          }
+                          assignedToList += '</ul>';
+                          return assignedToList
+                        }
+                        , "name": "ticketPriority.name",
+                        className: "text-left"
+                    },
+                    {
+                        data: { state: "member.accountNumber" },
+                        mRender: function (data, type, full) {
+                            return data.member.accountNumber;
+                        }, "name": "member.accountNumber",
+                        className: "text-left"
+                    },
+                    {
+                        data: { state: "state.name" },
+                        mRender: function (data, type, full) {
+
+                            if (data.state != null && data.state.status != 'Deleted') {
+                                if (data.state.name == "In Progress") {
+                                    return "<span class=' bg-light-warning text-warning '>In Progress</span>"
+                                }
+                                if (data.state.name == "Pending") {
+                                    return "<span class=' text-primary '>Pending</span>"
+                                }
+                                if (data.state.name == "Resolved") {
+                                    return "<span class=' text-success '>Resolved</span>"
+                                }
+                                if (data.state.name == "Closed") {
+                                    return "<span class='  text-secondary '>Closed</span>"
+                                }
+                                if (data.state.name == "Re-Opened") {
+                                    return "<span class='  text-warning '>Re-Opened</span>"
+                                }
+                                if (data.state.name == "New") {
+                                    return "<span class='  text-danger '>New</span>"
+                                } if (data.state.name == "Open") {
+                                    return "<span class='  text-info '>Open</span>"
+                                }
+
+
+                            }
+                            else {
+                                return data.state.name
+                            }
+
+                        }, "name": "state.name",
+                        className: "text-left"
+                    },
+                   
+                    {
+                        data: { state: "assignedTo.email" },
+                        mRender: function (data, type, full) {
+                            return data.assignedTo != null && data.assignedTo.status != 'Deleted' ? data.assignedTo.email : "";
+                        }, "name": "assignedTo.email",
+                        className: "text-left"
+                    },
+                    
+
+                ],
+                responsive: true,
+                "autoWidth": false,
+            });
+        });
+    </script>
+
+
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

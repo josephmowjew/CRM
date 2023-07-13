@@ -38,5 +38,9 @@ namespace UCS_CRM.Persistence.Interfaces
         Task<int> GetTicketReportsCount(CursorParams cursorParams, DateTime? startDate, DateTime? endDate, string branch = "", int stateId = 0, int categoryId = 0);
 
         Task<string> SendTicketDeEscalationEmail(Ticket ticket, string previousAssigneeEmail);
+
+        Task<int> GetEscalatedTicketsDataCountAsync(CursorParams cursorParams, DateTime? startDate, DateTime? endDate, string branch = "", int categoryId = 0);
+        Task<List<Ticket?>> GetEscalatedTicketsData(CursorParams cursorParams, DateTime? startDate, DateTime? endDate, string branch = "", int categoryId = 0);
+
     }
 }

@@ -40,6 +40,8 @@ namespace UCS_CRM.Core.DTOs.Ticket
 
         public string CreatedById { get; set; }
 
+        public ApplicationUser CreatedBy { get; set; }
+
         public ReadTicketDTO()
         {
             TicketAttachments = new List<TicketAttachment>();
