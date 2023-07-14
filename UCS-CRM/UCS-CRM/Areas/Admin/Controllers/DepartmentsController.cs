@@ -174,7 +174,7 @@ namespace UCS_CRM.Areas.Admin.Controllers
 
 
 
-                bool isTaken = (departmentPresentDb != null);
+                bool isTaken = (departmentPresentDb != null && departmentPresentDb.Email.Trim().ToLower() == editDepartmentDTO.Email.Trim().ToLower() );
                 if (isTaken)
                 {
 
