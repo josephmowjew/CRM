@@ -35,8 +35,9 @@ namespace UCS_CRM.Controllers
         private ApplicationDbContext _context;
         private readonly HttpClient _httpClient;
         private readonly IConfiguration _config;
+ 
 
-       
+
         public AuthController(UserManager<ApplicationUser> userManager, SignInManager<ApplicationUser> signInManager, IUserRepository userRepository, ApplicationDbContext context,
             IMemberRepository memberRepository, IUnitOfWork unitOfWork, IEmailService emailService, HttpClient httpClient, IConfiguration config, IDepartmentRepository departmentRepository, IBranchRepository branchRepository)
         {
@@ -55,6 +56,46 @@ namespace UCS_CRM.Controllers
 
         public async Task<IActionResult> Create()
         {
+            if (_signInManager.IsSignedIn(User))
+            {
+                var findUserDb = await this._userRepository.GetUserWithRole(User.Identity.Name);
+
+                if (findUserDb != null)
+                {
+                    var roles = _userManager.GetRolesAsync(findUserDb).Result.FirstOrDefault();
+
+                    if (findUserDb.Department.Name.ToLower().Contains("Executive suite", StringComparison.OrdinalIgnoreCase))
+                    {
+                        return RedirectToAction("Index", "Home", new { Area = "SeniorManager" });
+                    }
+
+                    if (roles.Contains("Administrator", StringComparison.OrdinalIgnoreCase))
+                    {
+                        return RedirectToAction("Index", "Home", new { Area = "Admin" });
+                    }
+                    if (roles.Contains("Clerk", StringComparison.OrdinalIgnoreCase) || roles.Contains("Member Engagements officer", StringComparison.OrdinalIgnoreCase))
+                    {
+                        return RedirectToAction("Index", "Home", new { Area = "Clerk" });
+                    }
+                    if (roles.Contains("Manager", StringComparison.OrdinalIgnoreCase))
+                    {
+                        return RedirectToAction("Index", "Home", new { Area = "Manager" });
+                    }
+                   
+                    if (roles.Contains("Member", StringComparison.OrdinalIgnoreCase))
+                    {
+                        return RedirectToAction("Index", "Home", new { Area = "Member" });
+                    }
+                   
+                    else
+                    {
+
+                        return RedirectToAction("Index", "Home", new { Area = "Manager" });
+                    }
+                }
+               
+            }
+
             return View();
         }
 
@@ -158,7 +199,9 @@ namespace UCS_CRM.Controllers
                             int pin = _memberRepository.RandomNumber();
 
                             var user = await this._userManager.FindByNameAsync(loginModel.Email);
-                            var roles = _userManager.GetRolesAsync(user).Result.ToList();
+                            var roles =  _userManager.GetRolesAsync(user).Result.ToList();
+
+                            
                             if (user != null)
                             {
                                 user.LastLogin = DateTime.Now;

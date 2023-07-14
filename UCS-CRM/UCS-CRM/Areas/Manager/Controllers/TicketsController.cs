@@ -29,9 +29,10 @@ namespace UCS_CRM.Areas.Manager.Controllers
         private readonly IMapper _mapper;
         private readonly IUnitOfWork _unitOfWork;
         private IWebHostEnvironment _env;
+        private readonly ITicketStateTrackerRepository _ticketStateTrackerRepository;
         public TicketsController(ITicketRepository ticketRepository, IMapper mapper, IUnitOfWork unitOfWork, 
             ITicketCategoryRepository ticketCategoryRepository, IStateRepository stateRepository, ITicketPriorityRepository priorityRepository,
-            IWebHostEnvironment env, ITicketCommentRepository ticketCommentRepository, IUserRepository userRepository, IMemberRepository memberRepository, ITicketEscalationRepository ticketEscalationRepository)
+            IWebHostEnvironment env, ITicketCommentRepository ticketCommentRepository, IUserRepository userRepository, IMemberRepository memberRepository, ITicketEscalationRepository ticketEscalationRepository, ITicketStateTrackerRepository ticketStateTrackerRepository)
         {
             _ticketRepository = ticketRepository;
             _mapper = mapper;
@@ -44,6 +45,7 @@ namespace UCS_CRM.Areas.Manager.Controllers
             _userRepository = userRepository;
             _memberRepository = memberRepository;
             _ticketEscalationRepository = ticketEscalationRepository;
+            _ticketStateTrackerRepository = ticketStateTrackerRepository;
         }
 
         // GET: TicketsController
@@ -87,6 +89,7 @@ namespace UCS_CRM.Areas.Manager.Controllers
                     return PartialView("_EditTicketPartial", editTicketDTO);
                 }
 
+                string currentState = ticketDB.State.Name;
 
                 editTicketDTO.StateId = editTicketDTO.StateId == null ? ticketDB.StateId : editTicketDTO.StateId;
 
@@ -99,6 +102,20 @@ namespace UCS_CRM.Areas.Manager.Controllers
                 //save changes to data store
 
                 await this._unitOfWork.SaveToDataStore();
+
+                var claimsIdentitifier = User.FindFirst(ClaimTypes.NameIdentifier);
+
+                if (ticketDB.State.Name.Trim().ToLower() != currentState.Trim().ToLower())
+                {
+
+                    //update the ticket change state 
+
+                    UCS_CRM.Core.Models.TicketStateTracker ticketStateTracker = new TicketStateTracker() { CreatedById = claimsIdentitifier.Value, TicketId = ticketDB.Id, NewState = ticketDB.State.Name, PreviousState = currentState, Reason = "Ticket Update" };
+
+                    this._ticketStateTrackerRepository.Add(ticketStateTracker);
+
+                    await this._unitOfWork.SaveToDataStore();
+                }
 
                 if (editTicketDTO.Attachments.Count > 0)
                 {
@@ -302,9 +319,12 @@ namespace UCS_CRM.Areas.Manager.Controllers
 
             //create a cursor params based on the data coming from the datatable
             CursorParams CursorParameters = new CursorParams() { SearchTerm = searchValue, Skip = skip, SortColum = sortColumn, SortDirection = sortColumnAscDesc, Take = pageSize };
+            //get the current user record
 
-            resultTotal = await this._ticketRepository.TotalCount();
-            var result = await this._ticketRepository.GetTickets(CursorParameters);
+            var findUserDb = await this._userRepository.GetUserWithRole(User.Identity.Name);
+
+            resultTotal = await this._ticketRepository.GetTicketsTotalFilteredAsync(CursorParameters, findUserDb.Department);
+            var result = await this._ticketRepository.GetTickets(CursorParameters, findUserDb.Department);
 
             //map the results to a read DTO
 

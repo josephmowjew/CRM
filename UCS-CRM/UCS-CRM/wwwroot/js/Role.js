@@ -17,13 +17,15 @@
         //get the form fields
 
         var roleName = $("#create_role_modal input[name ='Name']").val()
+        var rating = $("#create_role_modal input[name ='Rating']").val()
 
 
         //prepare data for request pushing
 
         var userInput = {
             __RequestVerificationToken: authenticationToken,
-            Name: roleName
+            Name: roleName,
+            Rating: rating
         }
 
        //send the request
@@ -33,7 +35,6 @@
             type: 'POST',
             data: userInput,
             success: function (data) {
-                console.log(data)
                 //parse whatever comes back to html
 
                 var parsedData = $.parseHTML(data)
@@ -71,6 +72,7 @@
                     dataTable.ajax.reload();
 
                     $("#create_role_modal").modal("hide")
+                    $("#create_role_modal form")[0].reset();
 
                 }
 
@@ -130,6 +132,7 @@ function EditForm(id) {
         $("#edit_role_modal input[name='Name']").val(data.name)
 
         $("#edit_role_modal input[name='Id']").val(data.id)
+        $("#edit_role_modal input[name='Rating']").val(data.rating)
 
         //hook up an event to the update role button
 
@@ -151,6 +154,7 @@ function upDateRole(id) {
 
 
     var roleName = $("#edit_role_modal input[name ='Name']").val()
+    var rating = $("#edit_role_modal input[name ='Rating']").val()
     var id = $("#edit_role_modal input[name ='Id']").val();
 
 
@@ -159,6 +163,7 @@ function upDateRole(id) {
     var userInput = {
         __RequestVerificationToken: authenticationToken,
         Name: roleName,
+        Rating: rating,
         Id: id
     }
 

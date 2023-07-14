@@ -443,81 +443,176 @@ namespace UCS_CRM.Persistence.SQLRepositories
             return status;
 
         }
-        public async Task<List<Ticket?>> GetTickets(CursorParams @params)
-        {
-            //check if the count has a value in it above zero before proceeding
+        //public async Task<List<Ticket?>> GetTickets(CursorParams @params)
+        //{
+        //    //check if the count has a value in it above zero before proceeding
 
-            if(@params.Take > 0)
-            {
-                //check if there is a search parameter
-                if (string.IsNullOrEmpty(@params.SearchTerm))
-                {
-                    var records = (from tblOb in await this._context.Tickets
-                                   .OrderBy(t =>t.CreatedDate)
-                                   .Include(t => t.Member)
-                                   .Include(t => t.AssignedTo)
-                                   .Include(t => t.TicketAttachments)
-                                   .Include(t => t.State)
-                                   .Include(t => t.TicketCategory)
-                                   .Include(t => t.TicketPriority)
-                                   .Include(t => t.TicketEscalations)
-                                   .Where(t => t.Status != Lambda.Deleted).Skip(@params.Skip)
-                                   .Take(@params.Take)
-                                   .ToListAsync() select tblOb);
+        //    if(@params.Take > 0)
+        //    {
+        //        //check if there is a search parameter
+        //        if (string.IsNullOrEmpty(@params.SearchTerm))
+        //        {
+        //            var records = (from tblOb in await this._context.Tickets
+        //                           .OrderBy(t =>t.CreatedDate)
+        //                           .Include(t => t.Member)
+        //                           .Include(t => t.AssignedTo)
+        //                           .Include(t => t.TicketAttachments)
+        //                           .Include(t => t.State)
+        //                           .Include(t => t.TicketCategory)
+        //                           .Include(t => t.TicketPriority)
+        //                           .Include(t => t.TicketEscalations)
+        //                           .Where(t => t.Status != Lambda.Deleted).Skip(@params.Skip)
+        //                           .Take(@params.Take)
+        //                           .ToListAsync() select tblOb);
 
-                    //accountTypes.AsQueryable().OrderBy("gjakdgdag");
+        //            //accountTypes.AsQueryable().OrderBy("gjakdgdag");
 
-                    if (string.IsNullOrEmpty(@params.SortColum) && !string.IsNullOrEmpty(@params.SortDirection))
-                    {
-                        records = records.AsQueryable().OrderBy(@params.SortColum + " " + @params.SortDirection);
+        //            if (string.IsNullOrEmpty(@params.SortColum) && !string.IsNullOrEmpty(@params.SortDirection))
+        //            {
+        //                records = records.AsQueryable().OrderBy(@params.SortColum + " " + @params.SortDirection);
 
-                    }
+        //            }
 
 
-                    return records.ToList();
-                }
-                else
-                {
-                    //include search query
+        //            return records.ToList();
+        //        }
+        //        else
+        //        {
+        //            //include search query
 
-                    var records = (from tblOb in await this._context.Tickets
-                                   .Where(t => t.Status != Lambda.Deleted)
-                                   .OrderBy(t => t.CreatedDate)
-                                   .Include(t => t.AssignedTo)
-                                   .Include(t => t.TicketAttachments)
-                                   .Include(t => t.State)
-                                   .Include(t => t.TicketCategory)
-                                   .Include(t => t.TicketPriority)
-                                   .Include(t => t.TicketEscalations)
-                                   .Where(t => 
-                                           t.Title.ToLower().Trim().Contains(@params.SearchTerm.ToLower()) ||
-                                           t.Description.ToLower().Trim().Contains(@params.SearchTerm.ToLower()) ||
-                                           t.State.Name.ToLower().Trim().Contains(@params.SearchTerm.ToLower()) ||
-                                           t.Member.FirstName.ToLower().Trim().Contains(@params.SearchTerm.ToLower()) ||
-                                           t.Member.LastName.ToLower().Trim().Contains(@params.SearchTerm.ToLower()) ||
-                                           t.TicketCategory.Name.ToLower().Trim().Contains(@params.SearchTerm.ToLower()))
-                                     .Skip(@params.Skip)
-                                   .Take(@params.Take)
+        //            var records = (from tblOb in await this._context.Tickets
+        //                           .Where(t => t.Status != Lambda.Deleted)
+        //                           .OrderBy(t => t.CreatedDate)
+        //                           .Include(t => t.AssignedTo)
+        //                           .Include(t => t.TicketAttachments)
+        //                           .Include(t => t.State)
+        //                           .Include(t => t.TicketCategory)
+        //                           .Include(t => t.TicketPriority)
+        //                           .Include(t => t.TicketEscalations)
+        //                           .Where(t => 
+        //                                   t.Title.ToLower().Trim().Contains(@params.SearchTerm.ToLower()) ||
+        //                                   t.Description.ToLower().Trim().Contains(@params.SearchTerm.ToLower()) ||
+        //                                   t.State.Name.ToLower().Trim().Contains(@params.SearchTerm.ToLower()) ||
+        //                                   t.Member.FirstName.ToLower().Trim().Contains(@params.SearchTerm.ToLower()) ||
+        //                                   t.Member.LastName.ToLower().Trim().Contains(@params.SearchTerm.ToLower()) ||
+        //                                   t.TicketCategory.Name.ToLower().Trim().Contains(@params.SearchTerm.ToLower()))
+        //                             .Skip(@params.Skip)
+        //                           .Take(@params.Take)
                                  
-                                   .ToListAsync()
-                                   select tblOb);
+        //                           .ToListAsync()
+        //                           select tblOb);
 
-                    //accountTypes.AsQueryable().OrderBy("gjakdgdag");
+        //            //accountTypes.AsQueryable().OrderBy("gjakdgdag");
 
-                    if (string.IsNullOrEmpty(@params.SortColum) && !string.IsNullOrEmpty(@params.SortDirection))
-                    {
-                        records = records.AsQueryable().OrderBy(@params.SortColum + " " + @params.SortDirection);
+        //            if (string.IsNullOrEmpty(@params.SortColum) && !string.IsNullOrEmpty(@params.SortDirection))
+        //            {
+        //                records = records.AsQueryable().OrderBy(@params.SortColum + " " + @params.SortDirection);
 
-                    }
+        //            }
 
-                    return records.ToList();
-                }
-            }
-            else
+        //            return records.ToList();
+        //        }
+        //    }
+        //    else
+        //    {
+        //        return null;
+        //    }
+        //}
+
+        public async Task<List<Ticket?>> GetTickets(CursorParams @params, Department department = null)
+        {
+            if (@params.Take <= 0)
             {
                 return null;
             }
+
+            var query = this._context.Tickets
+                .Include(t => t.Member)
+                .Include(t => t.AssignedTo)
+                .Include(t => t.TicketAttachments)
+                .Include(t => t.State)
+                .Include(t => t.TicketCategory)
+                .Include(t => t.TicketPriority)
+                .Include(t => t.TicketEscalations)
+                .Where(t => t.Status != Lambda.Deleted);
+
+            if (department != null)
+            {
+                query = query.Where(t => t.AssignedTo.Department.Id == department.Id);
+            }
+
+            if (!string.IsNullOrEmpty(@params.SearchTerm))
+            {
+                query = query.Where(t =>
+                    t.Title.ToLower().Trim().Contains(@params.SearchTerm.ToLower()) ||
+                    t.Description.ToLower().Trim().Contains(@params.SearchTerm.ToLower()) ||
+                    t.State.Name.ToLower().Trim().Contains(@params.SearchTerm.ToLower()) ||
+                    t.Member.FirstName.ToLower().Trim().Contains(@params.SearchTerm.ToLower()) ||
+                    t.Member.LastName.ToLower().Trim().Contains(@params.SearchTerm.ToLower()) ||
+                    t.TicketCategory.Name.ToLower().Trim().Contains(@params.SearchTerm.ToLower())
+                );
+            }
+
+            if (!string.IsNullOrEmpty(@params.SortColum) && !string.IsNullOrEmpty(@params.SortDirection))
+            {
+                string sortExpression = @params.SortColum + " " + @params.SortDirection;
+                query = query.OrderBy(sortExpression);
+            }
+
+            var records = await query
+                .OrderBy(t => t.CreatedDate)
+                .Skip(@params.Skip)
+                .Take(@params.Take)
+                .ToListAsync();
+
+            return records.ToList();
         }
+        public async Task<int> GetTicketsTotalFilteredAsync(CursorParams @params, Department department = null)
+        {
+            if (@params.Take <= 0)
+            {
+                return 0;
+            }
+
+            var query = this._context.Tickets
+                .Include(t => t.Member)
+                .Include(t => t.AssignedTo)
+                .Include(t => t.TicketAttachments)
+                .Include(t => t.State)
+                .Include(t => t.TicketCategory)
+                .Include(t => t.TicketPriority)
+                .Include(t => t.TicketEscalations)
+                .Where(t => t.Status != Lambda.Deleted);
+
+            if (department != null)
+            {
+                query = query.Where(t => t.AssignedTo.Department.Id == department.Id);
+            }
+
+            if (!string.IsNullOrEmpty(@params.SearchTerm))
+            {
+                query = query.Where(t =>
+                    t.Title.ToLower().Trim().Contains(@params.SearchTerm.ToLower()) ||
+                    t.Description.ToLower().Trim().Contains(@params.SearchTerm.ToLower()) ||
+                    t.State.Name.ToLower().Trim().Contains(@params.SearchTerm.ToLower()) ||
+                    t.Member.FirstName.ToLower().Trim().Contains(@params.SearchTerm.ToLower()) ||
+                    t.Member.LastName.ToLower().Trim().Contains(@params.SearchTerm.ToLower()) ||
+                    t.TicketCategory.Name.ToLower().Trim().Contains(@params.SearchTerm.ToLower())
+                );
+            }
+
+            if (!string.IsNullOrEmpty(@params.SortColum) && !string.IsNullOrEmpty(@params.SortDirection))
+            {
+                string sortExpression = @params.SortColum + " " + @params.SortDirection;
+                query = query.OrderBy(sortExpression);
+            }
+
+            var records = await query.CountAsync();
+
+
+            return records;
+        }
+
 
         //ticket reports
         public async Task<List<Ticket?>> GetTicketReports(CursorParams cursorParams, DateTime? startDate, DateTime? endDate, string branch = "", int stateId = 0, int categoryId = 0)

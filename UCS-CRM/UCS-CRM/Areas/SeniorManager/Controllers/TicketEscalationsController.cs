@@ -249,6 +249,16 @@ namespace UCS_CRM.Areas.SeniorManager.Controllers
                 ticketEscalationDb.Resolved = true;
                 await this._unitOfWork.SaveToDataStore();
 
+
+                //de-escalate ticket
+
+                ticketEscalationDb.Ticket.AssignedToId = ticketEscalationDb.CreatedById;
+
+                await this._ticketRepository.SendTicketDeEscalationEmail(ticketEscalationDb.Ticket, ticketEscalationDb.EscalatedTo.Email);
+
+
+                await this._unitOfWork.SaveToDataStore();
+
                 return Json(new { status = "success", message = "ticket has been marked done successfully" });
             }
 

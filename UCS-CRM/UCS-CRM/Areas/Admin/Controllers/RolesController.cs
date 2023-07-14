@@ -62,6 +62,7 @@ namespace UCS_CRM.Areas.Admin.Controllers
                 var identityRole = new Role();
                 identityRole.Name = role.Name;
                 identityRole.NormalizedName = role.Name;
+                identityRole.Rating = role.Rating;
 
                _roleRepository.AddRole(identityRole);
 
@@ -111,6 +112,7 @@ namespace UCS_CRM.Areas.Admin.Controllers
                 var identityRole = await _roleRepository.GetRoleAsync(id);
 
                 identityRole.Name = role.Name;
+                identityRole.Rating = role.Rating;
 
                 await _roleRepository.UpdateRoleAsync(identityRole);
 

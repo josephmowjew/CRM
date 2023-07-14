@@ -58,6 +58,20 @@ namespace UCS_CRM.Areas.SeniorManager.Controllers
             return View();
         }
 
+        [HttpPost]
+        public async Task<ActionResult> Escalated(DateTime? startDate, DateTime? endDate, string branch = "", int categoryId = 0, int stateId = 0)
+        {
+            ViewBag.stateId = stateId;
+            ViewBag.startDate = startDate;
+            ViewBag.endDate = endDate;
+            ViewBag.branch = branch;
+            ViewBag.categoryId = categoryId;
+
+            await populateViewBags();
+            return View();
+
+        }
+
         //
         public async Task<IActionResult> TicketReport(DateTime? startDate, DateTime? endDate, string branch = "", int categoryId = 0, int stateId = 0)
         {
