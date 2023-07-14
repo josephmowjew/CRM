@@ -25,6 +25,7 @@
         var gender = $("#create_user_modal select[name ='Gender']").val()
         var email = $("#create_user_modal input[name ='Email']").val()
         var contact = $("#create_user_modal input[name ='PhoneNumber']").val()
+        var departmentId = $("#create_user_modal select[name ='DepartmentId']").val()
         var role = $("#create_user_modal select[name ='RoleName']").val()
         //prepare data for request pushing
 
@@ -37,6 +38,7 @@
             Email: email,
             PhoneNumber: contact,
             RoleName: role,
+            DepartmentId: departmentId
         }
 
 
@@ -97,6 +99,43 @@
 
         });
     }
+
+    //events section
+
+    $("#create_user_modal select[name ='DepartmentId']").on('change', function () {
+        // Get the selected value
+        var selectedValue = $(this).val();
+
+        // Send a GET request to the endpoint with the selected value
+        $.get('users/FetchRolesOnDepartment', { selectedValue: selectedValue }, function (data) {
+            // Clear the options of the second dropdown list
+            $("#create_user_modal select[name ='RoleName']").empty();
+
+            // Iterate through the received JSON data and create options for the second dropdown list
+            $.each(data, function (index, item) {
+                var option = $('<option>').val(item.value).text(item.text);
+                $("#create_user_modal select[name ='RoleName']").append(option);
+            });
+        });
+    });
+
+
+    $("#edit_user_modal select[name ='DepartmentId']").on('change', function () {
+        // Get the selected value
+        var selectedValue = $(this).val();
+
+        // Send a GET request to the endpoint with the selected value
+        $.get('users/FetchRolesOnDepartment', { selectedValue: selectedValue }, function (data) {
+            // Clear the options of the second dropdown list
+            $("#edit_user_modal select[name ='RoleName']").empty();
+
+            // Iterate through the received JSON data and create options for the second dropdown list
+            $.each(data, function (index, item) {
+                var option = $('<option>').val(item.value).text(item.text);
+                $("#edit_user_modal select[name ='RoleName']").append(option);
+            });
+        });
+    });
 
 
 })
@@ -205,7 +244,7 @@ function EditForm(id, area = "") {
 
         var date = currentDate.getFullYear() + "-" + (month) + "-" + (day);
 
-
+        console.log(data)
 
         $("#edit_user_modal input[name ='FirstName']").val(data.firstName)
         $("#edit_user_modal input[name ='LastName']").val(data.lastName)
@@ -214,6 +253,7 @@ function EditForm(id, area = "") {
         $("#edit_user_modal input[name ='PhoneNumber']").val(data.phoneNumber)
         $("#edit_user_modal input[name ='DateOfBirth']").val(date)
         $("#edit_user_modal select[name ='RoleName']").val(data.roleName)
+        $("#edit_user_modal select[name ='DepartmentId']").val(data.departmentId)
         $("#edit_user_modal input[name='Id']").val(data.id)
 
         //hook up an event to the update role button
@@ -266,6 +306,46 @@ function Delete(id) {
 
     });
 }
+
+
+function ConfirmUser(id) {
+
+    bootbox.confirm("Are you sure you want to confirm this user from the system?", function (result) {
+
+
+        if (result) {
+            $.ajax({
+                url: 'users/ConfirmUser/' + id,
+                type: 'POST',
+
+            }).done(function (data) {
+
+                if (data.status == "success") {
+
+                    toastr.success(data.message)
+                }
+                else {
+                    toastr.error(data.message)
+                }
+
+
+
+
+                datatable.ajax.reload();
+
+
+            }).fail(function (response) {
+
+                toastr.error(response.responseText)
+
+                datatable.ajax.reload();
+            });
+        }
+
+
+    });
+}
+
 
 function Reactivate(id) {
 
@@ -322,6 +402,7 @@ function upDateUser() {
     var contact = $("#edit_user_modal input[name ='PhoneNumber']").val()
     var dateOfBirth = $("#edit_user_modal input[name ='DateOfBirth']").val()
     var role = $("#edit_user_modal select[name ='RoleName']").val()
+    var departmentId = $("#edit_user_modal select[name ='DepartmentId']").val()
     var id = $("#edit_user_modal input[name='Id']").val()
 
 
@@ -336,6 +417,7 @@ function upDateUser() {
         DateOfBirth: dateOfBirth,
         PhoneNumber: contact,
         RoleName: role,
+        DepartmentId: departmentId,
         Id: id
     }
 

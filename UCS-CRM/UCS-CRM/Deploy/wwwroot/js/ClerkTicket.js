@@ -91,6 +91,26 @@
         });
     }
 
+    //events
+
+
+    $('#DepartmentId').on('change', function () {
+        // Get the selected value
+        var selectedValue = $(this).val();
+
+        // Send a GET request to the endpoint with the selected value
+        $.get('tickets/FetchReassignList', { selectedValue: selectedValue }, function (data) {
+            // Clear the options of the second dropdown list
+            $('#AssignedToId').empty();
+
+            // Iterate through the received JSON data and create options for the second dropdown list
+            $.each(data, function (index, item) {
+                var option = $('<option>').val(item.value).text(item.text);
+                $('#AssignedToId').append(option);
+            });
+        });
+    });
+
 
 })
 
@@ -121,6 +141,7 @@ function EditForm(id, area = "") {
             Description: 'description',
             TicketCategoryId: 'ticketCategoryId',
             TicketPriorityId: 'ticketPriorityId',
+            AssignedToId: 'assignedToId',
             MemberId: 'memberId',
             StateId: 'stateId',
             Id: 'id',
@@ -145,8 +166,6 @@ function EditForm(id, area = "") {
 
     })
 }
-
-
 //escalate ticket
 function EscalationForm(id, area = "") {
 
@@ -165,8 +184,6 @@ function EscalationForm(id, area = "") {
     $("#escalate_ticket_modal").modal("show");
 
 }
-
-
 function Delete(id) {
 
     bootbox.confirm("Are you sure you want to delete this ticket from the system?", function (result) {
@@ -204,8 +221,6 @@ function Delete(id) {
 
     });
 }
-
-
 function escalateTicket() {
     toastr.clear()
 
@@ -269,7 +284,7 @@ function escalateTicket() {
                 //show success message to the user
                 var dataTable = $('#my_table').DataTable();
 
-                toastr.success(data.message)
+                toastr.success("Ticket has been escalated successfully")
 
                 $("#escalate_ticket_modal").modal("hide")
 
@@ -289,8 +304,6 @@ function escalateTicket() {
 
 
 }
-
-
 function updateTicket() {
     toastr.clear()
 
@@ -374,7 +387,6 @@ function updateTicket() {
 
 
 }
-
 function addComment(ticketId) {
 
     toastr.clear()
@@ -450,6 +462,88 @@ function addComment(ticketId) {
 
     });
 }
+function closeTicketfn(id) {
 
+    alert(id)
+    toastr.clear()
+
+    //get the authorisation token
+    //upDateRole
+    var authenticationToken = $("#close_ticket_modal input[name='__RequestVerificationToken']").val();
+
+    var form_url = $("#close_ticket_modal form").attr("action");
+
+    var form = $("#close_ticket_modal form")
+
+
+    let formData = new FormData(form[0]);
+
+
+    //send the request
+
+
+
+    $.ajax({
+        url: form_url,
+        type: 'POST',
+        data: formData,
+        processData: false,
+        contentType: false,
+        success: function (data) {
+
+
+            //parse whatever comes back to html
+
+            var parsedData = $.parseHTML(data)
+
+
+
+            //check if there is an error in the data that is coming back from the user
+
+            var isInvalid = $(parsedData).find("input[name='DataInvalid']").val() == "true"
+
+
+            if (isInvalid == true) {
+
+                //replace the form data with the data retrieved from the server
+                $("#close_ticket_modal").html(data)
+
+
+                //rewire the onclick event on the form
+
+                $("#close_ticket_modal button[name='closeTicketfn']").unbind().click(function () { closeTicket(id) });
+
+                var form = $("#close_ticket_modal")
+
+                $(form).removeData("validator")
+                $(form).removeData("unobtrusiveValidation")
+                $.validator.unobtrusive.parse(form)
+
+
+            }
+            else {
+
+
+                //show success message to the user
+                var dataTable = $('#my_table').DataTable();
+
+                toastr.success("Ticket has been closed successfully")
+
+                $("#close_ticket_modal").modal("hide")
+
+                dataTable.ajax.reload();
+
+            }
+
+
+
+        },
+        error: function (xhr, ajaxOtions, thrownError) {
+
+            console.error(thrownError + "r\n" + xhr.statusText + "r\n" + xhr.responseText)
+        }
+
+    });
+}
 
 
