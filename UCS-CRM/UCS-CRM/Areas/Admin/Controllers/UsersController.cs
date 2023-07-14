@@ -267,6 +267,7 @@ namespace UCS_CRM.Areas.Admin.Controllers
                     dbUser.Email = applicationViewModel.Email;
                     dbUser.PhoneNumber = applicationViewModel.PhoneNumber;
                     dbUser.DepartmentId = applicationViewModel.DepartmentId;
+                    dbUser.UserName = applicationViewModel.Email;
 
                     IdentityResult result = await this._userRepository.UpdateAsync(dbUser);
 
