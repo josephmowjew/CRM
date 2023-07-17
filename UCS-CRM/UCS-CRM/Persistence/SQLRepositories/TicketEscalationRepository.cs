@@ -35,53 +35,198 @@ namespace UCS_CRM.Persistence.SQLRepositories
             return await this._context.TicketEscalations.Include(t => t.EscalatedTo).Include(t=>t.Ticket).ThenInclude(m=>m.Member).Include(p => p.Ticket.TicketPriority).Include(a => a.Ticket.AssignedTo).FirstOrDefaultAsync(x => x.Id == id & x.Status != Lambda.Deleted);
         }
 
-        public async Task<List<TicketEscalation>?> GetTicketEscalations(int escalationLevel, CursorParams @params)
+        //public async Task<List<TicketEscalation>?> GetTicketEscalations(int departmentId, CursorParams @params)
+        //{
+        //    if (@params.Take > 0)
+        //    {
+
+        //        if(departmentId > 0)
+        //        {
+        //            //check if there is a search term sent 
+
+        //            if (string.IsNullOrEmpty(@params.SearchTerm))
+        //            {
+        //                var ticketEscalations = (from tblOb in await this._context
+        //                                         .TicketEscalations
+        //                                         .Include(t => t.Ticket)
+        //                                         .ThenInclude(m => m.Member)
+        //                                         .Include(a => a.Ticket.AssignedTo)
+        //                                         .Include(p => p.Ticket.TicketPriority)
+        //                                         .Where(t => t.Ticket.AssignedTo != null && t.Ticket.AssignedTo.DepartmentId == departmentId)
+        //                                         .Where(a => a.Status != Lambda.Deleted && a.Resolved == false)
+        //                                         .Skip(@params.Skip)
+        //                                         .Take(@params.Take)
+        //                                         .ToListAsync()
+        //                                         select tblOb);
+
+
+        //                if (string.IsNullOrEmpty(@params.SortColum) && !string.IsNullOrEmpty(@params.SortDirection))
+        //                {
+        //                    ticketEscalations = ticketEscalations.AsQueryable().OrderBy(@params.SortColum + " " + @params.SortDirection);
+
+        //                }
+
+
+        //                return ticketEscalations.ToList();
+
+        //            }
+        //            else
+        //            {
+        //                //include search text in the query
+        //                var ticketEscalations = (from tblOb in await this._context
+        //                                         .TicketEscalations
+        //                                         .Include(t => t.Ticket)
+        //                                         .ThenInclude(m => m.Member)
+        //                                         .Include(a => a.Ticket.AssignedTo)
+        //                                         .Include(p => p.Ticket.TicketPriority)
+        //                                          .Where(t => t.Ticket.AssignedTo != null && t.Ticket.AssignedTo.DepartmentId == departmentId)
+        //                                         .Where(a => a.Ticket.Title.ToLower()
+        //                                         .Contains(@params.SearchTerm) & a.Status != Lambda.Deleted)
+        //                                        .Skip(@params.Skip)
+        //                                        .Take(@params.Take)
+        //                                        .ToListAsync()
+        //                                         select tblOb);
+
+        //                ticketEscalations = ticketEscalations.AsQueryable().OrderBy(@params.SortColum + " " + @params.SortDirection);
+
+
+        //                return ticketEscalations.ToList();
+
+        //            }
+        //        }
+        //        else
+        //        {
+        //            //check if there is a search term sent 
+
+        //            if (string.IsNullOrEmpty(@params.SearchTerm))
+        //            {
+        //                var ticketEscalations = (from tblOb in await this._context
+        //                                         .TicketEscalations
+        //                                         .Include(t => t.Ticket)
+        //                                         .ThenInclude(m => m.Member)
+        //                                         .Include(a => a.Ticket.AssignedTo)
+        //                                         .Include(p => p.Ticket.TicketPriority)
+        //                                         .Where(a => a.Status != Lambda.Deleted && a.Resolved == false)
+        //                                         .Skip(@params.Skip)
+        //                                         .Take(@params.Take)
+        //                                         .ToListAsync()
+        //                                         select tblOb);
+
+
+        //                if (string.IsNullOrEmpty(@params.SortColum) && !string.IsNullOrEmpty(@params.SortDirection))
+        //                {
+        //                    ticketEscalations = ticketEscalations.AsQueryable().OrderBy(@params.SortColum + " " + @params.SortDirection);
+
+        //                }
+
+
+        //                return ticketEscalations.ToList();
+
+        //            }
+        //            else
+        //            {
+        //                //include search text in the query
+        //                var ticketEscalations = (from tblOb in await this._context
+        //                                         .TicketEscalations
+        //                                         .Include(t => t.Ticket)
+        //                                         .ThenInclude(m => m.Member)
+        //                                         .Include(a => a.Ticket.AssignedTo)
+        //                                         .Include(p => p.Ticket.TicketPriority)
+        //                                         .Where(a => a.Ticket.Title.ToLower()
+        //                                         .Contains(@params.SearchTerm) & a.Status != Lambda.Deleted)
+        //                                        .Skip(@params.Skip)
+        //                                        .Take(@params.Take)
+        //                                        .ToListAsync()
+        //                                         select tblOb);
+
+        //                ticketEscalations = ticketEscalations.AsQueryable().OrderBy(@params.SortColum + " " + @params.SortDirection);
+
+
+        //                return ticketEscalations.ToList();
+
+        //            }
+        //        }
+
+
+        //    }
+        //    else
+        //    {
+        //        return null;
+        //    }
+
+
+        //}
+
+        public async Task<List<TicketEscalation>?> GetTicketEscalations(int? departmentId, CursorParams @params)
         {
-            if (@params.Take > 0)
-            {
-                //check if there is a search term sent 
-
-                if (string.IsNullOrEmpty(@params.SearchTerm))
-                {
-                    var ticketEscalations = (from tblOb in await this._context.TicketEscalations.Include(t => t.Ticket).ThenInclude(m => m.Member).Include(a => a.Ticket.AssignedTo).Include(p => p.Ticket.TicketPriority).Where(a => a.Status != Lambda.Deleted
-                                             && a.Resolved == false).Skip(@params.Skip).Take(@params.Take).ToListAsync() select tblOb);
-
-
-                    if (string.IsNullOrEmpty(@params.SortColum) && !string.IsNullOrEmpty(@params.SortDirection))
-                    {
-                        ticketEscalations = ticketEscalations.AsQueryable().OrderBy(@params.SortColum + " " + @params.SortDirection);
-
-                    }
-
-
-                    return ticketEscalations.ToList();
-
-                }
-                else
-                {
-                    //include search text in the query
-                    var ticketEscalations = (from tblOb in await this._context.TicketEscalations.Include(t => t.Ticket).ThenInclude(m => m.Member).Include(a => a.Ticket.AssignedTo).Include(p => p.Ticket.TicketPriority)
-                                        .Where(a => a.Ticket.Title.ToLower().Contains(@params.SearchTerm) & a.Status != Lambda.Deleted)
-                                        .Skip(@params.Skip)
-                                        .Take(@params.Take)
-                                        .ToListAsync()
-                                             select tblOb);
-
-                    ticketEscalations = ticketEscalations.AsQueryable().OrderBy(@params.SortColum + " " + @params.SortDirection);
-
-
-                    return ticketEscalations.ToList();
-
-                }
-
-            }
-            else
+            if (@params.Take <= 0)
             {
                 return null;
             }
 
+            var query = this._context.TicketEscalations
+                .Include(t => t.Ticket.Member)
+                .Include(a => a.Ticket.AssignedTo)
+                .Include(p => p.Ticket.TicketPriority)
+                .Where(a => a.Status != Lambda.Deleted && a.Resolved == false);
 
+            if (departmentId != null || departmentId > 0)
+            {
+                query = query.Where(t => t.Ticket.AssignedTo != null && t.Ticket.AssignedTo.DepartmentId == departmentId);
+            }
+
+            if (!string.IsNullOrEmpty(@params.SearchTerm))
+            {
+                query = query.Where(a => a.Ticket.Title.ToLower().Contains(@params.SearchTerm));
+            }
+
+            if (!string.IsNullOrEmpty(@params.SortColum) && !string.IsNullOrEmpty(@params.SortDirection))
+            {
+                var sortExpression = @params.SortColum + " " + @params.SortDirection;
+                query = query.OrderBy(sortExpression);
+            }
+
+            var ticketEscalations = await query
+                .Skip(@params.Skip)
+                .Take(@params.Take)
+                .ToListAsync();
+
+            return ticketEscalations;
         }
+        public async Task<int> GetTicketEscalationsCount(int? departmentId, CursorParams @params)
+        {
+            if (@params.Take <= 0)
+            {
+                return 0;
+            }
+
+            var query = this._context.TicketEscalations
+                .Include(t => t.Ticket.Member)
+                .Include(a => a.Ticket.AssignedTo)
+                .Include(p => p.Ticket.TicketPriority)
+                .Where(a => a.Status != Lambda.Deleted && a.Resolved == false);
+
+            if (departmentId != null || departmentId > 0)
+            {
+                query = query.Where(t => t.Ticket.AssignedTo != null && t.Ticket.AssignedTo.DepartmentId == departmentId);
+            }
+
+            if (!string.IsNullOrEmpty(@params.SearchTerm))
+            {
+                query = query.Where(a => a.Ticket.Title.ToLower().Contains(@params.SearchTerm));
+            }
+
+            if (!string.IsNullOrEmpty(@params.SortColum) && !string.IsNullOrEmpty(@params.SortDirection))
+            {
+                var sortExpression = @params.SortColum + " " + @params.SortDirection;
+                query = query.OrderBy(sortExpression);
+            }
+
+            var ticketEscalations = await query.CountAsync();
+
+            return ticketEscalations;
+        }
+
 
         public async Task<List<TicketEscalation>?> GetTicketEscalationsForUser(CursorParams @params, string memberId)
         {

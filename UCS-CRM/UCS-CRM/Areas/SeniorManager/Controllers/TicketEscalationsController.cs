@@ -268,7 +268,7 @@ namespace UCS_CRM.Areas.SeniorManager.Controllers
 
 
         [HttpPost]
-        public async Task<ActionResult> GetTicketEscalations(int escalationLevel)
+        public async Task<ActionResult> GetTicketEscalations(string roleName)
         {
 
             try
@@ -289,11 +289,11 @@ namespace UCS_CRM.Areas.SeniorManager.Controllers
                 //create a cursor params based on the data coming from the datatable
                 CursorParams CursorParameters = new CursorParams() { SearchTerm = searchValue, Skip = skip, SortColum = sortColumn, SortDirection = sortColumnAscDesc, Take = pageSize };
 
-                List<TicketEscalation>? repoTicketEscalations = await this._ticketEscalationRepository.GetTicketEscalations(escalationLevel, CursorParameters);
+                List<TicketEscalation>? repoTicketEscalations = await this._ticketEscalationRepository.GetTicketEscalations(null, CursorParameters);
 
 
                 //get total records from the database
-                resultTotal = await this._ticketEscalationRepository.TotalCount();
+                resultTotal = await this._ticketEscalationRepository.GetTicketEscalationsCount(null, CursorParameters);
                 var result = repoTicketEscalations;
                 return Json(new { draw = draw, recordsFiltered = resultTotal, recordsTotal = resultTotal, data = result });
             }

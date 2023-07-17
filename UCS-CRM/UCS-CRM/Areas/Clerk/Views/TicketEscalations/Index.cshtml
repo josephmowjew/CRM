@@ -27,9 +27,7 @@
                         <th>
                             Title
                         </th>
-                        <th>
-                            Level
-                        </th>
+                        
 
                         <th>
                             Priority
@@ -110,13 +108,13 @@
                         className: "text-left",
                         "orderable": true,
                     },
-                    {
-                        data: { state: "escalationLevel" },
-                        mRender: function (data, type, full) {
-                            return data.escalationLevel == 1 ? "First Escalation" : "First Escalation";
-                        }, "name": "escalationLevel",
-                        className: "text-left"
-                    },
+                    //{
+                    //    data: { state: "escalationLevel" },
+                    //    mRender: function (data, type, full) {
+                    //        return data.escalationLevel == 1 ? "First Escalation" : "First Escalation";
+                    //    }, "name": "escalationLevel",
+                    //    className: "text-left"
+                    //},
                     {
                         data: { state: "ticket.ticketPriority.name" },
                         mRender: function (data, type, full) {

@@ -36,7 +36,10 @@
                             Title
                         </th>
                         <th>
-                            Description
+                            Member Account
+                        </th>
+                        <th>
+                            Member Branch
                         </th>
                      
                         <th>
@@ -86,7 +89,7 @@
                 ajax: {
                     url: '/manager/ticketEscalations/GetTicketEscalations',
                     type: 'post',
-                    data: { escalationLevel : 1 },
+                    data: { roleName : "manager" },
                     datatype: 'Json',
                     error: function (XMLHttpRequest, textStatus, errorThrown) {
 
@@ -108,9 +111,9 @@
 
                     {
                         data: "ticket.ticketNumber",
-                        name: "ticketNumber",
+                        name: "ticket.ticketNumber",
                         className: "text-left",
-                        "orderable": true,
+                        "orderable": false,
                     },
                     {
                         data: "ticket.title",
@@ -119,8 +122,14 @@
                         "orderable": true,
                     },
                     {
-                        data: "ticket.description",
-                        name: "description",
+                        data: "ticket.member.accountNumber",
+                        name: "ticket.member.accountNumber",
+                        className: "text-left",
+                        "orderable": false,
+                    },
+                    {
+                        data: "ticket.member.branch",
+                        name: "ticket.member.branch",
                         className: "text-left",
                         "orderable": false,
                     },

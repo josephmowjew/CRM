@@ -11,11 +11,15 @@
 }
 
 <p>
-
-    <!-- Button trigger modal -->
-    <button type="button" class="btn btn-info" data-bs-toggle="modal" data-bs-target="#create_ticket_modal">
-        Create A Ticket
-    </button>
+    @if(((string)ViewBag.role).Equals("Member Engagements officer", StringComparison.OrdinalIgnoreCase))
+    {
+         <!-- Button trigger modal -->
+        <button type="button" class="btn btn-info" data-bs-toggle="modal" data-bs-target="#create_ticket_modal">
+            Create A Ticket
+        </button>
+    }
+   
+    
 
 </p>
 
@@ -49,7 +53,10 @@
                             Title
                         </th>
                         <th>
-                            Description
+                            Member Account
+                        </th>
+                        <th>
+                            Member Branch
                         </th>
                         <th>
                             Priority
@@ -151,8 +158,14 @@
                         "orderable": true,
                     },
                     {
-                        data: "description",
-                        name: "description",
+                        data: "member.accountNumber",
+                        name: "member.accountNumber",
+                        className: "text-left",
+                        "orderable": false,
+                    },
+                    {
+                        data: "member.branch",
+                        name: "member.branch",
                         className: "text-left",
                         "orderable": false,
                     },
