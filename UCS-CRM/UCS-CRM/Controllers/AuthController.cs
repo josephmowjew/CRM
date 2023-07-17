@@ -213,10 +213,10 @@ namespace UCS_CRM.Controllers
                             string UserNameBody = "Your confirmation code is " + "<b>" + pin + " <br /> Enter this to login in";
 
 
-                            _emailService.SendMail(user.Email, "Login Details", UserNameBody);
+                            //_emailService.SendMail(user.Email, "Login Details", UserNameBody);
 
                             TempData["response"] = $"Check your email for the code";
-                            return RedirectToAction("MFA", "Auth");
+                            return RedirectToAction("Create", "Auth");
 
 
                         }
