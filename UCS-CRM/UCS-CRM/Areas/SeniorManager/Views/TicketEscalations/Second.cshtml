@@ -27,7 +27,13 @@
                         <th>
                             Title
                         </th>
-                                               <th>
+                        <th>
+                            Member Account Number
+                        </th>
+                        <th>
+                            Member Branch
+                        </th>
+                        <th>
                             Priority
                         </th>
                         <th>
@@ -36,9 +42,7 @@
                         <th>
                             Reason
                         </th>
-                        <th>
-                            Second Reason
-                        </th>
+                       
                         <th>
                             Assigned To
                         </th>
@@ -74,7 +78,7 @@
                 ajax: {
                     url: '/seniormanager/ticketEscalations/GetTicketEscalations',
                     type: 'post',
-                    data: { escalationLevel: 2 },
+                    data: { roleName: "seniorManager" },
                     datatype: 'Json',
                     error: function (XMLHttpRequest, textStatus, errorThrown) {
 
@@ -96,7 +100,7 @@
 
                     {
                         data: "ticket.ticketNumber",
-                        name: "ticketNumber",
+                        name: "ticket.ticketNumber",
                         className: "text-left",
                         "orderable": true,
                     },
@@ -105,7 +109,20 @@
                         name: "title",
                         className: "text-left",
                         "orderable": true,
-                    },                   
+                    }
+                    ,
+                    {
+                        data: "ticket.member.accountNumber",
+                        name: "ticket.member.accountNumber",
+                        className: "text-left",
+                        "orderable": false,
+                    },
+                    {
+                        data: "ticket.member.branch",
+                        name: "ticket.member.branch",
+                        className: "text-left",
+                        "orderable": false,
+                    },
                     {
                         data: { state: "ticket.ticketPriority.name" },
                         mRender: function (data, type, full) {
@@ -126,12 +143,7 @@
                         className: "text-left",
                         "orderable": false,
                     },
-                    {
-                        data: "secondEscalationReason",
-                        name: "secondEscalationReason",
-                        className: "text-left",
-                        "orderable": false,
-                    },
+                   
                     {
                         data: { state: "ticket.assignedTo.fullName" },
                         mRender: function (data, type, full) {

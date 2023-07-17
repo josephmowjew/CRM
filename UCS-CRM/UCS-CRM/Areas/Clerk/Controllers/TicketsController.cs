@@ -1,6 +1,7 @@
 ﻿using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
@@ -40,9 +41,10 @@ namespace UCS_CRM.Areas.Clerk.Controllers
         private IWebHostEnvironment _env;
         private readonly IEmailAddressRepository _addressRepository;
         private readonly ITicketStateTrackerRepository _ticketStateTrackerRepository;
+        private readonly UserManager<ApplicationUser> _userManager;
         public TicketsController(ITicketRepository ticketRepository, IMapper mapper, IUnitOfWork unitOfWork, IEmailService emailService, IEmailAddressRepository addressRepository,
             ITicketCategoryRepository ticketCategoryRepository, IStateRepository stateRepository, ITicketPriorityRepository priorityRepository,
-            IWebHostEnvironment env, ITicketCommentRepository ticketCommentRepository, IUserRepository userRepository, IMemberRepository memberRepository, ITicketEscalationRepository ticketEscalationRepository, IDepartmentRepository departmentRepository, ITicketStateTrackerRepository ticketStateTrackerRepository)
+            IWebHostEnvironment env, ITicketCommentRepository ticketCommentRepository, IUserRepository userRepository, IMemberRepository memberRepository, ITicketEscalationRepository ticketEscalationRepository, IDepartmentRepository departmentRepository, ITicketStateTrackerRepository ticketStateTrackerRepository, UserManager<ApplicationUser> userManager)
         {
             _ticketRepository = ticketRepository;
             _mapper = mapper;
@@ -59,12 +61,24 @@ namespace UCS_CRM.Areas.Clerk.Controllers
             _addressRepository = addressRepository;
             _departmentRepository = departmentRepository;
             _ticketStateTrackerRepository = ticketStateTrackerRepository;
+            _userManager = userManager;
         }
 
         // GET: TicketsController
         public async Task<ActionResult> Index()
         {
             await populateViewBags();
+
+            //find the currently logged in user
+
+            var findUserDb = await this._userRepository.GetUserWithRole(User.Identity.Name);
+
+            //find the role of the currently logged in user
+
+            if(findUserDb != null)
+            {
+                ViewBag.role = _userManager.GetRolesAsync(findUserDb).Result.FirstOrDefault();
+            }
 
             return View();
         }

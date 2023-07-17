@@ -90,7 +90,7 @@ namespace UCS_CRM.Controllers
                     else
                     {
 
-                        return RedirectToAction("Index", "Home", new { Area = "Manager" });
+                        return RedirectToAction("Index", "Home", new { Area = "Clerk" });
                     }
                 }
                

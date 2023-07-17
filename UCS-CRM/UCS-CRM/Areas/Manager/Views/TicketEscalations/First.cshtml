@@ -89,7 +89,7 @@
                 ajax: {
                     url: '/manager/ticketEscalations/GetTicketEscalations',
                     type: 'post',
-                    data: { escalationLevel : 1 },
+                    data: { roleName : "manager" },
                     datatype: 'Json',
                     error: function (XMLHttpRequest, textStatus, errorThrown) {
 
@@ -111,9 +111,9 @@
 
                     {
                         data: "ticket.ticketNumber",
-                        name: "ticketNumber",
+                        name: "ticket.ticketNumber",
                         className: "text-left",
-                        "orderable": true,
+                        "orderable": false,
                     },
                     {
                         data: "ticket.title",

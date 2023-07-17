@@ -11,11 +11,15 @@
 }
 
 <p>
-
-    <!-- Button trigger modal -->
-    <button type="button" class="btn btn-info" data-bs-toggle="modal" data-bs-target="#create_ticket_modal">
-        Create A Ticket
-    </button>
+    @if(((string)ViewBag.role).Equals("Member Engagements officer", StringComparison.OrdinalIgnoreCase))
+    {
+         <!-- Button trigger modal -->
+        <button type="button" class="btn btn-info" data-bs-toggle="modal" data-bs-target="#create_ticket_modal">
+            Create A Ticket
+        </button>
+    }
+   
+    
 
 </p>
 
