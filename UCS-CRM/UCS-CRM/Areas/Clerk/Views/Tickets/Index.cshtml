@@ -49,7 +49,10 @@
                             Title
                         </th>
                         <th>
-                            Description
+                            Member Account
+                        </th>
+                        <th>
+                            Member Branch
                         </th>
                         <th>
                             Priority
@@ -151,8 +154,14 @@
                         "orderable": true,
                     },
                     {
-                        data: "description",
-                        name: "description",
+                        data: "member.accountNumber",
+                        name: "member.accountNumber",
+                        className: "text-left",
+                        "orderable": false,
+                    },
+                    {
+                        data: "member.branch",
+                        name: "member.branch",
                         className: "text-left",
                         "orderable": false,
                     },

@@ -36,7 +36,10 @@
                             Title
                         </th>
                         <th>
-                            Description
+                            Member Account
+                        </th>
+                        <th>
+                            Member Branch
                         </th>
                      
                         <th>
@@ -119,8 +122,14 @@
                         "orderable": true,
                     },
                     {
-                        data: "ticket.description",
-                        name: "description",
+                        data: "ticket.member.accountNumber",
+                        name: "ticket.member.accountNumber",
+                        className: "text-left",
+                        "orderable": false,
+                    },
+                    {
+                        data: "ticket.member.branch",
+                        name: "ticket.member.branch",
                         className: "text-left",
                         "orderable": false,
                     },
