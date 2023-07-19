@@ -91,7 +91,14 @@ namespace UCS_CRM.Areas.Manager.Controllers
 
                 string currentState = ticketDB.State.Name;
 
+                int newStateId = (int)editTicketDTO.StateId;
+
+                string newState = (await this._stateRepository.GetStateAsync(newStateId)).Name;
+
+
                 editTicketDTO.StateId = editTicketDTO.StateId == null ? ticketDB.StateId : editTicketDTO.StateId;
+
+                editTicketDTO.AssignedToId = editTicketDTO.AssignedToId == null ? ticketDB.AssignedToId : ticketDB.AssignedToId;
 
                 editTicketDTO.TicketNumber = ticketDB.TicketNumber;
                 //check if the role name isn't already taken
@@ -105,7 +112,7 @@ namespace UCS_CRM.Areas.Manager.Controllers
 
                 var claimsIdentitifier = User.FindFirst(ClaimTypes.NameIdentifier);
 
-                if (ticketDB.State.Name.Trim().ToLower() != currentState.Trim().ToLower())
+                if (newState.Trim().ToLower() != currentState.Trim().ToLower())
                 {
 
                     //update the ticket change state 
