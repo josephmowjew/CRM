@@ -13,6 +13,7 @@ using System.IO;
 using UCS_CRM.Core.Models;
 using UCS_CRM.Core.DTOs.Ticket;
 using UCS_CRM.Core.Helpers;
+using UCS_CRM.ViewModel;
 
 namespace UCS_CRM.Areas.Manager.Controllers
 {
@@ -70,6 +71,57 @@ namespace UCS_CRM.Areas.Manager.Controllers
             await populateViewBags();
             return View();
         }
+        public async Task<IActionResult> Perfomance(DateTime? startDate, DateTime? endDate, string branch = "", int categoryId = 0, int stateId = 0)
+        {
+
+            ViewBag.stateId = stateId;
+            ViewBag.startDate = startDate;
+            ViewBag.endDate = endDate;
+            ViewBag.branch = branch;
+            ViewBag.categoryId = categoryId;
+            int departmentId = 0;
+
+            await populateViewBags();
+
+            var user = await this._userRepository.FindByEmailsync(User.Identity.Name);
+
+            if (user != null)
+            {
+                branch = user.Branch.Name;
+                departmentId = user.Department.Id;
+            }
+
+            var tickets = await _ticketRepository.GetMemberEngagementOfficerReport(startDate, endDate, branch , stateId, categoryId,departmentId);
+
+            List<ApplicationUser> memberEngagementOfficers = new();
+            List<UserTickets> userTickets = new();
+
+            tickets.ForEach(ticket =>
+            {
+            if (!memberEngagementOfficers.Contains(ticket.AssignedTo))
+            {
+                memberEngagementOfficers.Add(ticket.AssignedTo);
+                }
+            });
+
+
+            memberEngagementOfficers.ForEach(user =>
+            {
+               int openTickets =  tickets.Where(t => t.State.Name != Lambda.Closed && t.AssignedToId == user.Id).Count();
+               int closedTickets = tickets.Where(t => t.State.Name == Lambda.Closed && t.AssignedToId == user.Id).Count();
+
+                userTickets.Add(new UserTickets{ UserName = user.FullName, OpenTickets = openTickets, ClosedTickets = closedTickets });
+
+            });
+
+
+
+
+            ViewBag.userTickets = userTickets;
+
+            return View();
+        }
+
 
         [HttpPost]
         public async Task<ActionResult> Escalated(DateTime? startDate, DateTime? endDate, string branch = "", int categoryId = 0, int stateId = 0)

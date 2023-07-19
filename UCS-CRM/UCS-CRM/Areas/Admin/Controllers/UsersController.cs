@@ -10,6 +10,7 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using UCS_CRM.Core.Models;
 using Microsoft.AspNetCore.Identity;
 using System.Data;
+using Microsoft.IdentityModel.Tokens;
 
 namespace UCS_CRM.Areas.Admin.Controllers
 {
@@ -21,12 +22,12 @@ namespace UCS_CRM.Areas.Admin.Controllers
         private readonly IEmailService _emailService;
         private readonly IUnitOfWork _unitOfWork;
         private readonly IDepartmentRepository _departmentRepository;
-        //private readonly IPositionRepository _positionRepository;
+        private readonly IBranchRepository _branchRepository;
         private RoleManager<Role> _roleManager;
         private readonly IRoleRepositorycs _roleRepositorycs;
         private readonly UserManager<ApplicationUser> _userManager;
         public UsersController(IUserRepository userRepository, IEmailService emailService, RoleManager<Role> roleManager,
-            UserManager<ApplicationUser> userManager, IUnitOfWork unitOfWork, IDepartmentRepository departmentRepository, IRoleRepositorycs roleRepositorycs)
+            UserManager<ApplicationUser> userManager, IUnitOfWork unitOfWork, IDepartmentRepository departmentRepository, IRoleRepositorycs roleRepositorycs, IBranchRepository branchRepository)
         {
             this._userRepository = userRepository;
             this._emailService = emailService;
@@ -35,29 +36,39 @@ namespace UCS_CRM.Areas.Admin.Controllers
             this._unitOfWork = unitOfWork;
             this._departmentRepository = departmentRepository;
             this._roleRepositorycs = roleRepositorycs;
+            this._branchRepository = branchRepository;
         }
 
         // GET: UsersController
         public async Task<ActionResult> Index()
         {
-            List<SelectListItem> roles = new List<SelectListItem>();
-            UserViewModel newUser = new UserViewModel();
 
-            var rolesDb = await this._roleRepositorycs.GetRolesAsync();
-
-            rolesDb.ForEach(r =>
-            {
-                roles.Add(new SelectListItem { Text = r.Name, Value = r.Name });
-            });
 
             //ViewBag.rolesList = roles;
-            ViewBag.genderList = newUser.GenderList;
-            ViewBag.departmentsList = await GetDepartments();
+
+            await populateViewBags();
 
             return View();
         }
 
-       
+        private async Task<List<SelectListItem>> GetBranches()
+        {
+            List<SelectListItem> branches = new() { new SelectListItem() { Text = "---Select Branch---", Value = "" } };
+
+            var branchesDb = await this._branchRepository.GetBranches();
+
+            if (branchesDb != null)
+            {
+                branchesDb.ForEach(d =>
+                {
+                    branches.Add(new SelectListItem() { Text = d.Name, Value = d.Id.ToString() });
+                });
+            }
+
+            return branches;
+        }
+
+
         // GET: UsersController/Create
         public ActionResult Create()
         {
@@ -74,6 +85,8 @@ namespace UCS_CRM.Areas.Admin.Controllers
 
             List<SelectListItem> roles = new List<SelectListItem>();
             UserViewModel newUser = new UserViewModel();
+
+            await populateViewBags();
 
             if (ModelState.IsValid)
             {
@@ -93,6 +106,7 @@ namespace UCS_CRM.Areas.Admin.Controllers
                     EmailConfirmed = true,
                     DepartmentId = userViewModel.DepartmentId,
                     LastPasswordChangedDate = DateTime.Now,
+                    BranchId = userViewModel.BranchId,
 
                 };
 
@@ -223,6 +237,7 @@ namespace UCS_CRM.Areas.Admin.Controllers
                 Email = user.Email,
                 DepartmentId = user.DepartmentId,
                 Department = user.Department,
+                BranchId = user.BranchId,
                 Id = user.Id,
 
             };
@@ -250,8 +265,7 @@ namespace UCS_CRM.Areas.Admin.Controllers
             UserViewModel user = new UserViewModel();
             List<SelectListItem> roles = new List<SelectListItem>();
             List<SelectListItem> districts = new List<SelectListItem>();
-
-
+         
             if (ModelState.IsValid)
             {
                 applicationViewModel.DataInvalid = "";
@@ -268,20 +282,26 @@ namespace UCS_CRM.Areas.Admin.Controllers
                     dbUser.PhoneNumber = applicationViewModel.PhoneNumber;
                     dbUser.DepartmentId = applicationViewModel.DepartmentId;
                     dbUser.UserName = applicationViewModel.Email;
+                    dbUser.BranchId = applicationViewModel.BranchId;
+
 
                     IdentityResult result = await this._userRepository.UpdateAsync(dbUser);
 
 
                     //update user role
-
-                    var currentUserRoles = await this._userRepository.GetRolesAsync(dbUser.Id);
-
-                    if (!currentUserRoles.Contains(applicationViewModel.RoleName))
+                    if (!applicationViewModel.RoleName.IsNullOrEmpty())
                     {
-                        //swap the roles
-                        await _userRepository.RemoveFromRolesAsync(dbUser, currentUserRoles);
 
-                        await this._userRepository.AddUserToRoleAsync(dbUser, applicationViewModel.RoleName);
+
+                        var currentUserRoles = await this._userRepository.GetRolesAsync(dbUser.Id);
+
+                        if (!currentUserRoles.Contains(applicationViewModel.RoleName))
+                        {
+                            //swap the roles
+                            await _userRepository.RemoveFromRolesAsync(dbUser, currentUserRoles);
+
+                            await this._userRepository.AddUserToRoleAsync(dbUser, applicationViewModel.RoleName);
+                        }
                     }
                     await this._unitOfWork.SaveToDataStore();
 
@@ -631,7 +651,9 @@ namespace UCS_CRM.Areas.Admin.Controllers
             ViewBag.rolesList = roles;
             ViewBag.genderList = newUser.GenderList;
             ViewBag.departmentsList = await GetDepartments();
-            
+            ViewBag.branchList = await GetBranches();
+
         }
+
     }
 }

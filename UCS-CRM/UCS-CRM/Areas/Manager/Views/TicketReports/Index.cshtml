@@ -84,7 +84,7 @@
         </div>
     </div>
 
-    @*<div class="col-lg-6">
+    <div class="col-lg-6">
         <div class="card">
             <div class="card-body">
                 <h4 class="card-title">Perfomance Report</h4>
@@ -100,11 +100,7 @@
                             <select asp-for="CategoryId" asp-items="@ViewBag.categories" class="form-control"></select>
                             <span asp-validation-for="CategoryId" class="text-danger"></span>
                         </div>
-                        <div class="form-group">
-                            <label asp-for="Branch"></label>
-                            <select asp-for="Branch" asp-items="@ViewBag.branches" class="form-control"></select>
-                            <span asp-validation-for="Branch" class="text-danger"></span>
-                        </div>
+                       
 
                         <div class="form-group">
                             <label asp-for="StartDate"></label>
@@ -123,7 +119,7 @@
                 </div>
             </div>
         </div>
-    </div>*@
+    </div>
 
     <div class="col-lg-6">
         <div class="card">

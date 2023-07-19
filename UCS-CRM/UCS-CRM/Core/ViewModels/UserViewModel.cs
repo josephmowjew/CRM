@@ -12,8 +12,8 @@ namespace UCS_CRM.Core.ViewModels
         [Display(Name = "Role Name")]
         public string RoleName { get; set; }
         public string DataInvalid { get; set; } = "true";
-        public string FormattedFirstName => myTI.ToTitleCase(FirstName);
-        public string FormattedLastName => myTI.ToTitleCase(LastName);
+        public string? FormattedFirstName => (string.IsNullOrEmpty(FirstName))? FirstName: myTI.ToTitleCase(FirstName);
+        public string? FormattedLastName => (string.IsNullOrEmpty(LastName)) ? LastName : myTI.ToTitleCase(LastName);
         public string FormattedGender => (!string.IsNullOrEmpty(Gender)) ? myTI.ToTitleCase(Gender) : "";
         public string formattedCreatedDate => CreatedDate.ToString("dd-MM-yyyy");
         public string formattedLastLogin => LastLogin.ToString("dd-MM-yyyy hh:mm tt");
