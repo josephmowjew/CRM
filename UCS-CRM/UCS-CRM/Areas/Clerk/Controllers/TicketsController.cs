@@ -268,14 +268,18 @@ namespace UCS_CRM.Areas.Clerk.Controllers
                 //get the current state of the ticket 
 
                 string currentState = ticketDB.State.Name;
+                string currentAssignedUserId = ticketDB.AssignedToId;
+                string currentAssignedUserEmail = ticketDB?.AssignedTo?.Email;
 
                 int newStateId = (int)editTicketDTO.StateId;
 
                 string newState = (await this._stateRepository.GetStateAsync(newStateId)).Name;
+                string newAssignedUserEmail = (await this._userRepository.FindByIdAsync(editTicketDTO.AssignedToId)).Email;
 
                 editTicketDTO.StateId = editTicketDTO.StateId == null ? ticketDB.StateId : editTicketDTO.StateId;
 
-                editTicketDTO.AssignedToId = editTicketDTO.AssignedToId == null ? ticketDB.AssignedToId : ticketDB.AssignedToId;
+                editTicketDTO.AssignedToId = editTicketDTO.AssignedToId == null ? ticketDB.AssignedToId : editTicketDTO.AssignedToId;
+
 
                 editTicketDTO.TicketNumber = ticketDB.TicketNumber;
 
@@ -348,6 +352,12 @@ namespace UCS_CRM.Areas.Clerk.Controllers
                 }
 
 
+                if(currentAssignedUserId != editTicketDTO.AssignedToId) {
+
+                    await this._ticketRepository.SendTicketReassignmentEmail(currentAssignedUserEmail, newAssignedUserEmail, ticketDB);
+                }
+
+
                 string emailBody = "A ticket has been modified in the system. </b> check the system for more details by clicking here " + Lambda.systemLink + "<br /> ";
 
                 //email to send to support
@@ -356,7 +366,7 @@ namespace UCS_CRM.Areas.Clerk.Controllers
 
                 if (user != null)
                 {
-                    _emailService.SendMail(user.Email, "Ticket Escalation", emailBody);
+                    _emailService.SendMail(user.Email, $"Ticket {ticketDB.TicketNumber} Modification", emailBody);
                 }
 
                 return Json(new { status = "success", message = "user ticket updated successfully" });

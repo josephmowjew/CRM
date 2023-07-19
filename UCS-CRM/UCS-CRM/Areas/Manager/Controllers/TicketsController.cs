@@ -10,6 +10,7 @@ using UCS_CRM.Core.DTOs.TicketComment;
 using UCS_CRM.Core.DTOs.TicketEscalation;
 using UCS_CRM.Core.Helpers;
 using UCS_CRM.Core.Models;
+using UCS_CRM.Core.Services;
 using UCS_CRM.Persistence.Interfaces;
 
 namespace UCS_CRM.Areas.Manager.Controllers
@@ -28,11 +29,12 @@ namespace UCS_CRM.Areas.Manager.Controllers
         private readonly IMemberRepository _memberRepository;
         private readonly IMapper _mapper;
         private readonly IUnitOfWork _unitOfWork;
+        private readonly IEmailService _emailService;
         private IWebHostEnvironment _env;
         private readonly ITicketStateTrackerRepository _ticketStateTrackerRepository;
         public TicketsController(ITicketRepository ticketRepository, IMapper mapper, IUnitOfWork unitOfWork, 
             ITicketCategoryRepository ticketCategoryRepository, IStateRepository stateRepository, ITicketPriorityRepository priorityRepository,
-            IWebHostEnvironment env, ITicketCommentRepository ticketCommentRepository, IUserRepository userRepository, IMemberRepository memberRepository, ITicketEscalationRepository ticketEscalationRepository, ITicketStateTrackerRepository ticketStateTrackerRepository)
+            IWebHostEnvironment env, ITicketCommentRepository ticketCommentRepository, IUserRepository userRepository, IMemberRepository memberRepository, ITicketEscalationRepository ticketEscalationRepository, ITicketStateTrackerRepository ticketStateTrackerRepository, IEmailService emailService)
         {
             _ticketRepository = ticketRepository;
             _mapper = mapper;
@@ -46,6 +48,7 @@ namespace UCS_CRM.Areas.Manager.Controllers
             _memberRepository = memberRepository;
             _ticketEscalationRepository = ticketEscalationRepository;
             _ticketStateTrackerRepository = ticketStateTrackerRepository;
+            _emailService = emailService;
         }
 
         // GET: TicketsController
@@ -90,15 +93,17 @@ namespace UCS_CRM.Areas.Manager.Controllers
                 }
 
                 string currentState = ticketDB.State.Name;
-
                 int newStateId = (int)editTicketDTO.StateId;
+                string currentAssignedUserId = ticketDB.AssignedToId;
+                string currentAssignedUserEmail = ticketDB?.AssignedTo?.Email;
 
                 string newState = (await this._stateRepository.GetStateAsync(newStateId)).Name;
 
-
+                string newAssignedUserEmail = (await this._userRepository.FindByIdAsync(editTicketDTO.AssignedToId)).Email;
                 editTicketDTO.StateId = editTicketDTO.StateId == null ? ticketDB.StateId : editTicketDTO.StateId;
 
-                editTicketDTO.AssignedToId = editTicketDTO.AssignedToId == null ? ticketDB.AssignedToId : ticketDB.AssignedToId;
+                editTicketDTO.AssignedToId = editTicketDTO.AssignedToId == null ? ticketDB.AssignedToId : editTicketDTO.AssignedToId;
+
 
                 editTicketDTO.TicketNumber = ticketDB.TicketNumber;
                 //check if the role name isn't already taken
@@ -143,6 +148,24 @@ namespace UCS_CRM.Areas.Manager.Controllers
 
                     await this._unitOfWork.SaveToDataStore();
                 }
+
+                if (currentAssignedUserId != editTicketDTO.AssignedToId)
+                {
+
+                    await this._ticketRepository.SendTicketReassignmentEmail(currentAssignedUserEmail, newAssignedUserEmail, ticketDB);
+                }
+
+                string emailBody = "A ticket has been modified in the system. </b> check the system for more details by clicking here " + Lambda.systemLink + "<br /> ";
+
+                //email to send to support
+
+                var user = await _userRepository.GetSingleUser(ticketDB.CreatedById);
+
+                if (user != null)
+                {
+                    _emailService.SendMail(user.Email, $"Ticket {ticketDB.TicketNumber} Modification", emailBody);
+                }
+
 
                 return Json(new { status = "success", message = "user ticket updated successfully" });
             }
