@@ -27,6 +27,7 @@
         var contact = $("#create_user_modal input[name ='PhoneNumber']").val()
         var departmentId = $("#create_user_modal select[name ='DepartmentId']").val()
         var role = $("#create_user_modal select[name ='RoleName']").val()
+        var branchId = $("#create_user_modal select[name ='BranchId']").val()
         //prepare data for request pushing
 
 
@@ -38,7 +39,8 @@
             Email: email,
             PhoneNumber: contact,
             RoleName: role,
-            DepartmentId: departmentId
+            DepartmentId: departmentId,
+            BranchId: branchId
         }
 
 
@@ -255,6 +257,8 @@ function EditForm(id, area = "") {
         $("#edit_user_modal select[name ='RoleName']").val(data.roleName)
         $("#edit_user_modal select[name ='DepartmentId']").val(data.departmentId)
         $("#edit_user_modal input[name='Id']").val(data.id)
+        $("#edit_user_modal select[name='BranchId']").val(data.branchId)
+
 
         //hook up an event to the update role button
 
@@ -402,10 +406,11 @@ function upDateUser() {
     var contact = $("#edit_user_modal input[name ='PhoneNumber']").val()
     var dateOfBirth = $("#edit_user_modal input[name ='DateOfBirth']").val()
     var role = $("#edit_user_modal select[name ='RoleName']").val()
+    var branchId = $("#edit_user_modal select[name ='BranchId']").val()
     var departmentId = $("#edit_user_modal select[name ='DepartmentId']").val()
     var id = $("#edit_user_modal input[name='Id']").val()
 
-
+    console.log(branchId)
     //prepare data for request pushing
 
     var userInput = {
@@ -418,6 +423,7 @@ function upDateUser() {
         PhoneNumber: contact,
         RoleName: role,
         DepartmentId: departmentId,
+        BranchId: branchId,
         Id: id
     }
 
