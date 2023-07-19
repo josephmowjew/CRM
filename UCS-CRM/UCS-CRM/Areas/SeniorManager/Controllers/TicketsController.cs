@@ -31,11 +31,12 @@ namespace UCS_CRM.Areas.SeniorManager.Controllers
         private readonly ITicketPriorityRepository _priorityRepository;
         private readonly IMemberRepository _memberRepository;
         private readonly IMapper _mapper;
+        private readonly ITicketStateTrackerRepository _ticketStateTrackerRepository;
         private readonly IUnitOfWork _unitOfWork;
         private IWebHostEnvironment _env;
         public TicketsController(ITicketRepository ticketRepository, IMapper mapper, IUnitOfWork unitOfWork, 
             ITicketCategoryRepository ticketCategoryRepository, IStateRepository stateRepository, ITicketPriorityRepository priorityRepository,
-            IWebHostEnvironment env, ITicketCommentRepository ticketCommentRepository, IUserRepository userRepository, IMemberRepository memberRepository, ITicketEscalationRepository ticketEscalationRepository)
+            IWebHostEnvironment env, ITicketCommentRepository ticketCommentRepository, IUserRepository userRepository, IMemberRepository memberRepository, ITicketEscalationRepository ticketEscalationRepository, ITicketStateTrackerRepository ticketStateTrackerRepository)
         {
             _ticketRepository = ticketRepository;
             _mapper = mapper;
@@ -48,6 +49,7 @@ namespace UCS_CRM.Areas.SeniorManager.Controllers
             _userRepository = userRepository;
             _memberRepository = memberRepository;
             _ticketEscalationRepository = ticketEscalationRepository;
+            _ticketStateTrackerRepository = ticketStateTrackerRepository;
         }
 
         // GET: TicketsController
@@ -99,18 +101,39 @@ namespace UCS_CRM.Areas.SeniorManager.Controllers
                     return PartialView("_EditTicketPartial", editTicketDTO);
                 }
 
+                string currentState = ticketDB.State.Name;
+
+                int newStateId = (int)editTicketDTO.StateId;
+
+                string newState = (await this._stateRepository.GetStateAsync(newStateId)).Name;
+
 
                 editTicketDTO.StateId = editTicketDTO.StateId == null ? ticketDB.StateId : editTicketDTO.StateId;
 
                 editTicketDTO.TicketNumber = ticketDB.TicketNumber;
+
+                editTicketDTO.AssignedToId = editTicketDTO.AssignedToId == null ? ticketDB.AssignedToId : ticketDB.AssignedToId;
                 //check if the role name isn't already taken
                 var mappedTicket = this._mapper.Map<Ticket>(editTicketDTO);
 
                 this._mapper.Map(editTicketDTO, ticketDB);
-
                 //save changes to data store
 
                 await this._unitOfWork.SaveToDataStore();
+
+                var claimsIdentitifier = User.FindFirst(ClaimTypes.NameIdentifier);
+
+                if (newState.Trim().ToLower() != currentState.Trim().ToLower())
+                {
+
+                    //update the ticket change state 
+
+                    UCS_CRM.Core.Models.TicketStateTracker ticketStateTracker = new TicketStateTracker() { CreatedById = claimsIdentitifier.Value, TicketId = ticketDB.Id, NewState = ticketDB.State.Name, PreviousState = currentState, Reason = "Ticket Update" };
+
+                    this._ticketStateTrackerRepository.Add(ticketStateTracker);
+
+                    await this._unitOfWork.SaveToDataStore();
+                }
 
                 if (editTicketDTO.Attachments.Count > 0)
                 {

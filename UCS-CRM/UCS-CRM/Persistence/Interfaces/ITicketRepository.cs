@@ -11,6 +11,7 @@ namespace UCS_CRM.Persistence.Interfaces
         Task<int> GetTicketsTotalFilteredAsync(CursorParams @params, Department department = null);
         Task<List<Ticket?>> GetMemberTickets(CursorParams @params, int memberId);
         Task<List<Ticket?>> GetAssignedToTickets(CursorParams @params, string assignedToId);
+        Task<int> GetAssignedToTicketsCountAsync(CursorParams @params, string assignedToId);
         Task<Ticket?> GetTicket(int id);
         void Remove(Ticket ticket);
         Task<int> TotalCount();

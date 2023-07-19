@@ -269,7 +269,13 @@ namespace UCS_CRM.Areas.Clerk.Controllers
 
                 string currentState = ticketDB.State.Name;
 
+                int newStateId = (int)editTicketDTO.StateId;
+
+                string newState = (await this._stateRepository.GetStateAsync(newStateId)).Name;
+
                 editTicketDTO.StateId = editTicketDTO.StateId == null ? ticketDB.StateId : editTicketDTO.StateId;
+
+                editTicketDTO.AssignedToId = editTicketDTO.AssignedToId == null ? ticketDB.AssignedToId : ticketDB.AssignedToId;
 
                 editTicketDTO.TicketNumber = ticketDB.TicketNumber;
 
@@ -281,7 +287,7 @@ namespace UCS_CRM.Areas.Clerk.Controllers
                 //}
 
                 
-                //check if the role name isn't already taken
+                //map the edit ticket to ticket
                 var mappedTicket = this._mapper.Map<Ticket>(editTicketDTO);
 
                 var ticketExist = this._ticketRepository.Exists(mappedTicket);
@@ -308,7 +314,7 @@ namespace UCS_CRM.Areas.Clerk.Controllers
 
                 //check if the state changed
 
-                if(ticketDB.State.Name.Trim().ToLower() != currentState.Trim().ToLower()) {
+                if(newState.Trim().ToLower() != currentState.Trim().ToLower()) {
 
                     //update the ticket change state 
 
@@ -439,7 +445,7 @@ namespace UCS_CRM.Areas.Clerk.Controllers
 
             var claimsIdentitifier = userClaims.FindFirst(ClaimTypes.NameIdentifier);
 
-            resultTotal = await this._ticketRepository.TotalCountByAssignedTo(claimsIdentitifier.Value);
+            resultTotal = await this._ticketRepository.GetAssignedToTicketsCountAsync(CursorParameters, claimsIdentitifier.Value);
 
 
             var result = await this._ticketRepository.GetAssignedToTickets(CursorParameters, claimsIdentitifier.Value);
