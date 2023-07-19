@@ -1427,6 +1427,37 @@ namespace UCS_CRM.Persistence.SQLRepositories
 
             return string.Empty;
         }
+
+        public async Task<string> SendTicketReassignmentEmail(string previousEmail, string newEmail, Ticket ticket)
+        {
+            // Send an email to the previous assignee
+            string title = $"Ticket {ticket.TicketNumber} Re-assignment";
+            string body = $"Your ticket {ticket.TicketNumber} has been reassigned to  {newEmail}";
+
+            string emailResponse = string.Empty;
+
+            if (!string.IsNullOrEmpty(previousEmail))
+            {
+                 emailResponse = await _emailRepository.SendMail(previousEmail, title, body);
+
+            }
+
+
+            body = $"A {ticket.TicketNumber} has been reassigned to you .Please take note and respond to it accordingly";
+
+            emailResponse = await _emailRepository.SendMail(newEmail, title, body);
+
+            if (string.Equals(emailResponse, "Message sent", StringComparison.OrdinalIgnoreCase))
+            {
+                return "messages sent";
+            }
+            
+
+            //send email to the department
+            this.SendDepartmentEmail(ticket.AssignedTo.Department, title, body).Wait();
+
+            return string.Empty;
+        }
         public async Task<string> EscalatedTickets()
         {
             var tickets = new List<TicketEscalation>();
