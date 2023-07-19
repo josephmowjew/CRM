@@ -445,7 +445,7 @@ namespace UCS_CRM.Areas.Clerk.Controllers
 
             var claimsIdentitifier = userClaims.FindFirst(ClaimTypes.NameIdentifier);
 
-            resultTotal = await this._ticketRepository.TotalCountByAssignedTo(claimsIdentitifier.Value);
+            resultTotal = await this._ticketRepository.GetAssignedToTicketsCountAsync(CursorParameters, claimsIdentitifier.Value);
 
 
             var result = await this._ticketRepository.GetAssignedToTickets(CursorParameters, claimsIdentitifier.Value);
