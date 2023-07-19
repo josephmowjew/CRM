@@ -1,0 +1,65 @@
+﻿@using Microsoft.Extensions.Configuration
+@inject IConfiguration Configuration
+@{
+    var host = Configuration.GetSection("HostingSettings")["Host"];
+    var path = Configuration.GetSection("HostingSettings")["path"];
+    var protocol = Configuration.GetSection("HostingSettings")["Protocol"];
+
+    var branch = ViewBag.branch;
+    var stateId = ViewBag.stateId;
+    var categoryId = ViewBag.categoryId;
+    var startDate = ViewBag.startDate;
+    var endDate = ViewBag.endDate;
+
+    ViewData["Title"] = "Perfomance Report";
+    Layout = "~/Areas/Admin/Views/shared/_Layout.cshtml";
+}
+
+ <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <canvas id="ticketChart"></canvas>
+
+    <script>
+        var userTickets = @Html.Raw(Newtonsoft.Json.JsonConvert.SerializeObject(ViewBag.userTickets));
+       
+        var ctx = document.getElementById('ticketChart').getContext('2d');
+        var chart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: userTickets.map(x => x.UserName),
+                datasets: [
+                    {
+                        label: 'Open Tickets',
+                        backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                        borderColor: 'rgba(75, 0, 0, 1)',
+                        borderWidth: 1,
+                        data: userTickets.map(x => x.OpenTickets)
+                    },
+                    {
+                        label: 'Closed Tickets',
+                        backgroundColor: 'rgba(255, 0, 0, 0.2)',
+                        borderColor: 'rgba(255, 0, 0, 1)',
+                        borderWidth: 1,
+                        data: userTickets.map(x => x.ClosedTickets)
+                    }
+                ]
+            },
+            options: {
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+    </script>
+
+
+@section Scripts{
+
+
+
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

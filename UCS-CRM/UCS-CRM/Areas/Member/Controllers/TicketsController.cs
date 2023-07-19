@@ -425,6 +425,8 @@ namespace UCS_CRM.Areas.Member.Controllers
                     {
                         ticket.State.Name = Lambda.Closed;
 
+                        ticket.ClosedDate = DateTime.UtcNow;
+
                         //sync changes to the datastore
 
                         await this._unitOfWork.SaveToDataStore();
@@ -486,6 +488,8 @@ namespace UCS_CRM.Areas.Member.Controllers
                     if (ticket.CreatedById == currentUserId)
                     {
                         ticket.State.Name = Lambda.ReOpened;
+
+                        ticket.ClosedDate = null;
 
                         //sync changes to the datastore
 

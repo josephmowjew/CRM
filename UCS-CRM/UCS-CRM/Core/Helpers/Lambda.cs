@@ -24,6 +24,7 @@ namespace UCS_CRM.Core.Helpers
         public static string ExternalAdministrator = "External Administrator";
         public static string Manager = "Manager";
         public static string Clerk = "Clerk";
+        public static string MemberEngagementsOfficer = "Member Engagements officer";
         public static string SeniorManager = "Senior Manager";
         public static string CustomerServiceMemberEngagementManager = "Customer Service and Member Engagement Manager";
 

@@ -14,6 +14,8 @@ using System.Text;
 using Microsoft.IdentityModel.Tokens;
 using AutoMapper.QueryableExtensions;
 using Microsoft.EntityFrameworkCore.Query;
+using Microsoft.AspNetCore.Identity;
+using System.Web.WebPages;
 
 namespace UCS_CRM.Persistence.SQLRepositories
 {
@@ -26,6 +28,8 @@ namespace UCS_CRM.Persistence.SQLRepositories
         private readonly IUnitOfWork _unitOfWork;
         private readonly IMapper _mapper;
         private readonly ITicketEscalationRepository _ticketEscalationRepository;
+        private readonly UserManager<ApplicationUser> _userManager;
+
 
         public TicketRepository(
             ApplicationDbContext context,
@@ -34,7 +38,8 @@ namespace UCS_CRM.Persistence.SQLRepositories
             IUnitOfWork unitOfWork,
             IDepartmentRepository departmentRepository,
             IMapper mapper,
-            ITicketEscalationRepository ticketEscalationRepository)
+            ITicketEscalationRepository ticketEscalationRepository,
+            UserManager<ApplicationUser> userManager)
         {
             _context = context;
             _emailRepository = emailRepository;
@@ -43,6 +48,8 @@ namespace UCS_CRM.Persistence.SQLRepositories
             _unitOfWork = unitOfWork;
             _mapper = mapper;
             _ticketEscalationRepository = ticketEscalationRepository;
+            this._userManager = userManager;
+
         }
 
         public void Add(Ticket ticket)
@@ -611,6 +618,75 @@ namespace UCS_CRM.Persistence.SQLRepositories
 
 
             return records;
+        }
+
+        public async Task<List<Ticket>> GetMemberEngagementOfficerReport(DateTime? startDate, DateTime? endDate, string branch = "", int stateId = 0, int categoryId = 0, int departmentId = 0)
+        {
+            List<Ticket> MemberTicketList = new();
+            //get all user that are in a member engagement role
+
+            List<ApplicationUser> memberEngagementUsers = (await this._userManager.GetUsersInRoleAsync(Lambda.MemberEngagementsOfficer)).ToList();
+
+            List<Ticket?> finalRecords = new List<Ticket?>();
+
+                IQueryable<Ticket> query = this._context.Tickets
+                    .Where(t => t.Status != Lambda.Deleted);
+
+                if (categoryId > 0)
+                {
+                    query = query.Where(t => t.TicketCategoryId == categoryId);
+                }
+
+                if (stateId > 0)
+                {
+                    query = query.Where(t => t.StateId == stateId);
+                }
+
+                if (startDate != null)
+                {
+                    query = query.Where(t => t.CreatedDate >= startDate);
+                }
+
+                if (endDate != null)
+                {
+                    query = query.Where(t => t.CreatedDate <= endDate);
+                }
+
+                if (departmentId > 0)
+                {
+                    query = query.Where(t => t.AssignedTo.DepartmentId == departmentId);
+                }
+
+
+
+            if (!string.IsNullOrEmpty(branch))
+                {
+                    query = query.Where(t => t.Member.Branch == branch);
+                }
+
+                query = query.OrderBy(t => t.CreatedDate);
+
+               
+
+                finalRecords = await query
+                    .Include(t => t.AssignedTo)
+                    .Include(t => t.State)
+                    .Include(t => t.TicketCategory)
+                    .Include(t => t.TicketPriority)
+                    .ToListAsync();
+
+            
+
+            finalRecords.ForEach(finalRecord =>
+            {
+                if (memberEngagementUsers.Contains(finalRecord.AssignedTo))
+                {
+                    MemberTicketList.Add(finalRecord);
+                }
+            });
+
+
+            return MemberTicketList;
         }
 
 

@@ -38,9 +38,11 @@ namespace UCS_CRM.Core.Models
         public int? MemberId { get; set; }
         public Member? Member { get; set; }
         [Display(Name = "Department Name")]
+
         public int? DepartmentId { get; set; }
         public Department? Department { get; set; }
         public ICollection<Department> Departments { get; set; }
+        [Display(Name = "Branch")]
         public int? BranchId { get; set; }
         public Branch? Branch { get; set; }
         public ICollection<Branch> Branches { get; set; }
