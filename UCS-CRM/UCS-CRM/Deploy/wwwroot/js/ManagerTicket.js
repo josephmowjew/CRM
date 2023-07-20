@@ -1,5 +1,5 @@
 ﻿$(function () {
-
+    hideSpinner();
     //hook up a click event to the login button
 
     var createTicketButton = $("#create_ticket_modal button[name='create_ticket_btn']").unbind().click(OnCreateClick);
@@ -254,6 +254,8 @@ function MarkDone(id) {
 }
 
 function updateTicket() {
+
+    showSpinner();
     toastr.clear()
 
     //get the authorisation token
@@ -280,7 +282,7 @@ function updateTicket() {
         contentType: false,
         success: function (data) {
 
-
+            hideSpinner();
             //parse whatever comes back to html
 
             var parsedData = $.parseHTML(data)
@@ -328,7 +330,7 @@ function updateTicket() {
 
         },
         error: function (xhr, ajaxOtions, thrownError) {
-
+            hideSpinner();
             console.error(thrownError + "r\n" + xhr.statusText + "r\n" + xhr.responseText)
         }
 
@@ -412,6 +414,14 @@ function addComment(ticketId) {
 
     });
 }
+// Function to start the spinner
+function showSpinner() {
+    document.getElementById('spinner').style.display = 'block';
+}
 
+// Function to stop the spinner
+function hideSpinner() {
+    document.getElementById('spinner').style.display = 'none';
+}
 
 
