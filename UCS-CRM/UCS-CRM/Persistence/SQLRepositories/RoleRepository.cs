@@ -47,7 +47,7 @@ namespace UCS_CRM.Persistence.SQLRepositories
                 {
                     var identityRolesList = (from tblObj in this._context.Roles.Skip(@params.Skip).Take(@params.Take) select tblObj);
 
-                    if (string.IsNullOrEmpty(@params.SortColum) && !string.IsNullOrEmpty(@params.SortDirection))
+                    if (!string.IsNullOrEmpty(@params.SortColum) && !string.IsNullOrEmpty(@params.SortDirection))
                     {
                         identityRolesList = identityRolesList.AsQueryable().OrderBy(@params.SortColum + " " + @params.SortDirection);
 
