@@ -270,16 +270,17 @@ namespace UCS_CRM.Areas.Clerk.Controllers
                 string currentState = ticketDB.State.Name;
                 string currentAssignedUserId = ticketDB.AssignedToId;
                 string currentAssignedUserEmail = ticketDB?.AssignedTo?.Email;
+                editTicketDTO.AssignedToId = editTicketDTO.AssignedToId == null ? ticketDB.AssignedToId : editTicketDTO.AssignedToId;
 
                 int newStateId = (int)editTicketDTO.StateId;
 
                 string newState = (await this._stateRepository.GetStateAsync(newStateId)).Name;
+
                 string newAssignedUserEmail = (await this._userRepository.FindByIdAsync(editTicketDTO.AssignedToId)).Email;
 
                 editTicketDTO.StateId = editTicketDTO.StateId == null ? ticketDB.StateId : editTicketDTO.StateId;
 
                 editTicketDTO.AssignedToId = editTicketDTO.AssignedToId == null ? ticketDB.AssignedToId : editTicketDTO.AssignedToId;
-
 
                 editTicketDTO.TicketNumber = ticketDB.TicketNumber;
 
@@ -595,9 +596,13 @@ namespace UCS_CRM.Areas.Clerk.Controllers
 
                     string currentState = ticket.State.Name;
 
+                    //get close state
+
+                    var closeState = this._stateRepository.Exists(Lambda.Closed);
+
                     if(ticket.CreatedById == currentUserId)
                     {
-                        ticket.State.Name = Lambda.Closed;
+                        ticket.StateId = closeState.Id;
 
                         ticket.ClosedDate = DateTime.UtcNow;
 
@@ -659,9 +664,11 @@ namespace UCS_CRM.Areas.Clerk.Controllers
 
                     string currentState = ticket.State.Name;
 
+                    var reOpened = this._stateRepository.Exists(Lambda.ReOpened);
+
                     if (ticket.CreatedById == currentUserId)
                     {
-                        ticket.State.Name = Lambda.ReOpened;
+                        ticket.StateId = reOpened.Id;
 
                         ticket.ClosedDate = null;
 

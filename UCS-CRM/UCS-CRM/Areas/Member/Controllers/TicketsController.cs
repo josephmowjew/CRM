@@ -420,10 +420,10 @@ namespace UCS_CRM.Areas.Member.Controllers
                     var currentUserId = claimsIdentitifier.Value;
 
                     string currentState = ticket.State.Name;
-
+                    var closeState = this._stateRepository.Exists(Lambda.Closed);
                     if (ticket.CreatedById == currentUserId)
                     {
-                        ticket.State.Name = Lambda.Closed;
+                        ticket.StateId = closeState.Id;
 
                         ticket.ClosedDate = DateTime.UtcNow;
 
@@ -485,9 +485,11 @@ namespace UCS_CRM.Areas.Member.Controllers
 
                     string currentState = ticket.State.Name;
 
+                    var reOpened = this._stateRepository.Exists(Lambda.ReOpened);
+
                     if (ticket.CreatedById == currentUserId)
                     {
-                        ticket.State.Name = Lambda.ReOpened;
+                        ticket.StateId = reOpened.Id;
 
                         ticket.ClosedDate = null;
 

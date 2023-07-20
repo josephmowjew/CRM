@@ -110,7 +110,7 @@ namespace UCS_CRM.Areas.SeniorManager.Controllers
                 int newStateId = (int)editTicketDTO.StateId;
                 string newAssignedUserEmail = (await this._userRepository.FindByIdAsync(editTicketDTO.AssignedToId)).Email;
                 string newState = (await this._stateRepository.GetStateAsync(newStateId)).Name;
-
+                editTicketDTO.AssignedToId = editTicketDTO.AssignedToId == null ? ticketDB.AssignedToId : editTicketDTO.AssignedToId;
 
                 editTicketDTO.StateId = editTicketDTO.StateId == null ? ticketDB.StateId : editTicketDTO.StateId;
 
