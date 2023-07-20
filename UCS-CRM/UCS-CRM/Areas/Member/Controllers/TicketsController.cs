@@ -703,74 +703,69 @@ namespace UCS_CRM.Areas.Member.Controllers
         //escalate ticket
         public async Task<ActionResult> Escalate(CreateTicketEscalationDTO createTicketEscalation)
         {
-            //check for model validity
-
-            createTicketEscalation.DataInvalid = "true";
-
             if (ModelState.IsValid)
             {
-
+                ApplicationUser currentAssignedUser = null;
+                string currentAssignedUserEmail = string.Empty;
+                Role currentAssignedUserRole = null;
+                Department? currentAssignedUserDepartment = null;
+                List<Role> rolesOfCurrentUserDepartment = new();
+                List<Role> SortedrolesOfCurrentUserDepartment = new();
                 createTicketEscalation.DataInvalid = "";
-                createTicketEscalation.EscalationLevel = 1;
+                bool ticketAssignedToNewUser = false;
+                //createTicketEscalation.EscalationLevel = 1;
 
+                //get the ticket in question
 
-                //check for article title presence
+                var ticket = await this._ticketRepository.GetTicket(createTicketEscalation.TicketId);
 
-                var mappedTicketEscalation = this._mapper.Map<TicketEscalation>(createTicketEscalation);
+                //get the current user id
 
-                var ticketEscalationPresence = this._ticketEscalationRepository.Exists(mappedTicketEscalation);
+                var userClaims = (ClaimsIdentity)User.Identity;
 
+                var claimsIdentitifier = userClaims.FindFirst(ClaimTypes.NameIdentifier);
 
-
-                if (ticketEscalationPresence != null)
+                if (ticket != null)
                 {
-                    createTicketEscalation.DataInvalid = "true";
+                    string result = await this._ticketRepository.EscalateTicket(ticket, claimsIdentitifier.Value, createTicketEscalation.Reason);
 
-                    ModelState.AddModelError(nameof(mappedTicketEscalation.Reason), $"Another ticket exists with the parameters submitted'");
 
-                    return PartialView("_FirstTicketEscalationPartial", createTicketEscalation);
+                    if (result != null)
+                    {
+                        if (result.Equals("Could not find a user to escalate the ticket to", StringComparison.OrdinalIgnoreCase))
+                        {
+                            createTicketEscalation.DataInvalid = "true";
+
+                            ModelState.AddModelError("", "Could not find a user to escalate the ticket to");
+
+                            return PartialView("_FirstTicketEscalationPartial", createTicketEscalation);
+                        }
+                        if (result.Equals("ticket escalated", StringComparison.OrdinalIgnoreCase))
+                        {
+                            createTicketEscalation.DataInvalid = "";
+
+
+                            return PartialView("_FirstTicketEscalationPartial", createTicketEscalation);
+                        }
+                    }
+                    else
+                    {
+                        createTicketEscalation.DataInvalid = "true";
+
+                        ModelState.AddModelError("", "An error occurred while trying to escalate the ticket");
+
+                        return PartialView("_FirstTicketEscalationPartial", createTicketEscalation);
+                    }
                 }
+            }
+            else
+            {
 
+                createTicketEscalation.DataInvalid = "true";
 
-                //save to the database
+                ModelState.AddModelError("", "Could not find a ticket with the identifier sent");
 
-                try
-                {
-                    var userClaims = (ClaimsIdentity)User.Identity;
-
-                    var claimsIdentitifier = userClaims.FindFirst(ClaimTypes.NameIdentifier);
-
-                    mappedTicketEscalation.CreatedById = claimsIdentitifier.Value;
-
-
-                    this._ticketEscalationRepository.Add(mappedTicketEscalation);
-                    await this._unitOfWork.SaveToDataStore();
-
-
-                    return Json(new { status = "success", message = "ticket has been escalated successfully" });
-                }
-                catch (DbUpdateException ex)
-                {
-                    createTicketEscalation.DataInvalid = "true";
-
-                    ModelState.AddModelError(string.Empty, ex.InnerException.Message);
-
-                    return PartialView("_FirstTicketEscalationPartial", createTicketEscalation);
-                }
-
-                catch (Exception ex)
-                {
-
-                    createTicketEscalation.DataInvalid = "true";
-
-                    ModelState.AddModelError(string.Empty, ex.Message);
-
-                    return PartialView("_FirstTicketEscalationPartial", createTicketEscalation);
-                }
-
-
-
-
+                return PartialView("_FirstTicketEscalationPartial", createTicketEscalation);
             }
 
 

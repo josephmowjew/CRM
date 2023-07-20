@@ -1386,9 +1386,9 @@ namespace UCS_CRM.Persistence.SQLRepositories
 
             if (string.Equals(emailResponse, "Message sent", StringComparison.OrdinalIgnoreCase))
             {
-                body = $"A ticket {ticket.TicketNumber} previously assigned to {previousAssigneeEmail} has been escalated to you {ticketEscalation.EscalatedTo.Email}. Please take note and respond to it accordingly";
+                body = $"A ticket {ticket.TicketNumber} previously assigned to {previousAssigneeEmail} has been escalated to you. Please take note and respond to it accordingly";
 
-                emailResponse = await _emailRepository.SendMail(previousAssigneeEmail, title, body);
+                emailResponse = await _emailRepository.SendMail(ticketEscalation.EscalatedTo.Email, title, body);
 
                 if (string.Equals(emailResponse, "Message sent", StringComparison.OrdinalIgnoreCase))
                 {

@@ -532,7 +532,7 @@ namespace UCS_CRM.Areas.SeniorManager.Controllers
         {
             var ticketStates = await this._stateRepository.GetStates();
 
-            ticketStates = ticketStates.Where(ts => ts.Name.Trim().ToLower() != Lambda.Closed.Trim().ToLower() && ts.Name.Trim().ToLower() != "Resolved".ToLower()).ToList();
+            ticketStates = ticketStates.Where(ts => ts.Name.Trim().ToLower() != Lambda.Closed.Trim().ToLower()).ToList();
 
 
             var ticketStatesList = new List<SelectListItem>();
@@ -550,7 +550,7 @@ namespace UCS_CRM.Areas.SeniorManager.Controllers
 
         private async Task<List<SelectListItem>> GetAssignees()
         {
-            var users = await this._userRepository.GetUsers();
+            var users = await this._userRepository.GetStuff();
 
             var usersList = new List<SelectListItem>();
 

@@ -258,7 +258,7 @@ namespace UCS_CRM.Persistence.SQLRepositories
 
                     //add the updated user to the userViewModels class
 
-                    if (currentRole.ToLower().Trim() != "Member".ToLower().Trim() && currentRole.Trim().ToLower() != "Administrator".Trim().ToLower())
+                    if (currentRole.ToLower().Trim() != "Member".ToLower().Trim() && currentRole.Trim().ToLower() != "Administrator".Trim().ToLower() && currentRole.Trim().ToLower() != "System".Trim().ToLower())
                     {
                         userViewModels.Add(u);
                     }
