@@ -96,7 +96,7 @@ namespace UCS_CRM.Areas.Manager.Controllers
                 int newStateId = (int)editTicketDTO.StateId;
                 string currentAssignedUserId = ticketDB.AssignedToId;
                 string currentAssignedUserEmail = ticketDB?.AssignedTo?.Email;
-
+                editTicketDTO.AssignedToId = editTicketDTO.AssignedToId == null ? ticketDB.AssignedToId : editTicketDTO.AssignedToId;
                 string newState = (await this._stateRepository.GetStateAsync(newStateId)).Name;
 
                 string newAssignedUserEmail = (await this._userRepository.FindByIdAsync(editTicketDTO.AssignedToId)).Email;
@@ -239,6 +239,10 @@ namespace UCS_CRM.Areas.Manager.Controllers
                 }
                 else
                 {
+                    var closeState = this._stateRepository.Exists(Lambda.Closed);
+
+                    ticketRecordDb.StateId = closeState.Id;
+
                     ticketRecordDb.ClosedDate = DateTime.Now;
 
                     await this._unitOfWork.SaveToDataStore();

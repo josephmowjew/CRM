@@ -64,6 +64,11 @@ namespace UCS_CRM.Controllers
                 {
                     var roles = _userManager.GetRolesAsync(findUserDb).Result.FirstOrDefault();
 
+
+                    if (roles.Equals("Member", StringComparison.OrdinalIgnoreCase))
+                    {
+                        return RedirectToAction("Index", "Home", new { Area = "Member" });
+                    }
                     if (findUserDb.Department.Name.ToLower().Contains("Executive suite", StringComparison.OrdinalIgnoreCase))
                     {
                         return RedirectToAction("Index", "Home", new { Area = "SeniorManager" });
@@ -82,10 +87,6 @@ namespace UCS_CRM.Controllers
                         return RedirectToAction("Index", "Home", new { Area = "Manager" });
                     }
                    
-                    if (roles.Contains("Member", StringComparison.OrdinalIgnoreCase))
-                    {
-                        return RedirectToAction("Index", "Home", new { Area = "Member" });
-                    }
                    
                     else
                     {
