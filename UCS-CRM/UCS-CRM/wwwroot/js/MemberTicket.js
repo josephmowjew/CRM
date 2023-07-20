@@ -1,5 +1,5 @@
 ﻿$(function () {
-
+    hideSpinner();
     //hook up a click event to the login button
 
     var createTicketButton = $("#create_ticket_modal button[name='create_ticket_btn']").unbind().click(OnCreateClick);
@@ -437,6 +437,7 @@ function EscalationForm(id, area = "") {
 }
 
 function escalateTicket() {
+
     toastr.clear()
 
     //get the authorisation token
@@ -522,6 +523,8 @@ function escalateTicket() {
 
 function closeTicketfn(id) {
 
+    showSpinner();
+
     toastr.clear()
 
     //get the authorisation token
@@ -548,7 +551,7 @@ function closeTicketfn(id) {
         contentType: false,
         success: function (data) {
 
-
+            hideSpinner();
             //parse whatever comes back to html
 
             //var parsedData = $.parseHTML(data)
@@ -598,7 +601,7 @@ function closeTicketfn(id) {
 
         },
         error: function (xhr, ajaxOtions, thrownError) {
-
+            hideSpinner();
             console.error(thrownError + "r\n" + xhr.statusText + "r\n" + xhr.responseText)
         }
 
@@ -606,6 +609,7 @@ function closeTicketfn(id) {
 }
 function reopenTicketfn(id) {
 
+    showSpinner();
     toastr.clear()
 
     //get the authorisation token
@@ -632,6 +636,7 @@ function reopenTicketfn(id) {
         contentType: false,
         success: function (data) {
 
+            hideSpinner();
 
             //parse whatever comes back to html
 
@@ -682,10 +687,19 @@ function reopenTicketfn(id) {
 
         },
         error: function (xhr, ajaxOtions, thrownError) {
-
+            hideSpinner();
             console.error(thrownError + "r\n" + xhr.statusText + "r\n" + xhr.responseText)
         }
 
     });
+}
+// Function to start the spinner
+function showSpinner() {
+    document.getElementById('spinner').style.display = 'block';
+}
+
+// Function to stop the spinner
+function hideSpinner() {
+    document.getElementById('spinner').style.display = 'none';
 }
 

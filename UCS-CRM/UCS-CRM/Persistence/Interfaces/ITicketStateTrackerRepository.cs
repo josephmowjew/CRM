@@ -13,5 +13,7 @@ namespace UCS_CRM.Persistence.Interfaces
         void Remove(TicketStateTracker ticketStateTracker);
         Task<int> TotalCount();
         Task<int> TotalCountFiltered(CursorParams @params);
+        Task<int> TicketAuditTrailCountAsync(CursorParams cursorParams, int ticketId);
+        Task<List<TicketStateTracker>?> TicketAuditTrail(CursorParams cursorParams, int ticketId);
     }
 }
