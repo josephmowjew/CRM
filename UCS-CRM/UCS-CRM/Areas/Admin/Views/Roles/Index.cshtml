@@ -40,6 +40,9 @@
                     <th>
                         Name
                     </th>
+                     <th>
+                        Rating (Descending Order)
+                    </th>
                     <th>
                         Action
                     </th>
@@ -94,6 +97,16 @@
                             render: function(data)
                             {
                                 return toTitleCase(data);
+                            }
+                        },
+                         {
+                            data: "rating",
+                            name: "rating",
+                            className: "text-left",
+                            "orderable": true,
+                            render: function(data)
+                            {
+                                return data;
                             }
                         },
                         {
