@@ -1,5 +1,6 @@
 ﻿$(function () {
 
+    hideSpinner();
     //hook up a click event to the login button
 
     var createUserButton = $("#create_user_modal button[name='create_user_btn']").unbind().click(OnCreateClick);
@@ -10,6 +11,7 @@
 
     function OnCreateClick() {
 
+        showSpinner();
         //get the form url
 
         var form_url = $("#create_user_modal form").attr("action");
@@ -56,7 +58,7 @@
 
                 var parsedData = $.parseHTML(data)
 
-
+                hideSpinner();
 
                 //check if there is an error in the data that is coming back from the user
 
@@ -95,7 +97,7 @@
 
             },
             error: function (xhr, ajaxOtions, thrownError) {
-
+                hideSpinner();
                 console.error(xhr.responseText)
             }
 
@@ -272,7 +274,6 @@ function EditForm(id, area = "") {
 
     })
 }
-
 function Delete(id) {
 
     bootbox.confirm("Are you sure you want to delete this user from the system?", function (result) {
@@ -310,8 +311,6 @@ function Delete(id) {
 
     });
 }
-
-
 function ConfirmUser(id) {
 
     bootbox.confirm("Are you sure you want to confirm this user from the system?", function (result) {
@@ -349,8 +348,6 @@ function ConfirmUser(id) {
 
     });
 }
-
-
 function Reactivate(id) {
 
     bootbox.confirm("Are you sure you want to reactivate this user account?", function (result) {
@@ -385,8 +382,6 @@ function Reactivate(id) {
 
     });
 }
-
-
 function upDateUser() {
     toastr.clear()
 
@@ -490,6 +485,15 @@ function upDateUser() {
     });
 
 
+}
+// Function to start the spinner
+function showSpinner() {
+    document.getElementById('spinner').style.display = 'block';
+}
+
+// Function to stop the spinner
+function hideSpinner() {
+    document.getElementById('spinner').style.display = 'none';
 }
 
 
