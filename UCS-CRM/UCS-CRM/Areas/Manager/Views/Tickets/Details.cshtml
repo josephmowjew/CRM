@@ -56,7 +56,7 @@
                 </div>
             </div>
             <hr />
-            <p class="font-normal mt-4">ATTACHMENTS</p>
+            <p class="font-normal p-3 mt-4 fw-bold">ATTACHMENTS</p>
             <div class="container">
                 <div class="row">
                     <div class="col-md-12">
@@ -68,11 +68,11 @@
                         <div class="col-md-3">
                             <div class="card">
                                 <div class="card-body">
-                                    <h5 class="card-title">
+                                    <h6 class="card-title">
                                         <i class="mdi mdi-file-pdf"></i>
                                         @attachment.FileName
-                                    </h5>
-                                    <a href="/../@attachment.Url" class="btn btn-primary" download>Download</a>
+                                    </h6>
+                                    <a href="/../@attachment.Url" class="btn btn-primary" download> <i class="mdi mdi-file-pdf"></i> Download</a>
                                 </div>
                             </div>
                         </div>
@@ -92,7 +92,7 @@
     <div class="card-body">
 
         <div class="row p-3">
-            <h5 class="font-normal mt-4 ">COMMENTS</h5>
+            <h5 class="font-normal mt-4 fw-bold">COMMENTS</h5>
             <hr class="mb-5" />
             <form>
                 <div class="row">
@@ -130,6 +130,40 @@
     </div>
 
 </div>
+<div class="card">
+    <div class="card-body">
+        <div class="row p-3">
+            <h5 class="font-normal mt-4 text-uppercase fw-bold">Ticket Audit</h5>
+            <hr class="mb-5" />
+
+             <table class="table table-bordered " id="audit_table">
+                <thead>
+                    <tr>
+                        <th>
+                            Previous State
+                        </th>
+                        <th>
+                            New State
+                        </th>
+                        <th>
+                            Reason For Change
+                        </th>
+                        <th>
+                             Action Done By
+                        </th>
+                          <th>
+                            Date Action Performed
+                        </th>
+                       
+                    </tr>
+                </thead>
+                <tbody>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
 
 @section Scripts{
 
@@ -190,6 +224,68 @@
                         }
                     },
 
+                ],
+                responsive: true,
+                "autoWidth": false,
+            });
+        });
+    </script>
+    <script>
+        $(document).ready(function () {
+            datatable = $('#audit_table').DataTable({
+
+
+                "processing": true,
+                "serverSide": true,
+                "order": [[0, "desc"]],
+                ajax: {
+                    url: '/manager/tickets/GetTicketAuditData/?ticketId=' + @Model.Id,
+                    type: 'post',
+                    datatype: 'Json',
+
+
+                },
+                columnDefs: [
+                    {
+                        defaultContent: "",
+                        targets: "_all",
+                        'orderable': true
+                    },
+                ],
+                columns: [
+
+                    {
+                        data: "previousState",
+                        name: "previousState",
+                        className: "text-left",
+                        "orderable": true,
+                    },
+                    {
+                        data: "newState",
+                        name: "newState",
+                        className: "text-left",
+                        "orderable": true,
+                    },
+                    {
+                        data: "reason",
+                        name: "reason",
+                        className: "text-left",
+                        "orderable": false,
+                    },
+                    {
+                        data: { state: "createdBy.email" },
+                        mRender: function (data, type, full) {
+                            return data.createdBy != null && data.createdBy.status != 'Deleted' ? data.createdBy.email : "";
+                        }, "name": "createdBy.email",
+                        className: "text-left"
+                    },
+                    {
+                        data: "formattedCreatedAt",
+                        name: "CreatedDate",
+                        className: "text-left",
+                        "orderable": true,
+                    }
+                    
                 ],
                 responsive: true,
                 "autoWidth": false,

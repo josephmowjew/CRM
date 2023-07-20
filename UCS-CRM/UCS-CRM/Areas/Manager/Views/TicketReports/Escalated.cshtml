@@ -183,7 +183,7 @@
                     {
                         data: { state: "member.accountNumber" },
                         mRender: function (data, type, full) {
-                            return data.member.accountNumber;
+                            return data.member != null ? data.member.accountNumber : "";
                         }, "name": "member.accountNumber",
                         className: "text-left"
                     },

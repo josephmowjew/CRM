@@ -11,6 +11,7 @@ using UCS_CRM.Core.DTOs.State;
 using UCS_CRM.Core.DTOs.Ticket;
 using UCS_CRM.Core.DTOs.TicketComment;
 using UCS_CRM.Core.DTOs.TicketEscalation;
+using UCS_CRM.Core.DTOs.TicketStateTracker;
 using UCS_CRM.Core.Helpers;
 using UCS_CRM.Core.Models;
 using UCS_CRM.Core.Services;
@@ -107,7 +108,7 @@ namespace UCS_CRM.Areas.SeniorManager.Controllers
                 string currentState = ticketDB.State.Name;
                 string currentAssignedUserId = ticketDB.AssignedToId;
                 string currentAssignedUserEmail = ticketDB?.AssignedTo?.Email;
-                int newStateId = (int)editTicketDTO.StateId;
+                int newStateId = editTicketDTO.StateId == null ? ticketDB.StateId : (int)editTicketDTO.StateId;
                 string newAssignedUserEmail = (await this._userRepository.FindByIdAsync(editTicketDTO.AssignedToId)).Email;
                 string newState = (await this._stateRepository.GetStateAsync(newStateId)).Name;
                 editTicketDTO.AssignedToId = editTicketDTO.AssignedToId == null ? ticketDB.AssignedToId : editTicketDTO.AssignedToId;
@@ -340,7 +341,35 @@ namespace UCS_CRM.Areas.SeniorManager.Controllers
             return PartialView("_SecondTicketEscalationPartial", createTicketEscalation);
         }
 
+        [HttpPost]
+        public async Task<ActionResult> GetTicketAuditData(int ticketId)
+        {
+            //datatable stuff
+            var draw = HttpContext.Request.Form["draw"].FirstOrDefault();
+            var start = HttpContext.Request.Form["start"].FirstOrDefault();
+            var length = HttpContext.Request.Form["length"].FirstOrDefault();
 
+            var sortColumn = HttpContext.Request.Form["columns[" + HttpContext.Request.Form["order[0][column]"].FirstOrDefault() + "][name]"].FirstOrDefault();
+            var sortColumnAscDesc = Request.Form["order[0][dir]"].FirstOrDefault();
+            var searchValue = Request.Form["search[value]"].FirstOrDefault();
+
+            int pageSize = length != null ? Convert.ToInt32(length) : 0;
+            int skip = start != null ? Convert.ToInt32(start) : 0;
+            int resultTotal = 0;
+
+            //create a cursor params based on the data coming from the datatable
+            CursorParams CursorParameters = new CursorParams() { SearchTerm = searchValue, Skip = skip, SortColum = sortColumn, SortDirection = sortColumnAscDesc, Take = pageSize };
+
+            resultTotal = await this._ticketStateTrackerRepository.TicketAuditTrailCountAsync(CursorParameters, ticketId);
+            var result = await this._ticketStateTrackerRepository.TicketAuditTrail(CursorParameters, ticketId);
+
+            //map the results to a read DTO
+
+            var mappedResult = this._mapper.Map<List<ReadTicketStateTrackerDTO>>(result);
+
+            return Json(new { draw = draw, recordsFiltered = resultTotal, recordsTotal = resultTotal, data = mappedResult });
+
+        }
         [HttpPost]
         public async Task<ActionResult> GetTickets(string status)
         {
@@ -502,6 +531,9 @@ namespace UCS_CRM.Areas.SeniorManager.Controllers
         private async Task<List<SelectListItem>> GetTicketStates()
         {
             var ticketStates = await this._stateRepository.GetStates();
+
+            ticketStates = ticketStates.Where(ts => ts.Name.Trim().ToLower() != Lambda.Closed.Trim().ToLower() && ts.Name.Trim().ToLower() != "Resolved".ToLower()).ToList();
+
 
             var ticketStatesList = new List<SelectListItem>();
 
