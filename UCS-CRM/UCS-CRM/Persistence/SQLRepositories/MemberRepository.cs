@@ -137,7 +137,7 @@ namespace UCS_CRM.Persistence.SQLRepositories
                    
 
 
-                    var records = (from tblOb in  this._context.Members.Include(m => m.MemberAccounts).OrderBy(m => m.Id).Skip(@params.Skip).Take(@params.Take).ToList() select tblOb);
+                    var records = (from tblOb in  this._context.Members.Include(m => m.MemberAccounts).Include(m => m.User).OrderBy(m => m.Id).Skip(@params.Skip).Take(@params.Take).ToList() select tblOb);
 
                     //accountTypes.AsQueryable().OrderBy("gjakdgdag");
 
@@ -154,7 +154,7 @@ namespace UCS_CRM.Persistence.SQLRepositories
                 {
                     //include search query
 
-                    var records = (from tblOb in await this._context.Members.Include(m => m.User).Include(m => m.MemberAccounts)
+                    var records = (from tblOb in await this._context.Members.Include(m => m.User).Include(m => m.MemberAccounts).Include(m => m.User)
                                    .Where(m => m.Status != Lambda.Deleted 
 
                                         && m.FirstName.ToLower().Trim().Contains(@params.SearchTerm) ||
