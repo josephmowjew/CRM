@@ -37,7 +37,13 @@ namespace UCS_CRM.Persistence.SQLRepositories
             string DEFAULT_PASSWORD = "P@$$w0rd";
             //create a user record from the member information
 
-            int pin = RandomNumber();   
+            int pin = RandomNumber();
+
+            var department = await this._context.Departments.FirstOrDefaultAsync(d => d.Name.Trim().ToLower() == "Customer Service and Member Engagement".Trim().ToLower());
+
+            var branch = await this._context.Branches.FirstOrDefaultAsync(b => b.Name.Trim().ToLower() == member.Branch.Trim().ToLower());
+
+
 
             ApplicationUser user = new()
             {
@@ -50,8 +56,19 @@ namespace UCS_CRM.Persistence.SQLRepositories
                 MemberId = member.Id,
                 EmailConfirmed = false,
                 Pin = pin,
-                LastPasswordChangedDate= DateTime.Now,
+                LastPasswordChangedDate = DateTime.Now,
+                
             };
+
+            if(department != null)
+            {
+                user.DepartmentId = department.Id;
+            }
+
+            if(branch != null)
+            {
+                user.BranchId = branch.Id;
+            }
 
 
             var recordPresence = this._context.Users.FirstOrDefault(u => u.Email == email);

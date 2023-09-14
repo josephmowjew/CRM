@@ -6,11 +6,11 @@ namespace UCS_CRM.Persistence.Interfaces
 {
     public interface IRoleRepositorycs
     {
-        IQueryable<Role> GetRoles(CursorParams @params);
+        List<Role> GetRoles(CursorParams @params);
 
         Task<Role> GetRoleAsync(string id);
         Task<List<Role>> GetRolesAsync();
-        Task<bool> Exists(string name);
+        Task<bool> Exists(string name, int rating = 0);
         Task<IdentityResult> remove(string id);
         void AddRole(Role identityRole);
         Task<IdentityResult> UpdateRoleAsync(Role identityRole);
