@@ -191,6 +191,7 @@ namespace UCS_CRM.Controllers
                     else
                     {
 
+                        
                         var result = await _signInManager.PasswordSignInAsync(loginModel.Email, loginModel.Password, loginModel.RememberMe, lockoutOnFailure: false);
 
                         //get the result of the login attemp

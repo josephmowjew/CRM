@@ -39,7 +39,7 @@ namespace UCS_CRM.Persistence.SQLRepositories
 
             return roles;
         }
-        public IQueryable<Role> GetRoles(CursorParams @params)
+        public List<Role> GetRoles(CursorParams @params)
         {
             if (@params.Take > 0)
             {
@@ -54,7 +54,7 @@ namespace UCS_CRM.Persistence.SQLRepositories
                     }
 
 
-                    return identityRolesList;
+                    return identityRolesList.ToList();
 
                 }
                 else
@@ -68,7 +68,7 @@ namespace UCS_CRM.Persistence.SQLRepositories
                     identityRolesList = identityRolesList.AsQueryable().OrderBy(@params.SortColum + " " + @params.SortDirection);
 
 
-                    return identityRolesList;
+                    return identityRolesList.ToList();
 
                 }
 
@@ -76,9 +76,14 @@ namespace UCS_CRM.Persistence.SQLRepositories
 
             return null;
         }
-        public async Task<bool> Exists(string name)
+        public async Task<bool> Exists(string name,int rating)
         {
-            var identityRole = await _roleManager.FindByNameAsync(name);
+            Role? identityRole = null;
+            if (rating != 0)
+            {
+                identityRole = await this._context.Roles.FirstOrDefaultAsync(r => r.Name.Trim().ToLower() == name.Trim().ToLower() && r.Rating == rating);
+            }
+             
 
            return (identityRole != null ? true : false);
         }

@@ -75,6 +75,7 @@ namespace UCS_CRM.Persistence.SQLRepositories
             List<Role> rolesOfCurrentUserDepartment = new();
             List<Role> SortedrolesOfCurrentUserDepartment = new();
             bool ticketAssignedToNewUser = false;
+            ApplicationUser newOfficialTicketHandler = null;
 
             if (ticket != null)
             {
@@ -129,6 +130,8 @@ namespace UCS_CRM.Persistence.SQLRepositories
                                         //assign the ticket this person and break out of the loop
 
                                         ticket.AssignedToId = newTicketHandler.Id;
+
+                                        newOfficialTicketHandler = newTicketHandler;
 
                                         ticketAssignedToNewUser = true;
 
@@ -200,7 +203,8 @@ namespace UCS_CRM.Persistence.SQLRepositories
 
                 //update the escalated to to reflect to new user assigned to the ticket
 
-                mappedTicketEscalation.EscalatedTo = ticket.AssignedTo;
+                //mappedTicketEscalation.EscalatedTo = ticket.AssignedTo;
+                mappedTicketEscalation.EscalatedTo = newOfficialTicketHandler;
 
 
                 //save to the database
@@ -534,18 +538,21 @@ namespace UCS_CRM.Persistence.SQLRepositories
             }
 
             var query = this._context.Tickets
-                .Include(t => t.Member)
+
                 .Include(t => t.AssignedTo)
                 .Include(t => t.TicketAttachments)
                 .Include(t => t.State)
                 .Include(t => t.TicketCategory)
                 .Include(t => t.TicketPriority)
                 .Include(t => t.TicketEscalations)
+                .Include(t => t.Member)
+                .ThenInclude(m => m.User)
+                .ThenInclude(u => u.Department)
                 .Where(t => t.Status != Lambda.Deleted);
 
             if (department != null)
             {
-                query = query.Where(t => t.AssignedTo.Department.Id == department.Id);
+                query = query.Where(t => t.Member.User.Department.Id == department.Id);
             }
 
             if (!string.IsNullOrEmpty(@params.SearchTerm))
@@ -582,18 +589,20 @@ namespace UCS_CRM.Persistence.SQLRepositories
             }
 
             var query = this._context.Tickets
-                .Include(t => t.Member)
                 .Include(t => t.AssignedTo)
                 .Include(t => t.TicketAttachments)
                 .Include(t => t.State)
                 .Include(t => t.TicketCategory)
                 .Include(t => t.TicketPriority)
                 .Include(t => t.TicketEscalations)
+                .Include(t => t.Member)
+                 .ThenInclude(m => m.User)
+                .ThenInclude(u => u.Department)
                 .Where(t => t.Status != Lambda.Deleted);
 
             if (department != null)
             {
-                query = query.Where(t => t.AssignedTo.Department.Id == department.Id);
+                query = query.Where(t => t.Member.User.Department.Id == department.Id);
             }
 
             if (!string.IsNullOrEmpty(@params.SearchTerm))

@@ -83,7 +83,7 @@ namespace UCS_CRM.Areas.Admin.Controllers
         // GET: RolesController/Edit/5
         public async Task<ActionResult> Edit(string id)
         {
-            var identityRole = await _roleRepository.GetRoleAsync(id);
+            var identityRole = await _roleRepository.GetRoleByIdAsync(id);
 
             return Json(identityRole);
         }
@@ -100,7 +100,7 @@ namespace UCS_CRM.Areas.Admin.Controllers
                 role.DataInvalid = "";
                 //check if the role name isn't already taken
 
-                bool isTaken = await _roleRepository.Exists(role.Name);
+                bool isTaken = await _roleRepository.Exists(role.Name, role.Rating);
 
                 if (isTaken)
                 {
@@ -109,7 +109,7 @@ namespace UCS_CRM.Areas.Admin.Controllers
 
                     return PartialView("_EditRolePartial", role);
                 }
-                var identityRole = await _roleRepository.GetRoleAsync(id);
+                var identityRole = await _roleRepository.GetRoleByIdAsync(id);
 
                 identityRole.Name = role.Name;
                 identityRole.Rating = role.Rating;
