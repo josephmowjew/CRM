@@ -26,7 +26,7 @@
                 </div>
                 <div class="form-group">
                     <label asp-for="MaximumResponseTimeHours" class="control-label"></label>
-                    <input asp-for="MaximumResponseTimeHours" placeholder="Ticket Priority" class="form-control" />
+                    <input asp-for="MaximumResponseTimeHours" type="number" step="0.5" placeholder="Ticket Priority" class="form-control" />
                     <span asp-validation-for="MaximumResponseTimeHours" class="text-danger"></span>
                 </div>
 
