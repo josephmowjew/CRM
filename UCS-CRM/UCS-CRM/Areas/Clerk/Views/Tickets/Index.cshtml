@@ -99,7 +99,8 @@
     <script>
         var datatable;
     </script>
-
+    <link href="~/css/dselect.css" rel="stylesheet" />
+    <script src="~/js/dselect.js"></script>
     <script src="~/js/ClerkTicket.js"></script>
     <script>
         $(document).ready(function () {
@@ -249,6 +250,30 @@
                 responsive: true,
                 "autoWidth": false,
             });
+        });
+    </script>
+
+
+
+
+
+    <script>
+        $(document).ready(function () {
+
+            let selectElements = document.querySelectorAll('.selectpicker')
+
+            selectElements.forEach(function (element) {
+
+                // search
+                dselect(element, {
+                    search: true
+                })
+            });
+
+            
+            //$('.edit_member_select').select2();
+
+            //$('.create_member_select').select2();
         });
     </script>
 

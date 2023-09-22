@@ -1129,6 +1129,8 @@ namespace UCS_CRM.Areas.Clerk.Controllers
         {
             var members = await this._memberRepository.GetMembers();
 
+            
+
             var membersList = new List<SelectListItem>();
 
             membersList.Add(new SelectListItem() { Text = "---- Select Member -------", Value = "" });

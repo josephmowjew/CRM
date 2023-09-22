@@ -126,6 +126,18 @@ function EditForm(id, area = "") {
         $("#edit_ticket_modal select[name ='MemberId']").val(data.memberId)
         $("#edit_ticket_modal input[name='Id']").val(data.id)
 
+        let selectElements = document.querySelectorAll('.selectpicker')
+
+        selectElements.forEach(function (element) {
+
+            // Create a new 'change' event
+            var event = new Event('change');
+
+            // Dispatch it.
+            element.dispatchEvent(event);
+        });
+
+
         //hook up an event to the update role button
 
         $("#edit_ticket_modal button[name='update_ticket_btn']").unbind().click(function () { updateTicket() })
