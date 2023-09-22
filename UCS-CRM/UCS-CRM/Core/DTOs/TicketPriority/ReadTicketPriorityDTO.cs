@@ -11,6 +11,6 @@ namespace UCS_CRM.Core.DTOs.TicketPriority
         [Display(Name = "Priority Level")]
         public int Value { get; set; }
         [Display(Name = "Maximum Response TimeHours")]
-        public int MaximumResponseTimeHours { get; set; }
+        public double MaximumResponseTimeHours { get; set; }
     }
 }

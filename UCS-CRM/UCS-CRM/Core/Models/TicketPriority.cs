@@ -10,6 +10,6 @@ namespace UCS_CRM.Core.Models
         public string Name { get; set; }
         [Required]
         public int Value { get; set; }
-        public int MaximumResponseTimeHours { get; set; }
+        public double MaximumResponseTimeHours { get; set; }
     }
 }

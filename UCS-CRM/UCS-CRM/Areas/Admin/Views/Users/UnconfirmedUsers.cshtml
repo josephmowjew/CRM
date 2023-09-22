@@ -72,9 +72,9 @@
                         Date Added
                     </th>
                     
-                    <th>
+                   @*  <th>
                         Action
-                    </th>
+                    </th> *@
 
                 </tr>
             </thead>
@@ -160,14 +160,14 @@
                         "orderable": true,
                     },
                    
-                    {
-                        data: "id",
-                        name: "id",
-                        "orderable": false,
-                        render: function (data) {
-                            return "<a href='#' type='button' onclick=ConfirmUser('" + data + "') title='Confirm User' class='mdi mdi-checkbox-marked-circle'> </a> <a href='#' type='button' onclick=Delete('" + data + "') title='delete' class='feather icon-trash-2'></a>"
-                        }
-                    }
+                    // {
+                    //     data: "id",
+                    //     name: "id",
+                    //     "orderable": false,
+                    //     render: function (data) {
+                    //         return "<a href='#' type='button' onclick=ConfirmUser('" + data + "') title='Confirm User' class='mdi mdi-checkbox-marked-circle'> </a> <a href='#' type='button' onclick=Delete('" + data + "') title='delete' class='feather icon-trash-2'></a>"
+                    //     }
+                    // }
                 ],
                 responsive: true,
                 "autoWidth": false,
