@@ -104,6 +104,8 @@
     <script src="~/js/ClerkTicket.js"></script>
     <script>
         $(document).ready(function () {
+
+            var ticketTypeValue = "@ViewBag.type";
             datatable = $('#my_table').DataTable({
 
 
@@ -112,6 +114,7 @@
                 "order": [[0, "desc"]],
                 ajax: {
                     url: '/clerk/tickets/GetTickets',
+                    data: { ticketType: ticketTypeValue },
                     type: 'post',
                     datatype: 'Json',
                     error: function (XMLHttpRequest, textStatus, errorThrown) {

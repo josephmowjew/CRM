@@ -66,8 +66,9 @@ namespace UCS_CRM.Areas.Clerk.Controllers
         }
 
         // GET: TicketsController
-        public async Task<ActionResult> Index()
+        public async Task<ActionResult> Index(string type = "")
         {
+            ViewBag.type = type;
             await populateViewBags();
 
             //find the currently logged in user
@@ -438,6 +439,7 @@ namespace UCS_CRM.Areas.Clerk.Controllers
         public async Task<ActionResult> GetTickets()
         {
             //datatable stuff
+            var type = HttpContext.Request.Form["ticketType"].FirstOrDefault();
             var draw = HttpContext.Request.Form["draw"].FirstOrDefault();
             var start = HttpContext.Request.Form["start"].FirstOrDefault();
             var length = HttpContext.Request.Form["length"].FirstOrDefault();
@@ -459,10 +461,10 @@ namespace UCS_CRM.Areas.Clerk.Controllers
 
             var claimsIdentitifier = userClaims.FindFirst(ClaimTypes.NameIdentifier);
 
-            resultTotal = await this._ticketRepository.GetAssignedToTicketsCountAsync(CursorParameters, claimsIdentitifier.Value);
+            resultTotal = await this._ticketRepository.GetAssignedToTicketsCountAsync(CursorParameters, claimsIdentitifier.Value,type);
 
 
-            var result = await this._ticketRepository.GetAssignedToTickets(CursorParameters, claimsIdentitifier.Value);
+            var result = await this._ticketRepository.GetAssignedToTickets(CursorParameters, claimsIdentitifier.Value,type);
             
            
 

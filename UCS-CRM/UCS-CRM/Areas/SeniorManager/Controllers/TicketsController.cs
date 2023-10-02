@@ -57,10 +57,10 @@ namespace UCS_CRM.Areas.SeniorManager.Controllers
         }
 
         // GET: TicketsController
-        public async Task<ActionResult> Index()
+        public async Task<ActionResult> Index(string type = "")
         {
             //await populateViewBags();
-
+            ViewBag.type = type;
             return View();
         }
 
@@ -374,6 +374,7 @@ namespace UCS_CRM.Areas.SeniorManager.Controllers
         public async Task<ActionResult> GetTickets(string status)
         {
             //datatable stuff
+            var type = HttpContext.Request.Form["ticketType"].FirstOrDefault();
             var draw = HttpContext.Request.Form["draw"].FirstOrDefault();
             var start = HttpContext.Request.Form["start"].FirstOrDefault();
             var length = HttpContext.Request.Form["length"].FirstOrDefault();
@@ -389,8 +390,8 @@ namespace UCS_CRM.Areas.SeniorManager.Controllers
             //create a cursor params based on the data coming from the datatable
             CursorParams CursorParameters = new CursorParams() { SearchTerm = searchValue, Skip = skip, SortColum = sortColumn, SortDirection = sortColumnAscDesc, Take = pageSize };
 
-            resultTotal = status == Lambda.Closed ? await this._ticketRepository.CountTicketsByStatus(status) : await this._ticketRepository.TotalCount();
-            var result = status == Lambda.Closed ? await this._ticketRepository.GetClosedTickets(CursorParameters) : await this._ticketRepository.GetTickets(CursorParameters);
+            resultTotal = status == Lambda.Closed ? await this._ticketRepository.CountTicketsByStatus(status) : await this._ticketRepository.TotalCount(type);
+            var result = status == Lambda.Closed ? await this._ticketRepository.GetClosedTickets(CursorParameters) : await this._ticketRepository.GetTickets(CursorParameters,null, type);
 
             //map the results to a read DTO
 
