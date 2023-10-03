@@ -97,5 +97,10 @@ namespace UCS_CRM.Persistence.SQLRepositories
         {
             return await this._context.States.CountAsync(s => s.Status == Lambda.Deleted);
         }
+
+        public async Task<int> TotalCount()
+        {
+            return await this._context.States.CountAsync();
+        }
     }
 }

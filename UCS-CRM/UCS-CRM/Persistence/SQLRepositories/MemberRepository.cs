@@ -194,7 +194,7 @@ namespace UCS_CRM.Persistence.SQLRepositories
 
         public async Task<int> TotalCount()
         {
-            return await this._context.Members.CountAsync();
+            return await this._context.Members.CountAsync(m => m.Status != Lambda.Deleted);
         }
 
         public async Task<Member?> GetMemberByNationalId(string nationalId)

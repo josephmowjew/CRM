@@ -10,18 +10,36 @@ namespace UCS_CRM.Areas.Admin.Controllers
     public class HomeController : Controller
     {
         private readonly ITicketRepository _ticketRepository;
+        private readonly IUserRepository _userRepository;
+        private readonly IDepartmentRepository _departmentRepository;
+        private readonly IStateRepository _stateRepository;
+        private readonly IBranchRepository _branchRepository;
+        private readonly IMemberRepository _memberRepository;
+        
 
-        public HomeController(ITicketRepository ticketRepository)
+        public HomeController(ITicketRepository ticketRepository,
+                              IUserRepository userRepository,
+                              IDepartmentRepository departmentRepository,
+                              IStateRepository stateRepository,
+                              IBranchRepository branchRepository,
+                              IMemberRepository memberRepository)
         {
-            _ticketRepository = ticketRepository;
+            this._ticketRepository = ticketRepository;
+            this._userRepository = userRepository;
+            this._departmentRepository = departmentRepository;
+            this._stateRepository = stateRepository;
+            this._branchRepository = branchRepository;
+            this._memberRepository = memberRepository;
+
         }
 
         public async Task<IActionResult> Index()
         {
-            ViewBag.allTicketsCount = await this.CountAllMyTickets();
-            ViewBag.closedTicketsCount = await this.CountTicketsByStatus("Closed");
-            ViewBag.openedTicketsCount = await this.CountTicketsByStatus("Open");
-            ViewBag.waitingTicketsCount = await this.CountTicketsByStatus("New");
+            ViewBag.departmentsCounts = await this.CountDepartmentsAvailable();
+            ViewBag.statesCount = await this.CountStatesAvailable();
+            ViewBag.branchesCount = await this.CountStatesAvailable();
+            ViewBag.usersCount = await this.CountUsersAvailable();
+            ViewBag.membersCount = await this.CountMembersAvailable();
             return View();
         }
 
@@ -66,6 +84,51 @@ namespace UCS_CRM.Areas.Admin.Controllers
 
             return count;
 
+        }
+
+        private async Task<int> CountUsersAvailable()
+        {
+            int count = 0;
+
+            count = await this._userRepository.TotalCount();
+
+            return count;
+        }
+
+        private async Task<int> CountDepartmentsAvailable()
+        {
+            int count = 0;
+
+            count = await this._departmentRepository.TotalCount();
+
+            return count;
+        }
+
+        private async Task<int> CountBranchesAvailable()
+        {
+            int count = 0;
+
+            count = await this._branchRepository.TotalCount();
+
+            return count;
+        }
+
+        private async Task<int> CountStatesAvailable()
+        {
+            int count = 0;
+
+            count = await this._stateRepository.TotalActiveCount();
+
+            return count;
+        }
+
+        private async Task<int> CountMembersAvailable()
+        {
+            int count = 0;
+
+            count = await this._memberRepository.TotalCount();
+
+            return count;
         }
     }
 }
