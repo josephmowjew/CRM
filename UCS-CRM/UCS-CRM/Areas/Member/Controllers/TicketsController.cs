@@ -56,9 +56,10 @@ namespace UCS_CRM.Areas.Member.Controllers
         }
 
         // GET: TicketsController
-        public async Task<ActionResult> Index()
+        public async Task<ActionResult> Index(string type = "")
         {
             await populateViewBags();
+            ViewBag.type = type;
 
             return View();
         }
@@ -527,6 +528,7 @@ namespace UCS_CRM.Areas.Member.Controllers
         public async Task<ActionResult> GetTickets()
         {
             //datatable stuff
+            var type = HttpContext.Request.Form["ticketType"].FirstOrDefault();
             var draw = HttpContext.Request.Form["draw"].FirstOrDefault();
             var start = HttpContext.Request.Form["start"].FirstOrDefault();
             var length = HttpContext.Request.Form["length"].FirstOrDefault();
@@ -539,7 +541,7 @@ namespace UCS_CRM.Areas.Member.Controllers
             int skip = start != null ? Convert.ToInt32(start) : 0;
             int resultTotal = 0;
 
-            //create a cursor params based on the data coming from the datatable
+            //create a cursor params based on the data coming from the data-table
             CursorParams CursorParameters = new CursorParams() { SearchTerm = searchValue, Skip = skip, SortColum = sortColumn, SortDirection = sortColumnAscDesc, Take = pageSize };
 
             
@@ -550,13 +552,13 @@ namespace UCS_CRM.Areas.Member.Controllers
 
             var member = await this._memberRepository.GetMemberByUserId(claimsIdentitifier.Value);
 
-            resultTotal = await this._ticketRepository.TotalCountByMember(member.Id);
+            resultTotal = await this._ticketRepository.TotalCountByMember(member.Id,type);
 
             List<Ticket?> result = new List<Ticket>();
 
             if(member != null)
             {
-                result = await this._ticketRepository.GetMemberTickets(CursorParameters,member.Id);
+                result = await this._ticketRepository.GetMemberTickets(CursorParameters,member.Id,type);
             }
             else
             {

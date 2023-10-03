@@ -16,6 +16,9 @@
 <div class="card">
     <div class="card-header">
         <h4 class="text-center text-uppercase">Tickets Available In The System</h4>
+        <div>
+        <img src="~/images/91.gif" id="spinner" />
+    </div>
     </div>
     <div class="card-body">
         <div class="table-responsive">
@@ -75,6 +78,8 @@
                 <script src="~/js/ManagerTicket.js"></script>
                 <script>
                     $(document).ready(function () {
+
+                        var ticketTypeValue = "@ViewBag.type";
                         datatable = $('#my_table').DataTable({
 
 
@@ -85,7 +90,7 @@
                                 url: '/seniormanager/tickets/GetTickets',
                                 type: 'post',
                                 data:{
-                                    status:"Active"
+                                    status: "Active", ticketType: ticketTypeValue
                                 },
                                 datatype: 'Json',
                                      error: function(XMLHttpRequest, textStatus, errorThrown) { 

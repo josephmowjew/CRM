@@ -20,8 +20,10 @@ namespace UCS_CRM.Areas.SeniorManager.Controllers
         {
             ViewBag.allTicketsCount = await this.CountAllMyTickets();
             ViewBag.closedTicketsCount = await this.CountTicketsByStatus("Closed");
-            ViewBag.openedTicketsCount = await this.CountTicketsByStatus("Open");
-            ViewBag.waitingTicketsCount = await this.CountTicketsByStatus("New");
+            ViewBag.archivedTicketsCount = await this.CountTicketsByStatus("Archived");
+            ViewBag.newTicketsCount = await this.CountTicketsByStatus("New");
+            ViewBag.resolvedTicketsCount = await this.CountTicketsByStatus("Resolved");
+            ViewBag.reopenedTicketsCount = await this.CountTicketsByStatus("Re-opened");
             return View();
         }
 

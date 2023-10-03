@@ -1,6 +1,8 @@
-﻿using Microsoft.AspNetCore.Authorization;
+﻿using iTextSharp.text;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
+using UCS_CRM.Core.Helpers;
 using UCS_CRM.Persistence.Interfaces;
 
 namespace UCS_CRM.Areas.Manager.Controllers
@@ -10,18 +12,22 @@ namespace UCS_CRM.Areas.Manager.Controllers
     public class HomeController : Controller
     {
         private readonly ITicketRepository _ticketRepository;
+        private readonly IUserRepository _userRepository;
 
-        public HomeController(ITicketRepository ticketRepository)
+        public HomeController(ITicketRepository ticketRepository, IUserRepository userRepository)
         {
             _ticketRepository = ticketRepository;
+            _userRepository = userRepository;
         }
 
         public async Task<IActionResult> Index()
         {
-            ViewBag.allTicketsCount = await this.CountAllMyTickets();
+            ViewBag.allTicketsCount = await this.CountTicketsByStatus("");
             ViewBag.closedTicketsCount = await this.CountTicketsByStatus("Closed");
-            ViewBag.openedTicketsCount = await this.CountTicketsByStatus("Open");
-            ViewBag.waitingTicketsCount = await this.CountTicketsByStatus("New");
+            ViewBag.archivedTicketsCount = await this.CountTicketsByStatus("Archived");
+            ViewBag.newTicketsCount = await this.CountTicketsByStatus("New");
+            ViewBag.resolvedTicketsCount = await this.CountTicketsByStatus("Resolved");
+            ViewBag.reopenedTicketsCount = await this.CountTicketsByStatus("Re-opened");
             return View();
         }
 
@@ -55,7 +61,15 @@ namespace UCS_CRM.Areas.Manager.Controllers
 
             var claimsIdentitifier = userClaims.FindFirst(ClaimTypes.NameIdentifier);
 
-            int myTickets = await this._ticketRepository.CountTicketsByStatus(status);
+            var findUserDb = await this._userRepository.GetUserWithRole(User.Identity.Name);
+
+
+            //int myTickets = await this._ticketRepository.CountTicketsByStatus(status);
+
+            CursorParams CursorParameters = new CursorParams() { Take = 10};
+
+
+            int myTickets = await this._ticketRepository.GetTicketsTotalFilteredAsync(CursorParameters, findUserDb.Department, status);
 
             if (myTickets > 0)
             {

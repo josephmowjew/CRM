@@ -4,6 +4,7 @@
     var host = Configuration.GetSection("HostingSettings")["Host"];
     var path = Configuration.GetSection("HostingSettings")["path"];
     var protocol = Configuration.GetSection("HostingSettings")["Protocol"];
+    
 }
 @{
     ViewData["Title"] = "Tickets";
@@ -34,7 +35,7 @@
                             Title
                         </th>
                         <th>
-                            Memeber Account
+                            Member Account
                         </th>
                          <th>
                             Member Branch
@@ -73,14 +74,18 @@
 
 @section Scripts{
 
+    
     <script>
         var datatable;
+        
     </script>
     <link href="~/css/dselect.css" rel="stylesheet" />
     <script src="~/js/dselect.js"></script>
     <script src="~/js/ManagerTicket.js"></script>
     <script>
         $(document).ready(function () {
+
+            var ticketTypeValue = "@ViewBag.type";
             datatable = $('#my_table').DataTable({
 
 
@@ -89,6 +94,7 @@
                 "order": [[0, "desc"]],
                 ajax: {
                     url: '/manager/tickets/GetTickets',
+                    data: { ticketType: ticketTypeValue },
                     type: 'post',
                     datatype: 'Json',
                     error: function (XMLHttpRequest, textStatus, errorThrown) {
