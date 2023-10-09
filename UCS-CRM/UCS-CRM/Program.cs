@@ -123,8 +123,8 @@ ITicketRepository ticket = scope.ServiceProvider.GetRequiredService<ITicketRepos
 
 //BackgroundJob.Schedule(() => ticket.UnAssignedTickets(), TimeSpan.FromSeconds(10));
 //BackgroundJob.Schedule(() => ticket.EscalatedTickets(), TimeSpan.FromHours(1));
-//RecurringJob.AddOrUpdate("TicketReminder", () => ticket.SendTicketReminders(), Cron.MinuteInterval(15));
-//RecurringJob.AddOrUpdate("EscalatedTickets", () => ticket.EscalatedTickets(), "* 15 * * * *");
+//RecurringJob.AddOrUpdate("TicketReminder", () => ticket.SendTicketReminders(), Cron.MinuteInterval(10));
+//RecurringJob.AddOrUpdate("EscalatedTickets", () => ticket.SendEscalatedTicketsReminder(), Cron.MinuteInterval(10));
 
 
 app.Run();

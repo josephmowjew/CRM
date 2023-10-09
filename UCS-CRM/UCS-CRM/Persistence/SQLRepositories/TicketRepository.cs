@@ -1338,15 +1338,8 @@ namespace UCS_CRM.Persistence.SQLRepositories
         }
         public async Task<int> CountTicketsByStatusMember(string state, int memberId)
         {
-            //if (state == Lambda.Closed)
-            //{
-            //    return await this._context.Tickets.Include(t => t.State).CountAsync(t => t.Status == Lambda.Deleted & (t.State.Name.Trim().ToLower() == state.Trim().ToLower() || t.ClosedDate != null) && t.MemberId == memberId);
 
-            //}
-            //else
-            //{
                 return await this._context.Tickets.Include(t => t.State).CountAsync(t => t.Status != Lambda.Deleted & t.State.Name.Trim().ToLower() == state.Trim().ToLower() && t.MemberId == memberId);
-            ////}
           
         }
         public async Task<int> CountTicketsByStatusAssignedTo(string state, string assignedToId)
@@ -1498,22 +1491,27 @@ namespace UCS_CRM.Persistence.SQLRepositories
 
             return string.Empty;
         }
-        public async Task<string> EscalatedTickets()
+        public async Task<string> SendEscalatedTicketsReminder()
         {
             var tickets = new List<TicketEscalation>();
 
-            tickets = await _context.TicketEscalations.Include(t=>t.Ticket).Include(t => t.EscalatedTo).Where(i => DateTime.Now > i.CreatedDate.AddHours(1) && i.Resolved == false && i.Status != Lambda.Deleted).ToListAsync();
+            tickets = await _context.TicketEscalations
+                .Include(t => t.EscalatedTo)
+                .Include(t=>t.Ticket)
+                .ThenInclude(t => t.TicketPriority)
+                .Where(i => DateTime.Now > i.CreatedDate
+                .AddHours(i.Ticket.TicketPriority.Value) && i.Resolved == false && i.Status != Lambda.Deleted).ToListAsync();
 
-            // sending emails for all the issues that have not been assigned yet or they are on waiting for support
+            // sending reminder email
             string status = "";
             try
             {
                 foreach (var ticket in tickets)
                 {
-                    //email to send to
-                    //var levelTo = ticket.EscalationLevel == 1 ? Lambda.Manager : Lambda.SeniorManager;
 
-                    var emailAddress = await _context.EmailAddresses.FirstOrDefaultAsync(o => o.Owner == ticket.EscalatedTo.Email);
+                    //var emailAddress = await _context.EmailAddresses.FirstOrDefaultAsync(o => o.Owner == ticket.EscalatedTo.Email);
+
+                    var emailAddress = ticket.EscalatedTo;
 
                     if (emailAddress != null)
                     {
