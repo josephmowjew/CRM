@@ -47,7 +47,7 @@
                 </div>
                 <div class="form-group">
                     <label asp-for="AssignedToId"></label>
-                    <select asp-for="AssignedToId" asp-items="@ViewBag.Assignees" class="form-control" style="width:100%"></select>
+                    <select asp-for="AssignedToId" asp-items="@ViewBag.Assignees" class="form-control selectpicker" style="width:100%"></select>
                     <span asp-validation-for="AssignedToId" class="text-danger"></span>
                 </div>
                 <div class="form-group">

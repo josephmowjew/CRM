@@ -222,13 +222,13 @@ namespace UCS_CRM.Areas.Admin.Controllers
             return Json(new { status = "error", message = "department could not be found from the system" });
         }
      
-        public async Task<ActionResult> DeleteRoleOnDepartment(string roleId, int departmentId)
+        public async Task<ActionResult> DeleteRoleOnDepartment(string positionId, int departmentId)
         {
             var departmentDb = await this._departmentRepository.GetDepartment(departmentId);
 
             if (departmentDb != null)
             {
-                var role = await this._roleRepositorycs.GetRoleAsync(roleId);
+                var role = await this._roleRepositorycs.GetRoleByIdAsync(positionId);
                 if(role != null)
                 {
                     departmentDb.Roles.Remove(role);
