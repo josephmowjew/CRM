@@ -1,18 +1,20 @@
 ﻿$(function () {
 
+    hideSpinner();
+
     //hook up a click event to the login button
 
     var createUserButton = $("#set_email_modal button[name='create_account_btn']").unbind().click(CreateUserAccount);
     
     function CreateUserAccount() {
 
+        showSpinner();
 
         let id = $("#set_email_modal input[name = 'Id']").val()
         let email = $("#set_email_modal input[name = 'Email']").val()
 
         var form_url = $("#set_email_modal form").attr("action");
 
-        console.log(form_url)
         //get the record from the database
 
         var userInput = {
@@ -25,6 +27,8 @@
             type: 'POST',
             data: userInput,
             success: function (data) {
+
+                hideSpinner();
 
                 //parse whatever comes back to html
 
@@ -71,6 +75,7 @@
             error: function (xhr, ajaxOtions, thrownError) {
 
                 console.error(xhr.responseText)
+                hideSpinner();
             }
 
         });
@@ -98,16 +103,20 @@ function set_email_modal(id) {
 
 function removeUserAccount(id) {
 
+
     bootbox.confirm("Are you sure you want to remove this member's user account from the system?", function (result) {
 
 
         if (result) {
+            showSpinner();
             $.ajax({
                 url: 'members/DeleteUserAccount/' + id,
                 type: 'POST',
 
             }).done(function (data) {
-                console.log(data)
+
+                hideSpinner();
+           
                 if (data.status == "success") {
 
                     toastr.success(data.message)
@@ -126,11 +135,23 @@ function removeUserAccount(id) {
 
                 toastr.error(response.responseText)
 
+                hideSpinner();
+
                 datatable.ajax.reload();
             });
         }
 
 
     });
+}
+
+// Function to start the spinner
+function showSpinner() {
+    document.getElementById('spinner').style.display = 'block';
+}
+
+// Function to stop the spinner
+function hideSpinner() {
+    document.getElementById('spinner').style.display = 'none';
 }
 
