@@ -95,16 +95,23 @@ namespace UCS_CRM.Persistence.SQLRepositories
             else
             {
 
-                 await this._userManager.CreateAsync(user, password ?? DEFAULT_PASSWORD);
-               
-               
+                var userResult = await this._userManager.CreateAsync(user,DEFAULT_PASSWORD);
 
-                var roleResult =  await this._userManager.AddToRoleAsync(user, "Member");
-
-                if(roleResult.Succeeded)
+                if (userResult.Succeeded)
                 {
-                    return user;
+                    var roleResult = await this._userManager.AddToRoleAsync(user, "Member");
+
+                    if (roleResult.Succeeded)
+                    {
+                        return user;
+                    }
+
                 }
+               
+               
+
+               
+
 
                 return null;
             }
