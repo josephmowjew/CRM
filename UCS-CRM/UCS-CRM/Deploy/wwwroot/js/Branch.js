@@ -36,7 +36,6 @@
             contentType: false,
             success: function (data) {
 
-                console.log(data)
                 toastr.clear()
                 //parse whatever comes back to html
 
