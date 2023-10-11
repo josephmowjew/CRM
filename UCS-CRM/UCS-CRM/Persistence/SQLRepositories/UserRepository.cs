@@ -331,7 +331,7 @@ namespace UCS_CRM.Persistence.SQLRepositories
             return userViewModels;
         }
 
-        public async Task<UserViewModel> GetUserWithRole(string email)
+        public async Task<UserViewModel> GetUserWithRole(string email, bool confirmAccountsCheck = true)
         {
             //Initialize the mapper
             var config = new MapperConfiguration(cfg =>
@@ -340,7 +340,18 @@ namespace UCS_CRM.Persistence.SQLRepositories
 
             Mapper mapper = new Mapper(config);
 
-            var user = await this._context.Users.Include(u => u.Department).Where(u => u.Email == email && u.Status != Lambda.Deleted && u.EmailConfirmed == true).FirstOrDefaultAsync();
+            ApplicationUser? user = null;
+
+            if (confirmAccountsCheck)
+            {
+                user = await this._context.Users.Include(u => u.Department).Where(u => u.Email == email && u.Status != Lambda.Deleted && u.EmailConfirmed == true).FirstOrDefaultAsync();
+
+            }
+            else
+            {
+                user = await this._context.Users.Include(u => u.Department).Where(u => u.Email == email && u.Status != Lambda.Deleted).FirstOrDefaultAsync();
+
+            }
 
             //convert the list of users records to a list of UserViewModels
 
@@ -416,6 +427,18 @@ namespace UCS_CRM.Persistence.SQLRepositories
 
             return await this._context.Users.FirstOrDefaultAsync(u => u.Id == id && u.Pin == pin && u.DeletedDate == null);
 
+        }
+
+        public async Task<ApplicationUser> FindUserByPin(int pin)
+        {
+            return await this._context.Users.FirstOrDefaultAsync(u => u.Pin == pin);
+        }
+
+        public void ConfirmUserAccount(ApplicationUser applicationUser)
+        {
+            applicationUser.EmailConfirmed = true;
+
+            //invoke data store synchronization 
         }
 
         //generating a 6 digit number

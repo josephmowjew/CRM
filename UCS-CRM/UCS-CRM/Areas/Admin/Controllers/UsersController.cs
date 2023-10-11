@@ -11,6 +11,7 @@ using UCS_CRM.Core.Models;
 using Microsoft.AspNetCore.Identity;
 using System.Data;
 using Microsoft.IdentityModel.Tokens;
+using System.Security.Claims;
 
 namespace UCS_CRM.Areas.Admin.Controllers
 {
@@ -88,6 +89,13 @@ namespace UCS_CRM.Areas.Admin.Controllers
 
             await populateViewBags();
 
+            //get the current user ID
+
+            var userClaims = (ClaimsIdentity)User.Identity;
+
+            var claimsIdentitifier = userClaims.FindFirst(ClaimTypes.NameIdentifier);
+
+
             if (ModelState.IsValid)
             {
                 userViewModel.DataInvalid = "";
@@ -107,8 +115,11 @@ namespace UCS_CRM.Areas.Admin.Controllers
                     DepartmentId = userViewModel.DepartmentId,
                     LastPasswordChangedDate = DateTime.Now,
                     BranchId = userViewModel.BranchId,
+                    CreatedById = claimsIdentitifier.Value
 
                 };
+
+                
 
                 //check if the user is already in the system
                 var recordPresence = this._userRepository.Exists(applicationUser);
@@ -411,9 +422,13 @@ namespace UCS_CRM.Areas.Admin.Controllers
                 roles.Add(new SelectListItem { Text = r.Name, Value = r.Name });
             });
 
-           
+
+            var userClaims = (ClaimsIdentity)User.Identity;
+
+            var claimsIdentitifier = userClaims.FindFirst(ClaimTypes.NameIdentifier);
 
 
+            ViewBag.currentUserId = claimsIdentitifier.Value;
             ViewBag.rolesList = roles;
 
 

@@ -32,7 +32,7 @@ namespace UCS_CRM.Persistence.SQLRepositories
 
         }
 
-        public async Task<ApplicationUser?> CreateUserAccount(Member member, string email,string password = "")
+        public async Task<ApplicationUser?> CreateUserAccount(Member member, string email,string password = "", string createdBy = "")
         {
             string DEFAULT_PASSWORD = "P@$$w0rd";
             //create a user record from the member information
@@ -59,6 +59,11 @@ namespace UCS_CRM.Persistence.SQLRepositories
                 LastPasswordChangedDate = DateTime.Now,
                 
             };
+
+            if(!string.IsNullOrEmpty(createdBy))
+            {
+                user.CreatedById = createdBy;
+            }
 
             if(department != null)
             {

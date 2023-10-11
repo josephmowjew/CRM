@@ -15,7 +15,7 @@ namespace UCS_CRM.Persistence.Interfaces
         Task<Member?> GetMemberByNationalId(string nationalId);
 
         Task<List<Member>?> GetMembers();
-        Task<ApplicationUser?> CreateUserAccount(Member member, string email, string password = "");
+        Task<ApplicationUser?> CreateUserAccount(Member member, string email, string password = "", string createdBy = "");
         Task<Member?> GetMemberByUserId(string userId);
         int RandomNumber();
     }

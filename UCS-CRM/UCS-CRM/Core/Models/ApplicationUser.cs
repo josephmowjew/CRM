@@ -47,7 +47,8 @@ namespace UCS_CRM.Core.Models
         public Branch? Branch { get; set; }
         public ICollection<Branch> Branches { get; set; }
 
-
+        public string? CreatedById { get; set; } = "";
+        public virtual ApplicationUser? CreatedBy { get; set; }
 
         //public int? PositionId { get; set; }
         //public Position? Position { get; set; }
