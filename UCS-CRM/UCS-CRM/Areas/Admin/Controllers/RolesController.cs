@@ -52,11 +52,11 @@ namespace UCS_CRM.Areas.Admin.Controllers
                 role.DataInvalid = "";
                 //check if the role name isn't already taken
 
-                bool isTaken = await _roleRepository.Exists(role.Name);
+                bool isTaken = await _roleRepository.Exists(role.Name, role.Rating);
                 if (isTaken)
                 {
                     ModelState.AddModelError(nameof(role.Name), $"The Role {role.Name} is already taken");
-
+                    role.DataInvalid = "true";
                     return PartialView("_CreateRolePartial", role);
                 }
                 var identityRole = new Role();
