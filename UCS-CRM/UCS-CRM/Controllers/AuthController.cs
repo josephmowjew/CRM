@@ -78,7 +78,7 @@ namespace UCS_CRM.Controllers
                     {
                         return RedirectToAction("Index", "Home", new { Area = "Admin" });
                     }
-                    if (roles.Contains("Clerk", StringComparison.OrdinalIgnoreCase) || roles.Contains("Member Engagements officer", StringComparison.OrdinalIgnoreCase))
+                    if (roles.Contains("Clerk", StringComparison.OrdinalIgnoreCase) || roles.Contains("Member Engagements officer", StringComparison.OrdinalIgnoreCase) || roles.Contains("Teller", StringComparison.OrdinalIgnoreCase))
                     {
                         return RedirectToAction("Index", "Home", new { Area = "Clerk" });
                     }

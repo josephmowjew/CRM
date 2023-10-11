@@ -22,7 +22,7 @@ namespace UCS_CRM.Persistence.SQLRepositories
         public Department? Exists(string departmentName)
         {
 
-            return this._context.Departments.FirstOrDefault(d => d.Name.Trim().ToLower() == departmentName.Trim().ToLower() && d.Status != Lambda.Deleted);
+            return this._context.Departments.Include(d => d.Roles).FirstOrDefault(d => d.Name.Trim().ToLower() == departmentName.Trim().ToLower() && d.Status != Lambda.Deleted);
         }
 
         public Task<Department?> GetDepartment(int id)
