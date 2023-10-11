@@ -164,9 +164,11 @@ namespace UCS_CRM.Controllers
         }
 
         [HttpGet]
-        public IActionResult ConfirmAccount()
+        public IActionResult ConfirmAccount(string email)
         {
             ViewBag.response = $"Check your email for the pin";
+
+            ViewBag.email = email;
             return View();
         }
 
@@ -177,7 +179,7 @@ namespace UCS_CRM.Controllers
         {
             //find the account with this pin
 
-            ApplicationUser userDb = await this._userRepository.FindUserByPin(confirmPin.Pin);
+            ApplicationUser userDb = await this._userRepository.FindByEmailsync(confirmPin.Email);
 
             if(userDb !=  null)
             {
@@ -221,7 +223,7 @@ namespace UCS_CRM.Controllers
                         
                         _emailService.SendMail(loginModel.Email, "Login Details", UserNameBody);
 
-                        return RedirectToActionPermanent("ConfirmAccount");
+                        return RedirectToActionPermanent("ConfirmAccount", new {email = findUserDb.Email});
                     }
                     else if(findUserDb.LastPasswordChangedDate < DateTime.Now)
                     {

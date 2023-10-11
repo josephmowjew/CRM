@@ -18,6 +18,7 @@ namespace UCS_CRM.Core.ViewModels
 
     public class ConfirmPin
     {
-        public int Pin { get; set; } 
+        public int Pin { get; set; }
+        public string? Email { get; set; } = "";
     }
 }
