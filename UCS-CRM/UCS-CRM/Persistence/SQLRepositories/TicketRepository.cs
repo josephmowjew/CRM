@@ -150,7 +150,17 @@ namespace UCS_CRM.Persistence.SQLRepositories
 
                                 //check if the ticket is already in the the branch networks and satellites department
 
-                                if (currentAssignedUserDepartment.Name.Trim().ToLower() == "Branch Networks and satellites Department".Trim().ToLower())
+                                if(currentAssignedUserDepartment.Name.Equals("Branches",StringComparison.OrdinalIgnoreCase))
+                                {
+                                    ticket.AssignedToId = await this.AssignTicketToDepartment("Customer Service and Member Engagement");
+
+                                    if (!string.IsNullOrEmpty(ticket.AssignedToId))
+                                    {
+                                        ticketAssignedToNewUser = true;
+                                    }
+                                }
+
+                                else if (currentAssignedUserDepartment.Name.Trim().ToLower() == "Branch Networks and satellites Department".Trim().ToLower())
                                 {
                                     ticket.AssignedToId = await this.AssignTicketToDepartment("Executive suite");
 
@@ -205,7 +215,12 @@ namespace UCS_CRM.Persistence.SQLRepositories
                 //update the escalated to to reflect to new user assigned to the ticket
 
                 //mappedTicketEscalation.EscalatedTo = ticket.AssignedTo;
+
+                newOfficialTicketHandler = await this._userRepository.FindByIdAsync(ticket.AssignedToId);
+
                 mappedTicketEscalation.EscalatedTo = newOfficialTicketHandler;
+
+                
 
 
                 //save to the database
@@ -340,6 +355,7 @@ namespace UCS_CRM.Persistence.SQLRepositories
                     var listOfUsers = await this._userRepository.GetUsersInRole(SortedrolesOfCurrentUserDepartment[i].Name);
 
                     //get the first user if available
+                    //Note for later, get the user with least assigned on closed tickets assigned to them
 
                     var newTicketHandler = listOfUsers.FirstOrDefault();
 
@@ -348,6 +364,12 @@ namespace UCS_CRM.Persistence.SQLRepositories
                         //assign the ticket this person and break out of the loop
 
                         assignedToId = newTicketHandler.Id;
+
+                        if(!string.IsNullOrEmpty(assignedToId))
+                        {
+
+                            return assignedToId;
+                        };
                     }
 
                 }
