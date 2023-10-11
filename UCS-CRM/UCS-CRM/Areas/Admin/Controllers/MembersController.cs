@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 using UCS_CRM.Areas.Admin.ViewModels;
 using UCS_CRM.Core.DTOs.Member;
 using UCS_CRM.Core.Helpers;
@@ -57,7 +58,13 @@ namespace UCS_CRM.Areas.Admin.Controllers
 
                 if (databaseMemberRecord != null)
                 {
-                    ApplicationUser? user =  await this._memberRepository.CreateUserAccount(databaseMemberRecord, model.Email);
+
+                    var userClaims = (ClaimsIdentity)User.Identity;
+
+                    var claimsIdentitifier = userClaims.FindFirst(ClaimTypes.NameIdentifier);
+
+
+                    ApplicationUser? user =  await this._memberRepository.CreateUserAccount(databaseMemberRecord, model.Email, "",claimsIdentitifier.Value);
 
                     user.Pin = pin;
 

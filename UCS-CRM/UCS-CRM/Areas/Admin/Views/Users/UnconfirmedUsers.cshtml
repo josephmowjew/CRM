@@ -104,9 +104,8 @@
                     url: 'users/GetUnconfirmedUsers',
                     type: 'post',
                     datatype: 'Json',
-                   
-                   
-              },
+
+                },
                 columnDefs: [
                     {
                         defaultContent: "",
@@ -145,29 +144,34 @@
                         className: "text-left",
                         "orderable": true,
                     },
-                     {
+                    {
                         data: "roleName",
                         name: "role",
                         className: "text-left",
                         "orderable": true,
                     },
 
-                    
-                     {
+
+                    {
                         data: "formattedCreatedDate",
                         name: "createdDate",
                         className: "text-left",
                         "orderable": true,
                     },
+
+                    {
+                        data: { state: "id" },
+                        mRender: function (data, type, full) {
+
+                            if (data.createdById != "@ViewBag.currentUserId") {
+                                return "<a href='#' type='button' onclick=ConfirmUser('" + data.id + "') title='Confirm User' class='mdi mdi-checkbox-marked-circle'> </a> <a href='#' type='button' onclick=Delete('" + data.id + "') title='delete' class='feather icon-trash-2'></a>";
+
+                            }
+                        }, "name": "id",
+                        className: "text-left"
+                    },
                    
-                    // {
-                    //     data: "id",
-                    //     name: "id",
-                    //     "orderable": false,
-                    //     render: function (data) {
-                    //         return "<a href='#' type='button' onclick=ConfirmUser('" + data + "') title='Confirm User' class='mdi mdi-checkbox-marked-circle'> </a> <a href='#' type='button' onclick=Delete('" + data + "') title='delete' class='feather icon-trash-2'></a>"
-                    //     }
-                    // }
+                   
                 ],
                 responsive: true,
                 "autoWidth": false,
