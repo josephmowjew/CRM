@@ -163,6 +163,40 @@ namespace UCS_CRM.Controllers
             return View();
         }
 
+        [HttpGet]
+        public IActionResult ConfirmAccount()
+        {
+            ViewBag.response = $"Check your email for the pin";
+            return View();
+        }
+
+        [AllowAnonymous]
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ConfirmAccount(ConfirmPin confirmPin)
+        {
+            //find the account with this pin
+
+            ApplicationUser userDb = await this._userRepository.FindUserByPin(confirmPin.Pin);
+
+            if(userDb !=  null)
+            {
+                this._userRepository.ConfirmUserAccount(userDb);
+
+                //save changes to the database
+
+                await this._unitOfWork.SaveToDataStore();
+
+                TempData["response"] = "Your account has been activated successfully";
+
+                return RedirectToActionPermanent("Create");
+            }
+
+            TempData["errorResponse"] = "no account was found to activate";
+
+            return View();
+            
+        }
         [AllowAnonymous]
         [HttpPost]
         [ValidateAntiForgeryToken]
@@ -172,15 +206,24 @@ namespace UCS_CRM.Controllers
 
             if (ModelState.IsValid)
             {
-                //try to login the user with the credetials provided
 
                 //check if the email belongs to an administrator before proceeding
 
-                var findUserDb = await this._userRepository.GetUserWithRole(loginModel.Email);
+                var findUserDb = await this._userRepository.GetUserWithRole(loginModel.Email, false);
 
                 if (findUserDb != null)
                 {
-                    if (findUserDb.LastPasswordChangedDate < DateTime.Now)
+                    if(findUserDb.EmailConfirmed == false)
+                    {
+                        //send pin to email
+
+                        string UserNameBody = @"Here is the One time Pin (OTP) for your account on UCS: <strong>" + findUserDb.Pin + "</strong> <br /> ";
+                        
+                        _emailService.SendMail(loginModel.Email, "Login Details", UserNameBody);
+
+                        return RedirectToActionPermanent("ConfirmAccount");
+                    }
+                    else if(findUserDb.LastPasswordChangedDate < DateTime.Now)
                     {
                         var model = new ResetPassword { Token = "", Email = findUserDb.Email };
 

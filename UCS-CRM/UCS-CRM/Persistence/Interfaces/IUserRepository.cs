@@ -14,7 +14,7 @@ namespace UCS_CRM.Persistence.Interfaces
 
         Task<List<UserViewModel>> GetUsersWithRoles(CursorParams @params);
 
-        Task<UserViewModel> GetUserWithRole(string email);
+        Task<UserViewModel> GetUserWithRole(string email, bool confirmAccountsCheck = true);
         Task<List<UserViewModel>> GetStuff();
         ApplicationUser? Exists(ApplicationUser applicationUser);
         Task<ApplicationUser?> GetSingleUser(string id, bool includeRelated = true);
@@ -52,5 +52,9 @@ namespace UCS_CRM.Persistence.Interfaces
         Task<Role> GetRoleAsync(string userId);
 
         Task<List<ApplicationUser>?> GetUsersInRole(string roleName);
+
+        Task<ApplicationUser> FindUserByPin(int pin);
+
+        void ConfirmUserAccount(ApplicationUser applicationUser);
     }
 }
