@@ -82,10 +82,14 @@ namespace UCS_CRM.Areas.Admin.Controllers
 
                     string UserNameBody = "An account has been created on UCS SACCO. Your email is " + "<b>" + user.Email + " <br /> ";
                     string PasswordBody = "An account has been created on UCS SACCO App. Your password is " + "<b> P@$$w0rd <br />";
+                    //send pin to email
 
+                    string AccountActivationBody = @"Here is the One time Pin (OTP) for your account on UCS: <strong>" + user.Pin + "</strong> <br /> ";
+
+                   
 
                     //check if this is a new user or not (old users will have a deleted date field set to an actual date)
-                    if(user.DeletedDate != null)
+                    if (user.DeletedDate != null)
                     {
                         _emailService.SendMail(user.Email, "Account Status", $"Good day, We are pleased to inform you that your account has been reactivated on the UCS SACCO. You may proceed to login using your previous credentials. ");
 
@@ -94,6 +98,7 @@ namespace UCS_CRM.Areas.Admin.Controllers
                     {
                         _emailService.SendMail(user.Email, "Login Details", UserNameBody);
                         _emailService.SendMail(user.Email, "Login Details", PasswordBody);
+                        _emailService.SendMail(user.Email, "Account Activation", AccountActivationBody);
                         _emailService.SendMail(user.Email, "Account Details", $"Good day, for those who have not yet registered with Gravator, please do so so that you may upload an avatar of yourself that can be associated with your email address and displayed on your profile in the Mental Lab application.\r\nPlease visit https://en.gravatar.com/ to register with Gravatar. ");
 
 

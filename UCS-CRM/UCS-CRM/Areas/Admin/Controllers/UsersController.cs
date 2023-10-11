@@ -12,6 +12,7 @@ using Microsoft.AspNetCore.Identity;
 using System.Data;
 using Microsoft.IdentityModel.Tokens;
 using System.Security.Claims;
+using UCS_CRM.Persistence.SQLRepositories;
 
 namespace UCS_CRM.Areas.Admin.Controllers
 {
@@ -95,6 +96,7 @@ namespace UCS_CRM.Areas.Admin.Controllers
 
             var claimsIdentitifier = userClaims.FindFirst(ClaimTypes.NameIdentifier);
 
+            int pin = RandomNumber();
 
             if (ModelState.IsValid)
             {
@@ -115,7 +117,8 @@ namespace UCS_CRM.Areas.Admin.Controllers
                     DepartmentId = userViewModel.DepartmentId,
                     LastPasswordChangedDate = DateTime.Now,
                     BranchId = userViewModel.BranchId,
-                    CreatedById = claimsIdentitifier.Value
+                    CreatedById = claimsIdentitifier.Value,
+                    Pin = pin
 
                 };
 
@@ -168,9 +171,13 @@ namespace UCS_CRM.Areas.Admin.Controllers
                             //string pin = "An account has been created on UCS SACCO. Your pin is " + "<b>" + applicationUser.Pin + " <br /> ";
                             string PasswordBody = "An account has been created on UCS SACCO App. Your password is " + "<b> P@$$w0rd <br />";
 
+                            string AccountActivationBody = @"Here is the One time Pin (OTP) for your account on UCS: <strong>" + applicationUser.Pin + "</strong> <br /> ";
+
                             _emailService.SendMail(applicationUser.Email, "Login Details", UserNameBody);
                             //_emailService.SendMail(applicationUser.Email, "Login Details", pin);
                             _emailService.SendMail(applicationUser.Email, "Login Details", PasswordBody);
+
+                            _emailService.SendMail(applicationUser.Email, "Account Activation", AccountActivationBody);
                             return Json(new { response = "User account created successfully" });
                         }
                         else
@@ -668,6 +675,15 @@ namespace UCS_CRM.Areas.Admin.Controllers
             ViewBag.departmentsList = await GetDepartments();
             ViewBag.branchList = await GetBranches();
 
+        }
+
+        private int RandomNumber()
+        {
+            // generating a random number
+            Random generator = new Random();
+            int number = generator.Next(100000, 999999);
+
+            return number;
         }
 
     }
