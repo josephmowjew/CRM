@@ -32,50 +32,76 @@ namespace UCS_CRM.Persistence.SQLRepositories
 
         public async Task<List<Department>?> GetDepartments(CursorParams @params)
         {
-            if (@params.Take > 0)
-            {
-                //check if there is a search term sent 
-
-                if (string.IsNullOrEmpty(@params.SearchTerm))
-                {
-                    var departments = (from tblOb in await this._context.Departments.Where(d => d.Status != Lambda.Deleted).Skip(@params.Skip).Take(@params.Take).ToListAsync() select tblOb);
-
-
-                    if (!string.IsNullOrEmpty(@params.SortColum) && !string.IsNullOrEmpty(@params.SortDirection))
-                    {
-                        departments = departments.AsQueryable().OrderBy(@params.SortColum + " " + @params.SortDirection);
-
-                    }
-
-
-                    return departments.ToList();
-
-                }
-                else
-                {
-                    //include search text in the query
-                    var departments = (from tblOb in await this._context.Departments
-                                        .Where(a => a.Name.ToLower().Contains(@params.SearchTerm) & a.Status != Lambda.Deleted)
-                                        .Skip(@params.Skip)
-                                        .Take(@params.Take)
-                                        .ToListAsync()
-                                        select tblOb);
-
-                    if (!string.IsNullOrEmpty(@params.SortColum) && !string.IsNullOrEmpty(@params.SortDirection))
-                    {
-                        departments = departments.AsQueryable().OrderBy(@params.SortColum + " " + @params.SortDirection);
-                    }
-
-                    return departments.ToList();
-
-                }
-
-            }
-            else
+            if (@params.Take <= 0)
             {
                 return null;
             }
+
+            var query = this._context.Departments
+                .Where(d => d.Status != Lambda.Deleted);
+
+            if (!string.IsNullOrEmpty(@params.SearchTerm))
+            {
+                query = query.Where(a => a.Name.ToLower().Contains(@params.SearchTerm));
+            }
+
+            query = query.Skip(@params.Skip).Take(@params.Take);
+
+            if (!string.IsNullOrEmpty(@params.SortColum) && !string.IsNullOrEmpty(@params.SortDirection))
+            {
+                query = query.OrderBy($"{@params.SortColum} {@params.SortDirection}");
+            }
+
+            return await query.ToListAsync();
         }
+
+
+        //public async Task<List<Department>?> GetDepartments(CursorParams @params)
+        //{
+        //    if (@params.Take > 0)
+        //    {
+        //        //check if there is a search term sent 
+
+        //        if (string.IsNullOrEmpty(@params.SearchTerm))
+        //        {
+        //            var departments = (from tblOb in await this._context.Departments.Where(d => d.Status != Lambda.Deleted).Skip(@params.Skip).Take(@params.Take).ToListAsync() select tblOb);
+
+
+        //            if (!string.IsNullOrEmpty(@params.SortColum) && !string.IsNullOrEmpty(@params.SortDirection))
+        //            {
+        //                departments = departments.AsQueryable().OrderBy(@params.SortColum + " " + @params.SortDirection);
+
+        //            }
+
+
+        //            return departments.ToList();
+
+        //        }
+        //        else
+        //        {
+        //            //include search text in the query
+        //            var departments = (from tblOb in await this._context.Departments
+        //                                .Where(a => a.Name.ToLower().Contains(@params.SearchTerm) & a.Status != Lambda.Deleted)
+        //                                .Skip(@params.Skip)
+        //                                .Take(@params.Take)
+        //                                .ToListAsync()
+        //                                select tblOb);
+
+        //            if (!string.IsNullOrEmpty(@params.SortColum) && !string.IsNullOrEmpty(@params.SortDirection))
+        //            {
+        //                departments = departments.AsQueryable().OrderBy(@params.SortColum + " " + @params.SortDirection);
+        //            }
+
+        //            return departments.ToList();
+
+        //        }
+
+        //    }
+        //    else
+        //    {
+        //        return null;
+        //    }
+        //}
 
         public async Task<List<Department>?> GetDepartments()
         {
