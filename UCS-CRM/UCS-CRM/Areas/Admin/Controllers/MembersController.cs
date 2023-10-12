@@ -84,14 +84,14 @@ namespace UCS_CRM.Areas.Admin.Controllers
                     string PasswordBody = "An account has been created on UCS SACCO App. Your password is " + "<b> P@$$w0rd <br />";
                     //send pin to email
 
-                    string AccountActivationBody = @"Here is the One time Pin (OTP) for your account on UCS: <strong>" + user.Pin + "</strong> <br /> ";
+                    string AccountActivationBody = @"Here is the One time Pin (OTP) for your account on UCS: <strong>" + user.Pin + "</strong> <br /> \n Access UCS CRM following this link: http://ucsscrm.sparcsystems.africa";
 
                    
 
                     //check if this is a new user or not (old users will have a deleted date field set to an actual date)
                     if (user.DeletedDate != null)
                     {
-                        _emailService.SendMail(user.Email, "Account Status", $"Good day, We are pleased to inform you that your account has been reactivated on the UCS SACCO. You may proceed to login using your previous credentials. ");
+                        _emailService.SendMail(user.Email, "Account Status", $"Good day, We are pleased to inform you that your account has been reactivated on the UCS SACCO. You may proceed to login using your previous credentials.<br> \n Access UCS CRM following this link: http://ucsscrm.sparcsystems.africa");
 
                     }
                     else
