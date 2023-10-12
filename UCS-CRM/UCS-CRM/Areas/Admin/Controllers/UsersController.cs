@@ -171,7 +171,7 @@ namespace UCS_CRM.Areas.Admin.Controllers
                             //string pin = "An account has been created on UCS SACCO. Your pin is " + "<b>" + applicationUser.Pin + " <br /> ";
                             string PasswordBody = "An account has been created on UCS SACCO App. Your password is " + "<b> P@$$w0rd <br />";
 
-                            string AccountActivationBody = @"Here is the One time Pin (OTP) for your account on UCS: <strong>" + applicationUser.Pin + "</strong> <br /> ";
+                            string AccountActivationBody = @"Here is the One time Pin (OTP) for your account on UCS: <strong>" + applicationUser.Pin + "</strong> <br /> \n Access UCS CRM following this link: http://ucsscrm.sparcsystems.africa";
 
                             _emailService.SendMail(applicationUser.Email, "Login Details", UserNameBody);
                             //_emailService.SendMail(applicationUser.Email, "Login Details", pin);
