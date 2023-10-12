@@ -398,7 +398,7 @@ namespace UCS_CRM.Areas.Admin.Controllers
                 //create a cursor params based on the data coming from the datatable
                 CursorParams CursorParameters = new CursorParams() { SearchTerm = searchValue, Skip = skip, SortColum = sortColumn, SortDirection = sortColumnAscDesc, Take = pageSize };
 
-                resultTotal = await this._userRepository.TotalCount();
+                resultTotal = await this._userRepository.TotalFilteredUsersCount(CursorParameters);
                 var result = users = await this._userRepository.GetUsersWithRoles(CursorParameters);
                 return Json(new { draw = draw, recordsFiltered = resultTotal, recordsTotal = resultTotal, data = result });
 
@@ -464,13 +464,13 @@ namespace UCS_CRM.Areas.Admin.Controllers
                 //create a cursor params based on the data coming from the datatable
                 CursorParams CursorParameters = new CursorParams() { SearchTerm = searchValue, Skip = skip, SortColum = sortColumn, SortDirection = sortColumnAscDesc, Take = pageSize };
 
-                users = await this._userRepository.GetUnconfirmedUsersWithRoles(CursorParameters);
+              
 
                 try
                 {
 
 
-                    resultTotal = await this._userRepository.TotalUncomfirmedCount();
+                    resultTotal = await this._userRepository.TotalUncomfirmedCount(CursorParameters);
                     var result =  await this._userRepository.GetUnconfirmedUsersWithRoles(CursorParameters);
                     return Json(new { draw = draw, recordsFiltered = resultTotal, recordsTotal = resultTotal, data = result });
 
@@ -549,11 +549,10 @@ namespace UCS_CRM.Areas.Admin.Controllers
                 users = await this._userRepository.GetDeletedUsers(CursorParameters);
 
 
-
                 try
                 {
 
-                    resultTotal = await this._userRepository.TotalDeletedCount();
+                    resultTotal = await this._userRepository.TotalDeletedCount(CursorParameters);
                     var result = users;
                     return Json(new { draw = draw, recordsFiltered = resultTotal, recordsTotal = resultTotal, data = result });
 

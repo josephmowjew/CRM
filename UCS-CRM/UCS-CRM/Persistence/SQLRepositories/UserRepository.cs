@@ -91,9 +91,11 @@ namespace UCS_CRM.Persistence.SQLRepositories
             }
             else
             {
-                users = await this._context.Users
-                    .Where(u => u.Status == Lambda.Deleted
-                            || u.FirstName.ToLower().Contains(@params.SearchTerm.ToLower().Trim())
+                var tempUsers = this._context.Users.Where(u => u.Status == Lambda.Deleted);
+
+                users = await tempUsers
+                    .Where(u => 
+                               u.FirstName.ToLower().Contains(@params.SearchTerm.ToLower().Trim())
                             || u.LastName.ToLower().Contains(@params.SearchTerm.ToLower().Trim())
                             || u.Gender.ToLower().Contains(@params.SearchTerm.ToLower().Trim())
                             || u.Email.ToLower().Contains(@params.SearchTerm.ToLower().Trim())
@@ -180,9 +182,11 @@ namespace UCS_CRM.Persistence.SQLRepositories
             }
             else
             {
-                users = await this._context.Users
-                    .Where(u => u.Status != Lambda.Deleted && u.EmailConfirmed == false
-                            || u.FirstName.ToLower().Contains(@params.SearchTerm.ToLower().Trim())
+                var tempUsers = this._context.Users.Where(u => u.Status != Lambda.Deleted && u.EmailConfirmed == false);
+
+                users = await tempUsers
+                    .Where(u =>
+                              u.FirstName.ToLower().Contains(@params.SearchTerm.ToLower().Trim())
                             || u.LastName.ToLower().Contains(@params.SearchTerm.ToLower().Trim())
                             || u.Gender.ToLower().Contains(@params.SearchTerm.ToLower().Trim())
                             || u.Email.ToLower().Contains(@params.SearchTerm.ToLower().Trim())
@@ -293,9 +297,11 @@ namespace UCS_CRM.Persistence.SQLRepositories
             }
             else
             {
-                users = await this._context.Users
-                    .Where(u => u.Status != Lambda.Deleted && u.EmailConfirmed == true 
-                            || u.FirstName.ToLower().Contains(@params.SearchTerm.ToLower().Trim())
+                var usersTemp =  this._context.Users.Where(u => u.Status != Lambda.Deleted && u.EmailConfirmed == true);
+
+                users = await usersTemp
+                    .Where(u => 
+                             u.FirstName.ToLower().Contains(@params.SearchTerm.ToLower().Trim())
                             || u.LastName.ToLower().Contains(@params.SearchTerm.ToLower().Trim())
                             || u.Gender.ToLower().Contains(@params.SearchTerm.ToLower().Trim())
                             || u.Email.ToLower().Contains(@params.SearchTerm.ToLower().Trim())
@@ -406,14 +412,96 @@ namespace UCS_CRM.Persistence.SQLRepositories
             return await this._context.Users.Where(u => u.Status != Lambda.Deleted && u.EmailConfirmed == true).CountAsync();
         }
 
-        public async Task<int> TotalUncomfirmedCount()
+        public async Task<int> TotalFilteredUsersCount(CursorParams @params)
         {
-            return await this._context.Users.Where(u => u.Status != Lambda.Deleted && u.EmailConfirmed == false).CountAsync();
+            List<ApplicationUser> users = new List<ApplicationUser>();
+
+            int count = 0;
+
+            if (string.IsNullOrEmpty(@params.SearchTerm))
+            {
+
+                count = await this._context.Users.Where(u => u.Status != Lambda.Deleted && u.EmailConfirmed == true).CountAsync();
+
+            }
+            else
+            {
+                var usersTemp = this._context.Users.Where(u => u.Status != Lambda.Deleted && u.EmailConfirmed == true);
+
+                count = await usersTemp
+                    .Where(u =>
+                             u.FirstName.ToLower().Contains(@params.SearchTerm.ToLower().Trim())
+                            || u.LastName.ToLower().Contains(@params.SearchTerm.ToLower().Trim())
+                            || u.Gender.ToLower().Contains(@params.SearchTerm.ToLower().Trim())
+                            || u.Email.ToLower().Contains(@params.SearchTerm.ToLower().Trim())
+                            || u.PhoneNumber.ToLower().Contains(@params.SearchTerm.ToLower().Trim()))
+                    .CountAsync();
+
+            }
+
+            return count;
+
         }
 
-        public async Task<int> TotalDeletedCount()
+        public async Task<int> TotalUncomfirmedCount(CursorParams @params)
         {
-            return await this._context.Users.Where(u => u.Status == Lambda.Deleted).CountAsync();
+            List<ApplicationUser> users = new List<ApplicationUser>();
+
+            int count = 0;
+
+            if (string.IsNullOrEmpty(@params.SearchTerm))
+            {
+
+                count = await this._context.Users.Where(u => u.Status != Lambda.Deleted && u.EmailConfirmed == false).CountAsync();
+
+            }
+            else
+            {
+                var tempUsers = this._context.Users.Where(u => u.Status != Lambda.Deleted && u.EmailConfirmed == false);
+
+                count = await tempUsers
+                    .Where(u =>
+                              u.FirstName.ToLower().Contains(@params.SearchTerm.ToLower().Trim())
+                            || u.LastName.ToLower().Contains(@params.SearchTerm.ToLower().Trim())
+                            || u.Gender.ToLower().Contains(@params.SearchTerm.ToLower().Trim())
+                            || u.Email.ToLower().Contains(@params.SearchTerm.ToLower().Trim())
+                            || u.PhoneNumber.ToLower().Contains(@params.SearchTerm.ToLower().Trim()))
+                    .CountAsync();
+
+            }
+
+            return count;
+
+        }
+
+        public async Task<int> TotalDeletedCount(CursorParams @params)
+        {
+            List<ApplicationUser> users = new List<ApplicationUser>();
+
+            int count = 0;
+
+            if (string.IsNullOrEmpty(@params.SearchTerm))
+            {
+
+                count = await this._context.Users.Where(u => u.Status == Lambda.Deleted).CountAsync();
+
+            }
+            else
+            {
+                var tempUsers = this._context.Users.Where(u => u.Status == Lambda.Deleted);
+
+                count = await tempUsers
+                    .Where(u =>
+                               u.FirstName.ToLower().Contains(@params.SearchTerm.ToLower().Trim())
+                            || u.LastName.ToLower().Contains(@params.SearchTerm.ToLower().Trim())
+                            || u.Gender.ToLower().Contains(@params.SearchTerm.ToLower().Trim())
+                            || u.Email.ToLower().Contains(@params.SearchTerm.ToLower().Trim())
+                            || u.PhoneNumber.ToLower().Contains(@params.SearchTerm.ToLower().Trim()))
+                    .CountAsync();
+
+            }
+
+            return count;
         }
 
         public async Task<IdentityResult> UpdateAsync(ApplicationUser applicationUser)

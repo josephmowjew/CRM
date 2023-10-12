@@ -38,9 +38,9 @@ namespace UCS_CRM.Persistence.Interfaces
         Task<List<UserViewModel>> GetDeletedUsers(CursorParams @params);
         Task<int> TotalCount();
 
-        Task<int> TotalUncomfirmedCount();
+        Task<int> TotalUncomfirmedCount(CursorParams @params);
 
-        Task<int> TotalDeletedCount();
+        Task<int> TotalDeletedCount(CursorParams @params);
         Task<IdentityResult> RemoveFromRolesAsync(ApplicationUser applicationUser, IEnumerable<string> roleNames);
         Task<List<ApplicationUser>> GetUsers();
         Task<ApplicationUser?> FindUnconfirmedUserByIdAsync(string id);
@@ -56,5 +56,7 @@ namespace UCS_CRM.Persistence.Interfaces
         Task<ApplicationUser> FindUserByPin(int pin);
 
         void ConfirmUserAccount(ApplicationUser applicationUser);
+
+        Task<int> TotalFilteredUsersCount(CursorParams @params);
     }
 }
