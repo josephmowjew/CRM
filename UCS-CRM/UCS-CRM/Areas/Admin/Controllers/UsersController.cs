@@ -510,7 +510,7 @@ namespace UCS_CRM.Areas.Admin.Controllers
 
                 await this._unitOfWork.SaveToDataStore();
 
-                _emailService.SendMail(user.Email, "Account Confirmation", "Congratulations!! your account has been confirmed  on UCS SACCO.");
+                _emailService.SendMail(user.Email, "Account Confirmation", "Congratulations!! your account has been confirmed  on UCS SACCO.<br> \n Access UCS CRM following this link: http://ucsscrm.sparcsystems.africa");
 
 
                 return Json(new { status = "success", message = "user confirmed from the system successfully" });
