@@ -2,22 +2,14 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Build.Framework;
-using System.ComponentModel.DataAnnotations;
-using System.Configuration;
-using System.Data;
-using System.Net.Http;
 using System.Security.Claims;
-using System.Security.Policy;
 using System.Text.Json;
-using UCS_CRM.Core.DTOs.Member;
 using UCS_CRM.Core.Models;
 using UCS_CRM.Core.Services;
 using UCS_CRM.Core.ViewModels;
 using UCS_CRM.Data;
 using UCS_CRM.Models;
 using UCS_CRM.Persistence.Interfaces;
-using static Org.BouncyCastle.Math.EC.ECCurve;
 
 namespace UCS_CRM.Controllers
 {

@@ -1,9 +1,14 @@
 ﻿using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity.UI.V4.Pages.Account.Internal;
 using Microsoft.AspNetCore.Mvc;
+using Newtonsoft.Json;
+using System.Configuration;
 using System.Net.Http;
 using System.Security.Claims;
+using System.Text;
 using System.Text.Json;
+using UCS_CRM.Core.DTOs.Login;
 using UCS_CRM.Core.DTOs.Member;
 using UCS_CRM.Core.DTOs.MemberAccount;
 using UCS_CRM.Core.Helpers;
@@ -21,14 +26,18 @@ namespace UCS_CRM.Areas.Member.Controllers
         private readonly IMemberAccountRepository _memberAccountRepository;
         private readonly IMapper _mapper;
         private readonly HttpClient _httpClient;
+        public IConfiguration _configuration { get; }
 
-        public HomeController(ITicketRepository ticketRepository, IMemberRepository memberRepository, IMemberAccountRepository memberAccountRepository,IMapper mapper, HttpClient httpClient)
+
+        public HomeController(ITicketRepository ticketRepository, IMemberRepository memberRepository, IMemberAccountRepository memberAccountRepository,IMapper mapper, 
+            HttpClient httpClient, IConfiguration configuration)
         {
             _ticketRepository = ticketRepository;
             _memberRepository = memberRepository;
             _memberAccountRepository = memberAccountRepository;
             _mapper = mapper;
             _httpClient = httpClient;
+            _configuration = configuration;
         }
 
         public async Task<ActionResult> Index()
@@ -126,6 +135,14 @@ namespace UCS_CRM.Areas.Member.Controllers
 
         public async Task<List<MemberAccount>> Accounts() 
         {
+            //authenticate API
+            string token = await ApiAuthenticate();
+
+            if (string.IsNullOrEmpty(token))
+            {
+                return new List<MemberAccount>();
+            }         
+
 
             List<MemberAccount> accountDTOs = new List<MemberAccount>();
 
@@ -135,7 +152,9 @@ namespace UCS_CRM.Areas.Member.Controllers
 
             var member = await this._memberRepository.GetMemberByUserId(claimsIdentitifier.Value);
 
-            var baseAccountResponse = await _httpClient.GetAsync($"http://41.77.8.30:8081/api/BaseAccount/{member.AccountNumber}");
+            _httpClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
+
+            var baseAccountResponse = await _httpClient.GetAsync(_configuration["APIURL:link"] + $"BaseAccountAndRelatedAccounts?account_number={member.AccountNumber}");
 
             if (!baseAccountResponse.IsSuccessStatusCode)
             {
@@ -154,21 +173,25 @@ namespace UCS_CRM.Areas.Member.Controllers
                 return accountDTOs;
             }
 
-            var baseAccountElement = document.RootElement.GetProperty("data").GetProperty("baseAccount");
+            var baseAccountElement = document.RootElement.GetProperty("data").GetProperty("base_account");
 
-
-            var relatedAccounts = baseAccountElement.GetProperty("related_accounts");
+            var relatedAccounts = document.RootElement.GetProperty("data").GetProperty("related_accounts");
 
             if (relatedAccounts.ValueKind == JsonValueKind.Array)
             {
                 foreach (var relatedAccount in relatedAccounts.EnumerateArray())
                 {
-                   accountDTOs.Add(new MemberAccount()
+                    decimal balance;
+                    if (decimal.TryParse(relatedAccount.GetProperty("balance").GetString(), out balance))
+                    {
+                        balance = balance;
+                    }
+                    accountDTOs.Add(new MemberAccount()
                     {
                       
-                        AccountNumber = relatedAccount.GetProperty("accountNumber").GetString(),
-                        AccountName = relatedAccount.GetProperty("accountName").GetString(),
-                        Balance = relatedAccount.GetProperty("balance").GetDecimal()
+                        AccountNumber = relatedAccount.GetProperty("account_number").GetString(),
+                        AccountName = relatedAccount.GetProperty("account_name").GetString(),
+                        Balance = balance
                     });
                 }
             }
@@ -179,5 +202,45 @@ namespace UCS_CRM.Areas.Member.Controllers
             return accountDTOs;
         }
 
+
+        public async Task<string> ApiAuthenticate()
+        {
+
+           // APIToken token = new APIToken();
+
+            var username = _configuration["APICredentials:Username"];
+            var password = _configuration["APICredentials:Password"];
+
+            APILogin apiLogin = new APILogin()
+            {
+                Username = username,
+                Password = password,
+            };
+
+        
+
+            var jsonContent = JsonConvert.SerializeObject(apiLogin);
+            var stringContent = new StringContent(jsonContent, Encoding.UTF8, "application/json");
+
+            // Send POST request        
+            var tokenResponse = await _httpClient.PostAsync(_configuration["APIURL:link"] + $"Token", stringContent);
+
+            var json = await tokenResponse.Content.ReadAsStringAsync();
+            var document = JsonDocument.Parse(json);
+
+            var status = document.RootElement.GetProperty("status").GetString();
+
+            if (status == "404")
+            {
+              
+                //
+                Console.WriteLine("Failed to login");
+                return "Failed to login";
+            }
+
+            var token = document.RootElement.GetProperty("token").GetString();
+
+            return token;
+        }
     }
 }
