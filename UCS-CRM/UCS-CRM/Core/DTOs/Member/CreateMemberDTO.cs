@@ -4,6 +4,9 @@ namespace UCS_CRM.Core.DTOs.Member
 {
     public class CreateMemberDTO
     {
+
+        public int Fidxno { get; set; }
+
         [Display(Name ="First Name")]
         public string? FirstName { get; set; }
         [Display(Name = "Surname")]

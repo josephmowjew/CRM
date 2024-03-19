@@ -83,6 +83,7 @@ namespace UCS_CRM.Areas.Admin.Controllers
             }
 
             var json = await baseAccountResponse.Content.ReadAsStringAsync();
+
             var document = JsonDocument.Parse(json);
 
             var status = document.RootElement.GetProperty("status").GetInt32();

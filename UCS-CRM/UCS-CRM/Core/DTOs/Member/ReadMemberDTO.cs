@@ -13,6 +13,8 @@ namespace UCS_CRM.Core.DTOs.Member
 
         }
         TextInfo myTI = new CultureInfo("en-US", false).TextInfo;
+
+        public int Fidxno { get; set; }
         public int Id { get; set; }
         [Display(Name = "First Name")]
         public string? FirstName { get; set; }

@@ -7,6 +7,8 @@ namespace UCS_CRM.Core.DTOs.Member
         public int Id { get; set; }
         [Display(Name = "First Name")]
         public string? FirstName { get; set; }
+
+        public int Fidxno { get; set; }
         [Display(Name = "Surname")]
         [StringLength(maximumLength: 70, MinimumLength = 2)]
         public string? LastName { get; set; }
