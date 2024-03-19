@@ -24,7 +24,7 @@ namespace UCS_CRM.Core.Models
         public string? Gender { get; set; }
         public bool EmailConfirmed { get; set; } = false;
 
-        [StringLength(maximumLength: 10, MinimumLength = 2)]
+        [StringLength(maximumLength: 40, MinimumLength = 2)]
         [Display(Name = "Account Number")]
         public string AccountNumber { get; set; }
 

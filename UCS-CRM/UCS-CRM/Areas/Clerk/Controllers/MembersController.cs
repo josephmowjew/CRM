@@ -101,11 +101,21 @@ namespace UCS_CRM.Areas.Admin.Controllers
 
             var status = document.RootElement.GetProperty("status").GetInt32();
 
+            string message = document.RootElement.GetProperty("message").GetString();
+
             if (status == 404)
             {
                  Json(new { error = "error", message = "failed to create the user account from the member" });
                 return RedirectToAction("Index");
             }
+
+            if(message.Equals("Account Number Does Not Macth any Identification Details", StringComparison.OrdinalIgnoreCase))
+            {
+                Json(new { error = "error", message = "This user has no base account number" });
+                return RedirectToAction("Index");
+            }
+
+          
 
             var baseAccountElement = document.RootElement.GetProperty("data").GetProperty("base_account");
 
@@ -328,9 +338,9 @@ namespace UCS_CRM.Areas.Admin.Controllers
             var json = await tokenResponse.Content.ReadAsStringAsync();
             var document = JsonDocument.Parse(json);
 
-            var status = document.RootElement.GetProperty("status").GetString();
+            var status = document.RootElement.GetProperty("status").GetInt32();
 
-            if (status == "404")
+            if (status == 404)
             {
 
                 //
