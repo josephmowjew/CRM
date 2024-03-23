@@ -67,6 +67,10 @@ namespace UCS_CRM.Data
                 .HasMany(u => u.Branches)
                 .WithOne(i => i.CreatedBy);
 
+            builder.Entity<Member>()
+            .HasIndex(m => m.Fidxno)
+            .IsUnique();
+
             //manual annotation for position
             //builder.Entity<ApplicationUser>()
             //   .HasOne(i => i.Position)

@@ -25,6 +25,16 @@ namespace UCS_CRM.Persistence.SQLRepositories
             this._context.Add(member);
         }
 
+        public void AddRange(List<Member> members)
+        {
+            this._context.AddRange(members);
+        }
+
+        public async Task AddRangeAsync(List<Member> members)
+        {
+            await this._context.AddRangeAsync(members);
+        }
+
         public void DeleteUser(Member member)
         {
             member.User.Status = Lambda.Deleted;
@@ -125,6 +135,11 @@ namespace UCS_CRM.Persistence.SQLRepositories
         public Member? Exists(Member member)
         {
             return this._context.Members.FirstOrDefault(m => m.AccountNumber.Trim().ToLower() == member.AccountNumber.Trim().ToLower());
+        }
+
+        public async Task<Member?> ExistsAsync(Member member)
+        {
+            return await this._context.Members.FirstOrDefaultAsync(m => m.Fidxno == member.Fidxno);
         }
 
         public async Task<Member?> GetMemberAsync(int id)
@@ -228,6 +243,11 @@ namespace UCS_CRM.Persistence.SQLRepositories
             int number = generator.Next(100000, 999999);
 
             return number;
+        }
+
+        public async Task<Member?> GetLastMemberByFidxno()
+        {
+            return await this._context.Members.OrderByDescending(m => m.Fidxno).FirstOrDefaultAsync();
         }
     }
 }

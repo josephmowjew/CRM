@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using UCS_CRM.Data;
 
@@ -10,9 +11,11 @@ using UCS_CRM.Data;
 namespace UCS_CRM.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20240320132642_update member by removing createdBy required restriction")]
+    partial class updatememberbyremovingcreatedByrequiredrestriction
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -534,6 +537,7 @@ namespace UCS_CRM.Migrations
                         .HasColumnType("longtext");
 
                     b.Property<string>("Gender")
+                        .IsRequired()
                         .HasColumnType("longtext");
 
                     b.Property<string>("LastName")
@@ -559,9 +563,6 @@ namespace UCS_CRM.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("CreatedById");
-
-                    b.HasIndex("Fidxno")
-                        .IsUnique();
 
                     b.ToTable("Members");
                 });

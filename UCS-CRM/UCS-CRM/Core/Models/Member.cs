@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using Microsoft.EntityFrameworkCore;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace UCS_CRM.Core.Models
@@ -10,7 +11,7 @@ namespace UCS_CRM.Core.Models
             MemberAccounts = new List<MemberAccount>();
         }
         public int Id { get; set; }
-
+    
         public int Fidxno { get; set; }
         [Display(Name = "First Name")]
         public string? FirstName { get; set; }
@@ -20,7 +21,7 @@ namespace UCS_CRM.Core.Models
         public string? LastName { get; set; }
         [Display(Name = "Date Of Birth")]
         public DateTime? DateOfBirth { get; set; }
-        [Required]
+       
         public string? Gender { get; set; }
         public bool EmailConfirmed { get; set; } = false;
 
@@ -39,6 +40,9 @@ namespace UCS_CRM.Core.Models
         public string? Branch { get; set; }
         public string? Employer { get; set; }
         public List<MemberAccount> MemberAccounts { get; set; }
+
+        public string? CreatedById { get; set; }
+        public virtual ApplicationUser? CreatedBy { get; set; }
 
         [NotMapped]
         public String FullName
