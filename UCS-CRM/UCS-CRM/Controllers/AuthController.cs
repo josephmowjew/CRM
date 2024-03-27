@@ -196,95 +196,89 @@ namespace UCS_CRM.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(LoginViewModel loginModel)
         {
+            if (!ModelState.IsValid)
+                return View("Create", loginModel);
 
+            // Retrieve the user with the provided email and roles
+            var findUserDb = await _userRepository.GetUserWithRole(loginModel.Email, false);
 
-            if (ModelState.IsValid)
+            if (findUserDb == null)
             {
+                ModelState.AddModelError(string.Empty, "Invalid login credentials");
+                return View("Create", loginModel);
+            }
 
-                //check if the email belongs to an administrator before proceeding
+            // Check if the user's email is confirmed
+            if (!findUserDb.EmailConfirmed)
+            {
+                // Send a one-time pin (OTP) to the user's email
+                string userNameBody = $"Here is the One time Pin (OTP) for your account on UCS: <strong>{findUserDb.Pin}</strong> <br />";
+                var response = await _emailService.SendMailWithKeyVarReturn(loginModel.Email, "Login Details", userNameBody);
 
-                var findUserDb = await this._userRepository.GetUserWithRole(loginModel.Email, false);
-
-                if (findUserDb != null)
+                if (response.Key)
                 {
-                    if(findUserDb.EmailConfirmed == false)
-                    {
-                        //send pin to email
+                    TempData["response"] = $"Check your email for the confirmation code";
 
-                        string UserNameBody = @"Here is the One time Pin (OTP) for your account on UCS: <strong>" + findUserDb.Pin + "</strong> <br /> ";
-                        
-                        _emailService.SendMail(loginModel.Email, "Login Details", UserNameBody);
-
-                        return RedirectToActionPermanent("ConfirmAccount", new {email = findUserDb.Email});
-                    }
-                    else if(findUserDb.LastPasswordChangedDate < DateTime.Now)
-                    {
-                        var model = new ResetPassword { Token = "", Email = findUserDb.Email };
-
-                        var token = await _userManager.GeneratePasswordResetTokenAsync(findUserDb);
-
-                        return RedirectToActionPermanent("ResetPassword", new { token = token, email = findUserDb.Email });
-                    }
-                    else
-                    {
-
-                        
-                        var result = await _signInManager.PasswordSignInAsync(loginModel.Email, loginModel.Password, loginModel.RememberMe, lockoutOnFailure: false);
-
-                        //get the result of the login attemp
-
-                        if (result.Succeeded)
-                        {
-                            int pin = _memberRepository.RandomNumber();
-
-                            var user = await this._userManager.FindByNameAsync(loginModel.Email);
-                            var roles =  _userManager.GetRolesAsync(user).Result.ToList();
-
-                            
-                            if (user != null)
-                            {
-                                user.LastLogin = DateTime.Now;
-                                user.Pin = pin;
-                                user.EmailConfirmed = false;
-                            }
-
-                          
-
-                            await this._context.SaveChangesAsync();
-
-                            string UserNameBody = "Your confirmation code is " + "<b>" + pin + " <br /> Enter this to login in";
-
-
-                            //_emailService.SendMail(user.Email, "Login Details", UserNameBody);
-
-                            TempData["response"] = $"Check your email for the confirmation code";
-
-                            return RedirectToAction("ConfirmAccount", "Auth", new {email = loginModel.Email});
-
-
-                        }
-                        else
-                        {
-                            //flag an error message back the user
-
-                            ModelState.AddModelError(String.Empty, "Invalid login credentials");
-
-                            return View("Create", loginModel);
-                        }
-                    }
-                   
                 }
                 else
                 {
-                    ModelState.AddModelError(String.Empty, "Invalid login credentials");
+                    TempData["error"] = response.Value;
 
                     return View("Create", loginModel);
+
+                }
+                return RedirectToActionPermanent("ConfirmAccount", new { email = findUserDb.Email });
+            }
+
+            // Check if the user needs to reset their password
+            if (findUserDb.LastPasswordChangedDate < DateTime.Now)
+            {
+                var token = await _userManager.GeneratePasswordResetTokenAsync(findUserDb);
+                return RedirectToActionPermanent("ResetPassword", new { token, email = findUserDb.Email });
+            }
+
+            // Attempt to sign in the user
+            var result = await _signInManager.PasswordSignInAsync(loginModel.Email, loginModel.Password, loginModel.RememberMe, lockoutOnFailure: false);
+
+            if (result.Succeeded)
+            {
+                // Update the user's login details
+                int pin = _memberRepository.RandomNumber();
+                var user = await _userManager.FindByNameAsync(loginModel.Email);
+                var roles = await _userManager.GetRolesAsync(user);
+
+                if (user != null)
+                {
+                    user.LastLogin = DateTime.Now;
+                    user.Pin = pin;
+                    user.EmailConfirmed = false;
+                }
+
+                await _context.SaveChangesAsync();
+
+                string userNameBody = $"Your confirmation code is <b>{pin}</b> <br /> Enter this to login in";
+
+                var response = await _emailService.SendMailWithKeyVarReturn(user.Email, "Login Details", userNameBody);
+
+                if(response.Key)
+                {
+                    TempData["response"] = $"Check your email for the confirmation code";
+
+                }
+                else
+                {
+                    TempData["error"] = response.Value;
+
+                    return View("Create", loginModel);
+
                 }
 
 
-
-
+                return RedirectToAction("ConfirmAccount", "Auth", new { email = loginModel.Email });
             }
+
+            // Invalid login credentials
+            ModelState.AddModelError(string.Empty, "Invalid login credentials");
             return View("Create", loginModel);
         }
 

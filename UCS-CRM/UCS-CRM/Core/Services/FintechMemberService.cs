@@ -156,12 +156,7 @@ namespace UCS_CRM.Core.Services
                     }
                     catch (Exception ex)
                     {
-
-                       // throw ex;
-
-                        // Log the exception
-                        //logger.LogError(ex, "An error occurred while syncing Fintech members with the local data store.");
-
+                     
                         // Save the error to the database
                         await this._errorService.LogErrorAsync(ex);
                     }
