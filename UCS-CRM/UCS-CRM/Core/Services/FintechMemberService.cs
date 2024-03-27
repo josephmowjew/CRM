@@ -18,14 +18,23 @@ namespace UCS_CRM.Core.Services
         private readonly HttpClient _httpClient;
         private readonly IMemberRepository _memberRepository;
         private readonly IUnitOfWork _unitOfWork;
+        private readonly IUserRepository _userRepository;
+        private readonly IErrorLogService _errorService;
         public IConfiguration _configuration { get; }
 
-        public FintechMemberService(HttpClient httpClient, IConfiguration configuration, IMemberRepository memberRepository, IUnitOfWork unitOfWork)
+        public FintechMemberService(HttpClient httpClient, 
+                                    IConfiguration configuration,
+                                    IMemberRepository memberRepository,
+                                    IUnitOfWork unitOfWork,
+                                    IUserRepository userRepository,
+                                    IErrorLogService errorLogService)
         {
             _httpClient = httpClient;
             _configuration = configuration;
             _memberRepository = memberRepository;
             _unitOfWork = unitOfWork;
+            _userRepository = userRepository;
+            _errorService = errorLogService;
 
         }
 
@@ -147,11 +156,14 @@ namespace UCS_CRM.Core.Services
                     }
                     catch (Exception ex)
                     {
-                        // Handle exception
-                        // Log the exception or handle it based on the requirements
-                        // It's generally not recommended to throw exceptions in async void methods
-                        // Consider changing the return type to Task or Task<T> to handle exceptions properly
-                        throw ex;
+
+                       // throw ex;
+
+                        // Log the exception
+                        //logger.LogError(ex, "An error occurred while syncing Fintech members with the local data store.");
+
+                        // Save the error to the database
+                        await this._errorService.LogErrorAsync(ex);
                     }
                 }
             }
@@ -172,8 +184,6 @@ namespace UCS_CRM.Core.Services
 
             return duplicates;
         }
-
-
 
 
         public async Task<List<Datum>> GetFintechMembersAsync(int take, long Fidxno)
@@ -275,6 +285,39 @@ namespace UCS_CRM.Core.Services
             return token;
         }
 
-        
+        public async Task<KeyValuePair<bool, string>> CreateAllMemberUserAccounts()
+        {
+
+            string UserId = string.Empty;
+            //get the system user
+
+            ApplicationUser? systemUser = (await this._userRepository.GetUsersInRole("system"))?.FirstOrDefault();
+
+            if (systemUser != null)
+            {
+                UserId = systemUser.Id;
+
+                //loop through member records which have no associated user accounts 
+
+                List<Member> members = await this._memberRepository.GetMembersWithNoUserAccount();
+
+                if(members.Count > 0)
+                {
+                   await foreach(var member in members.ToAsyncEnumerable())
+                    {
+                        //add create a user account for the member
+
+
+
+                    }
+                }
+            }
+            else
+            {
+                return new KeyValuePair<bool, string>(true, "system user not found");
+            }
+
+            return new KeyValuePair<bool, string> ( true, "users created successfully");
+        }
     }
 }

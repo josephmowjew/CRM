@@ -78,6 +78,8 @@ builder.Services.AddScoped<IMemberAccountRepository, MemberAccountRepository>();
 builder.Services.AddScoped<IEmailAddressRepository, EmailAddressRepository>();
 builder.Services.AddScoped<IDepartmentRepository, DepartmentRepository>();
 builder.Services.AddScoped<IBranchRepository, BranchRepository>();
+builder.Services.AddScoped<IErrorLogRepository, ErrorLogRepository>();
+builder.Services.AddScoped<IErrorLogService, ErrorLogService>();
 builder.Services.AddScoped<ITicketStateTrackerRepository, TicketStateTrackerRepository>();
 //builder.Services.AddScoped<IPositionRepository, PositionRepository>();
 builder.Services.AddScoped<IFeedbackRepository, FeedbackRepository>();
@@ -123,7 +125,7 @@ ITicketRepository ticket = scope.ServiceProvider.GetRequiredService<ITicketRepos
 IFintechMemberService fintechMemberService = scope.ServiceProvider.GetRequiredService<IFintechMemberService>();
 
 
-RecurringJob.AddOrUpdate("SyncFintechMemberRecords", () => fintechMemberService.SyncFintechMembersWithLocalDataStore(), Cron.MinuteInterval(5));
+//RecurringJob.AddOrUpdate("SyncFintechMemberRecords", () => fintechMemberService.SyncFintechMembersWithLocalDataStore(), Cron.MinuteInterval(5));
 
 
 

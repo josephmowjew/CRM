@@ -53,7 +53,7 @@ namespace UCS_CRM.Persistence.Interfaces
 
         Task<List<ApplicationUser>?> GetUsersInRole(string roleName);
 
-        Task<ApplicationUser> FindUserByPin(int pin);
+        Task<ApplicationUser> FindUserByPin(int pin,string email);
 
         void ConfirmUserAccount(ApplicationUser applicationUser);
 

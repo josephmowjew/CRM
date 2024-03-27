@@ -212,6 +212,12 @@ namespace UCS_CRM.Persistence.SQLRepositories
             return await this._context.Members.Include(m => m.MemberAccounts).Where(a => a.Status != Lambda.Deleted).ToListAsync();
         }
 
+        public async Task<List<Member>>GetMembersWithNoUserAccount()
+        {
+            //get member accounts with associated user account
+            return await this._context.Members.Include(m => m.User).Where(m => m.User == null).ToListAsync();
+        }
+
 
         public void Remove(Member member)
         {

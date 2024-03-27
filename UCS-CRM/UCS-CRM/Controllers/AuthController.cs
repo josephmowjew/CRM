@@ -171,7 +171,7 @@ namespace UCS_CRM.Controllers
         {
             //find the account with this pin
 
-            ApplicationUser userDb = await this._userRepository.FindByEmailsync(confirmPin.Email);
+            ApplicationUser userDb = await this._userRepository.FindUserByPin(confirmPin.Pin,confirmPin.Email);
 
             if(userDb !=  null)
             {
@@ -245,7 +245,10 @@ namespace UCS_CRM.Controllers
                             {
                                 user.LastLogin = DateTime.Now;
                                 user.Pin = pin;
+                                user.EmailConfirmed = false;
                             }
+
+                          
 
                             await this._context.SaveChangesAsync();
 
@@ -254,8 +257,9 @@ namespace UCS_CRM.Controllers
 
                             //_emailService.SendMail(user.Email, "Login Details", UserNameBody);
 
-                            TempData["response"] = $"Check your email for the code";
-                            return RedirectToAction("Create", "Auth");
+                            TempData["response"] = $"Check your email for the confirmation code";
+
+                            return RedirectToAction("ConfirmAccount", "Auth", new {email = loginModel.Email});
 
 
                         }

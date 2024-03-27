@@ -517,9 +517,11 @@ namespace UCS_CRM.Persistence.SQLRepositories
 
         }
 
-        public async Task<ApplicationUser> FindUserByPin(int pin)
+       
+
+        public async Task<ApplicationUser> FindUserByPin(int pin, string email)
         {
-            return await this._context.Users.FirstOrDefaultAsync(u => u.Pin == pin);
+            return await this._context.Users.FirstOrDefaultAsync(u => u.Pin == pin && u.Email == email);
         }
 
         public void ConfirmUserAccount(ApplicationUser applicationUser)

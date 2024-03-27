@@ -31,7 +31,7 @@ namespace UCS_CRM.Data
         public DbSet<Department> Departments { get; set; }
         public DbSet<TicketStateTracker> TicketStateTrackers { get; set; }
         public DbSet<Feedback> Feedbacks { get; set; }
-
+        public DbSet<ErrorLog> ErrorLogs { get; set; }
         public DbSet<Role> Roles { get; set; }
 
 
