@@ -1,13 +1,27 @@
-function initSelect2(options) {
-    var selectSearch = document.getElementById("select-search");
-    var selectOptions = document.querySelector(".select2-options");
-    var selectDropdown = document.querySelector(".select2-dropdown");
-    var selectSelection = document.querySelector(".select2-selection");
+function initSelect2(options, containerId) {
+    var containerElement = document.getElementById(containerId);
+
+    // Check if containerElement exists
+    if (!containerElement) {
+        console.error("Container element with ID '" + containerId + "' not found.");
+        return;
+    }
+
+    var selectSearch = containerElement.querySelector("#select-search");
+    var selectOptions = containerElement.querySelector(".select2-options");
+    var selectDropdown = containerElement.querySelector(".select2-dropdown");
+    var selectSelection = containerElement.querySelector(".select2-selection");
     var lastSelectOption = null;
     var uniqueOptions = new Set();
     var currentPage = 1;
     var totalPages = 1;
     var hiddenFieldId = options.hiddenFieldId || "MemberId";
+
+    // Check if selectSearch exists
+    if (!selectSearch) {
+        console.error("Search input element not found within container element.");
+        return;
+    }
 
     // Function to fetch data from the backend
     function fetchData() {
