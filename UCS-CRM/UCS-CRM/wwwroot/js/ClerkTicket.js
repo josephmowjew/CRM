@@ -25,7 +25,7 @@
         var ticketCategoryId = $("#create_ticket_modal select[name ='TicketCategoryId']").val()
         var ticketPriorityId = $("#create_ticket_modal select[name ='TicketPriorityId']").val()
         var stateId = $("#create_ticket_modal select[name ='StateId']").val()
-        var memberId = $("#create_ticket_modal select[name ='MemberId']").val()
+        var memberId = $("#create_ticket_modal input[name ='MemberId']").val()
 
         var files = $("#create_ticket_modal input[name = 'Attachments']")[0].files;
 

@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using NuGet.Packaging;
+using NuGet.Protocol;
 using System.Data;
 using System.Security.Claims;
 using UCS_CRM.Core.DTOs.Member;
@@ -18,6 +19,7 @@ using UCS_CRM.Core.DTOs.TicketStateTracker;
 using UCS_CRM.Core.Helpers;
 using UCS_CRM.Core.Models;
 using UCS_CRM.Core.Services;
+using UCS_CRM.Core.ViewModels;
 using UCS_CRM.Persistence.Interfaces;
 using UCS_CRM.Persistence.SQLRepositories;
 
@@ -735,6 +737,33 @@ namespace UCS_CRM.Areas.Clerk.Controllers
 
             return Json(usersList);
         }
+
+        [HttpGet]
+        public async Task<JsonResult> GetAllMembersJson(int page = 1, int pageSize = 20, string searchValue = "")
+        {
+
+            var skip = (page - 1) * pageSize;
+
+
+            var members = await this._memberRepository.GetMembers(new CursorParams() { Take = pageSize, Skip = skip, SearchTerm = searchValue });
+
+            List<DynamicSelect> dynamicSelect = new List<DynamicSelect>();
+
+            if (members.Any())
+            {
+                foreach (var item in members)
+                {
+                    dynamicSelect.Add(new DynamicSelect { Id = item.Id.ToString(), Name = item.FullName + " (" + item.AccountNumber +
+                    ")" + " -- " + item.Branch,
+                        
+                    });
+                }
+            }
+
+
+
+            return Json(dynamicSelect);
+        }
         private async Task<List<SelectListItem>> GetTicketCategories()
         {
             var ticketCategories = await this._ticketCategoryRepository.GetTicketCategories();
@@ -1129,7 +1158,7 @@ namespace UCS_CRM.Areas.Clerk.Controllers
 
         private async Task<List<SelectListItem>> GetMembers()
         {
-            var members = await this._memberRepository.GetMembers();
+            var members = await this._memberRepository.GetMembers(new CursorParams() { Take = 10, Skip = 0});
 
             
 
@@ -1152,7 +1181,7 @@ namespace UCS_CRM.Areas.Clerk.Controllers
             ViewBag.priorities = await GetTicketPriorities();
             ViewBag.categories = await GetTicketCategories();
             ViewBag.states = await GetTicketStates();
-            ViewBag.members = await GetMembers();
+            //ViewBag.members = await GetMembers();
             ViewBag.assignees = await GetAssignees();
             ViewBag.departments = await GetDepartments();
         }
