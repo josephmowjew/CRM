@@ -243,17 +243,7 @@
 
   
 
-    <script>
-
-        // Initialize Select2 with desired options
-        initSelect2({
-            url: "/Manager/Tickets/GetAllMembersJson",
-            hiddenFieldId: "MemberId",
-            pageSize: 20,
-            initialSearchValue: "",
-        }, "edit_ticket_modal");
-    </script>
-
+ 
 
     @{
         await Html.RenderPartialAsync("_ValidationScriptsPartial");

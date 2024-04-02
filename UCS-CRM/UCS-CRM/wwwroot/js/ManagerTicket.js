@@ -148,7 +148,7 @@ function EditForm(id, area = "") {
                 // If the field is MemberId, set the value and trigger initSelect2 with the retrieved member ID
                 field.val(data[dataKey]);
                 initSelect2({
-                    url: "/Clerk/Tickets/GetAllMembersJson",
+                    url: "/Manager/Tickets/GetAllMembersJson",
                     hiddenFieldId: "MemberId",
                     pageSize: 20,
                     initialSearchValue: data.member.accountNumber

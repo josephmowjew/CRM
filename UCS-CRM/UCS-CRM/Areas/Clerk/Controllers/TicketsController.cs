@@ -163,8 +163,17 @@ namespace UCS_CRM.Areas.Clerk.Controllers
                     //assign ticket number to the mapped record
 
                     mappedTicket.TicketNumber = ticketNumber;
+
                     mappedTicket.AssignedToId = claimsIdentitifier.Value;
 
+                    //assign the ticket to the Customer Service and Member Engagement department
+
+                    var customerServiceMemberEngagementDept = this._departmentRepository.Exists("Customer Service and Member Engagement");
+
+                    if(customerServiceMemberEngagementDept != null)
+                    {
+                        mappedTicket.DepartmentId = customerServiceMemberEngagementDept.Id;
+                    }
 
                     this._ticketRepository.Add(mappedTicket);
 

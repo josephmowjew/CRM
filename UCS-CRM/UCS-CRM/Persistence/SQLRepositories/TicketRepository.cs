@@ -132,6 +132,10 @@ namespace UCS_CRM.Persistence.SQLRepositories
 
                                         ticket.AssignedToId = newTicketHandler.Id;
 
+                                        //assign the ticket to a new department
+
+                                        ticket.DepartmentId = newTicketHandler.DepartmentId;
+
                                         newOfficialTicketHandler = newTicketHandler;
 
                                         ticketAssignedToNewUser = true;
@@ -156,7 +160,16 @@ namespace UCS_CRM.Persistence.SQLRepositories
 
                                     if (!string.IsNullOrEmpty(ticket.AssignedToId))
                                     {
+
+                                        var customerServiceMemberEngagementDept = this._departmentRepository.Exists("Customer Service and Member Engagement");
+
+                                        if (customerServiceMemberEngagementDept != null)
+                                        {
+                                            ticket.DepartmentId = customerServiceMemberEngagementDept.Id;
+                                        }
                                         ticketAssignedToNewUser = true;
+
+                                       
                                     }
                                 }
 
@@ -166,6 +179,13 @@ namespace UCS_CRM.Persistence.SQLRepositories
 
                                     if (!string.IsNullOrEmpty(ticket.AssignedToId))
                                     {
+
+                                        var customerServiceMemberEngagementDept = this._departmentRepository.Exists("Executive suite");
+
+                                        if (customerServiceMemberEngagementDept != null)
+                                        {
+                                            ticket.DepartmentId = customerServiceMemberEngagementDept.Id;
+                                        }
                                         ticketAssignedToNewUser = true;
                                     }
 
@@ -176,6 +196,13 @@ namespace UCS_CRM.Persistence.SQLRepositories
 
                                     if (!string.IsNullOrEmpty(ticket.AssignedToId))
                                     {
+                                        var customerServiceMemberEngagementDept = this._departmentRepository.Exists("Branch Networks and satellites Department");
+
+                                        if (customerServiceMemberEngagementDept != null)
+                                        {
+                                            ticket.DepartmentId = customerServiceMemberEngagementDept.Id;
+                                        }
+
                                         ticketAssignedToNewUser = true;
                                     }
 
@@ -580,7 +607,7 @@ namespace UCS_CRM.Persistence.SQLRepositories
 
             if (department != null)
             {
-                query = query.Where(t => t.Member.User.Department.Id == department.Id);
+                query = query.Where(t => t.DepartmentId == department.Id);
             }
 
             if (!string.IsNullOrEmpty(@params.SearchTerm))
@@ -635,7 +662,7 @@ namespace UCS_CRM.Persistence.SQLRepositories
 
             if (department != null)
             {
-                query = query.Where(t => t.Member.User.Department.Id == department.Id);
+                query = query.Where(t => t.DepartmentId == department.Id);
             }
 
             if (!string.IsNullOrEmpty(@params.SearchTerm))

@@ -29,6 +29,7 @@ namespace UCS_CRM.Areas.Member.Controllers
         private readonly IStateRepository _stateRepository;
         private readonly ITicketPriorityRepository _priorityRepository;
         private readonly IMemberRepository _memberRepository;
+        private readonly IDepartmentRepository _departmentRepository;
         private readonly ITicketEscalationRepository _ticketEscalationRepository;
         private readonly IMapper _mapper;
         private readonly IUnitOfWork _unitOfWork;
@@ -36,9 +37,20 @@ namespace UCS_CRM.Areas.Member.Controllers
         private readonly IEmailService _emailService;
         private readonly IEmailAddressRepository _addressRepository;
         private readonly ITicketStateTrackerRepository _ticketStateTrackerRepository;
-        public TicketsController(ITicketRepository ticketRepository, IMapper mapper, IUnitOfWork unitOfWork, IEmailService emailService, IEmailAddressRepository addressRepository,
-            ITicketCategoryRepository ticketCategoryRepository, IStateRepository stateRepository, ITicketPriorityRepository priorityRepository, 
-            IWebHostEnvironment env, ITicketCommentRepository ticketCommentRepository, IMemberRepository memberRepository, ITicketEscalationRepository ticketEscalationRepository, ITicketStateTrackerRepository ticketStateTrackerRepository)
+        public TicketsController(ITicketRepository ticketRepository,
+            IMapper mapper, 
+            IUnitOfWork unitOfWork,
+            IEmailService emailService,
+            IEmailAddressRepository addressRepository,
+            ITicketCategoryRepository ticketCategoryRepository,
+            IStateRepository stateRepository, 
+            ITicketPriorityRepository priorityRepository, 
+            IWebHostEnvironment env,
+            ITicketCommentRepository ticketCommentRepository,
+            IMemberRepository memberRepository, 
+            ITicketEscalationRepository ticketEscalationRepository,
+            IDepartmentRepository departmentRepository,
+            ITicketStateTrackerRepository ticketStateTrackerRepository)
         {
             _ticketRepository = ticketRepository;
             _mapper = mapper;
@@ -52,6 +64,7 @@ namespace UCS_CRM.Areas.Member.Controllers
             _ticketEscalationRepository = ticketEscalationRepository;
             _emailService = emailService;
             _addressRepository = addressRepository;
+            _departmentRepository = departmentRepository;
             _ticketStateTrackerRepository = ticketStateTrackerRepository;
         }
 
@@ -102,6 +115,13 @@ namespace UCS_CRM.Areas.Member.Controllers
                 //check for article title presence
 
                 var mappedTicket = this._mapper.Map<Ticket>(createTicketDTO);
+
+                var customerServiceMemberEngagementDept = this._departmentRepository.Exists("Customer Service and Member Engagement");
+
+                if (customerServiceMemberEngagementDept != null)
+                {
+                    mappedTicket.DepartmentId = customerServiceMemberEngagementDept.Id;
+                }
 
                 var statePresence = this._ticketRepository.Exists(mappedTicket);
 
