@@ -33,6 +33,7 @@ namespace UCS_CRM.Core.Models
 
         public List<TicketEscalation> TicketEscalations { get; set; }
 
+
         public Ticket()
         {
             TicketAttachments = new List<TicketAttachment>();

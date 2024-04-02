@@ -186,8 +186,7 @@ namespace UCS_CRM.Persistence.SQLRepositories
 
                                         && m.FirstName.ToLower().Trim().Contains(@params.SearchTerm) ||
                                            m.LastName.ToLower().Trim().Contains(@params.SearchTerm) ||
-                                           m.AccountNumber.ToLower().Trim().Contains(@params.SearchTerm) ||
-                                           m.Address.ToLower().Trim().Contains(@params.SearchTerm))
+                                           m.AccountNumber.ToLower().Trim().Contains(@params.SearchTerm))
                                    .Skip(@params.Skip)
                                    .Take(@params.Take)
                                    .ToListAsync() select tblOb);

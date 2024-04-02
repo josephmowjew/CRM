@@ -130,6 +130,7 @@ function EditForm(id, area = "") {
         //get the input field inside the edit role modal form
         //var date = new Date(data.dateOfBirth);
 
+       
 
         var currentDate = new Date(data.dateOfBirth);
 
@@ -153,8 +154,23 @@ function EditForm(id, area = "") {
 
         Object.entries(ticketFields).forEach(([fieldName, dataKey]) => {
             const field = editTicketModal.find(`[name='${fieldName}']`);
-            field.val(data[dataKey]);
+
+            if (fieldName === 'MemberId') {
+
+                // If the field is MemberId, set the value and trigger initSelect2 with the retrieved member ID
+                field.val(data[dataKey]);
+                initSelect2({
+                    url: "/Clerk/Tickets/GetAllMembersJson",
+                    hiddenFieldId: "MemberId",
+                    pageSize: 20,
+                    initialSearchValue: data.member.accountNumber
+                }, "edit_ticket_modal");
+            } else {
+                // For other fields, set the value as usual
+                field.val(data[dataKey]);
+            }
         });
+
 
 
         let selectElements = document.querySelectorAll('.selectpicker')

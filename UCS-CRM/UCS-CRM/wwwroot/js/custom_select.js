@@ -23,6 +23,13 @@ function initSelect2(options, containerId) {
         return;
     }
 
+    if (options.initialSearchValue !== undefined && options.initialSearchValue !== null) {
+
+        selectSearch.value = options.initialSearchValue
+    }
+
+   
+
     // Function to fetch data from the backend
     function fetchData() {
         // Make an AJAX request to the backend
@@ -39,6 +46,8 @@ function initSelect2(options, containerId) {
                 response.forEach(function (option) {
                     var optionValue = option.name;
                     var optionId = option.id;
+                    var accountNumber = null;
+
                     if (!uniqueOptions.has(optionValue)) {
                         var newOption = document.createElement('div');
                         newOption.classList.add('select2-dropdown-option');
@@ -47,6 +56,17 @@ function initSelect2(options, containerId) {
 
                         var newOptionLi = document.createElement('li');
                         newOptionLi.appendChild(newOption);
+
+                        if (options.initialSearchValue && options.initialSearchValue.trim() !== '') {
+                            // Extract AccountNumber from optionValue only if initialSearchValue is defined and not empty
+                            accountNumber = extractAccountNumber(optionValue);
+                            // Check if the extracted accountNumber matches the initialSearchValue
+                            if (accountNumber === options.initialSearchValue) {
+                                newOptionLi.classList.add('selected'); // Mark as selected
+                                document.getElementById(hiddenFieldId).value = optionId; // Set hidden field value
+                                selectSelection.textContent = optionValue; // Set selection text
+                            }
+                        }
 
                         selectOptions.appendChild(newOptionLi);
                         uniqueOptions.add(optionValue);
@@ -81,6 +101,17 @@ function initSelect2(options, containerId) {
             }
         });
     }
+
+
+    // Function to extract AccountNumber from optionValue
+    function extractAccountNumber(optionValue) {
+        var matches = optionValue.match(/\((.*?)\)/); // Using regex to extract text within parentheses
+        if (matches && matches.length > 1) {
+            return matches[1];
+        }
+        return null;
+    }
+
 
     // Function to filter options based on search input
     function filterOptions() {

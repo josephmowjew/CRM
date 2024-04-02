@@ -42,7 +42,16 @@
                 </div>
                 <div class="form-group">
                     <label asp-for="MemberId"></label>
-                    <select asp-for="MemberId" asp-items="@ViewBag.members" class="selectpicker" style="width:100%"></select>
+                    <div class="select2-container">
+                        <div class="select2-selection">Select an option</div>
+                        <div class="select2-dropdown" style="display: none;">
+                            <div class="select2-search">
+                                <input type="text" class="form-control" id="select-search" placeholder="Search...">
+                            </div>
+                            <ul class="list-unstyled select2-options" style="max-height: 150px; overflow-y: auto;"></ul>
+                        </div>
+                    </div>
+                    <input type="hidden" id="MemberId" name="MemberId">
                     <span asp-validation-for="MemberId" class="text-danger"></span>
                 </div>
                 <div class="form-group">

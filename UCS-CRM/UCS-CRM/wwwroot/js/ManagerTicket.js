@@ -117,14 +117,48 @@ function EditForm(id, area = "") {
         var date = currentDate.getFullYear() + "-" + (month) + "-" + (day);
 
 
-        $("#edit_ticket_modal input[name ='Title']").val(data.title)
-        $("#edit_ticket_modal textarea[name ='Description']").val(data.description)
-        $("#edit_ticket_modal select[name ='TicketCategoryId']").val(data.ticketCategoryId)
-        $("#edit_ticket_modal select[name ='TicketPriorityId']").val(data.ticketPriorityId)
-        $("#edit_ticket_modal select[name ='StateId']").val(data.stateId)
-        $("#edit_ticket_modal select[name ='AssignedToId']").val(data.assignedToId)
-        $("#edit_ticket_modal select[name ='MemberId']").val(data.memberId)
-        $("#edit_ticket_modal input[name='Id']").val(data.id)
+        //$("#edit_ticket_modal input[name ='Title']").val(data.title)
+        //$("#edit_ticket_modal textarea[name ='Description']").val(data.description)
+        //$("#edit_ticket_modal select[name ='TicketCategoryId']").val(data.ticketCategoryId)
+        //$("#edit_ticket_modal select[name ='TicketPriorityId']").val(data.ticketPriorityId)
+        //$("#edit_ticket_modal select[name ='StateId']").val(data.stateId)
+        //$("#edit_ticket_modal select[name ='AssignedToId']").val(data.assignedToId)
+        //$("#edit_ticket_modal select[name ='MemberId']").val(data.memberId)
+        //$("#edit_ticket_modal input[name='Id']").val(data.id)
+
+
+        const ticketFields = {
+            Title: 'title',
+            Description: 'description',
+            TicketCategoryId: 'ticketCategoryId',
+            TicketPriorityId: 'ticketPriorityId',
+            AssignedToId: 'assignedToId',
+            MemberId: 'memberId',
+            StateId: 'stateId',
+            Id: 'id',
+        };
+
+        const editTicketModal = $("#edit_ticket_modal");
+
+        Object.entries(ticketFields).forEach(([fieldName, dataKey]) => {
+            const field = editTicketModal.find(`[name='${fieldName}']`);
+
+            if (fieldName === 'MemberId') {
+
+                // If the field is MemberId, set the value and trigger initSelect2 with the retrieved member ID
+                field.val(data[dataKey]);
+                initSelect2({
+                    url: "/Clerk/Tickets/GetAllMembersJson",
+                    hiddenFieldId: "MemberId",
+                    pageSize: 20,
+                    initialSearchValue: data.member.accountNumber
+                }, "edit_ticket_modal");
+            } else {
+                // For other fields, set the value as usual
+                field.val(data[dataKey]);
+            }
+        });
+
 
         let selectElements = document.querySelectorAll('.selectpicker')
 

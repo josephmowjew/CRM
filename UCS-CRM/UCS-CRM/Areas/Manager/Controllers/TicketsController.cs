@@ -12,6 +12,7 @@ using UCS_CRM.Core.DTOs.TicketStateTracker;
 using UCS_CRM.Core.Helpers;
 using UCS_CRM.Core.Models;
 using UCS_CRM.Core.Services;
+using UCS_CRM.Core.ViewModels;
 using UCS_CRM.Persistence.Interfaces;
 
 namespace UCS_CRM.Areas.Manager.Controllers
@@ -457,6 +458,35 @@ namespace UCS_CRM.Areas.Manager.Controllers
 
 
         }
+        [HttpGet]
+        public async Task<JsonResult> GetAllMembersJson(int page = 1, int pageSize = 20, string searchValue = "")
+        {
+
+            var skip = (page - 1) * pageSize;
+
+
+            var members = await this._memberRepository.GetMembers(new CursorParams() { Take = pageSize, Skip = skip, SearchTerm = searchValue });
+
+            List<DynamicSelect> dynamicSelect = new List<DynamicSelect>();
+
+            if (members.Any())
+            {
+                foreach (var item in members)
+                {
+                    dynamicSelect.Add(new DynamicSelect
+                    {
+                        Id = item.Id.ToString(),
+                        Name = item.FullName + " (" + item.AccountNumber +
+                    ")" + " -- " + item.Branch,
+
+                    });
+                }
+            }
+
+
+
+            return Json(dynamicSelect);
+        }
         [HttpPost]
         public async Task<ActionResult> GetTicketComments(string ticketId)
         {
@@ -559,6 +589,7 @@ namespace UCS_CRM.Areas.Manager.Controllers
 
         }
 
+
         private async Task<List<SelectListItem>> GetMembers()
         {
             var members = await this._memberRepository.GetMembers();
@@ -583,7 +614,7 @@ namespace UCS_CRM.Areas.Manager.Controllers
             ViewBag.categories = await GetTicketCategories();
             ViewBag.assignees = await GetAssignees();
             ViewBag.states = await GetTicketStates();
-            ViewBag.members = await GetMembers();
+            //ViewBag.members = await GetMembers();
         }
 
 
