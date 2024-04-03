@@ -42,28 +42,28 @@ UCS-CRM has the following requirements:
 
 - .NET SDK
 - MySQL Server
-- Pomelo.EntityFrameworkCore.MySql
-- AutoMapper.Extensions.Microsoft.DependencyInjection
-- Bogus
-- EPPlus
-- GravatarHelper.AspNetCore
-- Hangfire
-- Hangfire.MemoryStorage
-- iTextSharp
-- MailKit
-- Microsoft.AspNet.Mvc
-- Microsoft.AspNetCore.Diagnostics.EntityFrameworkCore
-- Microsoft.AspNetCore.Identity.EntityFrameworkCore
-- Microsoft.AspNetCore.Identity.UI
-- Microsoft.AspNetCore.Mvc.NewtonsoftJson
-- Microsoft.EntityFrameworkCore.SqlServer
-- Microsoft.EntityFrameworkCore.Tools
-- Microsoft.VisualStudio.Web.CodeGeneration.Design
-- MimeKit
-- SendGrid
-- System.Linq.Async
-- System.Linq.Dynamic.Core
-- System.Net.Http
+- Pomelo.EntityFrameworkCore.MySql (version 7.0.0)
+- AutoMapper.Extensions.Microsoft.DependencyInjection (version 12.0.1)
+- Bogus (version 34.0.2)
+- EPPlus (version 7.0.0)
+- GravatarHelper.AspNetCore (version 1.1.0)
+- Hangfire (version 1.8.6)
+- Hangfire.MemoryStorage (version 1.8.0)
+- iTextSharp (version 5.5.13.3)
+- MailKit (version 4.2.0)
+- Microsoft.AspNet.Mvc (version 5.3.0)
+- Microsoft.AspNetCore.Diagnostics.EntityFrameworkCore (version 7.0.13)
+- Microsoft.AspNetCore.Identity.EntityFrameworkCore (version 7.0.13)
+- Microsoft.AspNetCore.Identity.UI (version 7.0.13)
+- Microsoft.AspNetCore.Mvc.NewtonsoftJson (version 7.0.13)
+- Microsoft.EntityFrameworkCore.SqlServer (version 7.0.13)
+- Microsoft.EntityFrameworkCore.Tools (version 7.0.13)
+- Microsoft.VisualStudio.Web.CodeGeneration.Design (version 7.0.11)
+- MimeKit (version 4.2.0)
+- SendGrid (version 9.28.1)
+- System.Linq.Async (version 6.0.1)
+- System.Linq.Dynamic.Core (version 1.3.5)
+- System.Net.Http (version 4.3.4)
 
 
 ## Getting Started
