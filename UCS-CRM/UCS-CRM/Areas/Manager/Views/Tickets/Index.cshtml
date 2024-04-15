@@ -8,7 +8,13 @@
 }
 @{
     ViewData["Title"] = "Tickets";
-    Layout = "~/Areas/Admin/Views/shared/_Layout.cshtml";
+    Layout = "~/Areas/Manager/Views/shared/_Layout.cshtml";
+}
+
+
+@section Styles {
+
+    <link href="~/css/custom_select.css" rel="stylesheet" />
 }
 
 
@@ -79,7 +85,7 @@
         var datatable;
         
     </script>
-    <link href="~/css/dselect.css" rel="stylesheet" />
+    <script src="~/js/custom_select.js"></script>
     <script src="~/js/dselect.js"></script>
     <script src="~/js/ManagerTicket.js"></script>
     <script>
@@ -235,26 +241,9 @@
         });
     </script>
 
-    <script>
-        $(document).ready(function () {
+  
 
-            let selectElements = document.querySelectorAll('.selectpicker')
-
-            selectElements.forEach(function (element) {
-
-                // search
-                dselect(element, {
-                    search: true
-                })
-            });
-
-            
-            //$('.edit_member_select').select2();
-
-            //$('.create_member_select').select2();
-        });
-    </script>
-
+ 
 
     @{
         await Html.RenderPartialAsync("_ValidationScriptsPartial");

@@ -93,8 +93,6 @@ namespace UCS_CRM.Areas.Clerk.Controllers
                 createAcccountTypeDTO.DataInvalid = "";
 
 
-                //check for article title presence
-
                 var mappedTicketEscalation = this._mapper.Map<TicketEscalation>(createAcccountTypeDTO);
 
                 var ticketEscalationPresence = this._ticketEscalationRepository.Exists(mappedTicketEscalation);
@@ -509,7 +507,7 @@ namespace UCS_CRM.Areas.Clerk.Controllers
             ViewBag.categories = await GetTicketCategories();
             ViewBag.assignees = await GetAssignees();
             ViewBag.states = await GetTicketStates();
-            ViewBag.members = await GetMembers();
+            //ViewBag.members = await GetMembers();
         }
 
 

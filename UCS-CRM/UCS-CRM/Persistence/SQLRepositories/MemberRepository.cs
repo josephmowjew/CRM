@@ -25,6 +25,16 @@ namespace UCS_CRM.Persistence.SQLRepositories
             this._context.Add(member);
         }
 
+        public void AddRange(List<Member> members)
+        {
+            this._context.AddRange(members);
+        }
+
+        public async Task AddRangeAsync(List<Member> members)
+        {
+            await this._context.AddRangeAsync(members);
+        }
+
         public void DeleteUser(Member member)
         {
             member.User.Status = Lambda.Deleted;
@@ -127,6 +137,11 @@ namespace UCS_CRM.Persistence.SQLRepositories
             return this._context.Members.FirstOrDefault(m => m.AccountNumber.Trim().ToLower() == member.AccountNumber.Trim().ToLower());
         }
 
+        public async Task<Member?> ExistsAsync(Member member)
+        {
+            return await this._context.Members.FirstOrDefaultAsync(m => m.Fidxno == member.Fidxno);
+        }
+
         public async Task<Member?> GetMemberAsync(int id)
         {
             Member? databaseMember = await this._context.Members.Include(m => m.User).Include(m => m.MemberAccounts).FirstOrDefaultAsync(m =>m.Id == id);
@@ -171,8 +186,7 @@ namespace UCS_CRM.Persistence.SQLRepositories
 
                                         && m.FirstName.ToLower().Trim().Contains(@params.SearchTerm) ||
                                            m.LastName.ToLower().Trim().Contains(@params.SearchTerm) ||
-                                           m.AccountNumber.ToLower().Trim().Contains(@params.SearchTerm) ||
-                                           m.Address.ToLower().Trim().Contains(@params.SearchTerm))
+                                           m.AccountNumber.ToLower().Trim().Contains(@params.SearchTerm))
                                    .Skip(@params.Skip)
                                    .Take(@params.Take)
                                    .ToListAsync() select tblOb);
@@ -195,6 +209,12 @@ namespace UCS_CRM.Persistence.SQLRepositories
         public async Task<List<Member>?> GetMembers()
         {
             return await this._context.Members.Include(m => m.MemberAccounts).Where(a => a.Status != Lambda.Deleted).ToListAsync();
+        }
+
+        public async Task<List<Member>>GetMembersWithNoUserAccount()
+        {
+            //get member accounts with associated user account
+            return await this._context.Members.Include(m => m.User).Where(m => m.User == null).ToListAsync();
         }
 
 
@@ -228,6 +248,11 @@ namespace UCS_CRM.Persistence.SQLRepositories
             int number = generator.Next(100000, 999999);
 
             return number;
+        }
+
+        public async Task<Member?> GetLastMemberByFidxno()
+        {
+            return await this._context.Members.OrderByDescending(m => m.Fidxno).FirstOrDefaultAsync();
         }
     }
 }

@@ -32,6 +32,9 @@ namespace UCS_CRM.Core.Models
         public ICollection<TicketComment>? TicketComments { get; set; }
 
         public List<TicketEscalation> TicketEscalations { get; set; }
+        public int? DepartmentId { get; set; }
+        public Department? Department { get; set; }
+
 
         public Ticket()
         {

@@ -1,6 +1,7 @@
 ﻿using MimeKit;
 using MailKit.Security;
 using MailKit.Net.Smtp;
+using System.Net.Sockets;
 
 namespace UCS_CRM.Core.Services
 {
@@ -8,9 +9,12 @@ namespace UCS_CRM.Core.Services
     {
         private IConfiguration _configuration { get; }
 
-        public EmailService(IConfiguration configuration)
+        private readonly IErrorLogService _errorService;
+
+        public EmailService(IConfiguration configuration, IErrorLogService errorService)
         {
             _configuration = configuration;
+            _errorService = errorService;
         }
 
         public void SendEmail(string email, string subject, string HtmlMessage)
@@ -60,6 +64,49 @@ namespace UCS_CRM.Core.Services
              WebMail.Send(to: email, subject: subject, body: HtmlMessage, isBodyHtml: true);*/
 
             return "Message sent";
+        }
+
+        public async Task<KeyValuePair<bool, string>> SendMailWithKeyVarReturn(string email, string subject, string HtmlMessage)
+        {
+            try
+            {
+                MimeMessage message = new MimeMessage();
+
+                MailboxAddress from = new MailboxAddress(_configuration["MailSettings:SenderName"], _configuration["MailSettings:SenderEmail"]);
+                message.From.Add(from);
+
+                MailboxAddress to = new MailboxAddress(email, email);
+                message.To.Add(to);
+
+                message.Subject = subject;
+
+                BodyBuilder bodyBuilder = new BodyBuilder();
+                bodyBuilder.HtmlBody = HtmlMessage;
+
+                message.Body = bodyBuilder.ToMessageBody();
+
+                using (var client = new MailKit.Net.Smtp.SmtpClient())
+                {
+                    await client.ConnectAsync("smtp.gmail.com", 587, SecureSocketOptions.Auto);
+                    await client.AuthenticateAsync(_configuration["MailSettings:SenderEmail"], _configuration["MailSettings:Password"]);
+                    await client.SendAsync(message);
+                    await client.DisconnectAsync(true);
+                }
+
+                return new KeyValuePair<bool, string>(true, "Message sent");
+            }
+            catch (Exception ex)
+            {
+                string errorMessage = "Message not sent";
+                if (ex is SslHandshakeException || (ex is SocketException socketEx && socketEx.SocketErrorCode == SocketError.HostNotFound))
+                {
+                    errorMessage = "Message not sent due to internet-related issues. Please try again later.";
+                }
+
+                await this._errorService.LogErrorAsync(ex);
+
+                return new KeyValuePair<bool, string>(false, errorMessage);
+            }
         }
     }
 }

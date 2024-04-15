@@ -78,9 +78,12 @@ builder.Services.AddScoped<IMemberAccountRepository, MemberAccountRepository>();
 builder.Services.AddScoped<IEmailAddressRepository, EmailAddressRepository>();
 builder.Services.AddScoped<IDepartmentRepository, DepartmentRepository>();
 builder.Services.AddScoped<IBranchRepository, BranchRepository>();
+builder.Services.AddScoped<IErrorLogRepository, ErrorLogRepository>();
+builder.Services.AddScoped<IErrorLogService, ErrorLogService>();
 builder.Services.AddScoped<ITicketStateTrackerRepository, TicketStateTrackerRepository>();
 //builder.Services.AddScoped<IPositionRepository, PositionRepository>();
 builder.Services.AddScoped<IFeedbackRepository, FeedbackRepository>();
+builder.Services.AddScoped<IFintechMemberService,FintechMemberService>();
 builder.Services.AddHttpClient(); 
 
 
@@ -119,6 +122,11 @@ app.UseHangfireDashboard();
 
 using var scope = app.Services.CreateScope();
 ITicketRepository ticket = scope.ServiceProvider.GetRequiredService<ITicketRepository>();
+IFintechMemberService fintechMemberService = scope.ServiceProvider.GetRequiredService<IFintechMemberService>();
+
+
+//RecurringJob.AddOrUpdate("SyncFintechMemberRecords", () => fintechMemberService.SyncFintechMembersWithLocalDataStore(), Cron.MinuteInterval(5));
+
 
 
 //BackgroundJob.Schedule(() => ticket.UnAssignedTickets(), TimeSpan.FromSeconds(10));

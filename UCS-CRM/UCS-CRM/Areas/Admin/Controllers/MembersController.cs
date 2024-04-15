@@ -63,6 +63,9 @@ namespace UCS_CRM.Areas.Admin.Controllers
 
                     var claimsIdentitifier = userClaims.FindFirst(ClaimTypes.NameIdentifier);
 
+                    //update the gender
+                    databaseMemberRecord.Gender = model.Gender;
+
 
                     ApplicationUser? user =  await this._memberRepository.CreateUserAccount(databaseMemberRecord, model.Email, "",claimsIdentitifier.Value);
 

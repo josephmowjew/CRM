@@ -7,7 +7,12 @@
 }
 @{
     ViewData["Title"] = "Tickets";
-    Layout = "~/Areas/Admin/Views/shared/_Layout.cshtml";
+    Layout = "~/Areas/Clerk/Views/shared/_Layout.cshtml";
+}
+
+@section Styles {
+
+    <link href="~/css/custom_select.css" rel="stylesheet" />
 }
 
 <p>
@@ -25,15 +30,15 @@
 
 
 
-<div class="modal fade" id="create_ticket_modal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+<div class="modal fade" id="create_ticket_modal" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
     <partial name="_CreateTicketPartial" />
 </div>
 
-<div class="modal fade" id="edit_ticket_modal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+<div class="modal fade" id="edit_ticket_modal"  role="dialog" aria-labelledby="example2ModalLabel" aria-hidden="true">
     <partial name="_EditTicketPartial" />
 </div>
 
-<div class="modal fade" id="escalate_ticket_modal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+<div class="modal fade" id="escalate_ticket_modal" role="dialog" aria-labelledby="example3ModalLabel" aria-hidden="true">
     <partial name="_FirstTicketEscalationPartial" />
 </div>
 
@@ -99,9 +104,12 @@
     <script>
         var datatable;
     </script>
+    <script src="~/js/custom_select.js"></script>
     <link href="~/css/dselect.css" rel="stylesheet" />
     <script src="~/js/dselect.js"></script>
     <script src="~/js/ClerkTicket.js"></script>
+   
+    
     <script>
         $(document).ready(function () {
 
@@ -263,21 +271,42 @@
     <script>
         $(document).ready(function () {
 
-            let selectElements = document.querySelectorAll('.selectpicker')
+            // let selectElements = document.querySelectorAll('.selectpicker')
 
-            selectElements.forEach(function (element) {
+            // selectElements.forEach(function (element) {
 
-                // search
-                dselect(element, {
-                    search: true
-                })
-            });
+            //     // search
+            //     dselect(element, {
+            //         search: true
+            //     })
+            // });
 
             
             //$('.edit_member_select').select2();
 
             //$('.create_member_select').select2();
+
+
+       
+
+            
+
+            //$('.selectpicker1').select2();
+
         });
+    </script>
+
+  
+
+    <script>
+       
+        // Initialize Select2 with desired options
+        initSelect2({
+            url: "/Clerk/Tickets/GetAllMembersJson",
+            hiddenFieldId: "MemberId",
+            pageSize: 20,
+            initialSearchValue: "",
+        }, "create_ticket_modal");
     </script>
 
 

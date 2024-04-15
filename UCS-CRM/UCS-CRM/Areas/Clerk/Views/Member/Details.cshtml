@@ -27,15 +27,23 @@
                     <br>
                     <p class="text-muted">@Model.AccountNumber</p>
                 </div>
+
+                <div class="col-md-3 col-xs-6 b-r">
+                    <strong>BASE ACCOUNT BALANCE</strong>
+                    <br>
+                    <p class="text-muted">MWK @Model.Balance</p>
+                </div>
+              
                 <div class="col-md-3 col-xs-6">
                     <strong>NATIONAL ID</strong>
                     <br>
                     <p class="text-muted">@Model.NationalId</p>
                 </div>
+
             
             </div>
             <hr />
-            <p class="font-normal mt-4">ACCOUNT BALANCES</p>
+            <p class="font-normal mt-4">OTHER ACCOUNTS </p>
             <div class="container">
                 <div class="row">
                     <div class="col-md-12">
@@ -65,7 +73,7 @@
                     @foreach (var account in Model.MemberAccounts)
                     {
                         <tr>
-                            <td>@account.AccountNumber</td>
+                            <td>@account.AccountName</td>
                             <td> @account.Balance.ToString("MWK 0.00")</td>
                                 </tr>
 

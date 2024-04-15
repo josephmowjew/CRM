@@ -7,6 +7,8 @@ namespace UCS_CRM.Core.DTOs.Member
         public int Id { get; set; }
         [Display(Name = "First Name")]
         public string? FirstName { get; set; }
+
+        public int Fidxno { get; set; }
         [Display(Name = "Surname")]
         [StringLength(maximumLength: 70, MinimumLength = 2)]
         public string? LastName { get; set; }
@@ -14,7 +16,7 @@ namespace UCS_CRM.Core.DTOs.Member
         public DateTime? DateOfBirth { get; set; }
         [Required]
         public string? Gender { get; set; }
-        [StringLength(maximumLength: 10, MinimumLength = 2)]
+        [StringLength(maximumLength: 40, MinimumLength = 2)]
         [Display(Name = "Account Number")]
         public string AccountNumber { get; set; }
         [StringLength(maximumLength: 70, MinimumLength = 5)]
