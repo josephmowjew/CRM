@@ -12,6 +12,7 @@
 
         let id = $("#set_email_modal input[name = 'Id']").val()
         let email = $("#set_email_modal input[name = 'Email']").val()
+        let gender = $("#set_email_modal select[name = 'Gender']").val()
 
         var form_url = $("#set_email_modal form").attr("action");
 
@@ -19,6 +20,7 @@
 
         var userInput = {
             Email: email,
+            Gender:gender,
             Id: id,
         }
 
