@@ -58,6 +58,15 @@
                     //replace the form data with the data retrieved from the server
                     $("#create_ticket_modal").html(data)
 
+                    //hook up the custom select
+
+                    initSelect2({
+                        url: "/Clerk/Tickets/GetAllMembersJson",
+                        hiddenFieldId: "MemberId",
+                        pageSize: 20,
+                        initialSearchValue: "",
+                    }, "create_ticket_modal");
+
 
                     //rewire the onclick event on the form
 
@@ -87,6 +96,8 @@
             error: function (xhr, ajaxOtions, thrownError) {
 
                 console.error(xhr.statusText)
+
+                
             }
 
         });
@@ -384,6 +395,15 @@ function updateTicket() {
                 $("#edit_ticket_modal").html(data)
 
 
+                 //hook up custom select event
+
+                 initSelect2({
+                    url: "/Clerk/Tickets/GetAllMembersJson",
+                    hiddenFieldId: "MemberId",
+                    pageSize: 20,
+                    initialSearchValue: "",
+                }, "create_ticket_modal");
+                
                 //rewire the onclick event on the form
 
                 $("#edit_ticket_modal button[name='update_ticket_btn']").unbind().click(function () { updateTicket() });

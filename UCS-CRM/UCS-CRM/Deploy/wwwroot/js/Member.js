@@ -48,7 +48,7 @@
                     //replace the form data with the data retrieved from the server
                     $("#set_email_modal").html(data)
 
-
+                   
                     //rewire the onclick event on the form
 
                     $("#set_email_modal button[name='create_account_btn']").unbind().click(OnCreateClick);
