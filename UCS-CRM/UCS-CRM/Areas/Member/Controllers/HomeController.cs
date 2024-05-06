@@ -138,6 +138,8 @@ namespace UCS_CRM.Areas.Member.Controllers
             //authenticate API
             string token = await ApiAuthenticate();
 
+            bool error = false;
+
             if (string.IsNullOrEmpty(token))
             {
                 return new List<MemberAccount>();
@@ -166,35 +168,50 @@ namespace UCS_CRM.Areas.Member.Controllers
 
             var status = document.RootElement.GetProperty("status").GetInt32();
 
+            var message = document.RootElement.GetProperty("message").GetString();
+
+            if(message.Equals("Account Number Does Not Macth any Identification Details",StringComparison.CurrentCultureIgnoreCase)){
+                
+                 error = true;
+                return accountDTOs;
+            }
+
             if (status == 404)
             {
                 Json(new { error = "error", message = "failed to create the user account from the member" });
 
+                error = true;
+
                 return accountDTOs;
             }
 
-            var baseAccountElement = document.RootElement.GetProperty("data").GetProperty("base_account");
-
-            var relatedAccounts = document.RootElement.GetProperty("data").GetProperty("related_accounts");
-
-            if (relatedAccounts.ValueKind == JsonValueKind.Array)
+            if(error == false)
             {
-                foreach (var relatedAccount in relatedAccounts.EnumerateArray())
+                var baseAccountElement = document.RootElement.GetProperty("data").GetProperty("base_account");
+
+                var relatedAccounts = document.RootElement.GetProperty("data").GetProperty("related_accounts");
+
+                if (relatedAccounts.ValueKind == JsonValueKind.Array)
                 {
-                    decimal balance;
-                    if (decimal.TryParse(relatedAccount.GetProperty("balance").GetString(), out balance))
+                    foreach (var relatedAccount in relatedAccounts.EnumerateArray())
                     {
-                        balance = balance;
+                        decimal balance;
+                        if (decimal.TryParse(relatedAccount.GetProperty("balance").GetString(), out balance))
+                        {
+                            balance = balance;
+                        }
+                        accountDTOs.Add(new MemberAccount()
+                        {
+                        
+                            AccountNumber = relatedAccount.GetProperty("account_number").GetString(),
+                            AccountName = relatedAccount.GetProperty("account_name").GetString(),
+                            Balance = balance
+                        });
                     }
-                    accountDTOs.Add(new MemberAccount()
-                    {
-                      
-                        AccountNumber = relatedAccount.GetProperty("account_number").GetString(),
-                        AccountName = relatedAccount.GetProperty("account_name").GetString(),
-                        Balance = balance
-                    });
                 }
             }
+
+          
 
      
 
@@ -228,9 +245,9 @@ namespace UCS_CRM.Areas.Member.Controllers
             var json = await tokenResponse.Content.ReadAsStringAsync();
             var document = JsonDocument.Parse(json);
 
-            var status = document.RootElement.GetProperty("status").GetString();
+            var status = document.RootElement.GetProperty("status").GetInt32();
 
-            if (status == "404")
+            if (status == 404)
             {
               
                 //

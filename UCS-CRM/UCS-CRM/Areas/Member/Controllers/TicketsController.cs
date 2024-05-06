@@ -37,6 +37,8 @@ namespace UCS_CRM.Areas.Member.Controllers
         private readonly IEmailService _emailService;
         private readonly IEmailAddressRepository _addressRepository;
         private readonly ITicketStateTrackerRepository _ticketStateTrackerRepository;
+
+        private readonly IUserRepository _userRepository;
         public TicketsController(ITicketRepository ticketRepository,
             IMapper mapper, 
             IUnitOfWork unitOfWork,
@@ -50,7 +52,8 @@ namespace UCS_CRM.Areas.Member.Controllers
             IMemberRepository memberRepository, 
             ITicketEscalationRepository ticketEscalationRepository,
             IDepartmentRepository departmentRepository,
-            ITicketStateTrackerRepository ticketStateTrackerRepository)
+            ITicketStateTrackerRepository ticketStateTrackerRepository,
+            IUserRepository userRepository)
         {
             _ticketRepository = ticketRepository;
             _mapper = mapper;
@@ -66,6 +69,7 @@ namespace UCS_CRM.Areas.Member.Controllers
             _addressRepository = addressRepository;
             _departmentRepository = departmentRepository;
             _ticketStateTrackerRepository = ticketStateTrackerRepository;
+            _userRepository = userRepository;
         }
 
         // GET: TicketsController
@@ -194,13 +198,16 @@ namespace UCS_CRM.Areas.Member.Controllers
                         mappedTicket.TicketAttachments.AddRange(mappedAttachments);
 
                         await this._unitOfWork.SaveToDataStore();
+                        
 
                         //email to send to support
                         var emailAddress = await _addressRepository.GetEmailAddressByOwner(Lambda.Support);
 
+                         var userRecord = await this._userRepository.GetSingleUser(mappedTicket.CreatedById);
+
                         string emailBody = "Your ticket request for has been submitted in the system. </b> check the system for more details by clicking here " + Lambda.systemLink + "<br /> ";
                         string emailBod2y = "A ticket request for has been submitted in the system. </b> check the system for more details by clicking here " + Lambda.systemLink + "<br /> ";
-                        _emailService.SendMail(mappedTicket.Member.Address, "Ticket Creation", emailBody);
+                        _emailService.SendMail(userRecord.Email, "Ticket Creation", emailBody);
                         //_emailService.SendMail(mappedTicket.Member.Address, "Ticket Creation", emailBody);
 
                     }
