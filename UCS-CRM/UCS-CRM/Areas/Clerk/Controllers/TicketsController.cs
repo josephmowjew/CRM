@@ -122,13 +122,13 @@ namespace UCS_CRM.Areas.Clerk.Controllers
                 }
 
 
-                //check for article title presence
+              
 
                 var mappedTicket = this._mapper.Map<Ticket>(createTicketDTO);
 
-                var statePresence = this._ticketRepository.Exists(mappedTicket);
+                var ticketPresence = this._ticketRepository.Exists(mappedTicket);
 
-                if (statePresence != null)
+                if (ticketPresence != null)
                 {
                     createTicketDTO.DataInvalid = "true";
 
@@ -150,6 +150,7 @@ namespace UCS_CRM.Areas.Clerk.Controllers
 
                     mappedTicket.CreatedById = claimsIdentitifier.Value;
 
+                    
                     //get the last ticket
 
                     Ticket lastTicket = await this._ticketRepository.LastTicket();
@@ -203,13 +204,26 @@ namespace UCS_CRM.Areas.Clerk.Controllers
 
                         await this._unitOfWork.SaveToDataStore();
 
-                        string emailBody = "A ticket request for " + mappedTicket.Member.FullName + " has been submitted in the system. </b> check the system for more details by clicking here " + Lambda.systemLink + "<br /> ";
+                        //get user record by created by id
+
+                        var userRecord = await this._userRepository.GetSingleUser(mappedTicket.CreatedById);
 
 
-                        //email to send to support
-                        var emailAddress = await _addressRepository.GetEmailAddressByOwner(Lambda.Support);
+                        if(userRecord != null)
+                        {
+                             string emailBody = "A ticket request for " + userRecord.FullName + " has been submitted in the system. </b> check the system for more details by clicking here " + Lambda.systemLink + "<br /> ";
 
-                        _emailService.SendMail(emailAddress.Email, "Ticket Creation", emailBody);
+                            //email to send to support
+                            var emailAddress = await _addressRepository.GetEmailAddressByOwner(Lambda.Support);
+
+                            if(emailAddress != null)
+                            {
+                                 _emailService.SendMail(emailAddress.Email, "Ticket Creation", emailBody);
+                                
+                            }
+                        }
+
+                       
                     }
 
 

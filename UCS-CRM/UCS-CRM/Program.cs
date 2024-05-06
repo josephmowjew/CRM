@@ -125,11 +125,13 @@ ITicketRepository ticket = scope.ServiceProvider.GetRequiredService<ITicketRepos
 IFintechMemberService fintechMemberService = scope.ServiceProvider.GetRequiredService<IFintechMemberService>();
 
 
-//RecurringJob.AddOrUpdate("SyncFintechMemberRecords", () => fintechMemberService.SyncFintechMembersWithLocalDataStore(), Cron.MinuteInterval(5));
+RecurringJob.AddOrUpdate("SyncFintechMemberRecords", () => fintechMemberService.SyncFintechMembersWithLocalDataStore(), Cron.HourInterval(1));
 
 
 
-//BackgroundJob.Schedule(() => ticket.UnAssignedTickets(), TimeSpan.FromSeconds(10));
+BackgroundJob.Schedule(() => ticket.UnAssignedTickets(), TimeSpan.FromSeconds(10));
+BackgroundJob.Schedule(() => ticket.SendTicketReminders(), TimeSpan.FromMinutes(15));
+
 //BackgroundJob.Schedule(() => ticket.EscalatedTickets(), TimeSpan.FromHours(1));
 //RecurringJob.AddOrUpdate("TicketReminder", () => ticket.SendTicketReminders(), Cron.MinuteInterval(10));
 //RecurringJob.AddOrUpdate("EscalatedTickets", () => ticket.SendEscalatedTicketsReminder(), Cron.MinuteInterval(10));
