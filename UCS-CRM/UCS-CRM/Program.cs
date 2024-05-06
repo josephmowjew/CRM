@@ -129,8 +129,8 @@ RecurringJob.AddOrUpdate("SyncFintechMemberRecords", () => fintechMemberService.
 
 
 
-BackgroundJob.Schedule(() => ticket.UnAssignedTickets(), TimeSpan.FromMinutes(30));
-BackgroundJob.Schedule(() => ticket.SendTicketReminders(), TimeSpan.FromMinutes(30));
+RecurringJob.AddOrUpdate(() => ticket.UnAssignedTickets(), Cron.MinuteInterval(30));
+RecurringJob.AddOrUpdate(() => ticket.SendTicketReminders(), Cron.MinuteInterval(30));
 
 //BackgroundJob.Schedule(() => ticket.EscalatedTickets(), TimeSpan.FromHours(1));
 //RecurringJob.AddOrUpdate("TicketReminder", () => ticket.SendTicketReminders(), Cron.MinuteInterval(10));
