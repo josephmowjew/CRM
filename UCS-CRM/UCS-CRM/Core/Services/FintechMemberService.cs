@@ -86,7 +86,7 @@ namespace UCS_CRM.Core.Services
             }
         }
 
-        [DisableConcurrentExecution(timeoutInSeconds: 600)]
+        [DisableConcurrentExecution(timeoutInSeconds: 6000)]
         public async Task SyncFintechMembersWithLocalDataStore()
         
         {
@@ -131,35 +131,44 @@ namespace UCS_CRM.Core.Services
                     // If duplicates found, stop fetching more records
                     if (duplicates.Count > 0)
                     {
+
+                        //remove the duplicates 
+                        mappedMembers = mappedMembers.Except(duplicates).ToList();
+
                         fetchMore = false;
+                        
                     }
 
-                    // Insert records to local data store
-                    await this._memberRepository.AddRangeAsync(mappedMembers);
-
-                    // Update the fidxno to retrieve new records
-
-                    if(fintechMemberData.Count > 0)
+                    if(mappedMembers.Count > 0)
                     {
-                        // Original line of code
-                        fidxno = fintechMemberData.OrderByDescending(fm => fm.FIdxno).FirstOrDefault()?.FIdxno ?? 0;
+                         // Insert records to local data store
+                        await this._memberRepository.AddRangeAsync(mappedMembers);
 
-                        // defaultValue is the default value you want to assign if fintechMemberData is empty or if all items have a null FIdxno
+                         if(fintechMemberData.Count > 0)
+                        {
+                            // Original line of code
+                            fidxno = fintechMemberData.OrderByDescending(fm => fm.FIdxno).FirstOrDefault()?.FIdxno ?? 0;
 
+                            // defaultValue is the default value you want to assign if fintechMemberData is empty or if all items have a null FIdxno
+
+                        }
+
+
+                        // Save changes to the database
+                        try
+                        {
+                            await _unitOfWork.SaveToDataStore();
+                        }
+                        catch (Exception ex)
+                        {
+                        
+                            // Save the error to the database
+                            await this._errorService.LogErrorAsync(ex);
+                        }
+                        
                     }
 
-
-                    // Save changes to the database
-                    try
-                    {
-                        await _unitOfWork.SaveToDataStore();
-                    }
-                    catch (Exception ex)
-                    {
-                     
-                        // Save the error to the database
-                        await this._errorService.LogErrorAsync(ex);
-                    }
+                   
                 }
             //}
         }
