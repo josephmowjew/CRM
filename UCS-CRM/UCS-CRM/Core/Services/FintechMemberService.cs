@@ -96,11 +96,11 @@ namespace UCS_CRM.Core.Services
 
             // Get the last member sorted by Fidxno 
             Member? member = await this._memberRepository.GetLastMemberByFidxno();
-
-            if (member is not null)
-            {
+            fidxno = member is not null ? member.Fidxno : 0;
+           // if (member is not null)
+           // {
                 // Update the fidxno 
-                fidxno = member.Fidxno;
+                //fidxno = member.Fidxno;
 
                 while (fetchMore)
                 {
@@ -161,7 +161,7 @@ namespace UCS_CRM.Core.Services
                         await this._errorService.LogErrorAsync(ex);
                     }
                 }
-            }
+            //}
         }
 
         private async Task<List<Member>> FindDuplicatesAsync(List<Member> members)
