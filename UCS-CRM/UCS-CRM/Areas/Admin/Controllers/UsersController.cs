@@ -29,8 +29,9 @@ namespace UCS_CRM.Areas.Admin.Controllers
         private RoleManager<Role> _roleManager;
         private readonly IRoleRepositorycs _roleRepositorycs;
         private readonly UserManager<ApplicationUser> _userManager;
+        private readonly IConfiguration Configuration;
         public UsersController(IUserRepository userRepository, IEmailService emailService, RoleManager<Role> roleManager,
-            UserManager<ApplicationUser> userManager, IUnitOfWork unitOfWork, IDepartmentRepository departmentRepository, IRoleRepositorycs roleRepositorycs, IBranchRepository branchRepository)
+            UserManager<ApplicationUser> userManager, IUnitOfWork unitOfWork, IDepartmentRepository departmentRepository, IRoleRepositorycs roleRepositorycs, IBranchRepository branchRepository, IConfiguration configuration)
         {
             this._userRepository = userRepository;
             this._emailService = emailService;
@@ -40,6 +41,7 @@ namespace UCS_CRM.Areas.Admin.Controllers
             this._departmentRepository = departmentRepository;
             this._roleRepositorycs = roleRepositorycs;
             this._branchRepository = branchRepository;
+            Configuration = configuration;
         }
 
         // GET: UsersController
@@ -171,8 +173,10 @@ namespace UCS_CRM.Areas.Admin.Controllers
                             string UserNameBody = "An account has been created on UCS SACCO. Your email is " + "<b>" + applicationUser.Email + " <br /> ";
                             //string pin = "An account has been created on UCS SACCO. Your pin is " + "<b>" + applicationUser.Pin + " <br /> ";
                             string PasswordBody = "An account has been created on UCS SACCO App. Your password is " + "<b> P@$$w0rd <br />";
-
-                            string AccountActivationBody = @"Here is the One time Pin (OTP) for your account on UCS: <strong>" + applicationUser.Pin + "</strong> <br /> \n Access UCS CRM following this link: http://ucsscrm.sparcsystems.africa";
+                           
+                            var host = Configuration.GetSection("HostingSettings")["Host"];
+                            var protocol = Configuration.GetSection("HostingSettings")["Protocol"];
+                            string AccountActivationBody = @"Here is the One time Pin (OTP) for your account on UCS: <strong>" + applicationUser.Pin + "</strong> <br /> \n Access UCS CRM following this link: " + protocol + "://" + host ;
 
                             BackgroundJob.Enqueue(() => _emailService.SendMail(applicationUser.Email, "Login Details", UserNameBody));
                             //_emailService.SendMail(applicationUser.Email, "Login Details", pin);
