@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using Hangfire;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
@@ -139,7 +140,7 @@ namespace UCS_CRM.Areas.Manager.Controllers
                     //email to send to support
                     var emailAddress = await _addressRepository.GetEmailAddressByOwner(Lambda.SeniorManager);
 
-                    _emailService.SendMail(emailAddress.Email, "Ticket Escalation", emailBody);
+                    BackgroundJob.Enqueue(() => _emailService.SendMail(emailAddress.Email, "Ticket Escalation", emailBody));
 
                     return PartialView("_CreateTicketEscalationPartial", createAcccountTypeDTO);
                 }
@@ -305,11 +306,11 @@ namespace UCS_CRM.Areas.Manager.Controllers
 
                 if (user != null)
                 {
-                    _emailService.SendMail(user.Email, "Ticket Escalation", emailBody);
+                    BackgroundJob.Enqueue(() => _emailService.SendMail(user.Email, "Ticket Escalation", emailBody));
                 }
                 var emailAddress = await _addressRepository.GetEmailAddressByOwner(Lambda.SeniorManager);
 
-                _emailService.SendMail(emailAddress.Email, "Ticket Escalation", emailBody);
+                BackgroundJob.Enqueue(() => _emailService.SendMail(emailAddress.Email, "Ticket Escalation", emailBody));
 
                 return Json(new { status = "success", message = "user ticket updated successfully" });
             }

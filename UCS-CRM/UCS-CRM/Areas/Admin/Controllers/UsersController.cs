@@ -13,6 +13,7 @@ using System.Data;
 using Microsoft.IdentityModel.Tokens;
 using System.Security.Claims;
 using UCS_CRM.Persistence.SQLRepositories;
+using Hangfire;
 
 namespace UCS_CRM.Areas.Admin.Controllers
 {
@@ -173,11 +174,11 @@ namespace UCS_CRM.Areas.Admin.Controllers
 
                             string AccountActivationBody = @"Here is the One time Pin (OTP) for your account on UCS: <strong>" + applicationUser.Pin + "</strong> <br /> \n Access UCS CRM following this link: http://ucsscrm.sparcsystems.africa";
 
-                            _emailService.SendMail(applicationUser.Email, "Login Details", UserNameBody);
+                            BackgroundJob.Enqueue(() => _emailService.SendMail(applicationUser.Email, "Login Details", UserNameBody));
                             //_emailService.SendMail(applicationUser.Email, "Login Details", pin);
-                            _emailService.SendMail(applicationUser.Email, "Login Details", PasswordBody);
+                            BackgroundJob.Enqueue(() => _emailService.SendMail(applicationUser.Email, "Login Details", PasswordBody));
 
-                            _emailService.SendMail(applicationUser.Email, "Account Activation", AccountActivationBody);
+                            BackgroundJob.Enqueue(() => _emailService.SendMail(applicationUser.Email, "Account Activation", AccountActivationBody));
                             return Json(new { response = "User account created successfully" });
                         }
                         else

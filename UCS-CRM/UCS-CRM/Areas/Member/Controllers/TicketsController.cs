@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using Hangfire;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -207,7 +208,7 @@ namespace UCS_CRM.Areas.Member.Controllers
 
                         string emailBody = "Your ticket request for has been submitted in the system. </b> check the system for more details by clicking here " + Lambda.systemLink + "<br /> ";
                         string emailBod2y = "A ticket request for has been submitted in the system. </b> check the system for more details by clicking here " + Lambda.systemLink + "<br /> ";
-                        _emailService.SendMail(userRecord.Email, "Ticket Creation", emailBody);
+                        BackgroundJob.Enqueue(() => _emailService.SendMail(userRecord.Email, "Ticket Creation", emailBody));
                         //_emailService.SendMail(mappedTicket.Member.Address, "Ticket Creation", emailBody);
 
                     }

@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using Hangfire;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
@@ -184,14 +185,14 @@ namespace UCS_CRM.Areas.Manager.Controllers
                     //check if this is a new user or not (old users will have a deleted date field set to an actual date)
                     if(user.DeletedDate != null)
                     {
-                        _emailService.SendMail(user.Email, "Account Status", $"Good day, We are pleased to inform you that your account has been reactivated on the UCS SACCO. You may proceed to login using your previous credentials. ");
+                        BackgroundJob.Enqueue(() => _emailService.SendMail(user.Email, "Account Status", $"Good day, We are pleased to inform you that your account has been reactivated on the UCS SACCO. You may proceed to login using your previous credentials. "));
 
                     }
                     else
                     {
-                        _emailService.SendMail(user.Email, "Login Details", UserNameBody);
-                        _emailService.SendMail(user.Email, "Login Details", PasswordBody);
-                        _emailService.SendMail(user.Email, "Account Details", $"Good day, for those who have not yet registered with Gravator, please do so so that you may upload an avatar of yourself that can be associated with your email address and displayed on your profile in the Mental Lab application.\r\nPlease visit https://en.gravatar.com/ to register with Gravatar. ");
+                        BackgroundJob.Enqueue(() => _emailService.SendMail(user.Email, "Login Details", UserNameBody));
+                        BackgroundJob.Enqueue(() => _emailService.SendMail(user.Email, "Login Details", PasswordBody));
+                        BackgroundJob.Enqueue(() => _emailService.SendMail(user.Email, "Account Details", $"Good day, for those who have not yet registered with Gravator, please do so so that you may upload an avatar of yourself that can be associated with your email address and displayed on your profile in the Mental Lab application.\r\nPlease visit https://en.gravatar.com/ to register with Gravatar. "));
 
 
                     }
@@ -271,7 +272,7 @@ namespace UCS_CRM.Areas.Manager.Controllers
             int resultTotal = 0;
 
             //create a cursor params based on the data coming from the datatable
-            CursorParams CursorParameters = new CursorParams() { SearchTerm = searchValue, Skip = skip, SortColum = sortColumn, SortDirection = sortColumnAscDesc, Take = pageSize };
+            CursorParams CursorParameters = new CursorParams() { SearchTerm = searchValue.Trim(), Skip = skip, SortColum = sortColumn, SortDirection = sortColumnAscDesc, Take = pageSize };
 
             resultTotal = await this._memberRepository.TotalCount();
             var result = await this._memberRepository.GetMembers(CursorParameters);

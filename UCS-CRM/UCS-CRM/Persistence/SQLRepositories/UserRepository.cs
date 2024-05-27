@@ -297,11 +297,19 @@ namespace UCS_CRM.Persistence.SQLRepositories
             }
             else
             {
+                // Assume @params.SearchTerm is the input search string
+                var searchTerms = @params.SearchTerm.ToLower().Trim().Split(' ');
+
+                // If the search term contains a space, it will be split into two parts
+                string firstNameSearch = searchTerms.Length > 0 ? searchTerms[0] : "";
+                string lastNameSearch = searchTerms.Length > 1 ? searchTerms[1] : "";
+
                 var usersTemp =  this._context.Users.Where(u => u.Status != Lambda.Deleted && u.EmailConfirmed == true);
 
                 users = await usersTemp
-                    .Where(u => 
-                             u.FirstName.ToLower().Contains(@params.SearchTerm.ToLower().Trim())
+                    .Where(u =>
+                            u.FirstName.ToLower().Trim().Contains(firstNameSearch) && u.LastName.ToLower().Trim().Contains(lastNameSearch)
+                            ||u.FirstName.ToLower().Contains(@params.SearchTerm.ToLower().Trim())
                             || u.LastName.ToLower().Contains(@params.SearchTerm.ToLower().Trim())
                             || u.Gender.ToLower().Contains(@params.SearchTerm.ToLower().Trim())
                             || u.Email.ToLower().Contains(@params.SearchTerm.ToLower().Trim())

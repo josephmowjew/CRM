@@ -1,9 +1,14 @@
 ﻿using Bogus;
+using Hangfire;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Newtonsoft.Json;
+using System.Configuration;
 using System.Security.Claims;
+using System.Text;
 using System.Text.Json;
+using UCS_CRM.Core.DTOs.Login;
 using UCS_CRM.Core.Models;
 using UCS_CRM.Core.Services;
 using UCS_CRM.Core.ViewModels;
@@ -27,11 +32,10 @@ namespace UCS_CRM.Controllers
         private ApplicationDbContext _context;
         private readonly HttpClient _httpClient;
         private readonly IConfiguration _config;
- 
-
+        public IConfiguration _configuration { get; }
 
         public AuthController(UserManager<ApplicationUser> userManager, SignInManager<ApplicationUser> signInManager, IUserRepository userRepository, ApplicationDbContext context,
-            IMemberRepository memberRepository, IUnitOfWork unitOfWork, IEmailService emailService, HttpClient httpClient, IConfiguration config, IDepartmentRepository departmentRepository, IBranchRepository branchRepository)
+            IMemberRepository memberRepository, IUnitOfWork unitOfWork, IEmailService emailService, HttpClient httpClient, IConfiguration config, IDepartmentRepository departmentRepository, IBranchRepository branchRepository, IConfiguration configuration)
         {
             _userManager = userManager;
             _signInManager = signInManager;
@@ -44,12 +48,15 @@ namespace UCS_CRM.Controllers
             _config = config;
             _departmentRepository = departmentRepository;
             _branchRepository = branchRepository;
+            _configuration = configuration;
         }
 
         public async Task<IActionResult> Create()
         {
             if (_signInManager.IsSignedIn(User))
             {
+                TempData["response"] = "";
+
                 var findUserDb = await this._userRepository.GetUserWithRole(User.Identity.Name);
 
                 if (findUserDb != null)
@@ -200,83 +207,87 @@ namespace UCS_CRM.Controllers
                 return View("Create", loginModel);
 
             // Retrieve the user with the provided email and roles
-            var findUserDb = await _userRepository.GetUserWithRole(loginModel.Email, false);
+           
 
-            if (findUserDb == null)
+            var initialSignInResult = await _signInManager.PasswordSignInAsync(loginModel.Email, loginModel.Password, loginModel.RememberMe, lockoutOnFailure: false);
+
+           
+            if(initialSignInResult.Succeeded)
+            {
+                //logout the user
+
+                await _signInManager.SignOutAsync();
+
+                var findUserDb = await _userRepository.GetUserWithRole(loginModel.Email, false);
+
+
+
+                // Check if the user needs to reset their password
+                if (findUserDb.LastPasswordChangedDate < DateTime.Now)
+                {
+                    var token = await _userManager.GeneratePasswordResetTokenAsync(findUserDb);
+                    return RedirectToActionPermanent("ResetPassword", new { token, email = findUserDb.Email });
+                }
+
+                // Attempt to sign in the user
+                var result = await _signInManager.PasswordSignInAsync(loginModel.Email, loginModel.Password, loginModel.RememberMe, lockoutOnFailure: false);
+
+                if (result.Succeeded)
+                {
+                    // Update the user's login details
+                    int pin = _memberRepository.RandomNumber();
+                    var user = await _userManager.FindByNameAsync(loginModel.Email);
+                    var roles = await _userManager.GetRolesAsync(user);
+
+                    if (user != null)
+                    {
+                        user.LastLogin = DateTime.Now;
+                        user.Pin = pin;
+                        user.EmailConfirmed = false;
+                    }
+
+                    await _context.SaveChangesAsync();
+
+                    string userNameBody = $"Your confirmation code is <b>{pin}</b> <br /> Enter this to login in";
+
+                    BackgroundJob.Enqueue(() => _emailService.SendMailWithKeyVarReturn(user.Email, "Login Details", userNameBody));
+
+                   
+                    TempData["response"] = $"Check your email for the confirmation code";
+
+                  
+
+
+                    return RedirectToAction("ConfirmAccount", "Auth", new { email = loginModel.Email });
+                }
+            }
+
+            var userFromDb = await _userRepository.GetUserWithRole(loginModel.Email, false);
+
+            if (userFromDb == null)
             {
                 ModelState.AddModelError(string.Empty, "Invalid login credentials");
                 return View("Create", loginModel);
             }
 
             // Check if the user's email is confirmed
-            if (!findUserDb.EmailConfirmed)
+            if (!userFromDb.EmailConfirmed)
             {
                 // Send a one-time pin (OTP) to the user's email
-                string userNameBody = $"Here is the One time Pin (OTP) for your account on UCS: <strong>{findUserDb.Pin}</strong> <br />";
-                var response = await _emailService.SendMailWithKeyVarReturn(loginModel.Email, "Login Details", userNameBody);
+                string userNameBody = $"Here is the One time Pin (OTP) for your account on UCS: <strong>{userFromDb.Pin}</strong> <br />";
 
-                if (response.Key)
-                {
-                    TempData["response"] = $"Check your email for the confirmation code";
+                //throw this process to the background 
+               
 
-                }
-                else
-                {
-                    TempData["error"] = response.Value;
+                BackgroundJob.Enqueue(() => _emailService.SendMailWithKeyVarReturn(loginModel.Email, "Login Details", userNameBody));
 
-                    return View("Create", loginModel);
+              
+                TempData["response"] = $"Check your email for the confirmation code";
 
-                }
-                return RedirectToActionPermanent("ConfirmAccount", new { email = findUserDb.Email });
+               
+               
+                return RedirectToActionPermanent("ConfirmAccount", new { email = userFromDb.Email });
             }
-
-            // Check if the user needs to reset their password
-            if (findUserDb.LastPasswordChangedDate < DateTime.Now)
-            {
-                var token = await _userManager.GeneratePasswordResetTokenAsync(findUserDb);
-                return RedirectToActionPermanent("ResetPassword", new { token, email = findUserDb.Email });
-            }
-
-            // Attempt to sign in the user
-            var result = await _signInManager.PasswordSignInAsync(loginModel.Email, loginModel.Password, loginModel.RememberMe, lockoutOnFailure: false);
-
-            if (result.Succeeded)
-            {
-                // Update the user's login details
-                int pin = _memberRepository.RandomNumber();
-                var user = await _userManager.FindByNameAsync(loginModel.Email);
-                var roles = await _userManager.GetRolesAsync(user);
-
-                if (user != null)
-                {
-                    user.LastLogin = DateTime.Now;
-                    user.Pin = pin;
-                    user.EmailConfirmed = false;
-                }
-
-                await _context.SaveChangesAsync();
-
-                string userNameBody = $"Your confirmation code is <b>{pin}</b> <br /> Enter this to login in";
-
-                var response = await _emailService.SendMailWithKeyVarReturn(user.Email, "Login Details", userNameBody);
-
-                if(response.Key)
-                {
-                    TempData["response"] = $"Check your email for the confirmation code";
-
-                }
-                else
-                {
-                    TempData["error"] = response.Value;
-
-                    return View("Create", loginModel);
-
-                }
-
-
-                return RedirectToAction("ConfirmAccount", "Auth", new { email = loginModel.Email });
-            }
-
             // Invalid login credentials
             ModelState.AddModelError(string.Empty, "Invalid login credentials");
             return View("Create", loginModel);
@@ -312,68 +323,44 @@ namespace UCS_CRM.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Register(ClientRegisterViewModel clientRegisterViewModel)
         {
+            UserViewModel newUser = new UserViewModel();
+            ViewBag.genderList = newUser.GenderList;
+
             if (ModelState.IsValid)
             {
                 //check if there is a member with the following national Id
 
-               // Member? member = await this._memberRepository.GetMemberByNationalId(clientRegisterViewModel.NationalId);
-              
-                var protocol = _config.GetSection("APIURL")["link"];
+                Member? dbmember = await this._memberRepository.GetMemberByNationalId(clientRegisterViewModel.NationalId);
 
-                var response = await _httpClient.GetAsync(protocol + $"BioDataByNIN/{clientRegisterViewModel.NationalId}");
+               
+               //check if the member record already has an associted user account
 
-                if (!response.IsSuccessStatusCode)
+                if(dbmember.User != null)
                 {
-                    ModelState.AddModelError("", "No member was found with the National Id that was provided");
+                    ModelState.AddModelError("", "There is a user account that is already associated with the ID, kindly login");
+
+                    return View("Register", clientRegisterViewModel);
                 }
 
-                var json = await response.Content.ReadAsStringAsync();
-                var document = JsonDocument.Parse(json);
 
-                var status = document.RootElement.GetProperty("status").GetInt32();
-
-                if (status == 404)
+                if (dbmember == null)
                 {
                     ModelState.AddModelError("", "No member was found with the National Id that was provided");
+                    return View("Register", clientRegisterViewModel);
                 }
-
-                //if (member == null)
-                //{
-                //    ModelState.AddModelError("", "No member was found with the National Id that was provided");
-                //}
+                
                 else
                 {
-                    //check if there is an account with the email being provided
 
-                    var baseAccountElement = document.RootElement.GetProperty("data");
+                    int pin = _memberRepository.RandomNumber();
 
-
-                    var member = new Member()
-                    {
-                        Id = (baseAccountElement.GetProperty("id").GetInt32()),
-                        // AccountNumber = baseAccountElement.GetProperty("accountNumber").GetString(),
-                        Branch = baseAccountElement.GetProperty("branch").GetString(),
-                        PhoneNumber = baseAccountElement.GetProperty("phoneNumber").GetString(),
-                        FirstName = baseAccountElement.GetProperty("firstName").GetString(),
-                        LastName = baseAccountElement.GetProperty("lastName").GetString(),
-                        Address = baseAccountElement.GetProperty("employer").GetString(),
-                        DateOfBirth = baseAccountElement.GetProperty("dateOfBirth").GetDateTime(),
-                        NationalId = baseAccountElement.GetProperty("nationalID").GetString(),
-                        EmailConfirmed = false,
-                        Gender = baseAccountElement.GetProperty("nationalID").GetString()
-                    };
-
-                    var accountPresent = await this._userRepository.FindByEmailsync(clientRegisterViewModel.Email);
-
-                    if(accountPresent != null)
-                    {
-                        ModelState.AddModelError(nameof(clientRegisterViewModel.Email), "An account already exist with this email");
-
-                        return View("Register", clientRegisterViewModel);
-                    }
+                  
+                   
                     //create a user account based on the member record
 
-                    ApplicationUser? user = await this._memberRepository.CreateUserAccount(member, clientRegisterViewModel.Email,clientRegisterViewModel.Password);
+                    ApplicationUser? user = await this._memberRepository.CreateUserAccount(dbmember, clientRegisterViewModel.Email,clientRegisterViewModel.Password);
+
+                    user.Pin = pin;
 
                     if (user == null)
                     {
@@ -398,15 +385,15 @@ namespace UCS_CRM.Controllers
                     //check if this is a new user or not (old users will have a deleted date field set to an actual date)
                     if (user.DeletedDate != null)
                     {
-                        _emailService.SendMail(user.Email, "Account Status", $"Good day, We are pleased to inform you that your account has been reactivated on the UCS SACCO. You may proceed to login using your previous credentials. ");
+                        BackgroundJob.Enqueue(() => _emailService.SendMail(user.Email, "Account Status", $"Good day, We are pleased to inform you that your account has been reactivated on the UCS SACCO. You may proceed to login using your previous credentials. "));
 
                     }
                     else
                     {
-                        _emailService.SendMail(user.Email, "Login Details", UserNameBody);
+                        BackgroundJob.Enqueue(() => _emailService.SendMail(user.Email, "Login Details", UserNameBody));
                         //_emailService.SendMail(user.Email, "Login Details", pin);
-                        _emailService.SendMail(user.Email, "Login Details", PasswordBody);
-                        _emailService.SendMail(user.Email, "Account Details", $"Good day, for those who have not yet registered with Gravator, please do so so that you may upload an avatar of yourself that can be associated with your email address and displayed on your profile in the Mental Lab application.\r\nPlease visit https://en.gravatar.com/ to register with Gravatar. ");
+                        BackgroundJob.Enqueue(() => _emailService.SendMail(user.Email, "Login Details", PasswordBody));
+                        BackgroundJob.Enqueue(() => _emailService.SendMail(user.Email, "Account Details", $"Good day, for those who have not yet registered with Gravator, please do so so that you may upload an avatar of yourself that can be associated with your email address and displayed on your profile in the Mental Lab application.\r\nPlease visit https://en.gravatar.com/ to register with Gravatar. "));
 
 
                     }
@@ -440,7 +427,7 @@ namespace UCS_CRM.Controllers
 
                 //send email
 
-                _emailService.SendMail(user.Email, "Password reset details", $"Good day, please use the following link to reset your password\n <br/> {link}");
+                BackgroundJob.Enqueue(() => _emailService.SendMail(user.Email, "Password reset details", $"Good day, please use the following link to reset your password\n <br/> {link}"));
 
                 TempData["response"] = $"Password change request has been sent to your email {email}. Please open your email";
                 return RedirectToAction("Create");
@@ -574,6 +561,45 @@ namespace UCS_CRM.Controllers
 
         }
 
+        public async Task<string> ApiAuthenticate()
+        {
+
+            // APIToken token = new APIToken();
+
+            var username = _configuration["APICredentials:Username"];
+            var password = _configuration["APICredentials:Password"];
+
+            APILogin apiLogin = new APILogin()
+            {
+                Username = username,
+                Password = password,
+            };
+
+
+
+            var jsonContent = JsonConvert.SerializeObject(apiLogin);
+            var stringContent = new StringContent(jsonContent, Encoding.UTF8, "application/json");
+
+            // Send POST request        
+            var tokenResponse = await _httpClient.PostAsync(_configuration["APIURL:link"] + $"Token", stringContent);
+
+            var json = await tokenResponse.Content.ReadAsStringAsync();
+            var document = JsonDocument.Parse(json);
+
+            var status = document.RootElement.GetProperty("status").GetInt32();
+
+            if (status == 404)
+            {
+
+                //
+                Console.WriteLine("Failed to login");
+                return "Failed to login";
+            }
+
+            var token = document.RootElement.GetProperty("token").GetString();
+
+            return token;
+        }
 
     }
 }

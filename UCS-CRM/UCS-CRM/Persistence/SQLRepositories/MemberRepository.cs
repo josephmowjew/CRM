@@ -179,17 +179,23 @@ namespace UCS_CRM.Persistence.SQLRepositories
                 }
                 else
                 {
-                    //include search query
+                    // Assume @params.SearchTerm is the input search string
+                    var searchTerms = @params.SearchTerm.ToLower().Trim().Split(' ');
 
-                    var records = (from tblOb in await this._context.Members.Include(m => m.User).Include(m => m.MemberAccounts).Include(m => m.User)
-                                   .Where(m => m.Status != Lambda.Deleted 
+                    // If the search term contains a space, it will be split into two parts
+                    string firstNameSearch = searchTerms.Length > 0 ? searchTerms[0] : "";
+                    string lastNameSearch = searchTerms.Length > 1 ? searchTerms[1] : "";
 
-                                        && m.FirstName.ToLower().Trim().Contains(@params.SearchTerm) ||
-                                           m.LastName.ToLower().Trim().Contains(@params.SearchTerm) ||
-                                           m.AccountNumber.ToLower().Trim().Contains(@params.SearchTerm))
+                    var records = (from tblOb in await this._context.Members.Include(m => m.User).Include(m => m.MemberAccounts)
+                                   .Where(m => m.Status != Lambda.Deleted
+                                        && (m.FirstName.ToLower().Trim().Contains(firstNameSearch) && m.LastName.ToLower().Trim().Contains(lastNameSearch)
+                                        || m.FirstName.ToLower().Trim().Contains(@params.SearchTerm)
+                                        || m.LastName.ToLower().Trim().Contains(@params.SearchTerm)
+                                        || m.AccountNumber.ToLower().Trim().Contains(@params.SearchTerm)))
                                    .Skip(@params.Skip)
                                    .Take(@params.Take)
-                                   .ToListAsync() select tblOb);
+                                   .ToListAsync()
+                                   select tblOb);
 
                     //accountTypes.AsQueryable().OrderBy("gjakdgdag");
 
@@ -217,6 +223,8 @@ namespace UCS_CRM.Persistence.SQLRepositories
             return await this._context.Members.Include(m => m.User).Where(m => m.User == null).ToListAsync();
         }
 
+       
+
 
         public void Remove(Member member)
         {
@@ -231,7 +239,7 @@ namespace UCS_CRM.Persistence.SQLRepositories
 
         public async Task<Member?> GetMemberByNationalId(string nationalId)
         {
-            return await this._context.Members.FirstOrDefaultAsync(m => m.NationalId == nationalId);
+            return await this._context.Members.Include(m => m.User).FirstOrDefaultAsync(m => m.NationalId.Trim().ToLower() == nationalId.Trim().ToLower());
         }
 
         public async Task<Member?> GetMemberByUserId(string userId)

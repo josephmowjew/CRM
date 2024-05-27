@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using Hangfire;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
@@ -218,7 +219,7 @@ namespace UCS_CRM.Areas.Clerk.Controllers
 
                             if(emailAddress != null)
                             {
-                                 _emailService.SendMail(emailAddress.Email, "Ticket Creation", emailBody);
+                                BackgroundJob.Enqueue(() => _emailService.SendMail(emailAddress.Email, "Ticket Creation", emailBody));
                                 
                             }
                         }
@@ -394,7 +395,7 @@ namespace UCS_CRM.Areas.Clerk.Controllers
 
                 if (user != null)
                 {
-                    _emailService.SendMail(user.Email, $"Ticket {ticketDB.TicketNumber} Modification", emailBody);
+                    BackgroundJob.Enqueue(() => _emailService.SendMail(user.Email, $"Ticket {ticketDB.TicketNumber} Modification", emailBody));
                 }
 
                 return Json(new { status = "success", message = "user ticket updated successfully" });

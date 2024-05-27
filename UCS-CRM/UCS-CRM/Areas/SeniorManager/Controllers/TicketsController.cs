@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using Hangfire;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -175,7 +176,7 @@ namespace UCS_CRM.Areas.SeniorManager.Controllers
 
                 if (user != null)
                 {
-                    _emailService.SendMail(user.Email, $"Ticket {ticketDB.TicketNumber} Modification", emailBody);
+                    BackgroundJob.Enqueue(() => _emailService.SendMail(user.Email, $"Ticket {ticketDB.TicketNumber} Modification", emailBody));
                 }
 
                 return Json(new { status = "success", message = "user ticket updated successfully" });

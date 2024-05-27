@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using Hangfire;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
@@ -165,7 +166,7 @@ namespace UCS_CRM.Areas.Manager.Controllers
 
                 if (user != null)
                 {
-                    _emailService.SendMail(user.Email, $"Ticket {ticketDB.TicketNumber} Modification", emailBody);
+                    BackgroundJob.Enqueue(() => _emailService.SendMail(user.Email, $"Ticket {ticketDB.TicketNumber} Modification", emailBody));
                 }
 
 
