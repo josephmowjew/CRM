@@ -77,16 +77,24 @@ namespace UCS_CRM.Controllers
                     {
                         return RedirectToAction("Index", "Home", new { Area = "Admin" });
                     }
-                    if (roles.Contains("Clerk", StringComparison.OrdinalIgnoreCase) || roles.Contains("Member Engagements officer", StringComparison.OrdinalIgnoreCase) || roles.Contains("Teller", StringComparison.OrdinalIgnoreCase))
+                    if (roles.Contains("Clerk", StringComparison.OrdinalIgnoreCase) || roles.Contains("Member Engagements officer", StringComparison.OrdinalIgnoreCase))
                     {
                         return RedirectToAction("Index", "Home", new { Area = "Clerk" });
+                    }
+                    if (roles.Contains("Teller", StringComparison.OrdinalIgnoreCase))
+                    {
+                        return RedirectToAction("Index", "Home", new { Area = "Teller" });
                     }
                     if (roles.Contains("Manager", StringComparison.OrdinalIgnoreCase))
                     {
                         return RedirectToAction("Index", "Home", new { Area = "Manager" });
                     }
-                   
-                   
+                    if (roles.Contains("Call center officer", StringComparison.OrdinalIgnoreCase))
+                    {
+                        return RedirectToAction("Index", "Home", new { Area = "CallCenterOfficer" });
+                    }
+
+
                     else
                     {
 
@@ -129,6 +137,10 @@ namespace UCS_CRM.Controllers
                 if (roles.Contains("Clerk", StringComparison.OrdinalIgnoreCase) || roles.Contains("Member Engagements officer", StringComparison.OrdinalIgnoreCase))
                 {
                     return RedirectToAction("Index", "Home", new { Area = "Clerk" });
+                }
+                 if (roles.Contains("Teller", StringComparison.OrdinalIgnoreCase))
+                {
+                    return RedirectToAction("Index", "Home", new { Area = "Teller" });
                 }
                 if (roles.Contains("Manager", StringComparison.OrdinalIgnoreCase))
                 {

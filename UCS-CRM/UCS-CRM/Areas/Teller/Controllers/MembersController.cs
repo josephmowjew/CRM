@@ -20,9 +20,9 @@ using UCS_CRM.Core.Models;
 using UCS_CRM.Core.Services;
 using UCS_CRM.Persistence.Interfaces;
 
-namespace UCS_CRM.Areas.Admin.Controllers
+namespace UCS_CRM.Areas.Teller.Controllers
 {
-    [Area("Clerk")]
+    [Area("Teller")]
     [Authorize]
     public class MemberController : Controller
     {

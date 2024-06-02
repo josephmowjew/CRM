@@ -1,0 +1,34 @@
+﻿@model UCS_CRM.Core.DTOs.TicketEscalation.CreateTicketEscalationDTO
+<!-- Modal -->
+
+<div class="modal-dialog" role="document">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h5 class="modal-title" id="exampleModalLabel">Escalate Ticket</h5>
+            <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+            </button>
+        </div>
+        <div class="modal-body">
+            <input asp-for="DataInvalid" type="hidden"/>
+            <form asp-action="Escalate" enctype="multipart/form-data">
+                <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+                
+                <input type="hidden" asp-for="TicketId" />
+            
+                 <div class="form-group">
+                    <label asp-for="Reason" class="control-label"></label>
+                    <textarea asp-for="Reason" placeholder="Enter Reason" class="form-control"></textarea>
+                    <span asp-validation-for="Reason" class="text-danger"></span>
+                </div>
+              
+
+
+            </form>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            <button type="button" class="btn btn-primary" id="escalate_ticket_btn" name="escalate_ticket_btn">Escalate Ticket</button>
+        </div>
+    </div>
+</div>

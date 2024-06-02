@@ -1,0 +1,63 @@
+﻿<aside class="left-sidebar" data-sidebarbg="skin6">
+    <!-- Sidebar scroll-->
+    <div class="scroll-sidebar">
+        <!-- Sidebar navigation-->
+        <nav class="sidebar-nav">
+            <ul id="sidebarnav">
+                <!-- User Profile-->
+                         
+                <li class="sidebar-item">
+                    <a class="sidebar-link waves-effect waves-dark sidebar-link"
+                       asp-area="teller" asp-controller="home" asp-action="Index" aria-expanded="false">
+                        <i class="mdi me-2 mdi-gauge"></i><span class="hide-menu">Dashboard</span>
+                    </a>
+                </li>
+                <li class="sidebar-item">
+                    <a class="sidebar-link waves-effect waves-dark sidebar-link"
+                       asp-area="teller" asp-controller="member" asp-action="Index" aria-expanded="false">
+                        <i class="mdi me-2 mdi-account-multiple"></i><span class="hide-menu">Members</span>
+                    </a>
+                </li>
+
+
+                <li class="sidebar-item">
+                    <a class="sidebar-link waves-effect waves-dark sidebar-link"
+                       asp-area="teller" asp-controller="Tickets" asp-action="Index" aria-expanded="false">
+                        <i class="mdi mdi-note"></i><span class="hide-menu">Tickets</span>
+                    </a>
+                </li>
+                <li class="sidebar-item">
+                    <a class="sidebar-link waves-effect waves-dark sidebar-link"
+                       asp-area="teller" asp-controller="TicketEscalations" asp-action="Index" aria-expanded="false">
+                        <i class="mdi mdi-file-tree"></i><span class="hide-menu">Tickets Escalated</span>
+                    </a>
+                </li>
+            </ul>
+
+        </nav>
+        <!-- End Sidebar navigation -->
+    </div>
+    <!-- End Sidebar scroll-->
+    <div class="sidebar-footer">
+        <div class="row justify-content-center">
+            @*<div class="col-4 link-wrap">
+                <!-- item-->
+                <a href="" class="link" data-toggle="tooltip" title="" data-original-title="Settings">
+                    <i class="ti-settings"></i>
+                </a>
+            </div>
+            <div class="col-4 link-wrap">
+                <!-- item-->
+                <a href="" class="link" data-toggle="tooltip" title="" data-original-title="Email">
+                    <i class="mdi mdi-gmail"></i>
+                </a>
+            </div>*@
+            <div class="col-4 link-wrap">
+                <!-- item-->
+                <a asp-action="Logout" asp-controller="auth" asp-area="" class="link" data-toggle="tooltip" title="" data-original-title="Logout">
+                    <i class="mdi mdi-power"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+</aside>

@@ -1,0 +1,102 @@
+﻿@{
+    @using Microsoft.Extensions.Configuration
+    @inject IConfiguration Configuration
+    @model UCS_CRM.Core.DTOs.Member.ReadMemberDTO;
+    var host = Configuration.GetSection("HostingSettings")["Host"];
+
+}
+
+<div class="card">
+
+    <div class="tab-pane" id="profile" role="tabpanel">
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-3 col-xs-6 b-r">
+                    <strong>FIRST NAME</strong>
+                    <br>
+                    <p class="text-muted">@Model.FirstName</p>
+                </div>
+                <div class="col-md-3 col-xs-6 b-r">
+                    <strong>LAST NAME</strong>
+                    <br>
+                    <p class="text-muted">@Model.LastName</p>
+                </div>
+              
+                <div class="col-md-3 col-xs-6 b-r">
+                    <strong>BASE ACCOUNT</strong>
+                    <br>
+                    <p class="text-muted">@Model.AccountNumber</p>
+                </div>
+
+                <div class="col-md-3 col-xs-6 b-r">
+                    <strong>BASE ACCOUNT BALANCE</strong>
+                    <br>
+                    <p class="text-muted">MWK @Model.Balance</p>
+                </div>
+              
+                <div class="col-md-3 col-xs-6">
+                    <strong>NATIONAL ID</strong>
+                    <br>
+                    <p class="text-muted">@Model.NationalId</p>
+                </div>
+
+            
+            </div>
+            <hr />
+            <p class="font-normal mt-4">OTHER ACCOUNTS </p>
+            <div class="container">
+                <div class="row">
+                    <div class="col-md-12">
+                    </div>
+                </div>
+                <div class="row">
+                    <hr />
+                    @if (Model.MemberAccounts.Count() == 0)
+                    {
+
+                        <h5 class="card-title"> User does not have any account balances</h5>
+                    }
+                    else{
+                    <table class="table table-bordered " id="my_table">
+                        <thead>
+                            <tr>
+                                <th>
+                                    Account Name
+                                </th>
+                                <th>
+                                    Account Balance
+                                </th>                               
+                            </tr>
+                        </thead>
+                        <tbody>
+                     
+                    @foreach (var account in Model.MemberAccounts)
+                    {
+                        <tr>
+                            <td>@account.AccountName</td>
+                            <td> @account.Balance.ToString("MWK 0.00")</td>
+                                </tr>
+
+                            }
+
+                        </tbody>
+                    </table>
+                    }
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+</div>
+
+
+
+@section Scripts{
+
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+
+
+}

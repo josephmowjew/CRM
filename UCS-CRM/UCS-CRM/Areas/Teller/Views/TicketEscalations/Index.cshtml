@@ -6,25 +6,15 @@
     var protocol = Configuration.GetSection("HostingSettings")["Protocol"];
 }
 @{
-    ViewData["Title"] = "Members";
-    Layout = "~/Areas/Clerk/Views/shared/_Layout.cshtml";
-    string errorMessage = TempData["errorResponse"] as string;
+    ViewData["Title"] = "First Escalation";
+    Layout = "~/Areas/Admin/Views/shared/_Layout.cshtml";
 }
 
 
 
 <div class="card">
     <div class="card-header">
-        <h4 class="text-center text-uppercase">Members Available In The System</h4>
-        @if (!string.IsNullOrEmpty(errorMessage))
-        {
-            <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                @errorMessage
-                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-            </div>
-            <div>
-            </div>
-        }
+        <h4 class="text-center text-uppercase">Escalated Tickets</h4>
     </div>
     <div class="card-body">
         <div class="table-responsive">
@@ -32,27 +22,25 @@
                 <thead>
                     <tr>
                         <th>
-                            Account Number
+                            Ticket Number
                         </th>
                         <th>
-                            National Id
+                            Title
+                        </th>
+                        
+
+                        <th>
+                            Priority
                         </th>
                         <th>
-                            First Name
+                            Date Escalated
                         </th>
                         <th>
-                            Surname
-                        </th>
-                        <th>
-                            Gender
+                            Reason
                         </th>
 
                         <th>
-                            Phone Number
-                        </th>
-
-                        <th>
-                            Date Of Birth
+                            Assigned To
                         </th>
                         <th>
                             Action
@@ -76,6 +64,7 @@
         var datatable;
     </script>
 
+    <script src="~/js/TicketEscalation.js"></script>
     <script>
         $(document).ready(function () {
             datatable = $('#my_table').DataTable({
@@ -85,9 +74,16 @@
                 "serverSide": true,
                 "order": [[0, "desc"]],
                 ajax: {
-                    url: 'member/GetMembers',
+                    url: '/teller/ticketEscalations/GetTicketEscalations',
                     type: 'post',
-                    datatype: 'Json'
+                    data: { escalationLevel: 0 },
+                    datatype: 'Json',
+                    error: function (XMLHttpRequest, textStatus, errorThrown) {
+
+                        console.log(XMLHttpRequest.responseText)
+
+
+                    }
 
 
                 },
@@ -101,54 +97,57 @@
                 columns: [
 
                     {
-                        data: "accountNumber",
-                        name: "accountNumber",
+                        data: "ticket.ticketNumber",
+                        name: "ticketNumber",
                         className: "text-left",
                         "orderable": true,
                     },
                     {
-                        data: "nationalId",
-                        name: "nationalId",
+                        data: "ticket.title",
+                        name: "title",
                         className: "text-left",
                         "orderable": true,
                     },
+                    //{
+                    //    data: { state: "escalationLevel" },
+                    //    mRender: function (data, type, full) {
+                    //        return data.escalationLevel == 1 ? "First Escalation" : "First Escalation";
+                    //    }, "name": "escalationLevel",
+                    //    className: "text-left"
+                    //},
                     {
-                        data: "formattedFirstName",
-                        name: "firstName",
-                        className: "text-left",
-                        "orderable": true,
-                    },
-                    {
-                        data: "formattedLastName",
-                        name: "lastName",
-                        className: "text-left",
-                        "orderable": true,
-                    },
-                    {
-                        data: "formattedGender",
-                        name: "gender",
-                        className: "text-left",
-                        "orderable": true,
-                    },
-                    {
-                        data: "phoneNumber",
-                        name: "phoneNumber",
-                        className: "text-left",
-                        "orderable": false,
+                        data: { state: "ticket.ticketPriority.name" },
+                        mRender: function (data, type, full) {
+                            return data.ticket.ticketPriority != null && data.ticket.ticketPriority.status != 'Deleted' ? data.ticket.ticketPriority.name : "";
+                        }, "name": "ticket.ticketPriority.name",
+                        className: "text-left"
                     },
 
                     {
-                        data: "formattedDateOfBirth",
-                        name: "dateOfBirth",
+                        data: "formattedDateEscalated",
+                        name: "dateEscalated",
+                        className: "text-left",
+                        "orderable": true,
+                    },
+                    {
+                        data: "reason",
+                        name: "reason",
                         className: "text-left",
                         "orderable": false,
+                    },
+                    {
+                        data: { state: "ticket.assignedTo.fullName" },
+                        mRender: function (data, type, full) {
+                            return data.ticket.assignedTo != null && data.ticket.assignedTo.status != 'Deleted' ? data.ticket.assignedTo.fullName : "";
+                        }, "name": "ticket.assignedTo.fullName",
+                        className: "text-left"
                     },
                     {
                         data: "id",
                         name: "id",
                         "orderable": false,
                         render: function (data) {
-                            return "<a title='show more' href='member/details/" + data + "' class='mdi mdi-eye'></a> "
+                            return " <a href='#' type='button' onclick=Delete('" + data + "') title='delete' class='feather icon-trash-2'></a><a href='tickets/details/" + data + "' class='mdi mdi-eye'></a>"
                         }
                     },
 
