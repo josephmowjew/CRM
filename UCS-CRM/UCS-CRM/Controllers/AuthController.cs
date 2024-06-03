@@ -230,6 +230,8 @@ namespace UCS_CRM.Controllers
 
                 await _signInManager.SignOutAsync();
 
+                 TempData["errorResponse"] = "";
+
                 var findUserDb = await _userRepository.GetUserWithRole(loginModel.Email, false);
 
 
@@ -319,6 +321,8 @@ namespace UCS_CRM.Controllers
 
             //
             //return RedirectToAction("LogOut", "Home");
+            TempData["response"] = "";
+            TempData["errorResponse"] = "no account was found to activate";
             return Redirect("/");//
         }
 
