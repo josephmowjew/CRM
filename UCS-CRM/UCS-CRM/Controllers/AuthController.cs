@@ -295,7 +295,7 @@ namespace UCS_CRM.Controllers
                
 
                 //BackgroundJob.Enqueue(() => _emailService.SendMailWithKeyVarReturn(loginModel.Email, "Login Details", userNameBody));
-                BackgroundJob.Enqueue(() => _emailService.SendMailWithKeyVarReturnWrapper(user.Email, "Login Details", userNameBody));
+                BackgroundJob.Enqueue(() => _emailService.SendMailWithKeyVarReturnWrapper(loginModel.Email, "Login Details", userNameBody));
 
 
                 TempData["response"] = $"Check your email for the confirmation code";
