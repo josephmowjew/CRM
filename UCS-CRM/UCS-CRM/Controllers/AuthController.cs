@@ -264,9 +264,10 @@ namespace UCS_CRM.Controllers
 
                     string userNameBody = $"Your confirmation code is <b>{pin}</b> <br /> Enter this to login in";
 
-                    BackgroundJob.Enqueue(() => _emailService.SendMailWithKeyVarReturn(user.Email, "Login Details", userNameBody));
+                  //  BackgroundJob.Enqueue(() => _emailService.SendMailWithKeyVarReturn(user.Email, "Login Details", userNameBody));
+                    BackgroundJob.Enqueue(() => _emailService.SendMailWithKeyVarReturnWrapper(user.Email, "Login Details", userNameBody));
 
-                   
+
                     TempData["response"] = $"Check your email for the confirmation code";
 
                   
@@ -293,9 +294,10 @@ namespace UCS_CRM.Controllers
                 //throw this process to the background 
                
 
-                BackgroundJob.Enqueue(() => _emailService.SendMailWithKeyVarReturn(loginModel.Email, "Login Details", userNameBody));
+                //BackgroundJob.Enqueue(() => _emailService.SendMailWithKeyVarReturn(loginModel.Email, "Login Details", userNameBody));
+                BackgroundJob.Enqueue(() => _emailService.SendMailWithKeyVarReturnWrapper(user.Email, "Login Details", userNameBody));
 
-              
+
                 TempData["response"] = $"Check your email for the confirmation code";
 
                
