@@ -26,7 +26,7 @@ using UCS_CRM.Persistence.SQLRepositories;
 
 namespace UCS_CRM.Areas.Clerk.Controllers
 {
-    [Area("Clerk")]
+    [Area("officer")]
     [Authorize]
     public class TicketsController : Controller
     {
@@ -46,9 +46,10 @@ namespace UCS_CRM.Areas.Clerk.Controllers
         private readonly IEmailAddressRepository _addressRepository;
         private readonly ITicketStateTrackerRepository _ticketStateTrackerRepository;
         private readonly UserManager<ApplicationUser> _userManager;
+         private readonly HangfireJobEnqueuer _jobEnqueuer;
         public TicketsController(ITicketRepository ticketRepository, IMapper mapper, IUnitOfWork unitOfWork, IEmailService emailService, IEmailAddressRepository addressRepository,
             ITicketCategoryRepository ticketCategoryRepository, IStateRepository stateRepository, ITicketPriorityRepository priorityRepository,
-            IWebHostEnvironment env, ITicketCommentRepository ticketCommentRepository, IUserRepository userRepository, IMemberRepository memberRepository, ITicketEscalationRepository ticketEscalationRepository, IDepartmentRepository departmentRepository, ITicketStateTrackerRepository ticketStateTrackerRepository, UserManager<ApplicationUser> userManager)
+            IWebHostEnvironment env, ITicketCommentRepository ticketCommentRepository, IUserRepository userRepository, IMemberRepository memberRepository, ITicketEscalationRepository ticketEscalationRepository, IDepartmentRepository departmentRepository, ITicketStateTrackerRepository ticketStateTrackerRepository, UserManager<ApplicationUser> userManager, HangfireJobEnqueuer jobEnqueuer)
         {
             _ticketRepository = ticketRepository;
             _mapper = mapper;
@@ -66,6 +67,8 @@ namespace UCS_CRM.Areas.Clerk.Controllers
             _departmentRepository = departmentRepository;
             _ticketStateTrackerRepository = ticketStateTrackerRepository;
             _userManager = userManager;
+            _jobEnqueuer = jobEnqueuer;
+            
         }
 
         // GET: TicketsController
@@ -219,7 +222,8 @@ namespace UCS_CRM.Areas.Clerk.Controllers
 
                             if(emailAddress != null)
                             {
-                                BackgroundJob.Enqueue(() => _emailService.SendMail(emailAddress.Email, "Ticket Creation", emailBody));
+                                this._jobEnqueuer.EnqueueEmailJob(emailAddress.Email, "Ticket Creation", emailBody);
+                               
                                 
                             }
                         }
@@ -395,7 +399,8 @@ namespace UCS_CRM.Areas.Clerk.Controllers
 
                 if (user != null)
                 {
-                    BackgroundJob.Enqueue(() => _emailService.SendMail(user.Email, $"Ticket {ticketDB.TicketNumber} Modification", emailBody));
+                    this._jobEnqueuer.EnqueueEmailJob(user.Email, $"Ticket {ticketDB.TicketNumber} Modification", emailBody);
+                   
                 }
 
                 return Json(new { status = "success", message = "user ticket updated successfully" });

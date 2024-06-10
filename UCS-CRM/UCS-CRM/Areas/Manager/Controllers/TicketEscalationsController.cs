@@ -33,10 +33,11 @@ namespace UCS_CRM.Areas.Manager.Controllers
         private readonly ITicketCategoryRepository _ticketCategoryRepository;
         private readonly IEmailAddressRepository _addressRepository;
         private readonly IEmailService _emailService;
+        private readonly HangfireJobEnqueuer _jobEnqueuer;
         private readonly ITicketCommentRepository _ticketCommentRepository;
         public TicketEscalationsController(ITicketEscalationRepository ticketEscalationRepository, IMapper mapper, IUnitOfWork unitOfWork, ITicketRepository ticketRepository, IEmailService emailService,
             IWebHostEnvironment env, IStateRepository stateRepository, ITicketPriorityRepository priorityRepository, IMemberRepository memberRepository, IUserRepository userRepository, IEmailAddressRepository addressRepository,
-            ITicketCategoryRepository ticketCategoryRepository, ITicketCommentRepository ticketCommentRepository)
+            ITicketCategoryRepository ticketCategoryRepository, ITicketCommentRepository ticketCommentRepository, HangfireJobEnqueuer jobEnqueuer)
         {
             this._ticketEscalationRepository = ticketEscalationRepository;
             this._mapper = mapper;
@@ -51,6 +52,7 @@ namespace UCS_CRM.Areas.Manager.Controllers
             _emailService = emailService;
             _addressRepository = addressRepository;
             _ticketCommentRepository = ticketCommentRepository;
+            _jobEnqueuer = jobEnqueuer;
         }
 
         // GET: TicketEscalationsController
@@ -139,8 +141,8 @@ namespace UCS_CRM.Areas.Manager.Controllers
 
                     //email to send to support
                     var emailAddress = await _addressRepository.GetEmailAddressByOwner(Lambda.SeniorManager);
-
-                    BackgroundJob.Enqueue(() => _emailService.SendMail(emailAddress.Email, "Ticket Escalation", emailBody));
+                    this._jobEnqueuer.EnqueueEmailJob(emailAddress.Email, "Ticket Escalation", emailBody);
+                    
 
                     return PartialView("_CreateTicketEscalationPartial", createAcccountTypeDTO);
                 }
@@ -306,11 +308,13 @@ namespace UCS_CRM.Areas.Manager.Controllers
 
                 if (user != null)
                 {
-                    BackgroundJob.Enqueue(() => _emailService.SendMail(user.Email, "Ticket Escalation", emailBody));
+                    this._jobEnqueuer.EnqueueEmailJob(user.Email, "Ticket Escalation", emailBody);
+                   
                 }
                 var emailAddress = await _addressRepository.GetEmailAddressByOwner(Lambda.SeniorManager);
 
-                BackgroundJob.Enqueue(() => _emailService.SendMail(emailAddress.Email, "Ticket Escalation", emailBody));
+                this._jobEnqueuer.EnqueueEmailJob(emailAddress.Email, "Ticket Escalation", emailBody);
+               
 
                 return Json(new { status = "success", message = "user ticket updated successfully" });
             }

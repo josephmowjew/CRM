@@ -7,7 +7,7 @@
 }
 @{
     ViewData["Title"] = "Tickets";
-    Layout = "~/Areas/Clerk/Views/shared/_Layout.cshtml";
+    Layout = "~/Areas/officer/Views/shared/_Layout.cshtml";
 }
 
 @section Styles {
@@ -16,19 +16,19 @@
 }
 
 <p>
-    @if (((string)ViewBag.role).Equals("Member Engagements officer", StringComparison.OrdinalIgnoreCase) || ((string)ViewBag.role).Equals("Teller", StringComparison.OrdinalIgnoreCase) || ((string)ViewBag.role).Equals("Clerk", StringComparison.OrdinalIgnoreCase))
-    {
+    
          <!-- Button trigger modal -->
         <button type="button" class="btn btn-info" data-bs-toggle="modal" data-bs-target="#create_ticket_modal">
-            Create A Ticket
+            Create A Ticket 
         </button>
-    }
+    
    
     
 
 </p>
 
 
+   
 
 <div class="modal fade" id="create_ticket_modal" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
     <partial name="_CreateTicketPartial" />
@@ -44,7 +44,7 @@
 
 <div class="card">
     <div class="card-header">
-        <h4 class="text-center text-uppercase">My Tickets Available In The System</h4>
+        <h4 class="text-center text-uppercase">My Tickets Available In The System </h4>
          <div>
             <img src="~/images/91.gif" id="spinner" />
         </div>
@@ -121,7 +121,7 @@
                 "serverSide": true,
                 "order": [[0, "desc"]],
                 ajax: {
-                    url: '/clerk/tickets/GetTickets',
+                    url: '/officer/tickets/GetTickets',
                     data: { ticketType: ticketTypeValue },
                     type: 'post',
                     datatype: 'Json',
@@ -302,7 +302,7 @@
        
         // Initialize Select2 with desired options
         initSelect2({
-            url: "/Clerk/Tickets/GetAllMembersJson",
+            url: "/officer/Tickets/GetAllMembersJson",
             hiddenFieldId: "MemberId",
             pageSize: 20,
             initialSearchValue: "",

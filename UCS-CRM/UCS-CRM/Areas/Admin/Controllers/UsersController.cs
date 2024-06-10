@@ -29,9 +29,11 @@ namespace UCS_CRM.Areas.Admin.Controllers
         private RoleManager<Role> _roleManager;
         private readonly IRoleRepositorycs _roleRepositorycs;
         private readonly UserManager<ApplicationUser> _userManager;
+        private readonly HangfireJobEnqueuer _jobEnqueuer;
+
         private readonly IConfiguration Configuration;
         public UsersController(IUserRepository userRepository, IEmailService emailService, RoleManager<Role> roleManager,
-            UserManager<ApplicationUser> userManager, IUnitOfWork unitOfWork, IDepartmentRepository departmentRepository, IRoleRepositorycs roleRepositorycs, IBranchRepository branchRepository, IConfiguration configuration)
+            UserManager<ApplicationUser> userManager, IUnitOfWork unitOfWork, IDepartmentRepository departmentRepository, IRoleRepositorycs roleRepositorycs, IBranchRepository branchRepository, IConfiguration configuration, HangfireJobEnqueuer jobEnqueuer)
         {
             this._userRepository = userRepository;
             this._emailService = emailService;
@@ -42,6 +44,7 @@ namespace UCS_CRM.Areas.Admin.Controllers
             this._roleRepositorycs = roleRepositorycs;
             this._branchRepository = branchRepository;
             Configuration = configuration;
+            this._jobEnqueuer = jobEnqueuer;
         }
 
         // GET: UsersController
@@ -178,11 +181,10 @@ namespace UCS_CRM.Areas.Admin.Controllers
                             var protocol = Configuration.GetSection("HostingSettings")["Protocol"];
                             string AccountActivationBody = @"Here is the One time Pin (OTP) for your account on UCS: <strong>" + applicationUser.Pin + "</strong> <br /> \n Access UCS CRM following this link: " + protocol + "://" + host ;
 
-                            BackgroundJob.Enqueue(() => _emailService.SendMail(applicationUser.Email, "Login Details", UserNameBody));
-                            //_emailService.SendMail(applicationUser.Email, "Login Details", pin);
-                            BackgroundJob.Enqueue(() => _emailService.SendMail(applicationUser.Email, "Login Details", PasswordBody));
-
-                            BackgroundJob.Enqueue(() => _emailService.SendMail(applicationUser.Email, "Account Activation", AccountActivationBody));
+                            this._jobEnqueuer.EnqueueEmailJob(applicationUser.Email, "Login Details", UserNameBody);
+                            this._jobEnqueuer.EnqueueEmailJob(applicationUser.Email, "Login Details", PasswordBody);
+                            this._jobEnqueuer.EnqueueEmailJob(applicationUser.Email, "Account Activation", AccountActivationBody);
+                           
                             return Json(new { response = "User account created successfully" });
                         }
                         else
@@ -515,7 +517,9 @@ namespace UCS_CRM.Areas.Admin.Controllers
 
                 await this._unitOfWork.SaveToDataStore();
 
-                _emailService.SendMail(user.Email, "Account Confirmation", "Congratulations!! your account has been confirmed  on UCS SACCO.<br> \n Access UCS CRM following this link: http://ucsscrm.sparcsystems.africa");
+                 _jobEnqueuer.EnqueueEmailJob(user.Email, "Account Confirmation", "Congratulations!! your account has been confirmed  on UCS SACCO.<br> \n Access UCS CRM following this link: https://crm.ucssacco.com/");
+
+                //_emailService.SendMail(user.Email, "Account Confirmation", "Congratulations!! your account has been confirmed  on UCS SACCO.<br> \n Access UCS CRM following this link: http://ucsscrm.sparcsystems.africa");
 
 
                 return Json(new { status = "success", message = "user confirmed from the system successfully" });
@@ -596,7 +600,8 @@ namespace UCS_CRM.Areas.Admin.Controllers
 
                 await this._unitOfWork.SaveToDataStore();
 
-                _emailService.SendMail(user.Email, "Account Changes", "Congratulations!! your account has been reactivated on UCS SACCO.");
+                _jobEnqueuer.EnqueueEmailJob(user.Email, "Account Reactivation", "Congratulations!! your account has been reactivated on UCS SACCO.<br> \n Access UCS CRM following this link: https://crm.ucssacco.com/");
+                //_emailService.SendMail(user.Email, "Account Changes", "Congratulations!! your account has been reactivated on UCS SACCO.");
 
 
                 return Json(new { status = "success", message = "user activated from the system successfully" });

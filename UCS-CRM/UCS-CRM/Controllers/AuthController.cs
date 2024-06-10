@@ -32,10 +32,12 @@ namespace UCS_CRM.Controllers
         private ApplicationDbContext _context;
         private readonly HttpClient _httpClient;
         private readonly IConfiguration _config;
+ 
         public IConfiguration _configuration { get; }
+        private readonly HangfireJobEnqueuer _jobEnqueuer;
 
         public AuthController(UserManager<ApplicationUser> userManager, SignInManager<ApplicationUser> signInManager, IUserRepository userRepository, ApplicationDbContext context,
-            IMemberRepository memberRepository, IUnitOfWork unitOfWork, IEmailService emailService, HttpClient httpClient, IConfiguration config, IDepartmentRepository departmentRepository, IBranchRepository branchRepository, IConfiguration configuration)
+            IMemberRepository memberRepository, IUnitOfWork unitOfWork, IEmailService emailService, HttpClient httpClient, IConfiguration config, IDepartmentRepository departmentRepository, IBranchRepository branchRepository, IConfiguration configuration, HangfireJobEnqueuer hangfireJobEnqueuer)
         {
             _userManager = userManager;
             _signInManager = signInManager;
@@ -49,6 +51,7 @@ namespace UCS_CRM.Controllers
             _departmentRepository = departmentRepository;
             _branchRepository = branchRepository;
             _configuration = configuration;
+            _jobEnqueuer = hangfireJobEnqueuer;
         }
 
         public async Task<IActionResult> Create()
@@ -79,7 +82,7 @@ namespace UCS_CRM.Controllers
                     }
                     if (roles.Contains("Clerk", StringComparison.OrdinalIgnoreCase) || roles.Contains("Member Engagements officer", StringComparison.OrdinalIgnoreCase))
                     {
-                        return RedirectToAction("Index", "Home", new { Area = "Clerk" });
+                        return RedirectToAction("Index", "Home", new { Area = "officer" });
                     }
                     if (roles.Contains("Teller", StringComparison.OrdinalIgnoreCase))
                     {
@@ -98,7 +101,7 @@ namespace UCS_CRM.Controllers
                     else
                     {
 
-                        return RedirectToAction("Index", "Home", new { Area = "Clerk" });
+                        return RedirectToAction("Index", "Home", new { Area = "officer" });
                     }
                 }
                
@@ -136,7 +139,7 @@ namespace UCS_CRM.Controllers
                 }
                 if (roles.Contains("Clerk", StringComparison.OrdinalIgnoreCase) || roles.Contains("Member Engagements officer", StringComparison.OrdinalIgnoreCase))
                 {
-                    return RedirectToAction("Index", "Home", new { Area = "Clerk" });
+                    return RedirectToAction("Index", "Home", new { Area = "officer" });
                 }
                  if (roles.Contains("Teller", StringComparison.OrdinalIgnoreCase))
                 {
@@ -157,7 +160,7 @@ namespace UCS_CRM.Controllers
                 else
                 {
 
-                    return RedirectToAction("Index", "Home", new { Area = "Member" });
+                    return RedirectToAction("Index", "Home", new { Area = "officer" });
                 }
             }
             else
@@ -263,8 +266,8 @@ namespace UCS_CRM.Controllers
                     await _context.SaveChangesAsync();
 
                     string userNameBody = $"Your confirmation code is <b>{pin}</b> <br /> Enter this to login in";
-
-                    BackgroundJob.Enqueue(() => _emailService.SendMailWithKeyVarReturn(user.Email, "Login Details", userNameBody));
+                     this._jobEnqueuer.EnqueueEmailJob(user.Email, "Login Details", userNameBody);
+                   
 
                    
                     TempData["response"] = $"Check your email for the confirmation code";
@@ -292,8 +295,8 @@ namespace UCS_CRM.Controllers
 
                 //throw this process to the background 
                
-
-                BackgroundJob.Enqueue(() => _emailService.SendMailWithKeyVarReturn(loginModel.Email, "Login Details", userNameBody));
+                this._jobEnqueuer.EnqueueEmailJob(loginModel.Email, "Login Details", userNameBody);
+               
 
               
                 TempData["response"] = $"Check your email for the confirmation code";
@@ -401,15 +404,18 @@ namespace UCS_CRM.Controllers
                     //check if this is a new user or not (old users will have a deleted date field set to an actual date)
                     if (user.DeletedDate != null)
                     {
-                        BackgroundJob.Enqueue(() => _emailService.SendMail(user.Email, "Account Status", $"Good day, We are pleased to inform you that your account has been reactivated on the UCS SACCO. You may proceed to login using your previous credentials. "));
+                        this._jobEnqueuer.EnqueueEmailJob(user.Email, "Account Status", $"Good day, We are pleased to inform you that your account has been reactivated on the UCS SACCO. You may proceed to login using your previous credentials.");
+                        
 
                     }
                     else
                     {
-                        BackgroundJob.Enqueue(() => _emailService.SendMail(user.Email, "Login Details", UserNameBody));
-                        //_emailService.SendMail(user.Email, "Login Details", pin);
-                        BackgroundJob.Enqueue(() => _emailService.SendMail(user.Email, "Login Details", PasswordBody));
-                        BackgroundJob.Enqueue(() => _emailService.SendMail(user.Email, "Account Details", $"Good day, for those who have not yet registered with Gravator, please do so so that you may upload an avatar of yourself that can be associated with your email address and displayed on your profile in the Mental Lab application.\r\nPlease visit https://en.gravatar.com/ to register with Gravatar. "));
+                        this._jobEnqueuer.EnqueueEmailJob(user.Email, "Login Details", UserNameBody);
+                        this._jobEnqueuer.EnqueueEmailJob(user.Email, "Login Details", PasswordBody);
+                        this._jobEnqueuer.EnqueueEmailJob(user.Email, "Login Details", PasswordBody);
+                        this._jobEnqueuer.EnqueueEmailJob(user.Email, "Account Details", $"Good day, for those who have not yet registered with Gravator, please do so so that you may upload an avatar of yourself that can be associated with your email address and displayed on your profile in the Mental Lab application.\r\nPlease visit https://en.gravatar.com/ to register with Gravatar. ");
+                       
+                       
 
 
                     }
@@ -443,7 +449,8 @@ namespace UCS_CRM.Controllers
 
                 //send email
 
-                BackgroundJob.Enqueue(() => _emailService.SendMail(user.Email, "Password reset details", $"Good day, please use the following link to reset your password\n <br/> {link}"));
+                this._jobEnqueuer.EnqueueEmailJob(user.Email, "Password reset details", $"Good day, please use the following link to reset your password\n <br/> {link}");
+                
 
                 TempData["response"] = $"Password change request has been sent to your email {email}. Please open your email";
                 return RedirectToAction("Create");

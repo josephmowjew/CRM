@@ -31,6 +31,7 @@ namespace UCS_CRM.Persistence.SQLRepositories
         private readonly IMapper _mapper;
         private readonly ITicketEscalationRepository _ticketEscalationRepository;
         private readonly UserManager<ApplicationUser> _userManager;
+         private readonly HangfireJobEnqueuer _jobEnqueuer;
 
 
         public TicketRepository(
@@ -41,7 +42,8 @@ namespace UCS_CRM.Persistence.SQLRepositories
             IDepartmentRepository departmentRepository,
             IMapper mapper,
             ITicketEscalationRepository ticketEscalationRepository,
-            UserManager<ApplicationUser> userManager)
+            UserManager<ApplicationUser> userManager,
+            HangfireJobEnqueuer jobEnqueuer)
         {
             _context = context;
             _emailRepository = emailRepository;
@@ -51,6 +53,7 @@ namespace UCS_CRM.Persistence.SQLRepositories
             _mapper = mapper;
             _ticketEscalationRepository = ticketEscalationRepository;
             this._userManager = userManager;
+            this._jobEnqueuer = jobEnqueuer;
 
         }
 
@@ -335,12 +338,11 @@ namespace UCS_CRM.Persistence.SQLRepositories
                     bodyBuilder.Append($"has been assigned to you({ticket.AssignedTo.Email}) and a response is still pending");
                     string body = bodyBuilder.ToString();
 
-                    BackgroundJob.Enqueue(() => _emailRepository.SendMail(ticket.AssignedTo.Email, title, body).Wait());
-
-
+                     this._jobEnqueuer.EnqueueEmailJob(ticket.AssignedTo.Email, title, body);
+                    
                     //send to department
-
-                    BackgroundJob.Enqueue(() => this.SendDepartmentEmail(ticket.AssignedTo.Department,title,body).Wait());
+                     this._jobEnqueuer.EnqueueEmailJob(ticket.AssignedTo.Department.Name, title, body);
+                    
 
                     
                 }
@@ -436,7 +438,8 @@ namespace UCS_CRM.Persistence.SQLRepositories
                 bodyBuilder.Append($" has been closed because {reason}\nBut if you are not satisfied with the outcome. you have a chance to re-open it");
                 string body = bodyBuilder.ToString();
 
-                BackgroundJob.Enqueue(() => _emailRepository.SendMail(ticket.AssignedTo.Email, title, body).Wait());
+                this._jobEnqueuer.EnqueueEmailJob(ticket.AssignedTo.Email, title, body);
+                
 
                 status = "email sent";
             }   
@@ -450,7 +453,8 @@ namespace UCS_CRM.Persistence.SQLRepositories
                 bodyBuilder.Append($" has been closed because {reason}\n");
                 string body = bodyBuilder.ToString();
 
-                BackgroundJob.Enqueue(() => _emailRepository.SendMail(ticket.AssignedTo.Email, title, body).Wait());
+                this._jobEnqueuer.EnqueueEmailJob(ticket.AssignedTo.Email, title, body);
+               
 
                 status = "email sent";
             }
@@ -478,8 +482,8 @@ namespace UCS_CRM.Persistence.SQLRepositories
                 bodyBuilder.Append(ticket.TicketNumber);
                 bodyBuilder.Append($" has been reopened because {reason}\n");
                 string body = bodyBuilder.ToString();
-
-                BackgroundJob.Enqueue(() => _emailRepository.SendMail(ticket.AssignedTo.Email, title, body).Wait());
+                this._jobEnqueuer.EnqueueEmailJob(ticket.AssignedTo.Email, title, body);
+               
 
                 status = "email sent";
             }
@@ -492,8 +496,8 @@ namespace UCS_CRM.Persistence.SQLRepositories
                 bodyBuilder.Append(ticket.TicketNumber);
                 bodyBuilder.Append($" has been reopened because {reason}\n");
                 string body = bodyBuilder.ToString();
-
-                BackgroundJob.Enqueue(() => _emailRepository.SendMail(ticket.AssignedTo.Email, title, body).Wait());
+                this._jobEnqueuer.EnqueueEmailJob(ticket.AssignedTo.Email, title, body);
+               
 
                 status = "email sent";
             }
@@ -1419,8 +1423,8 @@ namespace UCS_CRM.Persistence.SQLRepositories
                         // sending the email 
                         string title = "Un Assigned Tickets";
                         var body = "Ticket number " + ticket.TicketNumber + " has not been assigned to anyone one yet";
-
-                        BackgroundJob.Enqueue(() => _emailRepository.SendMail(assignedTo.Email, title, body));
+                        this._jobEnqueuer.EnqueueEmailJob(assignedTo.Email, title, body);
+                        
                     } 
                 }
 
@@ -1445,7 +1449,8 @@ namespace UCS_CRM.Persistence.SQLRepositories
 
             if(emailAddress != null)
             {
-                BackgroundJob.Enqueue(() => _emailRepository.SendMail(emailAddress.Email, title, body));
+                this._jobEnqueuer.EnqueueEmailJob(emailAddress.Email, title, body);
+                
 
                
                     return "message sent";
@@ -1462,16 +1467,18 @@ namespace UCS_CRM.Persistence.SQLRepositories
             // Send an email to the previous assignee
             string title = "Ticket Escalation";
             string body = $"Your ticket {ticket.TicketNumber} has been escalated to {ticketEscalation.EscalatedTo.Email}";
+            
+            this._jobEnqueuer.EnqueueEmailJob(previousAssigneeEmail, title, body);
 
-            string parentJob = BackgroundJob.Enqueue(() => _emailRepository.SendMail(previousAssigneeEmail, title, body));
 
             body = $"A ticket {ticket.TicketNumber} previously assigned to {previousAssigneeEmail} has been escalated to you. Please take note and respond to it accordingly";
 
-            BackgroundJob.ContinueJobWith(parentJob,() => _emailRepository.SendMail(ticketEscalation.EscalatedTo.Email, title, body));
-
+            this._jobEnqueuer.EnqueueEmailJob(ticketEscalation.EscalatedTo.Email, title, body);
+           
                              
             //send email to the department
-            BackgroundJob.Enqueue(() => this.SendDepartmentEmail(ticket.AssignedTo.Department, title, body).Wait());
+             this._jobEnqueuer.EnqueueEmailJob(ticket.AssignedTo.Department.Email, title, body);
+           
 
       
 
@@ -1484,16 +1491,19 @@ namespace UCS_CRM.Persistence.SQLRepositories
             string title = "Ticket De-Escalation";
             string body = $"Your ticket {ticket.TicketNumber} has been de-escalated to {ticket.AssignedTo.Email}";
 
-            string parentJob = BackgroundJob.Enqueue(() => _emailRepository.SendMail(previousAssigneeEmail, title, body));
-
+            this._jobEnqueuer.EnqueueEmailJob(previousAssigneeEmail, title, body);
+            
+           
            
             body = $"A ticket {ticket.TicketNumber} previously escalated to {previousAssigneeEmail} has been de-escalated to you {ticket.AssignedTo.Email}. Please take note and respond to it accordingly";
 
-            BackgroundJob.ContinueJobWith(parentJob,() => _emailRepository.SendMail(previousAssigneeEmail, title, body));
+            this._jobEnqueuer.EnqueueEmailJob(previousAssigneeEmail, title, body);
 
 
+            
             //send email to the department
-            BackgroundJob.Enqueue(() => this.SendDepartmentEmail(ticket.AssignedTo.Department, title, body).Wait());
+             this._jobEnqueuer.EnqueueEmailJob(ticket.AssignedTo.Department.Email, title, body);
+            
 
 
             return "messages sent";
@@ -1515,14 +1525,16 @@ namespace UCS_CRM.Persistence.SQLRepositories
 
             if (!string.IsNullOrEmpty(previousEmail))
             {
-                BackgroundJob.Enqueue(() => _emailRepository.SendMail(previousEmail, title, body));
+                this._jobEnqueuer.EnqueueEmailJob(previousEmail, title, body);
+               
 
             }
 
 
             body = $"A {ticket.TicketNumber} has been reassigned to you .Please take note and respond to it accordingly";
 
-            BackgroundJob.Enqueue(() => _emailRepository.SendMail(newEmail, title, body));
+            this._jobEnqueuer.EnqueueEmailJob(newEmail, title, body);
+           
 
            
             return "messages sent";
@@ -1530,7 +1542,8 @@ namespace UCS_CRM.Persistence.SQLRepositories
             
 
             //send email to the department
-            this.SendDepartmentEmail(ticket.AssignedTo.Department, title, body).Wait();
+            this._jobEnqueuer.EnqueueEmailJob(ticket.AssignedTo.Department.Email, title, body);
+            
 
             return string.Empty;
         }
@@ -1561,8 +1574,8 @@ namespace UCS_CRM.Persistence.SQLRepositories
                         // sending the email 
                         string title = "Escalated Tickets";
                         var body = "Ticket number " + ticket.Ticket.TicketNumber + " was escalated and has not yet been resolved";
-
-                        BackgroundJob.Enqueue(() => _emailRepository.SendMail(emailAddress.Email, title, body));
+                        this._jobEnqueuer.EnqueueEmailJob(emailAddress.Email, title, body);
+                        
                     }
                 }
 
@@ -1587,7 +1600,8 @@ namespace UCS_CRM.Persistence.SQLRepositories
 
             if (!string.IsNullOrEmpty(emailAddress))
             {
-                BackgroundJob.Enqueue(() => _emailRepository.SendMail(emailAddress, title, body));
+                this._jobEnqueuer.EnqueueEmailJob(emailAddress, title, body);
+                
 
                 
 

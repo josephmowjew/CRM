@@ -45,6 +45,7 @@ namespace UCS_CRM.Areas.CallCenterOfficer.Controllers
         private IWebHostEnvironment _env;
         private readonly IEmailAddressRepository _addressRepository;
         private readonly ITicketStateTrackerRepository _ticketStateTrackerRepository;
+        private readonly HangfireJobEnqueuer _jobEnqueuer;
         private readonly UserManager<ApplicationUser> _userManager;
         public TicketsController(ITicketRepository ticketRepository, IMapper mapper, IUnitOfWork unitOfWork, IEmailService emailService, IEmailAddressRepository addressRepository,
             ITicketCategoryRepository ticketCategoryRepository, IStateRepository stateRepository, ITicketPriorityRepository priorityRepository,
@@ -219,7 +220,8 @@ namespace UCS_CRM.Areas.CallCenterOfficer.Controllers
 
                             if(emailAddress != null)
                             {
-                                BackgroundJob.Enqueue(() => _emailService.SendMail(emailAddress.Email, "Ticket Creation", emailBody));
+                                this._jobEnqueuer.EnqueueEmailJob(emailAddress.Email, "New Ticket Submitted", emailBody);
+                                
                                 
                             }
                         }
@@ -395,7 +397,7 @@ namespace UCS_CRM.Areas.CallCenterOfficer.Controllers
 
                 if (user != null)
                 {
-                    BackgroundJob.Enqueue(() => _emailService.SendMail(user.Email, $"Ticket {ticketDB.TicketNumber} Modification", emailBody));
+                    this._jobEnqueuer.EnqueueEmailJob(user.Email,$"Ticket {ticketDB.TicketNumber} Modification", emailBody);
                 }
 
                 return Json(new { status = "success", message = "user ticket updated successfully" });

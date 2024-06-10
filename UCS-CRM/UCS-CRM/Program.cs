@@ -68,7 +68,7 @@ builder.Services.AddScoped<IEmailRepository, EmailRepository>();
 builder.Services.AddScoped<ITicketRepository, TicketRepository>();
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 builder.Services.AddScoped<IUserRepository, UserRepository>();
-builder.Services.AddScoped<IEmailService, EmailService>();
+builder.Services.AddSingleton<IEmailService, EmailService>();
 builder.Services.AddScoped<IRoleRepositorycs, RoleRepository>();
 builder.Services.AddScoped<IMemberRepository, MemberRepository>();
 builder.Services.AddScoped<IStateRepository, StateRepository>();
@@ -84,6 +84,8 @@ builder.Services.AddScoped<ITicketStateTrackerRepository, TicketStateTrackerRepo
 //builder.Services.AddScoped<IPositionRepository, PositionRepository>();
 builder.Services.AddScoped<IFeedbackRepository, FeedbackRepository>();
 builder.Services.AddScoped<IFintechMemberService,FintechMemberService>();
+builder.Services.AddSingleton<HangfireJobEnqueuer>();
+builder.Services.AddSingleton<IErrorLogServiceFactory, ErrorLogServiceFactory>();
 builder.Services.AddHttpClient(); 
 
 
@@ -126,9 +128,6 @@ IFintechMemberService fintechMemberService = scope.ServiceProvider.GetRequiredSe
 
 
 RecurringJob.AddOrUpdate("SyncFintechMemberRecords", () => fintechMemberService.SyncFintechMembersWithLocalDataStore(), Cron.HourInterval(1));
-
-
-
 RecurringJob.AddOrUpdate(() => ticket.UnAssignedTickets(), Cron.MinuteInterval(30));
 RecurringJob.AddOrUpdate(() => ticket.SendTicketReminders(), Cron.MinuteInterval(30));
 
