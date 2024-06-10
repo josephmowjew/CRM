@@ -269,7 +269,7 @@ namespace UCS_CRM.Controllers
                      this._jobEnqueuer.EnqueueEmailJob(user.Email, "Login Details", userNameBody);
                    
 
-                   
+
                     TempData["response"] = $"Check your email for the confirmation code";
 
                   
@@ -298,7 +298,7 @@ namespace UCS_CRM.Controllers
                 this._jobEnqueuer.EnqueueEmailJob(loginModel.Email, "Login Details", userNameBody);
                
 
-              
+
                 TempData["response"] = $"Check your email for the confirmation code";
 
                
