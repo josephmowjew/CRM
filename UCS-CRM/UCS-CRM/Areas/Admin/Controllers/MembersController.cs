@@ -24,13 +24,15 @@ namespace UCS_CRM.Areas.Admin.Controllers
         private readonly IMapper _mapper;
         private readonly IUnitOfWork _unitOfWork;
         private readonly IEmailService _emailService;
-        public MembersController(IMemberRepository memberRepository, IMapper mapper, IUnitOfWork unitOfWork, IEmailService emailService, IUserRepository userRepository)
+        private readonly HangfireJobEnqueuer _jobEnqueuer;
+        public MembersController(IMemberRepository memberRepository, IMapper mapper, IUnitOfWork unitOfWork, IEmailService emailService, IUserRepository userRepository, HangfireJobEnqueuer jobEnqueuer)
         {
             _memberRepository = memberRepository;
             _emailService = emailService;
             _mapper = mapper;
             _unitOfWork = unitOfWork;
             _userRepository = userRepository;
+            _jobEnqueuer = jobEnqueuer;
         }
 
         // GET: MemberController
@@ -88,23 +90,24 @@ namespace UCS_CRM.Areas.Admin.Controllers
                     string PasswordBody = "An account has been created on UCS SACCO App. Your password is " + "<b> P@$$w0rd <br />";
                     //send pin to email
 
-                    string AccountActivationBody = @"Here is the One time Pin (OTP) for your account on UCS: <strong>" + user.Pin + "</strong> <br /> \n Access UCS CRM following this link: http://ucsscrm.sparcsystems.africa";
+                    string AccountActivationBody = @"Here is the One time Pin (OTP) for your account on UCS: <strong>" + user.Pin + "</strong> <br /> \n Access UCS CRM following this link: https://crm.ucssacco.com";
 
                    
 
                     //check if this is a new user or not (old users will have a deleted date field set to an actual date)
                     if (user.DeletedDate != null)
                     {
-                        BackgroundJob.Enqueue(() => _emailService.SendMail(user.Email, "Account Status", $"Good day, We are pleased to inform you that your account has been reactivated on the UCS SACCO. You may proceed to login using your previous credentials.<br> \n Access UCS CRM following this link: http://ucsscrm.sparcsystems.africa"));
+                        this._jobEnqueuer.EnqueueEmailJob(user.Email, "Account Reactivation", $"Good day, We are pleased to inform you that your account has been reactivated on the UCS SACCO. You may proceed to login using your previous credentials.<br> \n Access UCS CRM following this link: https://crm.ucssacco.com");
 
                     }
                     else
                     {
-                        BackgroundJob.Enqueue(() => _emailService.SendMail(user.Email, "Login Details", UserNameBody));
-                        BackgroundJob.Enqueue(() => _emailService.SendMail(user.Email, "Login Details", PasswordBody));
-                        BackgroundJob.Enqueue(() => _emailService.SendMail(user.Email, "Account Activation", AccountActivationBody));
-                        BackgroundJob.Enqueue(() => _emailService.SendMail(user.Email, "Account Details", $"Good day, for those who have not yet registered with Gravator, please do so so that you may upload an avatar of yourself that can be associated with your email address and displayed on your profile in the Mental Lab application.\r\nPlease visit https://en.gravatar.com/ to register with Gravatar. "));
-
+                        this._jobEnqueuer.EnqueueEmailJob(user.Email, "Login Details", UserNameBody);
+                        this._jobEnqueuer.EnqueueEmailJob(user.Email, "Login Details", PasswordBody);
+                        this._jobEnqueuer.EnqueueEmailJob(user.Email, "Account Activation", AccountActivationBody);
+                        this._jobEnqueuer.EnqueueEmailJob(user.Email, "Account Activation", $"Good day, for those who have not yet registered with Gravator, please do so so that you may upload an avatar of yourself that can be associated with your email address and displayed on your profile in the Mental Lab application.\r\nPlease visit https://en.gravatar.com/ to register with Gravatar. ");
+                        
+                      
 
                     }
 

@@ -9,12 +9,14 @@ namespace UCS_CRM.Core.Services
     {
         private IConfiguration _configuration { get; }
 
-        private readonly IErrorLogService _errorService;
+   
+        private readonly IErrorLogServiceFactory _errorLogRepositoryFactory;
 
-        public EmailService(IConfiguration configuration, IErrorLogService errorService)
+        public EmailService(IConfiguration configuration, IErrorLogServiceFactory errorLogServiceFactory)
         {
             _configuration = configuration;
-            _errorService = errorService;
+          
+            _errorLogRepositoryFactory = errorLogServiceFactory;
         }
 
         public void SendEmail(string email, string subject, string HtmlMessage)
@@ -102,8 +104,10 @@ namespace UCS_CRM.Core.Services
                 {
                     errorMessage = "Message not sent due to internet-related issues. Please try again later.";
                 }
+                
+                var errorServiceFactory = _errorLogRepositoryFactory.Create();
+                await errorServiceFactory.LogErrorAsync(ex);
 
-                await this._errorService.LogErrorAsync(ex);
 
                 return new KeyValuePair<bool, string>(false, errorMessage);
             }

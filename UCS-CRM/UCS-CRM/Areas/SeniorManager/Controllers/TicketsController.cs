@@ -37,10 +37,11 @@ namespace UCS_CRM.Areas.SeniorManager.Controllers
         private readonly ITicketStateTrackerRepository _ticketStateTrackerRepository;
         private readonly IUnitOfWork _unitOfWork;
         private readonly IEmailService _emailService;
+        private readonly HangfireJobEnqueuer _jobEnqueuer;
         private IWebHostEnvironment _env;
         public TicketsController(ITicketRepository ticketRepository, IMapper mapper, IUnitOfWork unitOfWork, 
             ITicketCategoryRepository ticketCategoryRepository, IStateRepository stateRepository, ITicketPriorityRepository priorityRepository,
-            IWebHostEnvironment env, ITicketCommentRepository ticketCommentRepository, IUserRepository userRepository, IMemberRepository memberRepository, ITicketEscalationRepository ticketEscalationRepository, ITicketStateTrackerRepository ticketStateTrackerRepository, IEmailService emailService)
+            IWebHostEnvironment env, ITicketCommentRepository ticketCommentRepository, IUserRepository userRepository, IMemberRepository memberRepository, ITicketEscalationRepository ticketEscalationRepository, ITicketStateTrackerRepository ticketStateTrackerRepository, IEmailService emailService, HangfireJobEnqueuer jobEnqueuer)
         {
             _ticketRepository = ticketRepository;
             _mapper = mapper;
@@ -55,6 +56,7 @@ namespace UCS_CRM.Areas.SeniorManager.Controllers
             _ticketEscalationRepository = ticketEscalationRepository;
             _ticketStateTrackerRepository = ticketStateTrackerRepository;
             _emailService = emailService;
+            _jobEnqueuer = jobEnqueuer;
         }
 
         // GET: TicketsController
@@ -176,7 +178,8 @@ namespace UCS_CRM.Areas.SeniorManager.Controllers
 
                 if (user != null)
                 {
-                    BackgroundJob.Enqueue(() => _emailService.SendMail(user.Email, $"Ticket {ticketDB.TicketNumber} Modification", emailBody));
+                    this._jobEnqueuer.EnqueueEmailJob(user.Email, $"Ticket {ticketDB.TicketNumber} Modification", emailBody);
+                    
                 }
 
                 return Json(new { status = "success", message = "user ticket updated successfully" });

@@ -38,6 +38,8 @@ namespace UCS_CRM.Areas.Member.Controllers
         private readonly IEmailService _emailService;
         private readonly IEmailAddressRepository _addressRepository;
         private readonly ITicketStateTrackerRepository _ticketStateTrackerRepository;
+        private readonly HangfireJobEnqueuer _jobEnqueuer;
+
 
         private readonly IUserRepository _userRepository;
         public TicketsController(ITicketRepository ticketRepository,
@@ -54,7 +56,7 @@ namespace UCS_CRM.Areas.Member.Controllers
             ITicketEscalationRepository ticketEscalationRepository,
             IDepartmentRepository departmentRepository,
             ITicketStateTrackerRepository ticketStateTrackerRepository,
-            IUserRepository userRepository)
+            IUserRepository userRepository,HangfireJobEnqueuer jobEnqueuer)
         {
             _ticketRepository = ticketRepository;
             _mapper = mapper;
@@ -71,6 +73,7 @@ namespace UCS_CRM.Areas.Member.Controllers
             _departmentRepository = departmentRepository;
             _ticketStateTrackerRepository = ticketStateTrackerRepository;
             _userRepository = userRepository;
+            _jobEnqueuer = jobEnqueuer;
         }
 
         // GET: TicketsController
@@ -208,7 +211,8 @@ namespace UCS_CRM.Areas.Member.Controllers
 
                         string emailBody = "Your ticket request for has been submitted in the system. </b> check the system for more details by clicking here " + Lambda.systemLink + "<br /> ";
                         string emailBod2y = "A ticket request for has been submitted in the system. </b> check the system for more details by clicking here " + Lambda.systemLink + "<br /> ";
-                        BackgroundJob.Enqueue(() => _emailService.SendMail(userRecord.Email, "Ticket Creation", emailBody));
+                       
+                         this._jobEnqueuer.EnqueueEmailJob(userRecord.Email, "Ticket Creation", emailBody);
                         //_emailService.SendMail(mappedTicket.Member.Address, "Ticket Creation", emailBody);
 
                     }

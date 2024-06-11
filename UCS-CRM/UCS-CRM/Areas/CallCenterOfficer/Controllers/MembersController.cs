@@ -31,8 +31,9 @@ namespace UCS_CRM.Areas.CallCenterOfficer.Controllers
         private readonly IUnitOfWork _unitOfWork;
         private readonly IEmailService _emailService;
         private readonly HttpClient _httpClient;
+        private readonly HangfireJobEnqueuer _jobEnqueuer;
         public IConfiguration _configuration { get; }
-        public MemberController(IMemberRepository memberRepository, IMapper mapper, IUnitOfWork unitOfWork, IEmailService emailService, HttpClient httpClient, IConfiguration configuration)
+        public MemberController(IMemberRepository memberRepository, IMapper mapper, IUnitOfWork unitOfWork, IEmailService emailService, HttpClient httpClient, IConfiguration configuration, HangfireJobEnqueuer jobEnqueuer)
         {
             _memberRepository = memberRepository;
             _emailService = emailService;
@@ -40,6 +41,7 @@ namespace UCS_CRM.Areas.CallCenterOfficer.Controllers
             _unitOfWork = unitOfWork;
             _httpClient = httpClient;
             _configuration = configuration;
+            _jobEnqueuer = jobEnqueuer;
         }
 
         // GET: MemberController
@@ -201,16 +203,15 @@ namespace UCS_CRM.Areas.CallCenterOfficer.Controllers
                     //check if this is a new user or not (old users will have a deleted date field set to an actual date)
                     if(user.DeletedDate != null)
                     {
-                        BackgroundJob.Enqueue(() => _emailService.SendMail(user.Email, "Account Status", $"Good day, We are pleased to inform you that your account has been reactivated on the UCS SACCO. You may proceed to login using your previous credentials. "));
+                        this._jobEnqueuer.EnqueueEmailJob(user.Email, "Account Status", $"Good day, We are pleased to inform you that your account has been reactivated on the UCS SACCO. You may proceed to login using your previous credentials. ");
 
                     }
                     else
                     {
-                        BackgroundJob.Enqueue(() => _emailService.SendMail(user.Email, "Login Details", UserNameBody));
-                        BackgroundJob.Enqueue(() => _emailService.SendMail(user.Email, "Login Details", PasswordBody));
-                        BackgroundJob.Enqueue(() => _emailService.SendMail(user.Email, "Account Details", $"Good day, for those who have not yet registered with Gravator, please do so so that you may upload an avatar of yourself that can be associated with your email address and displayed on your profile in the Mental Lab application.\r\nPlease visit https://en.gravatar.com/ to register with Gravatar. "));
-
-
+                        this._jobEnqueuer.EnqueueEmailJob(user.Email,"Login Details", UserNameBody);
+                        this._jobEnqueuer.EnqueueEmailJob(user.Email, "Login Details", PasswordBody);
+                        this._jobEnqueuer.EnqueueEmailJob(user.Email, "Account Details", $"Good day, for those who have not yet registered with Gravator, please do so so that you may upload an avatar of yourself that can be associated with your email address and displayed on your profile in the Mental Lab application.\r\nPlease visit XXXXXXXXXXXXXXXXXXXXXXXX to register with Gravatar. ");
+                       
                     }
 
 

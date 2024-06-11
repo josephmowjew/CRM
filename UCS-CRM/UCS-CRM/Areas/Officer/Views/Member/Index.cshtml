@@ -6,15 +6,25 @@
     var protocol = Configuration.GetSection("HostingSettings")["Protocol"];
 }
 @{
-    ViewData["Title"] = "First Escalation";
-    Layout = "~/Areas/Admin/Views/shared/_Layout.cshtml";
+    ViewData["Title"] = "Members";
+    Layout = "~/Areas/officer/Views/shared/_Layout.cshtml";
+    string errorMessage = TempData["errorResponse"] as string;
 }
 
 
 
 <div class="card">
     <div class="card-header">
-        <h4 class="text-center text-uppercase">Escalated Tickets</h4>
+        <h4 class="text-center text-uppercase">Members Available In The System</h4>
+        @if (!string.IsNullOrEmpty(errorMessage))
+        {
+            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                @errorMessage
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+            <div>
+            </div>
+        }
     </div>
     <div class="card-body">
         <div class="table-responsive">
@@ -22,25 +32,27 @@
                 <thead>
                     <tr>
                         <th>
-                            Ticket Number
+                            Account Number
                         </th>
                         <th>
-                            Title
-                        </th>
-                        
-
-                        <th>
-                            Priority
+                            National Id
                         </th>
                         <th>
-                            Date Escalated
+                            First Name
                         </th>
                         <th>
-                            Reason
+                            Surname
+                        </th>
+                        <th>
+                            Gender
                         </th>
 
                         <th>
-                            Assigned To
+                            Phone Number
+                        </th>
+
+                        <th>
+                            Date Of Birth
                         </th>
                         <th>
                             Action
@@ -64,7 +76,6 @@
         var datatable;
     </script>
 
-    <script src="~/js/TicketEscalation.js"></script>
     <script>
         $(document).ready(function () {
             datatable = $('#my_table').DataTable({
@@ -74,16 +85,9 @@
                 "serverSide": true,
                 "order": [[0, "desc"]],
                 ajax: {
-                    url: '/clerk/ticketEscalations/GetTicketEscalations',
+                    url: 'member/GetMembers',
                     type: 'post',
-                    data: { escalationLevel: 0 },
-                    datatype: 'Json',
-                    error: function (XMLHttpRequest, textStatus, errorThrown) {
-
-                        console.log(XMLHttpRequest.responseText)
-
-
-                    }
+                    datatype: 'Json'
 
 
                 },
@@ -97,57 +101,54 @@
                 columns: [
 
                     {
-                        data: "ticket.ticketNumber",
-                        name: "ticketNumber",
+                        data: "accountNumber",
+                        name: "accountNumber",
                         className: "text-left",
                         "orderable": true,
                     },
                     {
-                        data: "ticket.title",
-                        name: "title",
-                        className: "text-left",
-                        "orderable": true,
-                    },
-                    //{
-                    //    data: { state: "escalationLevel" },
-                    //    mRender: function (data, type, full) {
-                    //        return data.escalationLevel == 1 ? "First Escalation" : "First Escalation";
-                    //    }, "name": "escalationLevel",
-                    //    className: "text-left"
-                    //},
-                    {
-                        data: { state: "ticket.ticketPriority.name" },
-                        mRender: function (data, type, full) {
-                            return data.ticket.ticketPriority != null && data.ticket.ticketPriority.status != 'Deleted' ? data.ticket.ticketPriority.name : "";
-                        }, "name": "ticket.ticketPriority.name",
-                        className: "text-left"
-                    },
-
-                    {
-                        data: "formattedDateEscalated",
-                        name: "dateEscalated",
+                        data: "nationalId",
+                        name: "nationalId",
                         className: "text-left",
                         "orderable": true,
                     },
                     {
-                        data: "reason",
-                        name: "reason",
+                        data: "formattedFirstName",
+                        name: "firstName",
+                        className: "text-left",
+                        "orderable": true,
+                    },
+                    {
+                        data: "formattedLastName",
+                        name: "lastName",
+                        className: "text-left",
+                        "orderable": true,
+                    },
+                    {
+                        data: "formattedGender",
+                        name: "gender",
+                        className: "text-left",
+                        "orderable": true,
+                    },
+                    {
+                        data: "phoneNumber",
+                        name: "phoneNumber",
                         className: "text-left",
                         "orderable": false,
                     },
+
                     {
-                        data: { state: "ticket.assignedTo.fullName" },
-                        mRender: function (data, type, full) {
-                            return data.ticket.assignedTo != null && data.ticket.assignedTo.status != 'Deleted' ? data.ticket.assignedTo.fullName : "";
-                        }, "name": "ticket.assignedTo.fullName",
-                        className: "text-left"
+                        data: "formattedDateOfBirth",
+                        name: "dateOfBirth",
+                        className: "text-left",
+                        "orderable": false,
                     },
                     {
                         data: "id",
                         name: "id",
                         "orderable": false,
                         render: function (data) {
-                            return " <a href='#' type='button' onclick=Delete('" + data + "') title='delete' class='feather icon-trash-2'></a><a href='tickets/details/" + data + "' class='mdi mdi-eye'></a>"
+                            return "<a title='show more' href='member/details/" + data + "' class='mdi mdi-eye'></a> "
                         }
                     },
 

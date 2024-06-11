@@ -6,7 +6,7 @@ using UCS_CRM.Persistence.Interfaces;
 
 namespace UCS_CRM.Areas.Clerk.Controllers
 {
-    [Area("Clerk")]
+    [Area("officer")]
     [Authorize]
 
     public class HomeController : Controller
