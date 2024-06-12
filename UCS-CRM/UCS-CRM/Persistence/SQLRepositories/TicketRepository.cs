@@ -71,7 +71,7 @@ namespace UCS_CRM.Persistence.SQLRepositories
            
         }
 
-        public async Task<string> EscalateTicket(Ticket ticket, string UserId, string escalationReason)
+        public async Task EscalateTicket(Ticket ticket, string UserId, string escalationReason)
         {
             ApplicationUser currentAssignedUser = null;
             string currentAssignedUserEmail = string.Empty;
@@ -227,7 +227,7 @@ namespace UCS_CRM.Persistence.SQLRepositories
                 {
                     //do something is the ticket is not assigned to anyone
 
-                    string result = await this.SendUnassignedTicketEmail(ticket);
+                     await this.SendUnassignedTicketEmail(ticket);
                 }
 
             }
@@ -235,7 +235,7 @@ namespace UCS_CRM.Persistence.SQLRepositories
             if (ticketAssignedToNewUser != true)
             {
 
-                return "Could not find a user to escalate the ticket to";
+                //return "Could not find a user to escalate the ticket to";
             }
             else
             {
@@ -272,7 +272,7 @@ namespace UCS_CRM.Persistence.SQLRepositories
                         }
                         else
                         {
-                            return "system user not found";
+                            //return "system user not found";
                         }
 
 
@@ -289,16 +289,16 @@ namespace UCS_CRM.Persistence.SQLRepositories
 
                     //send emails to previous assignee and the new assignee
 
-                    string emails_response = await this.SendTicketEscalationEmail(ticket, mappedTicketEscalation, currentAssignedUserEmail);
+                     await this.SendTicketEscalationEmail(ticket, mappedTicketEscalation, currentAssignedUserEmail);
 
 
-                    return "ticket escalated";
+                    //return "ticket escalated";
                 }
               
                 catch (Exception ex)
                 {
 
-                    return null;
+                    //return null;
                 }
             }
 
@@ -327,7 +327,7 @@ namespace UCS_CRM.Persistence.SQLRepositories
 
                 if (escalationTime > DateTime.UtcNow)
                 {
-                    string result = await this.EscalateTicket(ticket, null, "Previous assignee did not respond in time");
+                    await this.EscalateTicket(ticket, null, "Previous assignee did not respond in time");
                 }
                 else if (ticket.AssignedTo != null)
                 {
@@ -421,7 +421,7 @@ namespace UCS_CRM.Persistence.SQLRepositories
                 .Include(t => t.Member).ThenInclude(t => t.User)
                 .FirstOrDefaultAsync(t => t.Id == id);
         }
-        public async Task<string> SendTicketClosureNotifications(Ticket ticket, string reason)
+        public async Task SendTicketClosureNotifications(Ticket ticket, string reason)
         {
             string status = string.Empty;
             //get the member email address
@@ -463,10 +463,10 @@ namespace UCS_CRM.Persistence.SQLRepositories
 
 
 
-            return status;
+            //return status;
 
         }
-        public async Task<string> SendTicketReopenedNotifications(Ticket ticket, string reason)
+        public async Task SendTicketReopenedNotifications(Ticket ticket, string reason)
         {
             string status = string.Empty;
             //get the member email address
@@ -506,7 +506,7 @@ namespace UCS_CRM.Persistence.SQLRepositories
 
 
 
-            return status;
+            //return status;
 
         }
         //public async Task<List<Ticket?>> GetTickets(CursorParams @params)
@@ -1404,7 +1404,7 @@ namespace UCS_CRM.Persistence.SQLRepositories
         {
             return await this._context.Tickets.Include(t => t.State).CountAsync(t => t.Status != Lambda.Deleted & t.State.Name.Trim().ToLower() == state.Trim().ToLower() && t.CreatedById == identifier || t.AssignedToId == identifier);
         }
-        public async Task<string> UnAssignedTickets()
+        public async Task UnAssignedTickets()
         {
             var tickets = new List<Ticket>();
 
@@ -1437,9 +1437,9 @@ namespace UCS_CRM.Persistence.SQLRepositories
                 status = "There was an error with this request";
             }
 
-            return status;
+            //return status;
         }
-        public async Task<string> SendUnassignedTicketEmail(Ticket ticket)
+        public async Task SendUnassignedTicketEmail(Ticket ticket)
         {
             // Send an email to the previous assignee
             string title = "Unassigned Ticket";
@@ -1453,16 +1453,16 @@ namespace UCS_CRM.Persistence.SQLRepositories
                 
 
                
-                    return "message sent";
+                    //return "message sent";
 
               
             }
 
           
 
-            return string.Empty;
+            //return string.Empty;
         }
-        public async Task<string> SendTicketEscalationEmail(Ticket ticket, TicketEscalation ticketEscalation, string previousAssigneeEmail)
+        public async Task SendTicketEscalationEmail(Ticket ticket, TicketEscalation ticketEscalation, string previousAssigneeEmail)
         {
             // Send an email to the previous assignee
             string title = "Ticket Escalation";
@@ -1482,10 +1482,10 @@ namespace UCS_CRM.Persistence.SQLRepositories
 
       
 
-            return "messages sent";
+            //return "messages sent";
         }
 
-        public async Task<string> SendTicketDeEscalationEmail(Ticket ticket,  string previousAssigneeEmail)
+        public async Task SendTicketDeEscalationEmail(Ticket ticket,  string previousAssigneeEmail)
         {
             // Send an email to the previous assignee
             string title = "Ticket De-Escalation";
@@ -1506,7 +1506,7 @@ namespace UCS_CRM.Persistence.SQLRepositories
             
 
 
-            return "messages sent";
+            //return "messages sent";
              
           
 
@@ -1515,7 +1515,7 @@ namespace UCS_CRM.Persistence.SQLRepositories
           
         }
 
-        public async Task<string> SendTicketReassignmentEmail(string previousEmail, string newEmail, Ticket ticket)
+        public async Task SendTicketReassignmentEmail(string previousEmail, string newEmail, Ticket ticket)
         {
             // Send an email to the previous assignee
             string title = $"Ticket {ticket.TicketNumber} Re-assignment";
@@ -1537,7 +1537,7 @@ namespace UCS_CRM.Persistence.SQLRepositories
            
 
            
-            return "messages sent";
+            //return "messages sent";
            
             
 
@@ -1545,9 +1545,9 @@ namespace UCS_CRM.Persistence.SQLRepositories
             this._jobEnqueuer.EnqueueEmailJob(ticket.AssignedTo.Department.Email, title, body);
             
 
-            return string.Empty;
+            //return string.Empty;
         }
-        public async Task<string> SendEscalatedTicketsReminder()
+        public async Task SendEscalatedTicketsReminder()
         {
             var tickets = new List<TicketEscalation>();
 
@@ -1588,7 +1588,7 @@ namespace UCS_CRM.Persistence.SQLRepositories
                 status = "There was an error with this request";
             }
 
-            return status;
+            //return status;
         }
         public async Task<string> SendDepartmentEmail(Department department, string emailSubject, string emailBody)
         {

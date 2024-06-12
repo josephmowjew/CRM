@@ -651,7 +651,7 @@ namespace UCS_CRM.Areas.CallCenterOfficer.Controllers
 
                         //send alert emails
 
-                        string result = await this._ticketRepository.SendTicketClosureNotifications(ticket, closeTicketDTO.Reason);
+                         await this._ticketRepository.SendTicketClosureNotifications(ticket, closeTicketDTO.Reason);
 
                         return Json(new { status = "success", message = $"Ticket {ticket.TicketNumber} has been closed successfully" });
 
@@ -719,7 +719,7 @@ namespace UCS_CRM.Areas.CallCenterOfficer.Controllers
 
                         //send alert emails
 
-                        string result = await this._ticketRepository.SendTicketReopenedNotifications(ticket, closeTicketDTO.Reason);
+                         await this._ticketRepository.SendTicketReopenedNotifications(ticket, closeTicketDTO.Reason);
 
                         return Json(new { status = "success", message = $"Ticket {ticket.TicketNumber} has been reopened successfully" });
 
@@ -959,35 +959,35 @@ namespace UCS_CRM.Areas.CallCenterOfficer.Controllers
 
                 if(ticket != null)
                 {
-                    string result = await this._ticketRepository.EscalateTicket(ticket, claimsIdentitifier.Value, createTicketEscalation.Reason);
+                     await this._ticketRepository.EscalateTicket(ticket, claimsIdentitifier.Value, createTicketEscalation.Reason);
                     
 
-                    if (result != null)
-                    {
-                        if(result.Equals("Could not find a user to escalate the ticket to", StringComparison.OrdinalIgnoreCase))
-                        {
-                            createTicketEscalation.DataInvalid = "true";
+                    // if (result != null)
+                    // {
+                    //     if(result.Equals("Could not find a user to escalate the ticket to", StringComparison.OrdinalIgnoreCase))
+                    //     {
+                    //         createTicketEscalation.DataInvalid = "true";
 
-                            ModelState.AddModelError("", "Could not find a user to escalate the ticket to");
+                    //         ModelState.AddModelError("", "Could not find a user to escalate the ticket to");
 
-                            return PartialView("_FirstTicketEscalationPartial", createTicketEscalation);
-                        }
-                        if(result.Equals("ticket escalated", StringComparison.OrdinalIgnoreCase))
-                        {
-                            createTicketEscalation.DataInvalid = "";
+                    //         return PartialView("_FirstTicketEscalationPartial", createTicketEscalation);
+                    //     }
+                    //     if(result.Equals("ticket escalated", StringComparison.OrdinalIgnoreCase))
+                    //     {
+                    //         createTicketEscalation.DataInvalid = "";
 
 
-                            return PartialView("_FirstTicketEscalationPartial", createTicketEscalation);
-                        }
-                    }
-                    else
-                    {
-                        createTicketEscalation.DataInvalid = "true";
+                    //         return PartialView("_FirstTicketEscalationPartial", createTicketEscalation);
+                    //     }
+                    // }
+                    // else
+                    // {
+                    //     createTicketEscalation.DataInvalid = "true";
 
-                        ModelState.AddModelError("","An error occurred while trying to escalate the ticket");
+                    //     ModelState.AddModelError("","An error occurred while trying to escalate the ticket");
 
-                        return PartialView("_FirstTicketEscalationPartial", createTicketEscalation);
-                    }
+                    //     return PartialView("_FirstTicketEscalationPartial", createTicketEscalation);
+                    // }
                 }
                 }
                 else

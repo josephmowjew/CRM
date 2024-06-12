@@ -152,7 +152,8 @@ namespace UCS_CRM.Core.Services
                     errorMessage = "Message not sent due to internet-related issues. Please try again later.";
                 }
 
-                await _errorService.LogErrorAsync(ex);
+                var errorServiceFactory = _errorLogRepositoryFactory.Create();
+                await errorServiceFactory.LogErrorAsync(ex);
 
                 return new KeyValuePair<bool, string>(false, errorMessage);
             }
