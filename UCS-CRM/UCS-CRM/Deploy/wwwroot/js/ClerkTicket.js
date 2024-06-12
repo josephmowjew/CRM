@@ -61,7 +61,7 @@
                     //hook up the custom select
 
                     initSelect2({
-                        url: "/Clerk/Tickets/GetAllMembersJson",
+                        url: "/officer/Tickets/GetAllMembersJson",
                         hiddenFieldId: "MemberId",
                         pageSize: 20,
                         initialSearchValue: "",
@@ -171,7 +171,7 @@ function EditForm(id, area = "") {
                 // If the field is MemberId, set the value and trigger initSelect2 with the retrieved member ID
                 field.val(data[dataKey]);
                 initSelect2({
-                    url: "/Clerk/Tickets/GetAllMembersJson",
+                    url: "/officer/Tickets/GetAllMembersJson",
                     hiddenFieldId: "MemberId",
                     pageSize: 20,
                     initialSearchValue: data.member.accountNumber
@@ -398,7 +398,7 @@ function updateTicket() {
                  //hook up custom select event
 
                  initSelect2({
-                    url: "/Clerk/Tickets/GetAllMembersJson",
+                    url: "/officer/Tickets/GetAllMembersJson",
                     hiddenFieldId: "MemberId",
                     pageSize: 20,
                     initialSearchValue: "",
@@ -456,7 +456,7 @@ function addComment(ticketId) {
 
 
     $.ajax({
-        url: "/clerk/tickets/AddTicketComment",
+        url: "/officer/tickets/AddTicketComment",
         type: 'POST',
         data: formData,
         processData: false,
