@@ -9,6 +9,8 @@
     ViewData["Title"] = "Members";
     Layout = "~/Areas/CallCenterOfficer/Views/shared/_Layout.cshtml";
     string errorMessage = TempData["errorResponse"] as string;
+    string message = TempData["response"] as string;
+
 }
 
 
@@ -27,6 +29,22 @@
         }
     </div>
     <div class="card-body">
+        <div>
+            @{
+                if (!string.IsNullOrEmpty(message))
+                {
+                    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                        @message
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+
+                    // Reset the message
+                    message = string.Empty;
+                }
+            }
+
+
+        </div>
         <div class="table-responsive">
             <table class="table table-bordered " id="my_table">
                 <thead>

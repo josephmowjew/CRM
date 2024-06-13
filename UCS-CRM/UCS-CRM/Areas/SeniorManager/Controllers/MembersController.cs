@@ -105,7 +105,25 @@ namespace UCS_CRM.Areas.SeniorManager.Controllers
             }
 
             var baseAccountElement = document.RootElement.GetProperty("data").GetProperty("base_account");
+            if (document.RootElement.TryGetProperty("data", out JsonElement data))
+            {
+                if (data.ValueKind == JsonValueKind.Object)
+                {
+                    if (data.GetRawText() == "{}")
+                    {
+                        TempData["response"] = "Account number does not match any identification details";
+                        return RedirectToAction("Index");
+                    }
 
+                }
+            }
+
+
+            if (status == 404)
+            {
+                TempData["response"] = "Account number does not match any identification details";
+                return RedirectToAction("Index");
+            }
             decimal balance;
             if (decimal.TryParse(baseAccountElement.GetProperty("balance").GetString(), out balance))
             {

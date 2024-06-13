@@ -104,6 +104,19 @@ namespace UCS_CRM.Areas.Teller.Controllers
 
             var status = document.RootElement.GetProperty("status").GetInt32();
 
+            if (document.RootElement.TryGetProperty("data", out JsonElement data))
+            {
+                if (data.ValueKind == JsonValueKind.Object)
+                {
+                    if (data.GetRawText() == "{}")
+                    {
+                        TempData["response"] = "Account number does not match any identification details";
+                        return RedirectToAction("Index");
+                    }
+
+                }
+            }
+
             string message = document.RootElement.GetProperty("message").GetString();
 
             if (status == 404)
@@ -123,6 +136,13 @@ namespace UCS_CRM.Areas.Teller.Controllers
 
             var baseAccountElement = document.RootElement.GetProperty("data").GetProperty("base_account");
 
+
+
+            if (status == 404)
+            {
+                TempData["response"] = "Account number does not match any identification details";
+                return RedirectToAction("Index");
+            }
             decimal balance;
             if (decimal.TryParse(baseAccountElement.GetProperty("balance").GetString(), out balance))
             {

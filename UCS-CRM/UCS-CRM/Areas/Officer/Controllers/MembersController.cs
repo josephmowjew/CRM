@@ -102,6 +102,21 @@ namespace UCS_CRM.Areas.Admin.Controllers
 
             var document = JsonDocument.Parse(json);
 
+            if (document.RootElement.TryGetProperty("data", out JsonElement data))
+            {
+                if (data.ValueKind == JsonValueKind.Object)
+                {
+                    if (data.GetRawText() == "{}")
+                    {
+                        TempData["response"] = "Account number does not match any identification details";
+                        return RedirectToAction("Index");
+                    }
+
+                }
+            }
+
+
+
             var status = document.RootElement.GetProperty("status").GetInt32();
 
             string message = document.RootElement.GetProperty("message").GetString();
@@ -118,6 +133,7 @@ namespace UCS_CRM.Areas.Admin.Controllers
                 TempData["errorResponse"] = "This user has no base account number";
                 return RedirectToAction("Index");
             }
+
 
           
 

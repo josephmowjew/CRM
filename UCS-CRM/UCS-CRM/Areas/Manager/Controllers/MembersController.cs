@@ -98,9 +98,25 @@ namespace UCS_CRM.Areas.Manager.Controllers
 
             var status = document.RootElement.GetProperty("status").GetInt32();
 
+            
+
+            if(document.RootElement.TryGetProperty("data", out JsonElement data))
+            {
+                if (data.ValueKind == JsonValueKind.Object)
+                {
+                    if (data.GetRawText() == "{}")
+                    {
+                        TempData["response"] = "Account number does not match any identification details";
+                        return RedirectToAction("Index");
+                    }
+                   
+                }
+            }
+            
+
             if (status == 404)
             {
-                Json(new { error = "error", message = "failed to create the user account from the member" });
+                TempData["response"] = "Account number does not match any identification details";
                 return RedirectToAction("Index");
             }
 
@@ -326,9 +342,9 @@ namespace UCS_CRM.Areas.Manager.Controllers
             var json = await tokenResponse.Content.ReadAsStringAsync();
             var document = JsonDocument.Parse(json);
 
-            var status = document.RootElement.GetProperty("status").GetString();
+            var status = document.RootElement.GetProperty("status").GetInt32();
 
-            if (status == "404")
+            if (status == 404)
             {
 
                 //
