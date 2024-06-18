@@ -136,7 +136,7 @@ namespace UCS_CRM.Core.Services
 
                 using (var client = new MailKit.Net.Smtp.SmtpClient())
                 {
-                    await client.ConnectAsync("smtp.gmail.com", 587, SecureSocketOptions.Auto);
+                    await client.ConnectAsync(_configuration["MailSettings:Server"], int.Parse(_configuration["MailSettings:Port"]), SecureSocketOptions.Auto);
                     await client.AuthenticateAsync(_configuration["MailSettings:SenderEmail"], _configuration["MailSettings:Password"]);
                     await client.SendAsync(message);
                     await client.DisconnectAsync(true);
