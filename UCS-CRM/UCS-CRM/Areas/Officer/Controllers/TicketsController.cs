@@ -282,133 +282,103 @@ namespace UCS_CRM.Areas.Clerk.Controllers
         {
             editTicketDTO.DataInvalid = "true";
 
-            if (ModelState.IsValid)
+            if (!ModelState.IsValid)
             {
-                editTicketDTO.DataInvalid = "";
-
-                var ticketDB = await this._ticketRepository.GetTicket(id);
-
-                if (ticketDB is null)
-                {
-                    editTicketDTO.DataInvalid = "true";
-
-                    ModelState.AddModelError("", $"The Identifier of the record was not found taken");
-
-                    return PartialView("_EditTicketPartial", editTicketDTO);
-                }
-
-                //get the current state of the ticket 
-
-                string currentState = ticketDB.State.Name;
-                string currentAssignedUserId = ticketDB.AssignedToId;
-                string currentAssignedUserEmail = ticketDB?.AssignedTo?.Email;
-                editTicketDTO.AssignedToId = editTicketDTO.AssignedToId == null ? ticketDB.AssignedToId : editTicketDTO.AssignedToId;
-
-                int newStateId = editTicketDTO.StateId == null ? ticketDB.StateId : (int)editTicketDTO.StateId;
-
-                string newState = (await this._stateRepository.GetStateAsync(newStateId)).Name;
-
-                string newAssignedUserEmail = (await this._userRepository.FindByIdAsync(editTicketDTO.AssignedToId)).Email;
-
-                editTicketDTO.StateId = editTicketDTO.StateId == null ? ticketDB.StateId : editTicketDTO.StateId;
-
-                editTicketDTO.AssignedToId = editTicketDTO.AssignedToId == null ? ticketDB.AssignedToId : editTicketDTO.AssignedToId;
-
-                editTicketDTO.TicketNumber = ticketDB.TicketNumber;
-
-                var claimsIdentitifier = User.FindFirst(ClaimTypes.NameIdentifier);
-
-                //if (editTicketDTO.AssignedToId == null)
-                //{
-                //    editTicketDTO.AssignedToId = claimsIdentitifier.Value;
-                //}
-
-                
-                //map the edit ticket to ticket
-                var mappedTicket = this._mapper.Map<Ticket>(editTicketDTO);
-
-                var ticketExist = this._ticketRepository.Exists(mappedTicket);
-
-
-                bool isTaken = (ticketExist != null);
-                if (isTaken)
-                {
-
-                    editTicketDTO.DataInvalid = "true";
-                    ModelState.AddModelError("Error", $"This title is already taken");
-
-
-                    return PartialView("_EditTicketPartial", editTicketDTO);
-                }
-
-               // var userClaims = (ClaimsIdentity)User.Identity;
-
-                this._mapper.Map(editTicketDTO, ticketDB);
-
-                //save changes to data store
-
-                await this._unitOfWork.SaveToDataStore();
-
-                //check if the state changed
-
-                if(newState.Trim().ToLower() != currentState.Trim().ToLower()) {
-
-                    //update the ticket change state 
-
-                    UCS_CRM.Core.Models.TicketStateTracker ticketStateTracker = new TicketStateTracker() { CreatedById = claimsIdentitifier.Value, TicketId = ticketDB.Id, NewState = ticketDB.State.Name, PreviousState = currentState, Reason = "Ticket Update" };
-
-                    this._ticketStateTrackerRepository.Add(ticketStateTracker);
-
-                    await this._unitOfWork.SaveToDataStore();
-                }
-
-                if (editTicketDTO.Attachments.Count > 0)
-                {
-                    var attachments = editTicketDTO.Attachments.Select(async attachment =>
-                    {
-                        string fileUrl = await Lambda.UploadFile(attachment, this._env.WebRootPath);
-                        return new TicketAttachment()
-                        {
-                            FileName = attachment.FileName,
-                            TicketId = mappedTicket.Id,
-                            Url = fileUrl
-                        };
-                    });
-
-                    var mappedAttachments = await Task.WhenAll(attachments);
-
-                    mappedTicket.TicketAttachments.AddRange(mappedAttachments);
-
-                    await this._unitOfWork.SaveToDataStore();
-
-
-                }
-
-
-                if(currentAssignedUserId != editTicketDTO.AssignedToId) {
-
-                    await this._ticketRepository.SendTicketReassignmentEmail(currentAssignedUserEmail, newAssignedUserEmail, ticketDB);
-                }
-
-
-                string emailBody = "A ticket has been modified in the system. </b> check the system for more details by clicking here " + Lambda.systemLink + "<br /> ";
-
-                //email to send to support
-
-                var user = await _userRepository.GetSingleUser(ticketDB.CreatedById);
-
-                if (user != null)
-                {
-                    this._jobEnqueuer.EnqueueEmailJob(user.Email, $"Ticket {ticketDB.TicketNumber} Modification", emailBody);
-                   
-                }
-
-                return Json(new { status = "success", message = "user ticket updated successfully" });
+                return PartialView("_EditTicketPartial", editTicketDTO);
             }
 
+            editTicketDTO.DataInvalid = "";
 
+            // Fetch the ticket from the database
+            var ticketDB = await this._ticketRepository.GetTicket(id);
+            if (ticketDB is null)
+            {
+                editTicketDTO.DataInvalid = "true";
+                ModelState.AddModelError("", "The Identifier of the record was not found taken");
+                return PartialView("_EditTicketPartial", editTicketDTO);
+            }
 
-            return PartialView("_EditTicketPartial", editTicketDTO);
+            // Fetch current state and assigned user details
+            string currentState = ticketDB.State.Name;
+            string currentAssignedUserId = ticketDB.AssignedToId;
+            string currentAssignedUserEmail = ticketDB?.AssignedTo?.Email;
+
+            editTicketDTO.AssignedToId ??= ticketDB.AssignedToId;
+            editTicketDTO.StateId ??= ticketDB.StateId;
+
+            var stateTask = this._stateRepository.GetStateAsync((int)editTicketDTO.StateId);
+            var userTask = this._userRepository.FindByIdAsync(editTicketDTO.AssignedToId);
+
+            await Task.WhenAll(stateTask, userTask);
+
+            string newState = stateTask.Result.Name;
+            string newAssignedUserEmail = userTask.Result.Email;
+
+            editTicketDTO.TicketNumber = ticketDB.TicketNumber;
+
+            var claimsIdentifier = User.FindFirst(ClaimTypes.NameIdentifier);
+
+            // Map the edit ticket to ticket
+            var mappedTicket = this._mapper.Map<Ticket>(editTicketDTO);
+
+            if (this._ticketRepository.Exists(mappedTicket) != null)
+            {
+                editTicketDTO.DataInvalid = "true";
+                ModelState.AddModelError("Error", "This title is already taken");
+                return PartialView("_EditTicketPartial", editTicketDTO);
+            }
+
+            this._mapper.Map(editTicketDTO, ticketDB);
+            await this._unitOfWork.SaveToDataStore();
+
+            // Check if the state changed
+            if (!string.Equals(newState, currentState, StringComparison.OrdinalIgnoreCase))
+            {
+                var ticketStateTracker = new TicketStateTracker
+                {
+                    CreatedById = claimsIdentifier.Value,
+                    TicketId = ticketDB.Id,
+                    NewState = ticketDB.State.Name,
+                    PreviousState = currentState,
+                    Reason = "Ticket Update"
+                };
+
+                this._ticketStateTrackerRepository.Add(ticketStateTracker);
+                await this._unitOfWork.SaveToDataStore();
+            }
+
+            // Process attachments in batch
+            if (editTicketDTO.Attachments.Count > 0)
+            {
+                var attachmentTasks = editTicketDTO.Attachments.Select(async attachment =>
+                {
+                    string fileUrl = await Lambda.UploadFile(attachment, this._env.WebRootPath);
+                    return new TicketAttachment
+                    {
+                        FileName = attachment.FileName,
+                        TicketId = mappedTicket.Id,
+                        Url = fileUrl
+                    };
+                });
+
+                var mappedAttachments = await Task.WhenAll(attachmentTasks);
+                mappedTicket.TicketAttachments.AddRange(mappedAttachments);
+                await this._unitOfWork.SaveToDataStore();
+            }
+
+            if (currentAssignedUserId != editTicketDTO.AssignedToId)
+            {
+                await this._ticketRepository.SendTicketReassignmentEmail(currentAssignedUserEmail, newAssignedUserEmail, ticketDB);
+            }
+
+            var user = await _userRepository.GetSingleUser(ticketDB.CreatedById);
+            if (user != null)
+            {
+                string emailBody = $"A ticket has been modified in the system. <b>Check the system for more details by clicking here {Lambda.systemLink}</b>";
+                this._jobEnqueuer.EnqueueEmailJob(user.Email, $"Ticket {ticketDB.TicketNumber} Modification", emailBody);
+            }
+
+            return Json(new { status = "success", message = "User ticket updated successfully" });
         }
 
         // GET: TicketController/Details/5
