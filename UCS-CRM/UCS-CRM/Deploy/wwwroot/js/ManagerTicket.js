@@ -105,16 +105,7 @@ function EditForm(id, area = "") {
         type: 'GET'
     }).done(function (data) {
 
-        //get the input field inside the edit role modal form
-        //var date = new Date(data.dateOfBirth);
-
-
-        var currentDate = new Date(data.dateOfBirth);
-
-        var day = ("0" + currentDate.getDate()).slice(-2);
-        var month = ("0" + (currentDate.getMonth() + 1)).slice(-2);
-
-        var date = currentDate.getFullYear() + "-" + (month) + "-" + (day);
+        
 
 
         //$("#edit_ticket_modal input[name ='Title']").val(data.title)

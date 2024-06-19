@@ -126,12 +126,12 @@ function EditForm(id, area = "") {
         //var date = new Date(data.dateOfBirth);
 
 
-        var currentDate = new Date(data.dateOfBirth);
+        // var currentDate = new Date(data.dateOfBirth);
 
-        var day = ("0" + currentDate.getDate()).slice(-2);
-        var month = ("0" + (currentDate.getMonth() + 1)).slice(-2);
+        // var day = ("0" + currentDate.getDate()).slice(-2);
+        // var month = ("0" + (currentDate.getMonth() + 1)).slice(-2);
 
-        var date = currentDate.getFullYear() + "-" + (month) + "-" + (day);
+        // var date = currentDate.getFullYear() + "-" + (month) + "-" + (day);
 
         const prefix = "#edit_ticket_modal ";
         const fields = {
