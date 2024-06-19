@@ -49,7 +49,7 @@ namespace UCS_CRM.Areas.CallCenterOfficer.Controllers
         private readonly UserManager<ApplicationUser> _userManager;
         public TicketsController(ITicketRepository ticketRepository, IMapper mapper, IUnitOfWork unitOfWork, IEmailService emailService, IEmailAddressRepository addressRepository,
             ITicketCategoryRepository ticketCategoryRepository, IStateRepository stateRepository, ITicketPriorityRepository priorityRepository,
-            IWebHostEnvironment env, ITicketCommentRepository ticketCommentRepository, IUserRepository userRepository, IMemberRepository memberRepository, ITicketEscalationRepository ticketEscalationRepository, IDepartmentRepository departmentRepository, ITicketStateTrackerRepository ticketStateTrackerRepository, UserManager<ApplicationUser> userManager)
+            IWebHostEnvironment env, ITicketCommentRepository ticketCommentRepository, IUserRepository userRepository, IMemberRepository memberRepository, ITicketEscalationRepository ticketEscalationRepository, IDepartmentRepository departmentRepository, ITicketStateTrackerRepository ticketStateTrackerRepository, UserManager<ApplicationUser> userManager, HangfireJobEnqueuer jobEnqueuer)
         {
             _ticketRepository = ticketRepository;
             _mapper = mapper;
@@ -67,6 +67,7 @@ namespace UCS_CRM.Areas.CallCenterOfficer.Controllers
             _departmentRepository = departmentRepository;
             _ticketStateTrackerRepository = ticketStateTrackerRepository;
             _userManager = userManager;
+            _jobEnqueuer = jobEnqueuer;
         }
 
         // GET: TicketsController
@@ -295,7 +296,7 @@ namespace UCS_CRM.Areas.CallCenterOfficer.Controllers
                 ModelState.AddModelError("", "The Identifier of the record was not found taken");
                 return PartialView("_EditTicketPartial", editTicketDTO);
             }
-
+            
             // Fetch current state and assigned user details
             string currentState = ticketDB.State.Name;
             string currentAssignedUserId = ticketDB.AssignedToId;
@@ -304,13 +305,18 @@ namespace UCS_CRM.Areas.CallCenterOfficer.Controllers
             editTicketDTO.AssignedToId ??= ticketDB.AssignedToId;
             editTicketDTO.StateId ??= ticketDB.StateId;
 
-            var stateTask = this._stateRepository.GetStateAsync((int)editTicketDTO.StateId);
-            var userTask = this._userRepository.FindByIdAsync(editTicketDTO.AssignedToId);
+            var state = await this._stateRepository.GetStateAsync((int)editTicketDTO.StateId);
+            var user = await this._userRepository.FindByIdAsync(editTicketDTO.AssignedToId);
 
-            await Task.WhenAll(stateTask, userTask);
+            if (state == null)
+            {
+                var defaultState = this._stateRepository.DefaultState(Lambda.NewTicket);
+                state = defaultState;
+            }
 
-            string newState = stateTask.Result.Name;
-            string newAssignedUserEmail = userTask.Result.Email;
+            string newState = state.Name;
+            string newAssignedUserEmail = user != null ? user.Email : currentAssignedUserEmail;
+
 
             editTicketDTO.TicketNumber = ticketDB.TicketNumber;
 
@@ -362,48 +368,27 @@ namespace UCS_CRM.Areas.CallCenterOfficer.Controllers
                 var mappedAttachments = await Task.WhenAll(attachmentTasks);
                 mappedTicket.TicketAttachments.AddRange(mappedAttachments);
                 await this._unitOfWork.SaveToDataStore();
-            }
+                }
 
-            if (currentAssignedUserId != editTicketDTO.AssignedToId)
-            {
-                await this._ticketRepository.SendTicketReassignmentEmail(currentAssignedUserEmail, newAssignedUserEmail, ticketDB);
-            }
+                if (currentAssignedUserId != editTicketDTO.AssignedToId)
+                {
+                    if (!string.IsNullOrEmpty(currentAssignedUserEmail) && !string.IsNullOrEmpty(newAssignedUserEmail))
+                    {
+                        await this._ticketRepository.SendTicketReassignmentEmail(currentAssignedUserEmail, newAssignedUserEmail, ticketDB);
+                    }
+                }
 
-            var user = await _userRepository.GetSingleUser(ticketDB.CreatedById);
-            if (user != null)
-            {
-                string emailBody = $"A ticket has been modified in the system. <b>Check the system for more details by clicking here {Lambda.systemLink}</b>";
-                this._jobEnqueuer.EnqueueEmailJob(user.Email, $"Ticket {ticketDB.TicketNumber} Modification", emailBody);
-            }
+                
+                if (user != null)
+                {
+                    string emailBody = $"A ticket has been modified in the system. <b>Check the system for more details by clicking here {Lambda.systemLink}</b>";
+                    this._jobEnqueuer.EnqueueEmailJob(user.Email, $"Ticket {ticketDB.TicketNumber} Modification", emailBody);
+                }
+
 
             return Json(new { status = "success", message = "User ticket updated successfully" });
         }
 
-            // GET: TicketController/Details/5
-            public async Task<ActionResult> Details(int id)
-            {
-                var ticketDB = await this._ticketRepository.GetTicket(id);
-
-                if (ticketDB == null)
-                {
-                    return RedirectToAction("Index");
-                }
-
-
-                var userClaims = (ClaimsIdentity)User.Identity;
-
-                var claimsIdentitifier = userClaims.FindFirst(ClaimTypes.NameIdentifier);
-
-                var currentUserId = claimsIdentitifier.Value;
-
-                ViewBag.CurrentUserId = currentUserId;
-
-                ViewBag.ticketId = id;
-
-                var mappedTicket = this._mapper.Map<ReadTicketDTO>(ticketDB);
-
-                return View(mappedTicket);
-            }
         // POST: TicketsController/Delete/5
         [HttpPost]
         public async Task<ActionResult> Delete(int id)

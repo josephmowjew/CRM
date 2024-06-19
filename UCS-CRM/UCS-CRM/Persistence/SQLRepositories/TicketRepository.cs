@@ -1539,11 +1539,15 @@ namespace UCS_CRM.Persistence.SQLRepositories
            
             //return "messages sent";
            
+            //check if department is not null
+            if (ticket.AssignedTo.Department!= null)
+            {
+                //send email to the department
+                this._jobEnqueuer.EnqueueEmailJob(ticket.AssignedTo.Department.Email, title, body);
             
+            }
 
-            //send email to the department
-            this._jobEnqueuer.EnqueueEmailJob(ticket.AssignedTo.Department.Email, title, body);
-            
+           
 
             //return string.Empty;
         }
