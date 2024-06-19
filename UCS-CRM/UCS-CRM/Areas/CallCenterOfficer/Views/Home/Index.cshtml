@@ -12,7 +12,7 @@
                 <div class="row mt-4">
                     <!-- Column -->
                     <div class="col-md-6 col-lg-3 col-xlg-3">
-                        <a asp-area="Clerk" asp-controller="Tickets" asp-action="Index" asp-route-type="" aria-expanded="false">
+                        <a asp-area="CallCenterOfficer" asp-controller="Tickets" asp-action="Index" asp-route-type="" aria-expanded="false">
                             <div class="card card-hover">
                                 <div class="p-2 rounded bg-light-primary text-center">
                                     <h1 class="fw-light text-primary">@ViewBag.allTicketsCount</h1>
@@ -23,7 +23,7 @@
                     </div>
                     <!-- Column -->
                     <div class="col-md-6 col-lg-3 col-xlg-3">
-                        <a asp-area="Clerk" asp-controller="Tickets" asp-action="Index" asp-route-type="new" aria-expanded="false">
+                        <a asp-area="CallCenterOfficer" asp-controller="Tickets" asp-action="Index" asp-route-type="new" aria-expanded="false">
                             <div class="card card-hover">
                                 <div class="p-2 rounded bg-light-primary text-center">
                                     <h1 class="fw-light text-secondary">@ViewBag.newTicketsCount</h1>
@@ -34,7 +34,7 @@
                     </div>
                     <!-- Column -->
                     <div class="col-md-6 col-lg-3 col-xlg-3">
-                        <a asp-area="Clerk" asp-controller="Tickets" asp-action="Index" asp-route-type="Resolved" aria-expanded="false">
+                        <a asp-area="CallCenterOfficer" asp-controller="Tickets" asp-action="Index" asp-route-type="Resolved" aria-expanded="false">
                             <div class="card card-hover">
                                 <div class="p-2 rounded bg-light-success text-center">
                                     <h1 class="fw-light text-success">@ViewBag.resolvedTicketsCount</h1>
@@ -56,7 +56,7 @@
                     </div>
                     <!-- Column -->
                     <div class="col-md-6 col-lg-3 col-xlg-3">
-                        <a asp-area="Clerk" asp-controller="Tickets" asp-action="Index" asp-route-type="Closed" aria-expanded="false">
+                        <a asp-area="CallCenterOfficer" asp-controller="Tickets" asp-action="Index" asp-route-type="Closed" aria-expanded="false">
                             <div class="card card-hover">
                                 <div class="p-2 rounded bg-light-danger text-center">
                                     <h1 class="fw-light text-danger">@ViewBag.closedTicketsCount</h1>
@@ -68,7 +68,7 @@
                     </div>
                     <!-- Column -->
                     <div class="col-md-6 col-lg-3 col-xlg-3">
-                        <a asp-area="Clerk" asp-controller="Tickets" asp-action="Index" asp-route-type="Archived" aria-expanded="false">
+                        <a asp-area="CallCenterOfficer" asp-controller="Tickets" asp-action="Index" asp-route-type="Archived" aria-expanded="false">
                             <div class="card card-hover">
                                 <div class="p-2 rounded bg-light-info text-center">
                                     <h1 class="fw-light text-info">@ViewBag.archivedTicketsCount</h1>

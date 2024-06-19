@@ -157,6 +157,10 @@ namespace UCS_CRM.Controllers
                 {
                     return RedirectToAction("Index", "Home", new { Area = "Member" });
                 }
+                if (roles.Contains("Call center officer", StringComparison.OrdinalIgnoreCase))
+                {
+                    return RedirectToAction("Index", "Home", new { Area = "CallCenterOfficer" });
+                }
                 else
                 {
 
