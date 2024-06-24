@@ -24,7 +24,7 @@ namespace UCS_CRM.Core.DTOs.Ticket
 
         [Display(Name = "Member")]
         public int? MemberId { get; set; }
-        //[Required]
+        [RequiredIfNotRole("Member")]
         [Display(Name = "Ticket Priority")]
         public int? TicketPriorityId { get; set; }
         [Required]

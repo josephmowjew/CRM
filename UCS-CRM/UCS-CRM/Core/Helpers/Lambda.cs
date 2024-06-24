@@ -37,7 +37,7 @@ namespace UCS_CRM.Core.Helpers
         public static string Lowest = "Lowest";
 
         //link
-        public static string systemLink = "<a href='http://ucsscrm.sparcsystems.africa/'>UCS Sacco System</a>";
+        public static string systemLink = "<a href='https://crm.ucssacco.com'>UCS Sacco System</a>";
 
 
         // issues filters

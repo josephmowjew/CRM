@@ -86,6 +86,7 @@ builder.Services.AddScoped<IFeedbackRepository, FeedbackRepository>();
 builder.Services.AddScoped<IFintechMemberService,FintechMemberService>();
 builder.Services.AddSingleton<HangfireJobEnqueuer>();
 builder.Services.AddSingleton<IErrorLogServiceFactory, ErrorLogServiceFactory>();
+builder.Services.AddHttpContextAccessor();
 builder.Services.AddHttpClient(); 
 
 
