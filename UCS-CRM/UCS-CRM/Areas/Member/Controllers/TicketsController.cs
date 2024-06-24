@@ -15,6 +15,7 @@ using UCS_CRM.Core.DTOs.TicketEscalation;
 using UCS_CRM.Core.Helpers;
 using UCS_CRM.Core.Models;
 using UCS_CRM.Core.Services;
+using UCS_CRM.Data;
 using UCS_CRM.Persistence.Interfaces;
 using UCS_CRM.Persistence.SQLRepositories;
 
@@ -39,7 +40,7 @@ namespace UCS_CRM.Areas.Member.Controllers
         private readonly IEmailAddressRepository _addressRepository;
         private readonly ITicketStateTrackerRepository _ticketStateTrackerRepository;
         private readonly HangfireJobEnqueuer _jobEnqueuer;
-
+        private readonly ApplicationDbContext _context;
 
         private readonly IUserRepository _userRepository;
         public TicketsController(ITicketRepository ticketRepository,
@@ -56,7 +57,8 @@ namespace UCS_CRM.Areas.Member.Controllers
             ITicketEscalationRepository ticketEscalationRepository,
             IDepartmentRepository departmentRepository,
             ITicketStateTrackerRepository ticketStateTrackerRepository,
-            IUserRepository userRepository,HangfireJobEnqueuer jobEnqueuer)
+            IUserRepository userRepository,HangfireJobEnqueuer jobEnqueuer,
+            ApplicationDbContext context)
         {
             _ticketRepository = ticketRepository;
             _mapper = mapper;
@@ -74,6 +76,7 @@ namespace UCS_CRM.Areas.Member.Controllers
             _ticketStateTrackerRepository = ticketStateTrackerRepository;
             _userRepository = userRepository;
             _jobEnqueuer = jobEnqueuer;
+            _context = context;
         }
 
         // GET: TicketsController
@@ -319,6 +322,9 @@ namespace UCS_CRM.Areas.Member.Controllers
 
                 //save changes to data store
 
+                this._context.Attach(ticketDB);
+                this._context.Entry(ticketDB).State = EntityState.Modified;
+
                 await this._unitOfWork.SaveToDataStore();
 
                 if (editTicketDTO.Attachments.Count > 0)
@@ -391,6 +397,9 @@ namespace UCS_CRM.Areas.Member.Controllers
                 {
                     this._ticketRepository.Remove(ticketRecordDb);
 
+                    this._context.Attach(ticketRecordDb);
+                    this._context.Entry(ticketRecordDb).State = EntityState.Modified;
+
                     await this._unitOfWork.SaveToDataStore();
 
                     return Json(new { status = "success", message = "ticket has been removed from the system successfully" });
@@ -461,6 +470,8 @@ namespace UCS_CRM.Areas.Member.Controllers
                         ticket.ClosedDate = DateTime.UtcNow;
 
                         //sync changes to the datastore
+                        this._context.Attach(ticket);
+                        this._context.Entry(ticket).State = EntityState.Modified;
 
                         await this._unitOfWork.SaveToDataStore();
 
@@ -527,6 +538,8 @@ namespace UCS_CRM.Areas.Member.Controllers
                         ticket.ClosedDate = null;
 
                         //sync changes to the datastore
+                        this._context.Attach(ticket);
+                        this._context.Entry(ticket).State = EntityState.Modified;
 
                         await this._unitOfWork.SaveToDataStore();
 

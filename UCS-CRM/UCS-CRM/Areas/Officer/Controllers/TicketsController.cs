@@ -443,6 +443,9 @@ namespace UCS_CRM.Areas.Clerk.Controllers
                 {
                     this._ticketRepository.Remove(ticketRecordDb);
 
+                    this._context.Attach(ticketRecordDb);
+                    this._context.Entry(ticketRecordDb).State = EntityState.Modified;
+
                     await this._unitOfWork.SaveToDataStore();
 
                     return Json(new { status = "success", message = "ticket has been removed from the system successfully" });
@@ -631,6 +634,9 @@ namespace UCS_CRM.Areas.Clerk.Controllers
 
                         //sync changes to the datastore
 
+                        this._context.Attach(ticket);
+                        this._context.Entry(ticket).State = EntityState.Modified;
+
                         await this._unitOfWork.SaveToDataStore();
 
                         UCS_CRM.Core.Models.TicketStateTracker ticketStateTracker = new TicketStateTracker() { CreatedById = currentUserId, TicketId = ticket.Id, NewState = ticket.State.Name, PreviousState = currentState, Reason = closeTicketDTO.Reason };
@@ -696,6 +702,8 @@ namespace UCS_CRM.Areas.Clerk.Controllers
                         ticket.ClosedDate = null;
 
                         //sync changes to the datastore
+                        this._context.Attach(ticket);
+                        this._context.Entry(ticket).State = EntityState.Modified;
 
                         await this._unitOfWork.SaveToDataStore();
 

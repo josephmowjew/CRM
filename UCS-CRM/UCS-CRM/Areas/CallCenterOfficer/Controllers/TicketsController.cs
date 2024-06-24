@@ -418,6 +418,10 @@ namespace UCS_CRM.Areas.CallCenterOfficer.Controllers
                 {
                     this._ticketRepository.Remove(ticketRecordDb);
 
+
+                    this._context.Attach(ticketRecordDb);
+                    this._context.Entry(ticketRecordDb).State = EntityState.Modified;
+
                     await this._unitOfWork.SaveToDataStore();
 
                     return Json(new { status = "success", message = "ticket has been removed from the system successfully" });
