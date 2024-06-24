@@ -585,7 +585,7 @@ namespace UCS_CRM.Persistence.SQLRepositories
         //    }
         //}
 
-        public async Task<List<Ticket?>> GetTickets(CursorParams @params, Department department = null,string ticketStatus = "")
+        public async Task<List<Ticket?>> GetTickets(CursorParams @params, Department department = null, string ticketStatus = "")
         {
             if (@params.Take <= 0)
             {
@@ -593,7 +593,6 @@ namespace UCS_CRM.Persistence.SQLRepositories
             }
 
             var query = this._context.Tickets
-
                 .Include(t => t.AssignedTo)
                 .Include(t => t.TicketAttachments)
                 .Include(t => t.State)
@@ -632,14 +631,12 @@ namespace UCS_CRM.Persistence.SQLRepositories
                 string sortExpression = @params.SortColum + " " + @params.SortDirection;
                 query = query.OrderBy(sortExpression);
             }
+            else
+            {
+                query = query.OrderBy(t => t.CreatedDate);
+            }
 
-            var records = await query
-                .OrderBy(t => t.CreatedDate)
-                .Skip(@params.Skip)
-                .Take(@params.Take)
-                .ToListAsync();
-
-            return records.ToList();
+            return await query.Skip(@params.Skip).Take(@params.Take).ToListAsync();
         }
         public async Task<int> GetTicketsTotalFilteredAsync(CursorParams @params, Department department = null, string ticketStatus = "")
         {
