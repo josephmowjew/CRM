@@ -287,7 +287,14 @@ namespace UCS_CRM.Persistence.SQLRepositories
                     this._ticketEscalationRepository.Add(mappedTicketEscalation);
 
                     // Attach the ticket to the context and set its state to Modified
-                    this._context.Attach(ticket);
+                    // Detach the existing entry if it is not in the Modified state
+                    var existingEntry = _context.ChangeTracker.Entries<Ticket>().FirstOrDefault(e => e.Entity.Id == ticket.Id);
+                    if (existingEntry != null && existingEntry.State != EntityState.Modified)
+                    {
+                        existingEntry.State = EntityState.Detached;
+                    }
+
+                    // Attach the ticket to the context and set its state to Modified
                     this._context.Entry(ticket).State = EntityState.Modified;
 
                     await this._unitOfWork.SaveToDataStore();

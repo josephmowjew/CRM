@@ -297,7 +297,8 @@ namespace UCS_CRM.Areas.CallCenterOfficer.Controllers
             {
                 editTicketDTO.DataInvalid = "true";
                 ModelState.AddModelError("", "The Identifier of the record was not found taken");
-                return PartialView("_EditTicketPartial", editTicketDTO);
+                await populateViewBags();
+                return PartialView("_EditTicketPartial", this._mapper.Map<EditTicketDTO>(editTicketDTO));
             }
             
             // Fetch current state and assigned user details
@@ -328,19 +329,20 @@ namespace UCS_CRM.Areas.CallCenterOfficer.Controllers
             // Map the edit ticket to ticket
             var mappedTicket = this._mapper.Map<Ticket>(editTicketDTO);
 
-            if (this._ticketRepository.Exists(mappedTicket) != null)
-            {
-                editTicketDTO.DataInvalid = "true";
-                ModelState.AddModelError("Error", "This title is already taken");
-                return PartialView("_EditTicketPartial", editTicketDTO);
-            }
 
             this._mapper.Map(editTicketDTO, ticketDB);
 
             // Attach the ticket to the context and set its state to Modified
 
 
-            this._context.Attach(ticketDB);
+            // Detach the existing entry if it is not in the Modified state
+            var existingEntry = _context.ChangeTracker.Entries<Ticket>().FirstOrDefault(e => e.Entity.Id == ticketDB.Id);
+            if (existingEntry != null && existingEntry.State != EntityState.Modified)
+            {
+                existingEntry.State = EntityState.Detached;
+            }
+
+            // Attach the ticket to the context and set its state to Modified
             this._context.Entry(ticketDB).State = EntityState.Modified;
             await this._unitOfWork.SaveToDataStore();
 
@@ -419,7 +421,14 @@ namespace UCS_CRM.Areas.CallCenterOfficer.Controllers
                     this._ticketRepository.Remove(ticketRecordDb);
 
 
-                    this._context.Attach(ticketRecordDb);
+                    // Detach the existing entry if it is not in the Modified state
+                    var existingEntry = _context.ChangeTracker.Entries<Ticket>().FirstOrDefault(e => e.Entity.Id == ticketRecordDb.Id);
+                    if (existingEntry != null && existingEntry.State != EntityState.Modified)
+                    {
+                        existingEntry.State = EntityState.Detached;
+                    }
+
+                    // Attach the ticket to the context and set its state to Modified
                     this._context.Entry(ticketRecordDb).State = EntityState.Modified;
 
                     await this._unitOfWork.SaveToDataStore();
@@ -612,6 +621,18 @@ namespace UCS_CRM.Areas.CallCenterOfficer.Controllers
 
                         await this._unitOfWork.SaveToDataStore();
 
+                        // Detach the existing entry if it is not in the Modified state
+                        var existingEntry = _context.ChangeTracker.Entries<Ticket>().FirstOrDefault(e => e.Entity.Id == ticket.Id);
+                        if (existingEntry != null && existingEntry.State != EntityState.Modified)
+                        {
+                            existingEntry.State = EntityState.Detached;
+                        }
+
+
+                        //sync changes to the datastore
+
+                        await this._unitOfWork.SaveToDataStore();
+
                         UCS_CRM.Core.Models.TicketStateTracker ticketStateTracker = new TicketStateTracker() { CreatedById = currentUserId, TicketId = ticket.Id, NewState = ticket.State.Name, PreviousState = currentState, Reason = closeTicketDTO.Reason };
 
                         this._ticketStateTrackerRepository.Add(ticketStateTracker);
@@ -675,6 +696,18 @@ namespace UCS_CRM.Areas.CallCenterOfficer.Controllers
                         ticket.ClosedDate = null;
 
                         //sync changes to the datastore
+
+                        //sync changes to the datastore
+
+                        await this._unitOfWork.SaveToDataStore();
+
+                        // Detach the existing entry if it is not in the Modified state
+                        var existingEntry = _context.ChangeTracker.Entries<Ticket>().FirstOrDefault(e => e.Entity.Id == ticket.Id);
+                        if (existingEntry != null && existingEntry.State != EntityState.Modified)
+                        {
+                            existingEntry.State = EntityState.Detached;
+                        }
+
 
                         await this._unitOfWork.SaveToDataStore();
 

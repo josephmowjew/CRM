@@ -96,8 +96,9 @@ namespace UCS_CRM.Areas.Manager.Controllers
                     editTicketDTO.DataInvalid = "true";
 
                     ModelState.AddModelError("", $"The Identifier of the record was not found taken");
+                    await populateViewBags();
+                    return PartialView("_EditTicketPartial", this._mapper.Map<EditTicketDTO>(editTicketDTO));
 
-                    return PartialView("_EditTicketPartial", editTicketDTO);
                 }
 
                 string currentState = ticketDB.State.Name;
@@ -119,9 +120,16 @@ namespace UCS_CRM.Areas.Manager.Controllers
 
                 this._mapper.Map(editTicketDTO, ticketDB);
 
-                //save changes to data store
+ 
 
-                this._context.Attach(ticketDB);
+                // Detach the existing entry if it is not in the Modified state
+                var existingEntry = _context.ChangeTracker.Entries<Ticket>().FirstOrDefault(e => e.Entity.Id == ticketDB.Id);
+                if (existingEntry != null && existingEntry.State != EntityState.Modified)
+                {
+                    existingEntry.State = EntityState.Detached;
+                }
+
+                // Attach the ticket to the context and set its state to Modified
                 this._context.Entry(ticketDB).State = EntityState.Modified;
 
                 await this._unitOfWork.SaveToDataStore();
@@ -221,8 +229,16 @@ namespace UCS_CRM.Areas.Manager.Controllers
                 else
                 {
                     this._ticketRepository.Remove(ticketRecordDb);
+                  
 
-                    this._context.Attach(ticketRecordDb);
+                    // Detach the existing entry if it is not in the Modified state
+                    var existingEntry = _context.ChangeTracker.Entries<Ticket>().FirstOrDefault(e => e.Entity.Id == ticketRecordDb.Id);
+                    if (existingEntry != null && existingEntry.State != EntityState.Modified)
+                    {
+                        existingEntry.State = EntityState.Detached;
+                    }
+
+                    // Attach the ticket to the context and set its state to Modified
                     this._context.Entry(ticketRecordDb).State = EntityState.Modified;
 
                     await this._unitOfWork.SaveToDataStore();
@@ -258,7 +274,15 @@ namespace UCS_CRM.Areas.Manager.Controllers
 
                     ticketRecordDb.ClosedDate = DateTime.Now;
 
-                    this._context.Attach(ticketRecordDb);
+                   
+                    // Detach the existing entry if it is not in the Modified state
+                    var existingEntry = _context.ChangeTracker.Entries<Ticket>().FirstOrDefault(e => e.Entity.Id == ticketRecordDb.Id);
+                    if (existingEntry != null && existingEntry.State != EntityState.Modified)
+                    {
+                        existingEntry.State = EntityState.Detached;
+                    }
+
+                    // Attach the ticket to the context and set its state to Modified
                     this._context.Entry(ticketRecordDb).State = EntityState.Modified;
 
                     await this._unitOfWork.SaveToDataStore();

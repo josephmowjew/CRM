@@ -279,6 +279,7 @@ namespace UCS_CRM.Areas.Clerk.Controllers
 
             return Json(identityRole);
         }
+
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<ActionResult> Edit(int id, EditManagerTicketDTO editTicketDTO)
@@ -300,7 +301,7 @@ namespace UCS_CRM.Areas.Clerk.Controllers
                 ModelState.AddModelError("", "The Identifier of the record was not found taken");
                 return PartialView("_EditTicketPartial", editTicketDTO);
             }
-            
+
             // Fetch current state and assigned user details
             string currentState = ticketDB.State.Name;
             string currentAssignedUserId = ticketDB.AssignedToId;
@@ -321,26 +322,23 @@ namespace UCS_CRM.Areas.Clerk.Controllers
             string newState = state.Name;
             string newAssignedUserEmail = user != null ? user.Email : currentAssignedUserEmail;
 
-
             editTicketDTO.TicketNumber = ticketDB.TicketNumber;
 
             var claimsIdentifier = User.FindFirst(ClaimTypes.NameIdentifier);
 
-            // Map the edit ticket to ticket
-            var mappedTicket = this._mapper.Map<Ticket>(editTicketDTO);
+            // Map the edit ticket to the existing ticket instance
+            this._mapper.Map(editTicketDTO, ticketDB);
 
-            if (this._ticketRepository.Exists(mappedTicket) != null)
+          
+
+            // Detach the existing entry if it is not in the Modified state
+            var existingEntry = _context.ChangeTracker.Entries<Ticket>().FirstOrDefault(e => e.Entity.Id == ticketDB.Id);
+            if (existingEntry != null && existingEntry.State != EntityState.Modified)
             {
-                editTicketDTO.DataInvalid = "true";
-                ModelState.AddModelError("Error", "This title is already taken");
-                return PartialView("_EditTicketPartial", editTicketDTO);
+                existingEntry.State = EntityState.Detached;
             }
 
-            this._mapper.Map(editTicketDTO, ticketDB);
             // Attach the ticket to the context and set its state to Modified
-
-
-            this._context.Attach(ticketDB);
             this._context.Entry(ticketDB).State = EntityState.Modified;
 
             await this._unitOfWork.SaveToDataStore();
@@ -370,34 +368,33 @@ namespace UCS_CRM.Areas.Clerk.Controllers
                     return new TicketAttachment
                     {
                         FileName = attachment.FileName,
-                        TicketId = mappedTicket.Id,
+                        TicketId = ticketDB.Id,
                         Url = fileUrl
                     };
                 });
 
                 var mappedAttachments = await Task.WhenAll(attachmentTasks);
-                mappedTicket.TicketAttachments.AddRange(mappedAttachments);
+                ticketDB.TicketAttachments.AddRange(mappedAttachments);
                 await this._unitOfWork.SaveToDataStore();
-                }
+            }
 
-                if (currentAssignedUserId != editTicketDTO.AssignedToId)
+            if (currentAssignedUserId != editTicketDTO.AssignedToId)
+            {
+                if (!string.IsNullOrEmpty(currentAssignedUserEmail) && !string.IsNullOrEmpty(newAssignedUserEmail))
                 {
-                    if (!string.IsNullOrEmpty(currentAssignedUserEmail) && !string.IsNullOrEmpty(newAssignedUserEmail))
-                    {
-                        await this._ticketRepository.SendTicketReassignmentEmail(currentAssignedUserEmail, newAssignedUserEmail, ticketDB);
-                    }
+                    await this._ticketRepository.SendTicketReassignmentEmail(currentAssignedUserEmail, newAssignedUserEmail, ticketDB);
                 }
+            }
 
-                
-                if (user != null)
-                {
-                    string emailBody = $"A ticket has been modified in the system. <b>Check the system for more details by clicking here {Lambda.systemLink}</b>";
-                    this._jobEnqueuer.EnqueueEmailJob(user.Email, $"Ticket {ticketDB.TicketNumber} Modification", emailBody);
-                }
-
+            if (user != null)
+            {
+                string emailBody = $"A ticket has been modified in the system. <b>Check the system for more details by clicking here {Lambda.systemLink}</b>";
+                this._jobEnqueuer.EnqueueEmailJob(user.Email, $"Ticket {ticketDB.TicketNumber} Modification", emailBody);
+            }
 
             return Json(new { status = "success", message = "User ticket updated successfully" });
         }
+
         // GET: TicketController/Details/5
         public async Task<ActionResult> Details(int id)
         {
@@ -443,7 +440,14 @@ namespace UCS_CRM.Areas.Clerk.Controllers
                 {
                     this._ticketRepository.Remove(ticketRecordDb);
 
-                    this._context.Attach(ticketRecordDb);
+                    // Detach the existing entry if it is not in the Modified state
+                    var existingEntry = _context.ChangeTracker.Entries<Ticket>().FirstOrDefault(e => e.Entity.Id == ticketRecordDb.Id);
+                    if (existingEntry != null && existingEntry.State != EntityState.Modified)
+                    {
+                        existingEntry.State = EntityState.Detached;
+                    }
+
+                    // Attach the ticket to the context and set its state to Modified
                     this._context.Entry(ticketRecordDb).State = EntityState.Modified;
 
                     await this._unitOfWork.SaveToDataStore();
@@ -634,7 +638,14 @@ namespace UCS_CRM.Areas.Clerk.Controllers
 
                         //sync changes to the datastore
 
-                        this._context.Attach(ticket);
+                        // Detach the existing entry if it is not in the Modified state
+                        var existingEntry = _context.ChangeTracker.Entries<Ticket>().FirstOrDefault(e => e.Entity.Id == ticket.Id);
+                        if (existingEntry != null && existingEntry.State != EntityState.Modified)
+                        {
+                            existingEntry.State = EntityState.Detached;
+                        }
+
+                        // Attach the ticket to the context and set its state to Modified
                         this._context.Entry(ticket).State = EntityState.Modified;
 
                         await this._unitOfWork.SaveToDataStore();
@@ -701,8 +712,14 @@ namespace UCS_CRM.Areas.Clerk.Controllers
 
                         ticket.ClosedDate = null;
 
-                        //sync changes to the datastore
-                        this._context.Attach(ticket);
+                        // Detach the existing entry if it is not in the Modified state
+                        var existingEntry = _context.ChangeTracker.Entries<Ticket>().FirstOrDefault(e => e.Entity.Id == ticket.Id);
+                        if (existingEntry != null && existingEntry.State != EntityState.Modified)
+                        {
+                            existingEntry.State = EntityState.Detached;
+                        }
+
+                        // Attach the ticket to the context and set its state to Modified
                         this._context.Entry(ticket).State = EntityState.Modified;
 
                         await this._unitOfWork.SaveToDataStore();

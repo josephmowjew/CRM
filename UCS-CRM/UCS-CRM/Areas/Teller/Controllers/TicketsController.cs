@@ -328,21 +328,19 @@ namespace UCS_CRM.Areas.Teller.Controllers
             // Map the edit ticket to ticket
             var mappedTicket = this._mapper.Map<Ticket>(editTicketDTO);
 
-            if (this._ticketRepository.Exists(mappedTicket) != null)
-            {
-                editTicketDTO.DataInvalid = "true";
-                ModelState.AddModelError("Error", "This title is already taken");
-                return PartialView("_EditTicketPartial", editTicketDTO);
-            }
 
             this._mapper.Map(editTicketDTO, ticketDB);
 
+
+            // Detach the existing entry if it is not in the Modified state
+            var existingEntry = _context.ChangeTracker.Entries<Ticket>().FirstOrDefault(e => e.Entity.Id == ticketDB.Id);
+            if (existingEntry != null && existingEntry.State != EntityState.Modified)
+            {
+                existingEntry.State = EntityState.Detached;
+            }
+
             // Attach the ticket to the context and set its state to Modified
-
-            
-            this._context.Attach(ticketDB);
             this._context.Entry(ticketDB).State = EntityState.Modified;
-
 
             await this._unitOfWork.SaveToDataStore();
 
@@ -639,8 +637,14 @@ namespace UCS_CRM.Areas.Teller.Controllers
 
                         await this._unitOfWork.SaveToDataStore();
 
+                        // Detach the existing entry if it is not in the Modified state
+                        var existingEntry = _context.ChangeTracker.Entries<Ticket>().FirstOrDefault(e => e.Entity.Id == ticket.Id);
+                        if (existingEntry != null && existingEntry.State != EntityState.Modified)
+                        {
+                            existingEntry.State = EntityState.Detached;
+                        }
+
                         // Attach the ticket to the context and set its state to Modified
-                        this._context.Attach(ticket);
                         this._context.Entry(ticket).State = EntityState.Modified;
 
                         UCS_CRM.Core.Models.TicketStateTracker ticketStateTracker = new TicketStateTracker() { CreatedById = currentUserId, TicketId = ticket.Id, NewState = ticket.State.Name, PreviousState = currentState, Reason = closeTicketDTO.Reason };
@@ -707,7 +711,14 @@ namespace UCS_CRM.Areas.Teller.Controllers
 
                         //sync changes to the datastore
 
-                        this._context.Attach(ticket);
+                        // Detach the existing entry if it is not in the Modified state
+                        var existingEntry = _context.ChangeTracker.Entries<Ticket>().FirstOrDefault(e => e.Entity.Id == ticket.Id);
+                        if (existingEntry != null && existingEntry.State != EntityState.Modified)
+                        {
+                            existingEntry.State = EntityState.Detached;
+                        }
+
+                        // Attach the ticket to the context and set its state to Modified
                         this._context.Entry(ticket).State = EntityState.Modified;
 
                         await this._unitOfWork.SaveToDataStore();
