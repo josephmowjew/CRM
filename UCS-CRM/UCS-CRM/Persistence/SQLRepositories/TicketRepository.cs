@@ -411,7 +411,7 @@ namespace UCS_CRM.Persistence.SQLRepositories
         public async Task<Ticket?> GetTicket(int id)
         {
             return await this._context.Tickets
-                .Include(t=> t.TicketCategory)
+                .Include(t => t.TicketCategory)
                 .Include(t => t.State)
                 .Include(t => t.TicketComments)
                 .Include(t => t.TicketAttachments)
@@ -419,6 +419,7 @@ namespace UCS_CRM.Persistence.SQLRepositories
                 .Include(t => t.CreatedBy)
                 .Include(t => t.AssignedTo).ThenInclude(a => a.Department)
                 .Include(t => t.Member).ThenInclude(t => t.User)
+                .AsNoTracking() // Use AsNoTracking if you don't plan to modify the retrieved entity
                 .FirstOrDefaultAsync(t => t.Id == id);
         }
         public async Task SendTicketClosureNotifications(Ticket ticket, string reason)

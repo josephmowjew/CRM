@@ -271,7 +271,7 @@ namespace UCS_CRM.Areas.CallCenterOfficer.Controllers
         {
             var identityRole = await _ticketRepository.GetTicket(id);
 
-            await populateViewBags();
+            //await populateViewBags();
 
             return Json(identityRole);
         }
