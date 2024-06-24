@@ -31,7 +31,9 @@ namespace UCS_CRM.Persistence.SQLRepositories
         private readonly IMapper _mapper;
         private readonly ITicketEscalationRepository _ticketEscalationRepository;
         private readonly UserManager<ApplicationUser> _userManager;
-         private readonly HangfireJobEnqueuer _jobEnqueuer;
+        private readonly HangfireJobEnqueuer _jobEnqueuer;
+
+       
 
 
         public TicketRepository(
@@ -46,6 +48,7 @@ namespace UCS_CRM.Persistence.SQLRepositories
             HangfireJobEnqueuer jobEnqueuer)
         {
             _context = context;
+            
             _emailRepository = emailRepository;
             _userRepository = userRepository;
             _departmentRepository = departmentRepository;
@@ -423,12 +426,7 @@ namespace UCS_CRM.Persistence.SQLRepositories
                 .AsNoTracking()
                 .FirstOrDefaultAsync(t => t.Id == id);
 
-            if (ticket != null)
-            {
-                // Attach the ticket to the context and set its state to Modified
-                this._context.Attach(ticket);
-                this._context.Entry(ticket).State = EntityState.Modified;
-            }
+           
 
             return ticket;
 

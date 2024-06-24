@@ -21,6 +21,7 @@ using UCS_CRM.Core.Helpers;
 using UCS_CRM.Core.Models;
 using UCS_CRM.Core.Services;
 using UCS_CRM.Core.ViewModels;
+using UCS_CRM.Data;
 using UCS_CRM.Persistence.Interfaces;
 using UCS_CRM.Persistence.SQLRepositories;
 
@@ -47,9 +48,10 @@ namespace UCS_CRM.Areas.Teller.Controllers
         private readonly ITicketStateTrackerRepository _ticketStateTrackerRepository;
         private readonly HangfireJobEnqueuer _jobEnqueuer;
         private readonly UserManager<ApplicationUser> _userManager;
+        private readonly ApplicationDbContext _context;
         public TicketsController(ITicketRepository ticketRepository, IMapper mapper, IUnitOfWork unitOfWork, IEmailService emailService, IEmailAddressRepository addressRepository,
             ITicketCategoryRepository ticketCategoryRepository, IStateRepository stateRepository, ITicketPriorityRepository priorityRepository,
-            IWebHostEnvironment env, ITicketCommentRepository ticketCommentRepository, IUserRepository userRepository, IMemberRepository memberRepository, ITicketEscalationRepository ticketEscalationRepository, IDepartmentRepository departmentRepository, ITicketStateTrackerRepository ticketStateTrackerRepository, UserManager<ApplicationUser> userManager,HangfireJobEnqueuer jobEnqueuer)
+            IWebHostEnvironment env, ITicketCommentRepository ticketCommentRepository, IUserRepository userRepository, IMemberRepository memberRepository, ITicketEscalationRepository ticketEscalationRepository, IDepartmentRepository departmentRepository, ITicketStateTrackerRepository ticketStateTrackerRepository, UserManager<ApplicationUser> userManager,HangfireJobEnqueuer jobEnqueuer, ApplicationDbContext context)
         {
             _ticketRepository = ticketRepository;
             _mapper = mapper;
@@ -68,6 +70,7 @@ namespace UCS_CRM.Areas.Teller.Controllers
             _ticketStateTrackerRepository = ticketStateTrackerRepository;
             _userManager = userManager;
             _jobEnqueuer = jobEnqueuer;
+            _context = context;
         }
 
         // GET: TicketsController
@@ -333,6 +336,14 @@ namespace UCS_CRM.Areas.Teller.Controllers
             }
 
             this._mapper.Map(editTicketDTO, ticketDB);
+
+            // Attach the ticket to the context and set its state to Modified
+
+            
+            this._context.Attach(ticketDB);
+            this._context.Entry(ticketDB).State = EntityState.Modified;
+
+
             await this._unitOfWork.SaveToDataStore();
 
             // Check if the state changed

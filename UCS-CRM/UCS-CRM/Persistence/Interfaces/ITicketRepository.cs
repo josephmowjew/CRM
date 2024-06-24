@@ -1,11 +1,14 @@
 ﻿using System.Security.Cryptography.X509Certificates;
 using UCS_CRM.Core.Helpers;
 using UCS_CRM.Core.Models;
+using UCS_CRM.Data;
 
 namespace UCS_CRM.Persistence.Interfaces
 {
     public interface ITicketRepository
     {
+
+       
         void Add(Ticket ticket);
         Ticket Exists(Ticket? ticket);
         Task<List<Ticket>?> GetTickets(CursorParams @params, Department department = null, string ticketStatus = "");
