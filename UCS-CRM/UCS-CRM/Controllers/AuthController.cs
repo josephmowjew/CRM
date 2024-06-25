@@ -329,7 +329,7 @@ namespace UCS_CRM.Controllers
             //
             //return RedirectToAction("LogOut", "Home");
             TempData["response"] = "";
-            TempData["errorResponse"] = "no account was found to activate";
+           
             return Redirect("/");//
         }
 

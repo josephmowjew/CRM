@@ -286,7 +286,8 @@ namespace UCS_CRM.Areas.CallCenterOfficer.Controllers
 
             if (!ModelState.IsValid)
             {
-                return PartialView("_EditTicketPartial", editTicketDTO);
+                await populateViewBags();
+                return PartialView("_EditTicketPartial", this._mapper.Map<EditTicketDTO>(editTicketDTO));
             }
 
             editTicketDTO.DataInvalid = "";

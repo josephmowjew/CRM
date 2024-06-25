@@ -286,7 +286,10 @@ namespace UCS_CRM.Areas.Teller.Controllers
 
             if (!ModelState.IsValid)
             {
-                return PartialView("_EditTicketPartial", editTicketDTO);
+                await this.populateViewBags();
+
+                var mappedDTO = this._mapper.Map<Ticket>(editTicketDTO);
+                return PartialView("_EditTicketPartial", mappedDTO);
             }
 
             editTicketDTO.DataInvalid = "";
@@ -297,7 +300,10 @@ namespace UCS_CRM.Areas.Teller.Controllers
             {
                 editTicketDTO.DataInvalid = "true";
                 ModelState.AddModelError("", "The Identifier of the record was not found taken");
-                return PartialView("_EditTicketPartial", editTicketDTO);
+                await this.populateViewBags();
+
+                var mappedDTO = this._mapper.Map<Ticket>(editTicketDTO);
+                return PartialView("_EditTicketPartial", mappedDTO);
             }
             
             // Fetch current state and assigned user details

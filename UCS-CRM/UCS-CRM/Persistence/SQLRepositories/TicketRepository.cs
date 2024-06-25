@@ -342,7 +342,7 @@ namespace UCS_CRM.Persistence.SQLRepositories
                 var ticketPriorityMaxReponseTimeInHours = ticket.TicketPriority.MaximumResponseTimeHours;
                 var escalationTime = creationTime.AddHours(ticketPriorityMaxReponseTimeInHours);
 
-                if (escalationTime > DateTime.UtcNow)
+                if (DateTime.UtcNow > escalationTime)
                 {
                     await this.EscalateTicket(ticket, null, "Previous assignee did not respond in time");
                 }

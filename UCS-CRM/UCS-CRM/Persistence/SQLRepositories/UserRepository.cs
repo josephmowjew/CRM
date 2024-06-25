@@ -334,9 +334,16 @@ namespace UCS_CRM.Persistence.SQLRepositories
                 {
                     u.RoleName = roles.First();
 
+                    //skip user with system role
+
+                    if(u.RoleName.ToLower().Trim() != "System".ToLower().Trim())
+                    {
+                        userViewModels.Add(u);
+
+                    }
+
                     //add the updated user to the userViewModels class
 
-                    userViewModels.Add(u);
                 }
 
 
