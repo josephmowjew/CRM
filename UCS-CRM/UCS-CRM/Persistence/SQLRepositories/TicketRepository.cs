@@ -319,16 +319,20 @@ namespace UCS_CRM.Persistence.SQLRepositories
 
         public async Task SendTicketReminders()
         {
-          
-            //get all active tickets
+
+            // Get all active tickets
             List<Ticket> tickets = await this._context.Tickets
                 .Include(t => t.State)
                 .Include(t => t.TicketPriority)
                 .Include(t => t.TicketEscalations)
                 .Include(t => t.AssignedTo)
                 .ThenInclude(u => u.Department)
-                .Where(t => t.AssignedTo != null && t.State.Name != Lambda.Closed && t.State.Name != Lambda.Archived)
+                .Where(t => t.Status != Lambda.Deleted &&
+                            t.AssignedTo != null &&
+                            t.State.Name != Lambda.Closed &&
+                            t.State.Name != Lambda.Archived)
                 .ToListAsync();
+
 
             //loop through the tickets
             foreach (Ticket ticket in tickets)
@@ -1563,11 +1567,14 @@ namespace UCS_CRM.Persistence.SQLRepositories
             var tickets = new List<TicketEscalation>();
 
             tickets = await _context.TicketEscalations
-                .Include(t => t.EscalatedTo)
-                .Include(t=>t.Ticket)
-                .ThenInclude(t => t.TicketPriority)
-                .Where(i => DateTime.Now > i.CreatedDate
-                .AddHours(i.Ticket.TicketPriority.Value) && i.Resolved == false && i.Status != Lambda.Deleted).ToListAsync();
+              .Include(t => t.EscalatedTo)
+              .Include(t => t.Ticket)
+              .ThenInclude(t => t.TicketPriority)
+              .Where(i => DateTime.Now > i.CreatedDate.AddHours(i.Ticket.TicketPriority.Value) &&
+                          i.Resolved == false &&
+                          i.Status != Lambda.Deleted)
+              .ToListAsync();
+
 
             // sending reminder email
             string status = "";
