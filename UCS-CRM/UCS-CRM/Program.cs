@@ -129,8 +129,8 @@ IFintechMemberService fintechMemberService = scope.ServiceProvider.GetRequiredSe
 
 
 RecurringJob.AddOrUpdate("SyncFintechMemberRecords", () => fintechMemberService.SyncFintechMembersWithLocalDataStore(), Cron.HourInterval(1));
-RecurringJob.AddOrUpdate(() => ticket.UnAssignedTickets(), Cron.MinuteInterval(15));
-RecurringJob.AddOrUpdate(() => ticket.SendTicketReminders(), Cron.MinuteInterval(5));
+RecurringJob.AddOrUpdate(() => ticket.UnAssignedTickets(), Cron.MinuteInterval(1));
+RecurringJob.AddOrUpdate(() => ticket.SendTicketReminders(), Cron.MinuteInterval(1));
 
 //BackgroundJob.Schedule(() => ticket.EscalatedTickets(), TimeSpan.FromHours(1));
 //RecurringJob.AddOrUpdate("TicketReminder", () => ticket.SendTicketReminders(), Cron.MinuteInterval(10));

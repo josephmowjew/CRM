@@ -330,6 +330,7 @@ namespace UCS_CRM.Persistence.SQLRepositories
                 .Where(t => t.Status != Lambda.Deleted &&
                             t.AssignedTo != null &&
                             t.State.Name != Lambda.Closed &&
+                            t.State.Name != Lambda.Resolved &&
                             t.State.Name != Lambda.Archived)
                 .ToListAsync();
 
