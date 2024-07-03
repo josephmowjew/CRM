@@ -93,13 +93,13 @@
             </div>
              <hr />
                 <div class="col-md-3 col-xs-6 ">
-                    @if(Model.State.Name.Trim().ToLower() != "closed" && @Model.CreatedById == ViewBag.CurrentUserId ){
+                    @if(Model.State.Name.Trim().ToLower() != "closed" && @Model.AssignedToId == ViewBag.CurrentUserId ){
                         
                         <button class="btn btn-danger text-white" data-bs-toggle="modal" data-bs-target="#close_ticket_modal">Close Ticket</button>
                         
                     }
 
-                     @if(Model.State.Name.Trim().ToLower() == "closed" && @Model.CreatedById == ViewBag.CurrentUserId ){
+                     @if(Model.State.Name.Trim().ToLower() == "closed" && @Model.AssignedToId == ViewBag.CurrentUserId ){
                         
                         <button class="btn btn-success text-white" data-bs-toggle="modal" data-bs-target="#reopen_ticket_modal"><i class="mdi mdi-file-plus"></i> Open Ticket</button>
                         

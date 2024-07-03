@@ -657,7 +657,30 @@ namespace UCS_CRM.Areas.CallCenterOfficer.Controllers
 
             return Json(new { status="error", message = "Could not close ticket" });
         }
+        public async Task<ActionResult> Details(int id)
+        {
+            var ticketDB = await this._ticketRepository.GetTicket(id);
 
+            if (ticketDB == null)
+            {
+                return RedirectToAction("Index");
+            }
+
+
+            var userClaims = (ClaimsIdentity)User.Identity;
+
+            var claimsIdentitifier = userClaims.FindFirst(ClaimTypes.NameIdentifier);
+
+            var currentUserId = claimsIdentitifier.Value;
+
+            ViewBag.CurrentUserId = currentUserId;
+
+            ViewBag.ticketId = id;
+
+            var mappedTicket = this._mapper.Map<ReadTicketDTO>(ticketDB);
+
+            return View(mappedTicket);
+        }
         [HttpPost]
         public async Task<ActionResult> ReopenTicket(CloseTicketDTO closeTicketDTO)
         {

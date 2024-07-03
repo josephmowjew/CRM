@@ -218,6 +218,16 @@ namespace UCS_CRM.Areas.SeniorManager.Controllers
             }
 
 
+            var userClaims = (ClaimsIdentity)User.Identity;
+
+            var claimsIdentitifier = userClaims.FindFirst(ClaimTypes.NameIdentifier);
+
+            var currentUserId = claimsIdentitifier.Value;
+
+            ViewBag.CurrentUserId = currentUserId;
+
+            ViewBag.ticketId = id;
+
             var mappedTicket = this._mapper.Map<ReadTicketDTO>(ticketDB);
 
             return View(mappedTicket);

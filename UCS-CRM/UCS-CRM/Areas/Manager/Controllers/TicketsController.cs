@@ -195,8 +195,7 @@ namespace UCS_CRM.Areas.Manager.Controllers
             return PartialView("_EditTicketPartial", editTicketDTO);
         }
 
-        // GET: TicketController/Details/5
-        public async Task<ActionResult> Details(int id)
+       public async Task<ActionResult> Details(int id)
         {
             var ticketDB = await this._ticketRepository.GetTicket(id);
 
@@ -205,6 +204,16 @@ namespace UCS_CRM.Areas.Manager.Controllers
                 return RedirectToAction("Index");
             }
 
+
+            var userClaims = (ClaimsIdentity)User.Identity;
+
+            var claimsIdentitifier = userClaims.FindFirst(ClaimTypes.NameIdentifier);
+
+            var currentUserId = claimsIdentitifier.Value;
+
+            ViewBag.CurrentUserId = currentUserId;
+
+            ViewBag.ticketId = id;
 
             var mappedTicket = this._mapper.Map<ReadTicketDTO>(ticketDB);
 

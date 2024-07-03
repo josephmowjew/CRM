@@ -56,6 +56,22 @@
                 </div>
             </div>
             <hr />
+                    @if(Model.State.Name.Trim().ToLower() != "closed" && @Model.AssignedToId == ViewBag.CurrentUserId ){
+
+                    <button class="btn btn-danger text-white" data-bs-toggle="modal" data-bs-target="#close_ticket_modal">Close Ticket</button>
+
+                    }
+
+                     @if(Model.State.Name.Trim().ToLower() == "closed" && @Model.AssignedToId == ViewBag.CurrentUserId ){
+                        
+                        <button class="btn btn-success text-white" data-bs-toggle="modal" data-bs-target="#reopen_ticket_modal"><i class="mdi mdi-file-plus"></i> Open Ticket</button>
+                        
+                    }
+                    <div>
+                        <img src="~/images/91.gif" id="spinner" />
+                    </div>
+                </div>
+                <hr/>
             <p class="font-normal p-3 mt-4 fw-bold">ATTACHMENTS</p>
             <div class="container">
                 <div class="row">
