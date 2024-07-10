@@ -632,7 +632,8 @@ namespace UCS_CRM.Persistence.SQLRepositories
 
             if (!string.IsNullOrEmpty(ticketStatus))
             {
-                query = query.Where(t => t.State.Name.Trim().ToLower() == ticketStatus.Trim().ToLower());
+                var ticketStatusLower = ticketStatus.Trim().ToLower();
+                query = query.Where(t => t.State.Name.Trim().ToLower() == ticketStatusLower);
             }
 
             if (department != null)
@@ -642,13 +643,14 @@ namespace UCS_CRM.Persistence.SQLRepositories
 
             if (!string.IsNullOrEmpty(@params.SearchTerm))
             {
+                var searchTermLower = @params.SearchTerm.ToLower().Trim();
                 query = query.Where(t =>
-                    t.Title.ToLower().Trim().Contains(@params.SearchTerm.ToLower()) ||
-                    t.Description.ToLower().Trim().Contains(@params.SearchTerm.ToLower()) ||
-                    t.State.Name.ToLower().Trim().Contains(@params.SearchTerm.ToLower()) ||
-                    t.Member.FirstName.ToLower().Trim().Contains(@params.SearchTerm.ToLower()) ||
-                    t.Member.LastName.ToLower().Trim().Contains(@params.SearchTerm.ToLower()) ||
-                    t.TicketCategory.Name.ToLower().Trim().Contains(@params.SearchTerm.ToLower())
+                    t.Title.ToLower().Trim().Contains(searchTermLower) ||
+                    t.Description.ToLower().Trim().Contains(searchTermLower) ||
+                    t.State.Name.ToLower().Trim().Contains(searchTermLower) ||
+                    t.Member.FirstName.ToLower().Trim().Contains(searchTermLower) ||
+                    t.Member.LastName.ToLower().Trim().Contains(searchTermLower) ||
+                    t.TicketCategory.Name.ToLower().Trim().Contains(searchTermLower)
                 );
             }
 
@@ -671,21 +673,12 @@ namespace UCS_CRM.Persistence.SQLRepositories
                 return 0;
             }
 
-            var query = this._context.Tickets
-                .Include(t => t.AssignedTo)
-                .Include(t => t.TicketAttachments)
-                .Include(t => t.State)
-                .Include(t => t.TicketCategory)
-                .Include(t => t.TicketPriority)
-                .Include(t => t.TicketEscalations)
-                .Include(t => t.Member)
-                 .ThenInclude(m => m.User)
-                .ThenInclude(u => u.Department)
-                .Where(t => t.Status != Lambda.Deleted);
+            var query = this._context.Tickets.AsQueryable();
 
             if (!string.IsNullOrEmpty(ticketStatus))
             {
-                query = query.Where(t => t.State.Name.Trim().ToLower() == ticketStatus.Trim().ToLower());
+                var ticketStatusLower = ticketStatus.Trim().ToLower();
+                query = query.Where(t => t.State.Name.Trim().ToLower() == ticketStatusLower);
             }
 
             if (department != null)
@@ -695,24 +688,18 @@ namespace UCS_CRM.Persistence.SQLRepositories
 
             if (!string.IsNullOrEmpty(@params.SearchTerm))
             {
+                var searchTermLower = @params.SearchTerm.ToLower().Trim();
                 query = query.Where(t =>
-                    t.Title.ToLower().Trim().Contains(@params.SearchTerm.ToLower()) ||
-                    t.Description.ToLower().Trim().Contains(@params.SearchTerm.ToLower()) ||
-                    t.State.Name.ToLower().Trim().Contains(@params.SearchTerm.ToLower()) ||
-                    t.Member.FirstName.ToLower().Trim().Contains(@params.SearchTerm.ToLower()) ||
-                    t.Member.LastName.ToLower().Trim().Contains(@params.SearchTerm.ToLower()) ||
-                    t.TicketCategory.Name.ToLower().Trim().Contains(@params.SearchTerm.ToLower())
+                    t.Title.ToLower().Trim().Contains(searchTermLower) ||
+                    t.Description.ToLower().Trim().Contains(searchTermLower) ||
+                    t.State.Name.ToLower().Trim().Contains(searchTermLower) ||
+                    t.Member.FirstName.ToLower().Trim().Contains(searchTermLower) ||
+                    t.Member.LastName.ToLower().Trim().Contains(searchTermLower) ||
+                    t.TicketCategory.Name.ToLower().Trim().Contains(searchTermLower)
                 );
             }
 
-            if (!string.IsNullOrEmpty(@params.SortColum) && !string.IsNullOrEmpty(@params.SortDirection))
-            {
-                string sortExpression = @params.SortColum + " " + @params.SortDirection;
-                query = query.OrderBy(sortExpression);
-            }
-
             var records = await query.CountAsync();
-
 
             return records;
         }

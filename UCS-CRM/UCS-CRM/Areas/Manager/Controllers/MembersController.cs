@@ -210,7 +210,7 @@ namespace UCS_CRM.Areas.Manager.Controllers
                     {
                         this._jobEnqueuer.EnqueueEmailJob(user.Email,"Login Details", UserNameBody);
                         this._jobEnqueuer.EnqueueEmailJob(user.Email, "Login Details", PasswordBody);
-                        this._jobEnqueuer.EnqueueEmailJob(user.Email, "Account Details", $"Good day, for those who have not yet registered with Gravator, please do so so that you may upload an avatar of yourself that can be associated with your email address and displayed on your profile in the Mental Lab application.\r\nPlease visit XXXXXXXXXXXXXXXXXXXXXXXX to register with Gravatar. ");
+                        this._jobEnqueuer.EnqueueEmailJob(user.Email, "Account Details", $"Good day, for those who have not yet registered with Gravator, please do so so that you may upload an avatar of yourself that can be associated with your email address and displayed on your profile in the USC SACCO.\r\nPlease visit XXXXXXXXXXXXXXXXXXXXXXXX to register with Gravatar. ");
                        
                     }
 

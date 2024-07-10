@@ -157,24 +157,20 @@ namespace UCS_CRM.Persistence.SQLRepositories
         {
             IQueryable<Member> query = _context.Members
                 .Include(m => m.MemberAccounts)
-                .Include(m => m.User);
+                .Include(m => m.User)
+                .Where(m => m.Status != "Deleted");
 
             if (!string.IsNullOrEmpty(@params.SearchTerm))
             {
-                var searchTerms = @params.SearchTerm.ToLower().Trim().Split(' ');
-                string firstNameSearch = searchTerms.Length > 0 ? searchTerms[0] : "";
-                string lastNameSearch = searchTerms.Length > 1 ? searchTerms[1] : "";
-
-                query = query.Where(m => m.Status != "Deleted"
-                    && (m.FirstName.ToLower().Trim().Contains(firstNameSearch) && m.LastName.ToLower().Trim().Contains(lastNameSearch)
-                    || m.FirstName.ToLower().Trim().Contains(@params.SearchTerm)
-                    || m.LastName.ToLower().Trim().Contains(@params.SearchTerm)
-                    || m.AccountNumber.ToLower().Trim().Contains(@params.SearchTerm)));
+                var searchTerm = @params.SearchTerm.ToLower().Trim();
+                query = query.Where(m => m.FirstName.ToLower().Contains(searchTerm)
+                    || m.LastName.ToLower().Contains(searchTerm)
+                    || m.AccountNumber.ToLower().Contains(searchTerm));
             }
 
             if (!string.IsNullOrEmpty(@params.SortColum) && !string.IsNullOrEmpty(@params.SortDirection))
             {
-                query = query.OrderBy(@params.SortColum + " " + @params.SortDirection);
+                query = query.OrderBy($"{@params.SortColum} {@params.SortDirection}");
             }
             else
             {

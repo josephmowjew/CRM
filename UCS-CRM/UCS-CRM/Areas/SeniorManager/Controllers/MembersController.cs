@@ -64,8 +64,7 @@ namespace UCS_CRM.Areas.SeniorManager.Controllers
             return View(mappedMember);
         }
 
-
-        public async Task<ActionResult> Details(int id)
+         public async Task<ActionResult> Details(int id)
         {
 
             //authenticate API
@@ -98,14 +97,9 @@ namespace UCS_CRM.Areas.SeniorManager.Controllers
 
             var status = document.RootElement.GetProperty("status").GetInt32();
 
-            if (status == 404)
-            {
-                Json(new { error = "error", message = "failed to create the user account from the member" });
-                return RedirectToAction("Index");
-            }
+            
 
-            var baseAccountElement = document.RootElement.GetProperty("data").GetProperty("base_account");
-            if (document.RootElement.TryGetProperty("data", out JsonElement data))
+            if(document.RootElement.TryGetProperty("data", out JsonElement data))
             {
                 if (data.ValueKind == JsonValueKind.Object)
                 {
@@ -114,16 +108,19 @@ namespace UCS_CRM.Areas.SeniorManager.Controllers
                         TempData["response"] = "Account number does not match any identification details";
                         return RedirectToAction("Index");
                     }
-
+                   
                 }
             }
-
+            
 
             if (status == 404)
             {
                 TempData["response"] = "Account number does not match any identification details";
                 return RedirectToAction("Index");
             }
+
+            var baseAccountElement = document.RootElement.GetProperty("data").GetProperty("base_account");
+
             decimal balance;
             if (decimal.TryParse(baseAccountElement.GetProperty("balance").GetString(), out balance))
             {
@@ -171,6 +168,8 @@ namespace UCS_CRM.Areas.SeniorManager.Controllers
         }
 
 
+
+
         // POST: MemberController/Edit/5
         [HttpPost]
         public async Task<ActionResult> CreateUserFromMember(UserFromMemberViewModel model)
@@ -210,7 +209,7 @@ namespace UCS_CRM.Areas.SeniorManager.Controllers
                     {
                         this._jobEnqueuer.EnqueueEmailJob(user.Email,"Login Details", UserNameBody);
                         this._jobEnqueuer.EnqueueEmailJob(user.Email, "Login Details", PasswordBody);
-                        this._jobEnqueuer.EnqueueEmailJob(user.Email, "Account Details", $"Good day, for those who have not yet registered with Gravator, please do so so that you may upload an avatar of yourself that can be associated with your email address and displayed on your profile in the Mental Lab application.\r\nPlease visit XXXXXXXXXXXXXXXXXXXXXXXX to register with Gravatar. ");
+                        this._jobEnqueuer.EnqueueEmailJob(user.Email, "Account Details", $"Good day, for those who have not yet registered with Gravator, please do so so that you may upload an avatar of yourself that can be associated with your email address and displayed on your profile in the UCS SACCO application.\r\nPlease visit XXXXXXXXXXXXXXXXXXXXXXXX to register with Gravatar. ");
                        
                     }
 
@@ -316,7 +315,7 @@ namespace UCS_CRM.Areas.SeniorManager.Controllers
 
         }
 
-        public async Task<string> ApiAuthenticate()
+               public async Task<string> ApiAuthenticate()
         {
 
             // APIToken token = new APIToken();
@@ -341,9 +340,9 @@ namespace UCS_CRM.Areas.SeniorManager.Controllers
             var json = await tokenResponse.Content.ReadAsStringAsync();
             var document = JsonDocument.Parse(json);
 
-            var status = document.RootElement.GetProperty("status").GetString();
+            var status = document.RootElement.GetProperty("status").GetInt32();
 
-            if (status == "404")
+            if (status == 404)
             {
 
                 //
@@ -355,5 +354,6 @@ namespace UCS_CRM.Areas.SeniorManager.Controllers
 
             return token;
         }
+    
     }
 }

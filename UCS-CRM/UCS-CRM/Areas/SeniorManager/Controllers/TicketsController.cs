@@ -427,47 +427,37 @@ namespace UCS_CRM.Areas.SeniorManager.Controllers
         [HttpPost]
         public async Task<ActionResult> GetTickets(string status)
         {
-            //datatable stuff
-            var type = HttpContext.Request.Form["ticketType"].FirstOrDefault();
-            var draw = HttpContext.Request.Form["draw"].FirstOrDefault();
-            var start = HttpContext.Request.Form["start"].FirstOrDefault();
-            var length = HttpContext.Request.Form["length"].FirstOrDefault();
+            var form = HttpContext.Request.Form;
+            var type = form["ticketType"].FirstOrDefault();
+            var draw = form["draw"].FirstOrDefault();
+            int.TryParse(form["start"].FirstOrDefault(), out int skip);
+            int.TryParse(form["length"].FirstOrDefault(), out int pageSize);
 
-            var sortColumn = HttpContext.Request.Form["columns[" + HttpContext.Request.Form["order[0][column]"].FirstOrDefault() + "][name]"].FirstOrDefault();
-            var sortColumnAscDesc = Request.Form["order[0][dir]"].FirstOrDefault();
-            var searchValue = Request.Form["search[value]"].FirstOrDefault();
+            var sortColumn = form[$"columns[{form["order[0][column]"].FirstOrDefault()}][name]"].FirstOrDefault();
+            var sortColumnAscDesc = form["order[0][dir]"].FirstOrDefault();
+            var searchValue = form["search[value]"].FirstOrDefault();
 
-            int pageSize = length != null ? Convert.ToInt32(length) : 0;
-            int skip = start != null ? Convert.ToInt32(start) : 0;
-            int resultTotal = 0;
+            var cursorParameters = new CursorParams 
+            { 
+                SearchTerm = searchValue, 
+                Skip = skip, 
+                SortColum = sortColumn, 
+                SortDirection = sortColumnAscDesc, 
+                Take = pageSize 
+            };
 
-            //create a cursor params based on the data coming from the datatable
-            CursorParams CursorParameters = new CursorParams() { SearchTerm = searchValue, Skip = skip, SortColum = sortColumn, SortDirection = sortColumnAscDesc, Take = pageSize };
+            var isClosedStatus = status == Lambda.Closed;
+            var resultTotal = isClosedStatus 
+                ? await this._ticketRepository.CountTicketsByStatus(status) 
+                : await this._ticketRepository.TotalCount(type);
 
-            resultTotal = status == Lambda.Closed ? await this._ticketRepository.CountTicketsByStatus(status) : await this._ticketRepository.TotalCount(type);
-            var result = status == Lambda.Closed ? await this._ticketRepository.GetClosedTickets(CursorParameters) : await this._ticketRepository.GetTickets(CursorParameters,null, type);
-
-            //map the results to a read DTO
+            var result = isClosedStatus 
+                ? await this._ticketRepository.GetClosedTickets(cursorParameters) 
+                : await this._ticketRepository.GetTickets(cursorParameters, null, type);
 
             var mappedResult = this._mapper.Map<List<ReadTicketDTO>>(result);
 
-            var cleanResult = new List<ReadTicketDTO>();
-
-            //mappedResult.ForEach(record =>
-            //{
-            //    record.State.Tickets = null;
-            //    record.TicketAttachments.Select(r => r.Ticket = null);
-
-            //    cleanResult.Add(record);
-
-            //});
-
-
-            return Json(new { draw = draw, recordsFiltered = resultTotal, recordsTotal = resultTotal, data = mappedResult });
-            //return Json(new { draw = draw, recordsFiltered = result.Count, recordsTotal = resultTotal, data = mappedResult });
-
-
-
+            return Json(new { draw, recordsFiltered = resultTotal, recordsTotal = resultTotal, data = mappedResult });
         }
         [HttpPost]
         public async Task<ActionResult> AddTicketComment(CreateTicketCommentDTO createTicketCommentDTO)
