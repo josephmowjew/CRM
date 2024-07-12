@@ -151,37 +151,89 @@ namespace UCS_CRM.Persistence.SQLRepositories
             
         }
 
-    public async Task<List<Member>?> GetMembers(CursorParams @params)
+        public async Task<List<Member>?> GetMembers(CursorParams @params)
     {
-        if (@params.Take > 0)
+        if (@params.Take <= 0) return null;
+
+        IQueryable<Member> query = _context.Members
+            .Include(m => m.MemberAccounts)
+            .Include(m => m.User)
+            .Where(m => m.Status != "Deleted");
+
+        if (!string.IsNullOrEmpty(@params.SearchTerm))
         {
-            IQueryable<Member> query = _context.Members
-                .Include(m => m.MemberAccounts)
-                .Include(m => m.User)
-                .Where(m => m.Status != "Deleted");
+            var searchTerms = @params.SearchTerm.ToLower().Trim()
+                .Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
 
-            if (!string.IsNullOrEmpty(@params.SearchTerm))
+            if (searchTerms.Length == 2)
             {
-                var searchTerm = @params.SearchTerm.ToLower().Trim();
-                query = query.Where(m => m.FirstName.ToLower().Contains(searchTerm)
-                    || m.LastName.ToLower().Contains(searchTerm)
-                    || m.AccountNumber.ToLower().Contains(searchTerm));
-            }
+                var firstNameTerm = searchTerms[0];
+                var lastNameTerm = searchTerms[1];
 
-            if (!string.IsNullOrEmpty(@params.SortColum) && !string.IsNullOrEmpty(@params.SortDirection))
-            {
-                query = query.OrderBy($"{@params.SortColum} {@params.SortDirection}");
+                query = query.Where(m => 
+                    (m.FirstName.ToLower().Contains(firstNameTerm) && m.LastName.ToLower().Contains(lastNameTerm)) ||
+                    (m.FirstName.ToLower().Contains(lastNameTerm) && m.LastName.ToLower().Contains(firstNameTerm))
+                );
             }
             else
             {
-                query = query.OrderBy(m => m.Id);
+                foreach (var term in searchTerms)
+                {
+                    query = query.Where(m => m.FirstName.ToLower().Contains(term)
+                        || m.LastName.ToLower().Contains(term)
+                        || m.AccountNumber.ToLower().Contains(term));
+                }
             }
-
-            return await query.Skip(@params.Skip).Take(@params.Take).ToListAsync();
         }
 
-        return null;
-    }    
+        if (!string.IsNullOrEmpty(@params.SortColum) && !string.IsNullOrEmpty(@params.SortDirection))
+        {
+            query = query.OrderBy($"{@params.SortColum} {@params.SortDirection}");
+        }
+        else
+        {
+            query = query.OrderBy(m => m.Id);
+        }
+
+        return await query.Skip(@params.Skip).Take(@params.Take).ToListAsync();
+    }
+
+        public async Task<int> TotalFilteredMembersCount(CursorParams @params)
+        {
+            IQueryable<Member> memberQuery = _context.Members.Where(m => m.Status != "Deleted");
+
+            if (!string.IsNullOrEmpty(@params.SearchTerm))
+            {
+                var searchTerms = @params.SearchTerm.ToLower().Trim().Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+
+                if (searchTerms.Length == 2)
+                {
+                    var firstNameTerm = searchTerms[0];
+                    var lastNameTerm = searchTerms[1];
+
+                    memberQuery = memberQuery.Where(m => 
+                        (m.FirstName.ToLower().Contains(firstNameTerm) && m.LastName.ToLower().Contains(lastNameTerm)) ||
+                        (m.FirstName.ToLower().Contains(lastNameTerm) && m.LastName.ToLower().Contains(firstNameTerm))
+                    );
+                }
+                else
+                {
+                    foreach (var term in searchTerms)
+                    {
+                        memberQuery = memberQuery.Where(m =>
+                            m.FirstName.ToLower().Contains(term) ||
+                            m.LastName.ToLower().Contains(term) ||
+                            m.AccountNumber.ToLower().Contains(term) ||
+                            m.Gender.ToLower().Contains(term) ||
+                            m.PhoneNumber.ToLower().Contains(term)
+                        );
+                    }
+                }
+            }
+
+            return await memberQuery.CountAsync();
+        }
+
         public async Task<List<Member>?> GetMembers()
         {
             return await this._context.Members.Include(m => m.MemberAccounts).Where(a => a.Status != Lambda.Deleted).ToListAsync();

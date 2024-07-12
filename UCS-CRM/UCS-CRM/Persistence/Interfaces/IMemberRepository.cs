@@ -15,6 +15,7 @@ namespace UCS_CRM.Persistence.Interfaces
 
         Task<Member?> ExistsAsync(Member member);
         Task<List<Member>?> GetMembers(CursorParams cursorParams);
+        Task<int> TotalFilteredMembersCount(CursorParams @params);
         Task<Member?> GetMemberAsync(int id);
         void Remove(Member member);
         Task<int> TotalCount();

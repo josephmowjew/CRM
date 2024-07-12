@@ -280,74 +280,66 @@ namespace UCS_CRM.Persistence.SQLRepositories
 
         public async Task<List<UserViewModel>> GetUsersWithRoles(CursorParams @params)
         {
-            //Initialize the mapper
-            var config = new MapperConfiguration(cfg =>
-                    cfg.CreateMap<ApplicationUser, UserViewModel>()
-                );
-
-            List<ApplicationUser> users = new List<ApplicationUser>();
+            // Initialize the mapper
+            var config = new MapperConfiguration(cfg => cfg.CreateMap<ApplicationUser, UserViewModel>());
             Mapper mapper = new Mapper(config);
 
-            //check if the search term has been provided
+            // Initialize the user query
+            IQueryable<ApplicationUser> userQuery = _context.Users.Where(u => u.Status != Lambda.Deleted && u.EmailConfirmed == true);
 
-            if(string.IsNullOrEmpty(@params.SearchTerm)) {
-
-               users = await this._context.Users.Where(u => u.Status != Lambda.Deleted && u.EmailConfirmed == true).Skip(@params.Skip).Take(@params.Take).ToListAsync();
-
-            }
-            else
+            // Check if the search term has been provided
+            if (!string.IsNullOrEmpty(@params.SearchTerm))
             {
-                // Assume @params.SearchTerm is the input search string
-                var searchTerms = @params.SearchTerm.ToLower().Trim().Split(' ');
+                var searchTerms = @params.SearchTerm.ToLower().Trim().Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
 
-                // If the search term contains a space, it will be split into two parts
-                string firstNameSearch = searchTerms.Length > 0 ? searchTerms[0] : "";
-                string lastNameSearch = searchTerms.Length > 1 ? searchTerms[1] : "";
+                if (searchTerms.Length == 2)
+                {
+                    var firstNameTerm = searchTerms[0];
+                    var lastNameTerm = searchTerms[1];
 
-                var usersTemp =  this._context.Users.Where(u => u.Status != Lambda.Deleted && u.EmailConfirmed == true);
-
-                users = await usersTemp
-                    .Where(u =>
-                            u.FirstName.ToLower().Trim().Contains(firstNameSearch) && u.LastName.ToLower().Trim().Contains(lastNameSearch)
-                            ||u.FirstName.ToLower().Contains(@params.SearchTerm.ToLower().Trim())
-                            || u.LastName.ToLower().Contains(@params.SearchTerm.ToLower().Trim())
-                            || u.Gender.ToLower().Contains(@params.SearchTerm.ToLower().Trim())
-                            || u.Email.ToLower().Contains(@params.SearchTerm.ToLower().Trim())
-                            || u.PhoneNumber.ToLower().Contains(@params.SearchTerm.ToLower().Trim()))
-                    .Skip(@params.Skip)
-                    .Take(@params.Take)
-                    .ToListAsync();
-
+                    userQuery = userQuery.Where(u => 
+                        (u.FirstName.ToLower().Contains(firstNameTerm) && u.LastName.ToLower().Contains(lastNameTerm)) ||
+                        (u.FirstName.ToLower().Contains(lastNameTerm) && u.LastName.ToLower().Contains(firstNameTerm))
+                    );
+                }
+                else
+                {
+                    foreach (var term in searchTerms)
+                    {
+                        userQuery = userQuery.Where(u =>
+                            u.FirstName.ToLower().Contains(term) ||
+                            u.LastName.ToLower().Contains(term) ||
+                            u.Gender.ToLower().Contains(term) ||
+                            u.Email.ToLower().Contains(term) ||
+                            u.PhoneNumber.ToLower().Contains(term)
+                        );
+                    }
+                }
             }
 
+            // Apply pagination
+            List<ApplicationUser> users = await userQuery.Skip(@params.Skip).Take(@params.Take).ToListAsync();
 
-            //convert the list of users records to a list of UserViewModels
-
-            var userViewModelUnFiltered = mapper.Map<List<UserViewModel>>(users);
+            // Convert the list of user records to a list of UserViewModels
+            var userViewModelUnfiltered = mapper.Map<List<UserViewModel>>(users);
             List<UserViewModel> userViewModels = new();
 
-            userViewModelUnFiltered.ForEach(u => {
-                //get a list of roles of the particular user
-                var roles = this.GetRolesAsync(u.Id).Result;
+            // Process roles for each user
+            foreach (var userViewModel in userViewModelUnfiltered)
+            {
+                var roles = await GetRolesAsync(userViewModel.Id);
 
                 if (roles.Count > 0)
                 {
-                    u.RoleName = roles.First();
+                    userViewModel.RoleName = roles.First();
 
-                    //skip user with system role
-
-                    if(u.RoleName.ToLower().Trim() != "System".ToLower().Trim())
+                    // Skip user with system role
+                    if (!string.Equals(userViewModel.RoleName, "System", StringComparison.OrdinalIgnoreCase))
                     {
-                        userViewModels.Add(u);
-
+                        userViewModels.Add(userViewModel);
                     }
-
-                    //add the updated user to the userViewModels class
-
                 }
-
-
-            });
+            }
 
             return userViewModels;
         }
@@ -429,33 +421,38 @@ namespace UCS_CRM.Persistence.SQLRepositories
 
         public async Task<int> TotalFilteredUsersCount(CursorParams @params)
         {
-            List<ApplicationUser> users = new List<ApplicationUser>();
+            IQueryable<ApplicationUser> userQuery = _context.Users.Where(u => u.Status != Lambda.Deleted && u.EmailConfirmed == true);
 
-            int count = 0;
-
-            if (string.IsNullOrEmpty(@params.SearchTerm))
+            if (!string.IsNullOrEmpty(@params.SearchTerm))
             {
+                var searchTerms = @params.SearchTerm.ToLower().Trim().Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
 
-                count = await this._context.Users.Where(u => u.Status != Lambda.Deleted && u.EmailConfirmed == true).CountAsync();
+                if (searchTerms.Length == 2)
+                {
+                    var firstNameTerm = searchTerms[0];
+                    var lastNameTerm = searchTerms[1];
 
+                    userQuery = userQuery.Where(u => 
+                        (u.FirstName.ToLower().Contains(firstNameTerm) && u.LastName.ToLower().Contains(lastNameTerm)) ||
+                        (u.FirstName.ToLower().Contains(lastNameTerm) && u.LastName.ToLower().Contains(firstNameTerm))
+                    );
+                }
+                else
+                {
+                    foreach (var term in searchTerms)
+                    {
+                        userQuery = userQuery.Where(u =>
+                            u.FirstName.ToLower().Contains(term) ||
+                            u.LastName.ToLower().Contains(term) ||
+                            u.Gender.ToLower().Contains(term) ||
+                            u.Email.ToLower().Contains(term) ||
+                            u.PhoneNumber.ToLower().Contains(term)
+                        );
+                    }
+                }
             }
-            else
-            {
-                var usersTemp = this._context.Users.Where(u => u.Status != Lambda.Deleted && u.EmailConfirmed == true);
 
-                count = await usersTemp
-                    .Where(u =>
-                             u.FirstName.ToLower().Contains(@params.SearchTerm.ToLower().Trim())
-                            || u.LastName.ToLower().Contains(@params.SearchTerm.ToLower().Trim())
-                            || u.Gender.ToLower().Contains(@params.SearchTerm.ToLower().Trim())
-                            || u.Email.ToLower().Contains(@params.SearchTerm.ToLower().Trim())
-                            || u.PhoneNumber.ToLower().Contains(@params.SearchTerm.ToLower().Trim()))
-                    .CountAsync();
-
-            }
-
-            return count;
-
+            return await userQuery.CountAsync();
         }
 
         public async Task<int> TotalUncomfirmedCount(CursorParams @params)

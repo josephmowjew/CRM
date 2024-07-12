@@ -304,7 +304,7 @@ namespace UCS_CRM.Areas.CallCenterOfficer.Controllers
             //create a cursor params based on the data coming from the data-table
             CursorParams CursorParameters = new CursorParams() { SearchTerm = searchValue, Skip = skip, SortColum = sortColumn, SortDirection = sortColumnAscDesc, Take = pageSize };
 
-            resultTotal = await this._memberRepository.TotalCount();
+            resultTotal = await this._memberRepository.TotalFilteredMembersCount(CursorParameters);
             var result = await this._memberRepository.GetMembers(CursorParameters);
 
             //map the results to a read DTO
