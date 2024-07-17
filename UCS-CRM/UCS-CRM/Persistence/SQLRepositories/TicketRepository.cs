@@ -775,7 +775,7 @@ namespace UCS_CRM.Persistence.SQLRepositories
                 Member = new UCS_CRM.Core.Models.Member 
                 { 
                     AccountNumber = t.Member.AccountNumber,
-                    Branch = t.Member.Branch
+                    Branch = t.Member.Branch,
                 },
                 TicketPriority = t.TicketPriority,
                 TicketCategory = t.TicketCategory,
