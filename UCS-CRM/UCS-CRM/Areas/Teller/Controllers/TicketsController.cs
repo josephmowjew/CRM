@@ -510,21 +510,7 @@ namespace UCS_CRM.Areas.Teller.Controllers
 
             var cleanResult = new List<ReadTicketDTO>();
 
-            //mappedResult.ForEach(record =>
-            //{
-            //    record.State.Tickets = null;
-            //    record.TicketAttachments.Select(r => r.Ticket = null);
-
-            //    cleanResult.Add(record);
-
-            //});
-
-
-
-            //return Json(new { draw = draw, recordsFiltered = result.Count, recordsTotal = resultTotal, data = mappedResult });
             return Json(new { draw = draw, recordsFiltered = resultTotal, recordsTotal = resultTotal, data = mappedResult });
-
-
 
         }
         [HttpPost]

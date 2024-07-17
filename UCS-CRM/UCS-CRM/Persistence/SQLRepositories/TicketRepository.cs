@@ -611,29 +611,107 @@ namespace UCS_CRM.Persistence.SQLRepositories
         //    }
         //}
 
-        public async Task<List<Ticket?>> GetTickets(CursorParams @params, Department department = null, string ticketStatus = "")
-        {
-            if (@params.Take <= 0)
-            {
-                return null;
-            }
+        // public async Task<List<Ticket?>> GetTickets(CursorParams @params, Department department = null, string ticketStatus = "")
+        // {
+        //     if (@params.Take <= 0)
+        //     {
+        //         return null;
+        //     }
 
-            var query = this._context.Tickets
-                .Include(t => t.AssignedTo)
-                .Include(t => t.TicketAttachments)
-                .Include(t => t.State)
-                .Include(t => t.TicketCategory)
-                .Include(t => t.TicketPriority)
-                .Include(t => t.TicketEscalations)
-                .Include(t => t.Member)
-                .ThenInclude(m => m.User)
-                .ThenInclude(u => u.Department)
-                .Where(t => t.Status != Lambda.Deleted);
+        //     var query = this._context.Tickets
+        //         .Include(t => t.AssignedTo)
+        //         .Include(t => t.TicketAttachments)
+        //         .Include(t => t.State)
+        //         .Include(t => t.TicketCategory)
+        //         .Include(t => t.TicketPriority)
+        //         .Include(t => t.TicketEscalations)
+        //         .Include(t => t.Member)
+        //         .ThenInclude(m => m.User)
+        //         .ThenInclude(u => u.Department)
+        //         .Where(t => t.Status != Lambda.Deleted);
+
+        //     if (!string.IsNullOrEmpty(ticketStatus))
+        //     {
+        //         var ticketStatusLower = ticketStatus.Trim().ToLower();
+        //         query = query.Where(t => t.State.Name.Trim().ToLower() == ticketStatusLower);
+        //     }
+
+        //     if (department != null)
+        //     {
+        //         query = query.Where(t => t.DepartmentId == department.Id);
+        //     }
+
+        //     if (!string.IsNullOrEmpty(@params.SearchTerm))
+        //     {
+        //         var searchTermLower = @params.SearchTerm.ToLower().Trim();
+        //         query = query.Where(t =>
+        //             t.Title.ToLower().Trim().Contains(searchTermLower) ||
+        //             t.Description.ToLower().Trim().Contains(searchTermLower) ||
+        //             t.State.Name.ToLower().Trim().Contains(searchTermLower) ||
+        //             t.Member.FirstName.ToLower().Trim().Contains(searchTermLower) ||
+        //             t.Member.LastName.ToLower().Trim().Contains(searchTermLower) ||
+        //             t.TicketCategory.Name.ToLower().Trim().Contains(searchTermLower)
+        //         );
+        //     }
+
+        //     if (!string.IsNullOrEmpty(@params.SortColum) && !string.IsNullOrEmpty(@params.SortDirection))
+        //     {
+        //         string sortExpression = @params.SortColum + " " + @params.SortDirection;
+        //         query = query.OrderBy(sortExpression);
+        //     }
+        //     else
+        //     {
+        //         query = query.OrderBy(t => t.CreatedDate);
+        //     }
+
+        //     return await query.Skip(@params.Skip).Take(@params.Take).ToListAsync();
+        // }
+        // // public async Task<int> GetTicketsTotalFilteredAsync(CursorParams @params, Department department = null, string ticketStatus = "")
+        // {
+        //     if (@params.Take <= 0)
+        //     {
+        //         return 0;
+        //     }
+
+        //     var query = this._context.Tickets.AsQueryable();
+
+        //     if (!string.IsNullOrEmpty(ticketStatus))
+        //     {
+        //         var ticketStatusLower = ticketStatus.Trim().ToLower();
+        //         query = query.Where(t => t.State.Name.Trim().ToLower() == ticketStatusLower);
+        //     }
+
+        //     if (department != null)
+        //     {
+        //         query = query.Where(t => t.DepartmentId == department.Id);
+        //     }
+
+        //     if (!string.IsNullOrEmpty(@params.SearchTerm))
+        //     {
+        //         var searchTermLower = @params.SearchTerm.ToLower().Trim();
+        //         query = query.Where(t =>
+        //             t.Title.ToLower().Trim().Contains(searchTermLower) ||
+        //             t.Description.ToLower().Trim().Contains(searchTermLower) ||
+        //             t.State.Name.ToLower().Trim().Contains(searchTermLower) ||
+        //             t.Member.FirstName.ToLower().Trim().Contains(searchTermLower) ||
+        //             t.Member.LastName.ToLower().Trim().Contains(searchTermLower) ||
+        //             t.TicketCategory.Name.ToLower().Trim().Contains(searchTermLower)
+        //         );
+        //     }
+
+        //     var records = await query.CountAsync();
+
+        //     return records;
+        // }
+
+         private IQueryable<Ticket> GetBaseQuery(CursorParams @params, Department department = null, string ticketStatus = "")
+        {
+            var query = _context.Tickets.Where(t => t.Status != Lambda.Deleted);
 
             if (!string.IsNullOrEmpty(ticketStatus))
             {
                 var ticketStatusLower = ticketStatus.Trim().ToLower();
-                query = query.Where(t => t.State.Name.Trim().ToLower() == ticketStatusLower);
+                query = query.Where(t => t.State.Name.ToLower() == ticketStatusLower);
             }
 
             if (department != null)
@@ -645,65 +723,82 @@ namespace UCS_CRM.Persistence.SQLRepositories
             {
                 var searchTermLower = @params.SearchTerm.ToLower().Trim();
                 query = query.Where(t =>
-                    t.Title.ToLower().Trim().Contains(searchTermLower) ||
-                    t.Description.ToLower().Trim().Contains(searchTermLower) ||
-                    t.State.Name.ToLower().Trim().Contains(searchTermLower) ||
-                    t.Member.FirstName.ToLower().Trim().Contains(searchTermLower) ||
-                    t.Member.LastName.ToLower().Trim().Contains(searchTermLower) ||
-                    t.TicketCategory.Name.ToLower().Trim().Contains(searchTermLower)
+                    EF.Functions.Like(t.Title.ToLower(), $"%{searchTermLower}%") ||
+                    EF.Functions.Like(t.Description.ToLower(), $"%{searchTermLower}%") ||
+                    EF.Functions.Like(t.State.Name.ToLower(), $"%{searchTermLower}%") ||
+                    EF.Functions.Like(t.Member.FirstName.ToLower(), $"%{searchTermLower}%") ||
+                    EF.Functions.Like(t.Member.LastName.ToLower(), $"%{searchTermLower}%") ||
+                    EF.Functions.Like(t.TicketCategory.Name.ToLower(), $"%{searchTermLower}%")
                 );
             }
 
-            if (!string.IsNullOrEmpty(@params.SortColum) && !string.IsNullOrEmpty(@params.SortDirection))
-            {
-                string sortExpression = @params.SortColum + " " + @params.SortDirection;
-                query = query.OrderBy(sortExpression);
-            }
-            else
-            {
-                query = query.OrderBy(t => t.CreatedDate);
-            }
-
-            return await query.Skip(@params.Skip).Take(@params.Take).ToListAsync();
+            return query;
         }
-        public async Task<int> GetTicketsTotalFilteredAsync(CursorParams @params, Department department = null, string ticketStatus = "")
+
+       public async Task<List<Ticket>> GetTickets(CursorParams @params, Department department = null, string ticketStatus = "")
+    {
+        if (@params.Take <= 0)
         {
-            if (@params.Take <= 0)
-            {
-                return 0;
-            }
-
-            var query = this._context.Tickets.AsQueryable();
-
-            if (!string.IsNullOrEmpty(ticketStatus))
-            {
-                var ticketStatusLower = ticketStatus.Trim().ToLower();
-                query = query.Where(t => t.State.Name.Trim().ToLower() == ticketStatusLower);
-            }
-
-            if (department != null)
-            {
-                query = query.Where(t => t.DepartmentId == department.Id);
-            }
-
-            if (!string.IsNullOrEmpty(@params.SearchTerm))
-            {
-                var searchTermLower = @params.SearchTerm.ToLower().Trim();
-                query = query.Where(t =>
-                    t.Title.ToLower().Trim().Contains(searchTermLower) ||
-                    t.Description.ToLower().Trim().Contains(searchTermLower) ||
-                    t.State.Name.ToLower().Trim().Contains(searchTermLower) ||
-                    t.Member.FirstName.ToLower().Trim().Contains(searchTermLower) ||
-                    t.Member.LastName.ToLower().Trim().Contains(searchTermLower) ||
-                    t.TicketCategory.Name.ToLower().Trim().Contains(searchTermLower)
-                );
-            }
-
-            var records = await query.CountAsync();
-
-            return records;
+            return new List<Ticket>();
         }
 
+        var query = GetBaseQuery(@params, department, ticketStatus);
+
+        // Apply sorting
+        if (!string.IsNullOrEmpty(@params.SortColum) && !string.IsNullOrEmpty(@params.SortDirection))
+        {
+            query = query.ApplySorting(@params.SortColum, @params.SortDirection);
+        }
+        else
+        {
+            query = query.OrderBy(t => t.CreatedDate);
+        }
+
+        // Include necessary related entities
+        query = query
+            .Include(t => t.TicketEscalations)
+            .Include(t => t.Member)
+            .Include(t => t.TicketPriority)
+            .Include(t => t.TicketCategory)
+            .Include(t => t.State)
+            .Include(t => t.AssignedTo);
+
+        // Apply pagination and select fields
+        var result = await query
+            .Skip(@params.Skip)
+            .Take(@params.Take)
+            .Select(t => new Ticket
+            {
+                Id = t.Id,
+                TicketNumber = t.TicketNumber,
+                Title = t.Title,
+                Member = new UCS_CRM.Core.Models.Member 
+                { 
+                    AccountNumber = t.Member.AccountNumber,
+                    Branch = t.Member.Branch
+                },
+                TicketPriority = t.TicketPriority,
+                TicketCategory = t.TicketCategory,
+                State = t.State,
+                CreatedDate = t.CreatedDate, // Added this as it might be used for the 'period' in your DataTable
+                AssignedTo = t.AssignedTo != null ? new ApplicationUser { FullName = t.AssignedTo.FullName } : null,
+                TicketEscalations = t.TicketEscalations.Select(te => new TicketEscalation { Id = te.Id, Status = te.Status }).ToList()
+            })
+            .ToListAsync();
+
+        return result;
+    }
+
+    public async Task<int> GetTicketsTotalFilteredAsync(CursorParams @params, Department department = null, string ticketStatus = "")
+    {
+        if (@params.Take <= 0)
+        {
+            return 0;
+        }
+
+        var query = GetBaseQuery(@params, department, ticketStatus);
+        return await query.CountAsync();
+    }
         public async Task<List<Ticket>> GetMemberEngagementOfficerReport(DateTime? startDate, DateTime? endDate, string branch = "", int stateId = 0, int categoryId = 0, int departmentId = 0)
         {
             List<Ticket> MemberTicketList = new();

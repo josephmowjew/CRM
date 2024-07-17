@@ -58,7 +58,26 @@ namespace UCS_CRM.Core.Models
 
         [NotMapped]
         public String FullName
-        {
+        {   
+
+            set
+            {
+                if (!string.IsNullOrEmpty(value))
+                {
+                    var names = value.Split(' ');
+                    if (names.Length > 1)
+                    {
+                        FirstName = names[0];
+                        LastName = string.Join(" ", names.Skip(1));
+                    }
+                    else
+                    {
+                        FirstName = value;
+                        LastName = string.Empty;
+                    }
+                }
+            }
+          
             get
             {
                 return FirstName + " " + LastName;
