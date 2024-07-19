@@ -15,6 +15,9 @@ using UCS_CRM.Core.ViewModels;
 using UCS_CRM.Data;
 using UCS_CRM.Models;
 using UCS_CRM.Persistence.Interfaces;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.Cookies;
 
 namespace UCS_CRM.Controllers
 {
@@ -36,7 +39,8 @@ namespace UCS_CRM.Controllers
         public IConfiguration _configuration { get; }
         private readonly HangfireJobEnqueuer _jobEnqueuer;
 
-        public AuthController(UserManager<ApplicationUser> userManager, SignInManager<ApplicationUser> signInManager, IUserRepository userRepository, ApplicationDbContext context,
+
+       public AuthController(UserManager<ApplicationUser> userManager, SignInManager<ApplicationUser> signInManager, IUserRepository userRepository, ApplicationDbContext context,
             IMemberRepository memberRepository, IUnitOfWork unitOfWork, IEmailService emailService, HttpClient httpClient, IConfiguration config, IDepartmentRepository departmentRepository, IBranchRepository branchRepository, IConfiguration configuration, HangfireJobEnqueuer hangfireJobEnqueuer)
         {
             _userManager = userManager;
@@ -58,113 +62,235 @@ namespace UCS_CRM.Controllers
         {
             if (_signInManager.IsSignedIn(User))
             {
-                TempData["response"] = "";
-
-                var findUserDb = await this._userRepository.GetUserWithRole(User.Identity.Name);
-
-                if (findUserDb != null)
-                {
-                    var roles = _userManager.GetRolesAsync(findUserDb).Result.FirstOrDefault();
-
-
-                    if (roles.Equals("Member", StringComparison.OrdinalIgnoreCase))
-                    {
-                        return RedirectToAction("Index", "Home", new { Area = "Member" });
-                    }
-                    if (findUserDb.Department.Name.ToLower().Contains("Executive suite", StringComparison.OrdinalIgnoreCase))
-                    {
-                        return RedirectToAction("Index", "Home", new { Area = "SeniorManager" });
-                    }
-
-                    if (roles.Contains("Administrator", StringComparison.OrdinalIgnoreCase))
-                    {
-                        return RedirectToAction("Index", "Home", new { Area = "Admin" });
-                    }
-                    if (roles.Contains("Clerk", StringComparison.OrdinalIgnoreCase) || roles.Contains("Member Engagements officer", StringComparison.OrdinalIgnoreCase))
-                    {
-                        return RedirectToAction("Index", "Home", new { Area = "officer" });
-                    }
-                    if (roles.Contains("Teller", StringComparison.OrdinalIgnoreCase))
-                    {
-                        return RedirectToAction("Index", "Home", new { Area = "Teller" });
-                    }
-                    if (roles.Contains("Manager", StringComparison.OrdinalIgnoreCase))
-                    {
-                        return RedirectToAction("Index", "Home", new { Area = "Manager" });
-                    }
-                    if (roles.Contains("Call center officer", StringComparison.OrdinalIgnoreCase))
-                    {
-                        return RedirectToAction("Index", "Home", new { Area = "CallCenterOfficer" });
-                    }
-
-
-                    else
-                    {
-
-                        return RedirectToAction("Index", "Home", new { Area = "officer" });
-                    }
-                }
-               
+                return await RedirectLoggedInUser(User.Identity.Name);
             }
-
             return View();
         }
 
         [HttpPost]
+        [AllowAnonymous]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> ConfirmCode(ConfirmPin confirmPin) 
+        public async Task<IActionResult> Create(LoginViewModel loginModel)
         {
+            if (!ModelState.IsValid)
+                return View("Create", loginModel);
+
+            var user = await _userManager.FindByEmailAsync(loginModel.Email);
+            if (user == null)
+            {
+                ModelState.AddModelError(string.Empty, "Invalid login credentials");
+                return View("Create", loginModel);
+            }
+
+            if (user.LastPasswordChangedDate < DateTime.Now.AddDays(-90))
+            {
+                var token = await _userManager.GeneratePasswordResetTokenAsync(user);
+                return RedirectToAction("ResetPassword", new { token, email = user.Email });
+            }
+
+             if (!user.EmailConfirmed)
+                {
+                    // Generate and send OTP
+                    int pin = _memberRepository.RandomNumber();
+                    user.Pin = pin;
+                    await _userManager.UpdateAsync(user);
+
+                    string userNameBody = $"Your confirmation code is <b>{pin}</b> <br /> Enter this to login in";
+                    _jobEnqueuer.EnqueueEmailJob(user.Email, "Login Details", userNameBody);
+
+                    TempData["response"] = $"Check your email for the confirmation code";
+                    return RedirectToAction("ConfirmAccount", "Auth", new { email = loginModel.Email });
+                }
+
+            var result = await _signInManager.PasswordSignInAsync(loginModel.Email, loginModel.Password, loginModel.RememberMe, lockoutOnFailure: false);
+            if (result.Succeeded)
+            {
+                
+
+              
+                    // Generate and send OTP
+                    int pin = _memberRepository.RandomNumber();
+                    user.Pin = pin;
+                    await _userManager.UpdateAsync(user);
+
+                    string userNameBody = $"Your confirmation code is <b>{pin}</b> <br /> Enter this to login in";
+                    _jobEnqueuer.EnqueueEmailJob(user.Email, "Login Details", userNameBody);
+
+                    TempData["response"] = $"Check your email for the confirmation code";
+                    return RedirectToAction("ConfirmAccount", "Auth", new { email = loginModel.Email });
+                
+
+                // User is authenticated and email is confirmed
+                HttpContext.Session.SetString("LastUserActivity",DateTime.Now.ToString());
+                return await RedirectLoggedInUser(user.Email);
+            }
+
+            ModelState.AddModelError(string.Empty, "Invalid login credentials");
+            return View("Create", loginModel);
+        }
+
+       [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ConfirmAccount(ConfirmPin confirmPin)
+        {
+            var user = await _userManager.FindByEmailAsync(confirmPin.Email);
+            if (user == null)
+            {
+                TempData["errorResponse"] = "No account was found to activate";
+                return View();
+            }
+
+            if (user.Pin != confirmPin.Pin)
+            {
+                ModelState.AddModelError("", "Invalid confirmation code");
+                return View(confirmPin);
+            }
+
+                user.EmailConfirmed = true;
+                user.Pin = 0; // Reset the pin after successful confirmation
+                await _userManager.UpdateAsync(user);
+
+                // Sign out any existing authentication
+                await _signInManager.SignOutAsync();
+
+                // Sign in the user and create the authentication cookie
+                await _signInManager.SignInAsync(user, isPersistent: false);
+
+                // Generate claims for the user
+                var claims = new List<Claim>
+                {
+                    new Claim(ClaimTypes.NameIdentifier, user.Id),
+                    new Claim(ClaimTypes.Name, user.UserName),
+                    new Claim(ClaimTypes.Email, user.Email)
+                };
+
+
+                   // Add roles to claims
+                var userRoles = await _userManager.GetRolesAsync(user);
+                foreach (var role in userRoles)
+                {
+                    claims.Add(new Claim(ClaimTypes.Role, role));
+                }
+
+                // Create ClaimsIdentity
+                var claimsIdentity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
+
+                // Create ClaimsPrincipal
+                var claimsPrincipal = new ClaimsPrincipal(claimsIdentity);
+
+                // Sign in the user and create the authentication cookie
+                await HttpContext.SignInAsync(
+                    CookieAuthenticationDefaults.AuthenticationScheme,
+                    claimsPrincipal,
+                    new AuthenticationProperties 
+                    { 
+                        IsPersistent = false,
+                        ExpiresUtc = DateTime.Now.AddMinutes(2) // Set an expiration time as needed
+                    }
+                );
+
+                HttpContext.Session.SetString("LastUserActivity", DateTime.Now.ToString());
+                TempData["response"] = "Your account has been activated successfully";
+
+            // Redirect to the appropriate area
+            return await RedirectLoggedInUser(user.Email);
+        }
+
+        private async Task<IActionResult> RedirectLoggedInUser(string email)
+        {
+            var user = await _userRepository.GetUserWithRole(email);
+
+            TempData["response"] = "";
+            if (user == null)
+            {
+                
+                return RedirectToAction("Index", "Home");
+            }
+
+            var roles = await _userManager.GetRolesAsync(user);
+            var role = roles.FirstOrDefault();
+
+            if (user.Department?.Name.Contains("Executive suite", StringComparison.OrdinalIgnoreCase) == true)
+            {
+               
+                return RedirectToAction("Index", "Home", new { Area = "SeniorManager" });
+            }
+
+            switch (role?.ToLower())
+            {
+                case "member":
+                    return RedirectToAction("Index", "Home", new { Area = "Member" });
+                case "administrator":
+                    return RedirectToAction("Index", "Home", new { Area = "Admin" });
+                case "clerk":
+                case "member engagements officer":
+                    return RedirectToAction("Index", "Home", new { Area = "Officer" });
+                case "teller":
+                    return RedirectToAction("Index", "Home", new { Area = "Teller" });
+                case "manager":
+                    return RedirectToAction("Index", "Home", new { Area = "Manager" });
+                case "call center officer":
+                    return RedirectToAction("Index", "Home", new { Area = "CallCenterOfficer" });
+                default:
+                    return RedirectToAction("Index", "Home", new { Area = "Officer" });
+            }
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ConfirmCode(ConfirmPin confirmPin)
+        {
+            if (!ModelState.IsValid)
+            {
+                return View("MFA", confirmPin);
+            }
+
             var userClaims = (ClaimsIdentity)User.Identity;
+            var claimsIdentifier = userClaims.FindFirst(ClaimTypes.NameIdentifier);
+            
+            if (claimsIdentifier == null)
+            {
+                return RedirectToAction("Create", "Auth");
+            }
 
-            var claimsIdentitifier = userClaims.FindFirst(ClaimTypes.NameIdentifier);
-
-            var userId = claimsIdentitifier.Value;
-
-            //var findUserDb = await this._userRepository.GetUserWithRole(userId);
-
-            var confirmedUser= await this._userRepository.ConfirmUserPin(userId, confirmPin.Pin);
+            var userId = claimsIdentifier.Value;
+            var confirmedUser = await this._userRepository.ConfirmUserPin(userId, confirmPin.Pin);
 
             if (confirmedUser != null)
             {
-                var roles = _userManager.GetRolesAsync(confirmedUser).Result.FirstOrDefault();
+                var roles = await _userManager.GetRolesAsync(confirmedUser);
+                var role = roles.FirstOrDefault();
 
                 confirmedUser.Pin = 0;
-
-
                 await this._context.SaveChangesAsync();
 
-                if (roles.Contains("Administrator", StringComparison.OrdinalIgnoreCase))
-                {
-                    return RedirectToAction("Index", "Home", new { Area = "Admin" });
-                }
-                if (roles.Contains("Clerk", StringComparison.OrdinalIgnoreCase) || roles.Contains("Member Engagements officer", StringComparison.OrdinalIgnoreCase))
-                {
-                    return RedirectToAction("Index", "Home", new { Area = "officer" });
-                }
-                 if (roles.Contains("Teller", StringComparison.OrdinalIgnoreCase))
-                {
-                    return RedirectToAction("Index", "Home", new { Area = "Teller" });
-                }
-                if (roles.Contains("Manager", StringComparison.OrdinalIgnoreCase))
-                {
-                    return RedirectToAction("Index", "Home", new { Area = "Manager" });
-                }
-                if (roles.Contains("Senior Manager", StringComparison.OrdinalIgnoreCase))
-                {
-                    return RedirectToAction("Index", "Home", new { Area = "SeniorManager" });
-                }
-                if (roles.Contains("Member", StringComparison.OrdinalIgnoreCase))
-                {
-                    return RedirectToAction("Index", "Home", new { Area = "Member" });
-                }
-                if (roles.Contains("Call center officer", StringComparison.OrdinalIgnoreCase))
-                {
-                    return RedirectToAction("Index", "Home", new { Area = "CallCenterOfficer" });
-                }
-                else
-                {
+                // Set the last activity time for the idle timeout feature
+                HttpContext.Session.SetString("LastUserActivity",DateTime.Now.ToString());
 
-                    return RedirectToAction("Index", "Home", new { Area = "officer" });
+                if (string.IsNullOrEmpty(role))
+                {
+                    return RedirectToAction("Index", "Home", new { Area = "Officer" });
+                }
+
+                switch (role.ToLower())
+                {
+                    case "administrator":
+                        return RedirectToAction("Index", "Home", new { Area = "Admin" });
+                    case "clerk":
+                    case "member engagements officer":
+                        return RedirectToAction("Index", "Home", new { Area = "Officer" });
+                    case "teller":
+                        return RedirectToAction("Index", "Home", new { Area = "Teller" });
+                    case "manager":
+                        return RedirectToAction("Index", "Home", new { Area = "Manager" });
+                    case "senior manager":
+                        return RedirectToAction("Index", "Home", new { Area = "SeniorManager" });
+                    case "member":
+                        return RedirectToAction("Index", "Home", new { Area = "Member" });
+                    case "call center officer":
+                        return RedirectToAction("Index", "Home", new { Area = "CallCenterOfficer" });
+                    default:
+                        return RedirectToAction("Index", "Home", new { Area = "Officer" });
                 }
             }
             else
@@ -172,10 +298,7 @@ namespace UCS_CRM.Controllers
                 ModelState.AddModelError("", "Wrong pin");
                 return View("MFA", confirmPin);
             }
-
-          
-        }
-
+        }        
         public ActionResult MFA()
         {
             return View();
@@ -190,148 +313,14 @@ namespace UCS_CRM.Controllers
             return View();
         }
 
-        [AllowAnonymous]
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> ConfirmAccount(ConfirmPin confirmPin)
+         public async Task<IActionResult> Logout(string returnUrl = null)
         {
-            //find the account with this pin
-
-            ApplicationUser userDb = await this._userRepository.FindUserByPin(confirmPin.Pin,confirmPin.Email);
-
-            if(userDb !=  null)
-            {
-                this._userRepository.ConfirmUserAccount(userDb);
-
-                //save changes to the database
-
-                await this._unitOfWork.SaveToDataStore();
-
-                TempData["response"] = "Your account has been activated successfully";
-
-                return RedirectToActionPermanent("Create");
-            }
-
-            TempData["errorResponse"] = "no account was found to activate";
-
-            return View();
-            
-        }
-        [AllowAnonymous]
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create(LoginViewModel loginModel)
-        {
-            if (!ModelState.IsValid)
-                return View("Create", loginModel);
-
-            // Retrieve the user with the provided email and roles
-           
-
-            var initialSignInResult = await _signInManager.PasswordSignInAsync(loginModel.Email, loginModel.Password, loginModel.RememberMe, lockoutOnFailure: false);
-
-           
-            if(initialSignInResult.Succeeded)
-            {
-                //logout the user
-
-                await _signInManager.SignOutAsync();
-
-                 TempData["errorResponse"] = "";
-
-                var findUserDb = await _userRepository.GetUserWithRole(loginModel.Email, false);
-
-
-
-                // Check if the user needs to reset their password
-                if (findUserDb.LastPasswordChangedDate < DateTime.Now)
-                {
-                    var token = await _userManager.GeneratePasswordResetTokenAsync(findUserDb);
-                    return RedirectToActionPermanent("ResetPassword", new { token, email = findUserDb.Email });
-                }
-
-                // Attempt to sign in the user
-                var result = await _signInManager.PasswordSignInAsync(loginModel.Email, loginModel.Password, loginModel.RememberMe, lockoutOnFailure: false);
-
-                if (result.Succeeded)
-                {
-                    // Update the user's login details
-                    int pin = _memberRepository.RandomNumber();
-                    var user = await _userManager.FindByNameAsync(loginModel.Email);
-                    var roles = await _userManager.GetRolesAsync(user);
-
-                    if (user != null)
-                    {
-                        user.LastLogin = DateTime.Now;
-                        user.Pin = pin;
-                        user.EmailConfirmed = false;
-                    }
-
-                    await _context.SaveChangesAsync();
-
-                    string userNameBody = $"Your confirmation code is <b>{pin}</b> <br /> Enter this to login in";
-                     this._jobEnqueuer.EnqueueEmailJob(user.Email, "Login Details", userNameBody);
-                   
-
-
-                    TempData["response"] = $"Check your email for the confirmation code";
-
-                  
-
-
-                    return RedirectToAction("ConfirmAccount", "Auth", new { email = loginModel.Email });
-                }
-            }
-
-            var userFromDb = await _userRepository.GetUserWithRole(loginModel.Email, false);
-
-            if (userFromDb == null)
-            {
-                ModelState.AddModelError(string.Empty, "Invalid login credentials");
-                return View("Create", loginModel);
-            }
-
-            // Check if the user's email is confirmed
-            if (!userFromDb.EmailConfirmed)
-            {
-                // Send a one-time pin (OTP) to the user's email
-                string userNameBody = $"Here is the One time Pin (OTP) for your account on UCS: <strong>{userFromDb.Pin}</strong> <br />";
-
-                //throw this process to the background 
-               
-                this._jobEnqueuer.EnqueueEmailJob(loginModel.Email, "Login Details", userNameBody);
-               
-
-
-                TempData["response"] = $"Check your email for the confirmation code";
-
-               
-               
-                return RedirectToActionPermanent("ConfirmAccount", new { email = userFromDb.Email });
-            }
-            // Invalid login credentials
-            ModelState.AddModelError(string.Empty, "Invalid login credentials");
-            return View("Create", loginModel);
-        }
-
-        public async Task<IActionResult> Logout(string returnUrl = null)
-        {
-            //string hostPath = Configuration.GetSection("HostingSettings")["Host"];
             await _signInManager.SignOutAsync();
-
-            //if (returnUrl != null)
-            //{
-            //    returnUrl = hostPath + returnUrl;
-            //    //redirect to a specifc url if one was provided
-            //    return LocalRedirect(returnUrl);
-            //}
-
-            //
-            //return RedirectToAction("LogOut", "Home");
+            HttpContext.Session.Clear();
             TempData["response"] = "";
-           
-            return Redirect("/");//
+            return Redirect("/");
         }
+
 
         [HttpGet]
         public IActionResult Register()

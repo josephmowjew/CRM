@@ -13,13 +13,10 @@ using UCS_CRM.Persistence.SQLRepositories;
 using Hangfire;
 using Hangfire.MemoryStorage;
 using UCS_CRM.Areas.Admin.Controllers;
+using Microsoft.AspNetCore.Authentication;
+
 
 var builder = WebApplication.CreateBuilder(args);
-
-// Add services to the container.
-//var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
-//builder.Services.AddDbContext<ApplicationDbContext>(options =>
-//    options.UseSqlServer(connectionString));
 
 var provider = builder.Configuration["ServerSettings:ServerName"];
 string mySqlConnectionStr = builder.Configuration.GetConnectionString("MySqlConnection");
@@ -29,14 +26,8 @@ options => _ = provider switch
 {
     "MySQL" => options.UseMySql(mySqlConnectionStr, ServerVersion.AutoDetect(mySqlConnectionStr),
  b => b.SchemaBehavior(MySqlSchemaBehavior.Ignore)),
-
-    // "SqlServer" => options.UseSqlServer(
-    //     Configuration.GetConnectionString("DefaultConnection")),
-
     _ => throw new Exception($"Unsupported provider: {provider}")
 });
-
-//builder.Services.AddDefaultIdentity<ApplicationUser>(options => options.SignIn.RequireConfirmedAccount = true).AddEntityFrameworkStores<ApplicationDbContext>();
 
 builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 
@@ -44,11 +35,31 @@ builder.Services.AddIdentity<ApplicationUser,Role>(options =>
 {
     options.SignIn.RequireConfirmedEmail = true;
     options.Password.RequireNonAlphanumeric = true;
-    
-   
 })  .AddEntityFrameworkStores<ApplicationDbContext>()
     .AddDefaultUI()
     .AddDefaultTokenProviders();
+
+builder.Services.AddAuthentication(options =>
+{
+    options.DefaultScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+    options.DefaultSignInScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+    options.DefaultAuthenticateScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+})
+.AddCookie(options =>
+{
+    options.ExpireTimeSpan = TimeSpan.FromMinutes(2);
+    options.SlidingExpiration = true;
+    options.LoginPath = "/Auth/Create";
+    options.LogoutPath = "/Auth/Logout";
+    options.AccessDeniedPath = "/Auth/AccessDenied";
+});
+
+builder.Services.AddSession(options =>
+{
+    options.IdleTimeout = TimeSpan.FromMinutes(2);
+    options.Cookie.HttpOnly = true;
+    options.Cookie.IsEssential = true;
+});
 
 builder.Services.AddHangfire(config =>
            config.SetDataCompatibilityLevel(CompatibilityLevel.Version_170)
@@ -58,8 +69,9 @@ builder.Services.AddHangfire(config =>
 
 builder.Services.AddHangfireServer();
 
-//configure services
 builder.Services.AddControllersWithViews().AddNewtonsoftJson(x => x.SerializerSettings.ReferenceLoopHandling = Newtonsoft.Json.ReferenceLoopHandling.Ignore);
+builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
+
 builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 builder.Services.AddScoped<IAccountTypeRepository, AccountTypeRepository>();
 builder.Services.AddScoped<ITicketCategoryRepository, TicketCategoryRepository>();
@@ -89,10 +101,8 @@ builder.Services.AddSingleton<IErrorLogServiceFactory, ErrorLogServiceFactory>()
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddHttpClient(); 
 
-
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
     app.UseMigrationsEndPoint();
@@ -100,7 +110,6 @@ if (app.Environment.IsDevelopment())
 else
 {
     app.UseExceptionHandler("/Home/Error");
-    // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
     app.UseHsts();
 }
 
@@ -109,15 +118,17 @@ app.UseStaticFiles();
 
 app.UseRouting();
 
+app.UseAuthentication();
 app.UseAuthorization();
+app.UseSession();
+app.UseUserInactivity();
+
 app.MapControllerRoute(
    name: "areas",
-            pattern: "{area:exists}/{controller=Home}/{action=Index}/{id?}");
+   pattern: "{area:exists}/{controller=Home}/{action=Index}/{id?}");
 app.MapControllerRoute(
     name: "default",
-    //pattern: "{controller=Home}/{action=Index}/{id?}");
     pattern: "{controller=Auth}/{action=Create}/{id?}");
-
 
 app.MapRazorPages();
 
@@ -127,14 +138,47 @@ using var scope = app.Services.CreateScope();
 ITicketRepository ticket = scope.ServiceProvider.GetRequiredService<ITicketRepository>();
 IFintechMemberService fintechMemberService = scope.ServiceProvider.GetRequiredService<IFintechMemberService>();
 
-
 RecurringJob.AddOrUpdate("SyncFintechMemberRecords", () => fintechMemberService.SyncFintechMembersWithLocalDataStore(), Cron.HourInterval(1));
 RecurringJob.AddOrUpdate(() => ticket.UnAssignedTickets(), Cron.HourInterval(1));
 RecurringJob.AddOrUpdate(() => ticket.SendTicketReminders(), Cron.HourInterval(1));
 
-//BackgroundJob.Schedule(() => ticket.EscalatedTickets(), TimeSpan.FromHours(1));
-//RecurringJob.AddOrUpdate("TicketReminder", () => ticket.SendTicketReminders(), Cron.MinuteInterval(10));
-//RecurringJob.AddOrUpdate("EscalatedTickets", () => ticket.SendEscalatedTicketsReminder(), Cron.MinuteInterval(10));
-
-
 app.Run();
+
+public class UserInactivityMiddleware
+{
+    private readonly RequestDelegate _next;
+
+    public UserInactivityMiddleware(RequestDelegate next)
+    {
+        _next = next;
+    }
+
+    public async Task InvokeAsync(HttpContext context)
+    {
+        if (context.User.Identity.IsAuthenticated)
+        {
+            var lastActivity = context.Session.GetString("LastUserActivity");
+            var currentTime = DateTime.Now;
+
+            if (string.IsNullOrEmpty(lastActivity) || 
+                (currentTime - DateTime.Parse(lastActivity)).TotalMinutes > 2)
+            {
+                await context.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+                context.Response.Redirect("/Auth/Create");
+                return;
+            }
+
+            context.Session.SetString("LastUserActivity", currentTime.ToString());
+        }
+
+        await _next(context);
+    }
+}
+
+public static class UserInactivityMiddlewareExtensions
+{
+    public static IApplicationBuilder UseUserInactivity(this IApplicationBuilder builder)
+    {
+        return builder.UseMiddleware<UserInactivityMiddleware>();
+    }
+}
