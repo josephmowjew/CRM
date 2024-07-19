@@ -151,7 +151,7 @@ namespace UCS_CRM.Persistence.SQLRepositories
             
         }
 
-        public async Task<List<Member>?> GetMembers(CursorParams @params)
+    public async Task<List<Member>?> GetMembers(CursorParams @params)
     {
         if (@params.Take <= 0) return null;
 
@@ -195,8 +195,64 @@ namespace UCS_CRM.Persistence.SQLRepositories
             query = query.OrderBy(m => m.Id);
         }
 
-        return await query.Skip(@params.Skip).Take(@params.Take).ToListAsync();
-    }
+        
+            return await query.Skip(@params.Skip).Take(@params.Take).ToListAsync();
+           
+        }
+
+        public async Task<List<Member>?> GetMembersJson(CursorParams @params)
+        {
+            if (@params.Take <= 0) return null;
+
+            IQueryable<Member> query = _context.Members
+                .Include(m => m.MemberAccounts)
+                .Include(m => m.User)
+                .Where(m => m.Status != "Deleted");
+
+            if (!string.IsNullOrEmpty(@params.SearchTerm))
+            {
+                var searchTerms = @params.SearchTerm.ToLower().Trim()
+                    .Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+
+                if (searchTerms.Length == 2)
+                {
+                    var firstNameTerm = searchTerms[0];
+                    var lastNameTerm = searchTerms[1];
+
+                    query = query.Where(m => 
+                        (m.FirstName.ToLower().Contains(firstNameTerm) && m.LastName.ToLower().Contains(lastNameTerm)) ||
+                        (m.FirstName.ToLower().Contains(lastNameTerm) && m.LastName.ToLower().Contains(firstNameTerm))
+                    );
+                }
+                else
+                {
+                    foreach (var term in searchTerms)
+                    {
+                        query = query.Where(m => m.FirstName.ToLower().Contains(term)
+                            || m.LastName.ToLower().Contains(term)
+                            || m.AccountNumber.ToLower().Contains(term));
+                    }
+                }
+            }
+
+            if (!string.IsNullOrEmpty(@params.SortColum) && !string.IsNullOrEmpty(@params.SortDirection))
+            {
+                query = query.OrderBy($"{@params.SortColum} {@params.SortDirection}");
+            }
+            else
+            {
+                query = query.OrderBy(m => m.Id);
+            }
+
+                if (!string.IsNullOrEmpty(@params.SearchTerm))
+                {
+                    return await query.ToListAsync();
+                }
+                else
+                {
+                    return await query.Skip(@params.Skip).Take(@params.Take).ToListAsync();
+                }    
+            }
 
         public async Task<int> TotalFilteredMembersCount(CursorParams @params)
         {

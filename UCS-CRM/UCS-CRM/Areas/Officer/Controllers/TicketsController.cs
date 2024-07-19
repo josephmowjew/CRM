@@ -786,7 +786,7 @@ namespace UCS_CRM.Areas.Clerk.Controllers
             var skip = (page - 1) * pageSize;
 
 
-            var members = await this._memberRepository.GetMembers(new CursorParams() { Take = pageSize, Skip = skip, SearchTerm = searchValue });
+            var members = await this._memberRepository.GetMembersJson(new CursorParams() { Take = pageSize, Skip = skip, SearchTerm = searchValue });
 
             List<DynamicSelect> dynamicSelect = new List<DynamicSelect>();
 

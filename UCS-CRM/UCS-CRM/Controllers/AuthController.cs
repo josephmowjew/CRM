@@ -93,6 +93,7 @@ namespace UCS_CRM.Controllers
                     // Generate and send OTP
                     int pin = _memberRepository.RandomNumber();
                     user.Pin = pin;
+                    user.UpdatedDate = DateTime.Now;
                     await _userManager.UpdateAsync(user);
 
                     string userNameBody = $"Your confirmation code is <b>{pin}</b> <br /> Enter this to login in";
@@ -107,17 +108,18 @@ namespace UCS_CRM.Controllers
             {
                 
 
-              
-                    // Generate and send OTP
-                    int pin = _memberRepository.RandomNumber();
-                    user.Pin = pin;
-                    await _userManager.UpdateAsync(user);
+            
+                // Generate and send OTP
+                int pin = _memberRepository.RandomNumber();
+                user.Pin = pin;
+                user.UpdatedDate = DateTime.Now;
+                await _userManager.UpdateAsync(user);
 
-                    string userNameBody = $"Your confirmation code is <b>{pin}</b> <br /> Enter this to login in";
-                    _jobEnqueuer.EnqueueEmailJob(user.Email, "Login Details", userNameBody);
+                string userNameBody = $"Your confirmation code is <b>{pin}</b> <br /> Enter this to login in";
+                _jobEnqueuer.EnqueueEmailJob(user.Email, "Login Details", userNameBody);
 
-                    TempData["response"] = $"Check your email for the confirmation code";
-                    return RedirectToAction("ConfirmAccount", "Auth", new { email = loginModel.Email });
+                TempData["response"] = $"Check your email for the confirmation code";
+                return RedirectToAction("ConfirmAccount", "Auth", new { email = loginModel.Email });
                 
 
                 // User is authenticated and email is confirmed
@@ -133,6 +135,10 @@ namespace UCS_CRM.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> ConfirmAccount(ConfirmPin confirmPin)
         {
+            //clear temp messages 
+            TempData["response"] = "";
+            TempData["errorResponse"] = "";
+            
             var user = await _userManager.FindByEmailAsync(confirmPin.Email);
             if (user == null)
             {
@@ -144,6 +150,15 @@ namespace UCS_CRM.Controllers
             {
                 ModelState.AddModelError("", "Invalid confirmation code");
                 return View(confirmPin);
+            }
+
+            if (user.UpdatedDate <= DateTime.Now.AddMinutes(-5))
+            {
+              
+               
+                TempData["error"] = "Confirmation code has expired";
+
+                return RedirectToAction("Create", "Auth");
             }
 
                 user.EmailConfirmed = true;
