@@ -8,6 +8,16 @@ namespace UCS_CRM.Core.ViewModels
 {
     public class UserViewModel : ApplicationUser
     {
+        [EmailAddress]
+        [Display(Name = "Secondary Email")]
+        public string? SecondaryEmail { get; set; }
+        public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
+        {
+            if (SecondaryEmail != null && SecondaryEmail == Email)
+            {
+                yield return new ValidationResult("Secondary email cannot be the same as the primary email.", new[] { nameof(SecondaryEmail) });
+            }
+        }
         TextInfo myTI = new CultureInfo("en-US", false).TextInfo;
         [Display(Name = "Role Name")]
         public string RoleName { get; set; }

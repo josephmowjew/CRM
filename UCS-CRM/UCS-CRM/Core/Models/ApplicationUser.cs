@@ -14,6 +14,18 @@ namespace UCS_CRM.Core.Models
             Branches = new List<Branch>();
             Escalations = new List<TicketEscalation>();
         }
+
+        [EmailAddress]
+        [Display(Name = "Secondary Email")]
+        [StringLength(maximumLength: 100, MinimumLength = 5)]
+        public string? SecondaryEmail { get; set; }
+        public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
+        {
+            if (SecondaryEmail != null && SecondaryEmail == Email)
+            {
+                yield return new ValidationResult("Secondary email cannot be the same as the primary email.", new[] { nameof(SecondaryEmail) });
+            }
+        }
         [Required]
         [StringLength(maximumLength: 70, MinimumLength = 2)]
         [Display(Name = "First Name")]

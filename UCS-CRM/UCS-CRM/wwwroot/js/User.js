@@ -26,6 +26,7 @@
         var lastName = $("#create_user_modal input[name ='LastName']").val()
         var gender = $("#create_user_modal select[name ='Gender']").val()
         var email = $("#create_user_modal input[name ='Email']").val()
+        var secondaryemail = $("#create_user_modal input[name ='SecondaryEmail']").val()
         var contact = $("#create_user_modal input[name ='PhoneNumber']").val()
         var departmentId = $("#create_user_modal select[name ='DepartmentId']").val()
         var role = $("#create_user_modal select[name ='RoleName']").val()
@@ -42,7 +43,8 @@
             PhoneNumber: contact,
             RoleName: role,
             DepartmentId: departmentId,
-            BranchId: branchId
+            BranchId: branchId,
+            SecondaryEmail: secondaryemail
         }
 
 
@@ -254,6 +256,7 @@ function EditForm(id, area = "") {
         $("#edit_user_modal input[name ='LastName']").val(data.lastName)
         $("#edit_user_modal select[name ='Gender']").val(data.gender)
         $("#edit_user_modal input[name ='Email']").val(data.email)
+        $("#edit_user_modal input[name ='SecondaryEmail']").val(data.secondaryemail)
         $("#edit_user_modal input[name ='PhoneNumber']").val(data.phoneNumber)
         $("#edit_user_modal input[name ='DateOfBirth']").val(date)
         $("#edit_user_modal select[name ='RoleName']").val(data.roleName)
@@ -398,6 +401,7 @@ function upDateUser() {
     var lastName = $("#edit_user_modal input[name ='LastName']").val()
     var gender = $("#edit_user_modal select[name ='Gender']").val()
     var email = $("#edit_user_modal input[name ='Email']").val()
+    var secondaryemail = $("#edit_user_modal input[name ='SecondaryEmail']").val()
     var contact = $("#edit_user_modal input[name ='PhoneNumber']").val()
     var dateOfBirth = $("#edit_user_modal input[name ='DateOfBirth']").val()
     var role = $("#edit_user_modal select[name ='RoleName']").val()
@@ -419,6 +423,7 @@ function upDateUser() {
         RoleName: role,
         DepartmentId: departmentId,
         BranchId: branchId,
+        SecondaryEmail: secondaryemail,
         Id: id
     }
 
