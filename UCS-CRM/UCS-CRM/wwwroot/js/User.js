@@ -161,7 +161,7 @@ function UpdatePassword() {
         NewPassword: newPassword
     }
 
-    console.log(userInput);
+
 
     $.ajax({
         url: form_url,
@@ -424,7 +424,7 @@ function upDateUser() {
         Id: id
     }
 
-    console.log(userInput);
+
     //send the request
 
     $.ajax({
