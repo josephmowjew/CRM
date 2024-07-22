@@ -210,27 +210,29 @@ namespace UCS_CRM.Areas.Teller.Controllers
 
                         await this._unitOfWork.SaveToDataStore();
 
-                        //get user record by created by id
-
-                        var userRecord = await this._userRepository.GetSingleUser(mappedTicket.CreatedById);
-
-
-                        if(userRecord != null)
-                        {
-                             string emailBody = "A ticket request for " + userRecord.FullName + " has been submitted in the system. </b> check the system for more details by clicking here " + Lambda.systemLink + "<br /> ";
-
-                            //email to send to support
-                            var emailAddress = await _addressRepository.GetEmailAddressByOwner(Lambda.Support);
-
-                            if(emailAddress != null)
-                            {
-                                this._jobEnqueuer.EnqueueEmailJob(emailAddress.Email, "Ticket Creation", emailBody);
-                               
-                                
-                            }
-                        }
+                       
 
                        
+                    }
+
+                     //get user record by created by id
+
+                    var userRecord = await this._userRepository.GetSingleUser(mappedTicket.CreatedById);
+
+
+                    if(userRecord != null)
+                    {
+                            string emailBody = "A ticket request for " + userRecord.FullName + " has been submitted in the system. </b> check the system for more details by clicking here " + Lambda.systemLink + "<br /> ";
+
+                        //email to send to support
+                        var emailAddress = await _addressRepository.GetEmailAddressByOwner(Lambda.Support);
+
+                        if(emailAddress != null)
+                        {
+                            this._jobEnqueuer.EnqueueEmailJob(emailAddress.Email, "Ticket Creation", emailBody);
+                            
+                            
+                        }
                     }
 
 

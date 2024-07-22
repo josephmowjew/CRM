@@ -18,6 +18,7 @@ using UCS_CRM.Persistence.Interfaces;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using UCS_CRM.Core.Helpers;
 
 namespace UCS_CRM.Controllers
 {
@@ -97,8 +98,7 @@ namespace UCS_CRM.Controllers
                     await _userManager.UpdateAsync(user);
 
                     string userNameBody = $"Your confirmation code is <b>{pin}</b> <br /> Enter this to login in";
-                    _jobEnqueuer.EnqueueEmailJob(user.Email, "Login Details", userNameBody);
-
+                    EmailHelper.SendEmail(_jobEnqueuer, user.Email, "Login Details", userNameBody, user.SecondaryEmail);
                     TempData["response"] = $"Check your email for the confirmation code";
                     return RedirectToAction("ConfirmAccount", "Auth", new { email = loginModel.Email });
                 }
@@ -116,8 +116,7 @@ namespace UCS_CRM.Controllers
                 await _userManager.UpdateAsync(user);
 
                 string userNameBody = $"Your confirmation code is <b>{pin}</b> <br /> Enter this to login in";
-                _jobEnqueuer.EnqueueEmailJob(user.Email, "Login Details", userNameBody);
-
+                EmailHelper.SendEmail(_jobEnqueuer, user.Email, "Login Details", userNameBody, user.SecondaryEmail);
                 TempData["response"] = $"Check your email for the confirmation code";
                 return RedirectToAction("ConfirmAccount", "Auth", new { email = loginModel.Email });
                 
@@ -412,17 +411,14 @@ namespace UCS_CRM.Controllers
                     //check if this is a new user or not (old users will have a deleted date field set to an actual date)
                     if (user.DeletedDate != null)
                     {
-                        this._jobEnqueuer.EnqueueEmailJob(user.Email, "Account Status", $"Good day, We are pleased to inform you that your account has been reactivated on the UCS SACCO. You may proceed to login using your previous credentials.");
-                        
+                        EmailHelper.SendEmail(this._jobEnqueuer, user.Email, "Account Status", $"Good day, We are pleased to inform you that your account has been reactivated on the UCS SACCO. You may proceed to login using your previous credentials.", user.SecondaryEmail);                        
 
                     }
                     else
                     {
-                        this._jobEnqueuer.EnqueueEmailJob(user.Email, "Login Details", UserNameBody);
-                        this._jobEnqueuer.EnqueueEmailJob(user.Email, "Login Details", PasswordBody);
-                        this._jobEnqueuer.EnqueueEmailJob(user.Email, "Login Details", PasswordBody);
-                        this._jobEnqueuer.EnqueueEmailJob(user.Email, "Account Details", $"Good day, for those who have not yet registered with Gravator, please do so so that you may upload an avatar of yourself that can be associated with your email address and displayed on your profile in the Mental Lab application.\r\nPlease visit https://en.gravatar.com/ to register with Gravatar. ");
-                       
+                        EmailHelper.SendEmail(this._jobEnqueuer, user.Email, "Login Details", UserNameBody,user.SecondaryEmail);
+                        EmailHelper.SendEmail(this._jobEnqueuer, user.Email, "Login Details", PasswordBody,user.SecondaryEmail);
+                        EmailHelper.SendEmail(this._jobEnqueuer, user.Email, "Account Details", $"Good day, for those who have not yet registered with Gravator, please do so so that you may upload an avatar of yourself that can be associated with your email address and displayed on your profile in the Mental Lab application.\r\nPlease visit https://en.gravatar.com/ to register with Gravatar. ",user.SecondaryEmail);                       
                        
 
 
@@ -457,8 +453,7 @@ namespace UCS_CRM.Controllers
 
                 //send email
 
-                this._jobEnqueuer.EnqueueEmailJob(user.Email, "Password reset details", $"Good day, please use the following link to reset your password\n <br/> {link}");
-                
+                EmailHelper.SendEmail(this._jobEnqueuer, user.Email, "Password reset details", $"Good day, please use the following link to reset your password\n <br/> {link}", user.SecondaryEmail);                
 
                 TempData["response"] = $"Password change request has been sent to your email {email}. Please open your email";
                 return RedirectToAction("Create");

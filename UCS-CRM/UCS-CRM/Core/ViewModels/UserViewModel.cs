@@ -27,6 +27,7 @@ namespace UCS_CRM.Core.ViewModels
         public string FormattedGender => (!string.IsNullOrEmpty(Gender)) ? myTI.ToTitleCase(Gender) : "";
         public string formattedCreatedDate => CreatedDate.ToString("dd-MM-yyyy");
         public string formattedLastLogin => LastLogin.ToString("dd-MM-yyyy hh:mm tt");
+      
 
 
         [NotMapped]

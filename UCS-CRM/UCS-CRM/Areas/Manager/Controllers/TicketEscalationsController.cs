@@ -308,8 +308,7 @@ namespace UCS_CRM.Areas.Manager.Controllers
 
                 if (user != null)
                 {
-                    this._jobEnqueuer.EnqueueEmailJob(user.Email, "Ticket Escalation", emailBody);
-                   
+                    EmailHelper.SendEmail(this._jobEnqueuer, user.Email, "Ticket Escalation", emailBody, user.SecondaryEmail);                   
                 }
                 var emailAddress = await _addressRepository.GetEmailAddressByOwner(Lambda.SeniorManager);
 

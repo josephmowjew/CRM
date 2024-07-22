@@ -349,20 +349,34 @@ namespace UCS_CRM.Persistence.SQLRepositories
                 }
                 else if (ticket.AssignedTo != null)
                 {
-                    string title = "Ticket Reminder";
-                    var bodyBuilder = new StringBuilder();
-                    bodyBuilder.Append("Please be reminded that ticket number ");
-                    bodyBuilder.Append(ticket.TicketNumber);
-                    bodyBuilder.Append($"has been assigned to you({ticket.AssignedTo.Email}) and a response is still pending");
-                    string body = bodyBuilder.ToString();
+                    try
+                    {
+                        string title = "Ticket Reminder";
+                        var bodyBuilder = new StringBuilder();
+                        bodyBuilder.Append("Please be reminded that ticket number ");
+                        bodyBuilder.Append(ticket.TicketNumber);
+                        bodyBuilder.Append($"has been assigned to you({ticket.AssignedTo.Email}) and a response is still pending");
+                        string body = bodyBuilder.ToString();
 
-                     this._jobEnqueuer.EnqueueEmailJob(ticket.AssignedTo.Email, title, body);
-                    
-                    //send to department
-                     this._jobEnqueuer.EnqueueEmailJob(ticket.AssignedTo.Department.Name, title, body);
-                    
-
-                    
+                        EmailHelper.SendEmail(_jobEnqueuer, ticket.AssignedTo.Email, title, body, ticket.AssignedTo?.SecondaryEmail);
+                        
+                        //send to department
+                        this._jobEnqueuer.EnqueueEmailJob(ticket.AssignedTo.Department.Name, title, body);
+                    }
+                    catch (Exception ex)
+                    {
+                        var errorLog = new ErrorLog
+                        {
+                            UserFriendlyMessage = "An error occurred while sending ticket reminder.",
+                            DetailedMessage = ex.ToString(),
+                            DateOccurred = DateTime.UtcNow,
+                            CreatedById = ticket.AssignedTo.Id
+                        };
+                        
+                        _context.ErrorLogs.Add(errorLog);
+                        // Assuming you have a method to save the error log
+                        await _unitOfWork.SaveToDataStore();
+                    }
                 }
             }
 
@@ -455,38 +469,50 @@ namespace UCS_CRM.Persistence.SQLRepositories
             var memberEmailAddress = ticket?.Member?.User?.Email ?? null;
             var ticketCreatorAddress = ticket.CreatedBy.Email;
 
-            if(!string.IsNullOrEmpty(memberEmailAddress))
+            if (!string.IsNullOrEmpty(memberEmailAddress) || (!string.IsNullOrEmpty(ticketCreatorAddress) && memberEmailAddress != ticketCreatorAddress))
             {
-                string title = "Ticket Closure Alert";
-                var bodyBuilder = new StringBuilder();
-                bodyBuilder.Append("Your ticket with reference number: ");
-                bodyBuilder.Append(ticket.TicketNumber);
-                bodyBuilder.Append($" has been closed because {reason}\nBut if you are not satisfied with the outcome. you have a chance to re-open it");
-                string body = bodyBuilder.ToString();
+                try
+                {
+                    string title = "Ticket Closure Alert";
+                    var bodyBuilder = new StringBuilder();
+                    
+                    if (!string.IsNullOrEmpty(memberEmailAddress))
+                    {
+                        bodyBuilder.Append("Your ticket with reference number: ")
+                                   .Append(ticket.TicketNumber)
+                                   .Append($" has been closed because {reason}\nBut if you are not satisfied with the outcome, you have a chance to re-open it");
+                        
+                        EmailHelper.SendEmail(_jobEnqueuer, ticket.AssignedTo.Email, title, bodyBuilder.ToString(), ticket.AssignedTo?.SecondaryEmail);
+                    }
+                    
+                    if (!string.IsNullOrEmpty(ticketCreatorAddress) && memberEmailAddress != ticketCreatorAddress)
+                    {
+                        bodyBuilder.Clear()
+                                   .Append("You have closed ticket: ")
+                                   .Append(ticket.TicketNumber)
+                                   .Append($" has been closed because {reason}");
+                        
+                        EmailHelper.SendEmail(_jobEnqueuer, ticketCreatorAddress, title, bodyBuilder.ToString(), ticket.AssignedTo?.SecondaryEmail);
+                    }
 
-                this._jobEnqueuer.EnqueueEmailJob(ticket.AssignedTo.Email, title, body);
-                
+                    status = "email sent";
+                }
+                catch (Exception ex)
+                {
+                    var errorLog = new ErrorLog
+                    {
+                        UserFriendlyMessage = "An error occurred while sending the ticket closure email.",
+                        DetailedMessage = ex.ToString(),
+                        DateOccurred = DateTime.UtcNow,
+                        CreatedById = ticket.CreatedById
+                    };
 
-                status = "email sent";
-            }   
+                    await _context.ErrorLogs.AddAsync(errorLog);
+                    await _context.SaveChangesAsync();
 
-            if(!string.IsNullOrEmpty(ticketCreatorAddress) && memberEmailAddress != ticketCreatorAddress)
-            {
-                string title = "Ticket Closure Alert";
-                var bodyBuilder = new StringBuilder();
-                bodyBuilder.Append("You have closed ticket: ");
-                bodyBuilder.Append(ticket.TicketNumber);
-                bodyBuilder.Append($" has been closed because {reason}\n");
-                string body = bodyBuilder.ToString();
-
-                this._jobEnqueuer.EnqueueEmailJob(ticket.AssignedTo.Email, title, body);
-               
-
-                status = "email sent";
+                    status = "email sending failed";
+                }
             }
-
-
-
 
 
             //return status;
@@ -494,215 +520,55 @@ namespace UCS_CRM.Persistence.SQLRepositories
         }
         public async Task SendTicketReopenedNotifications(Ticket ticket, string reason)
         {
-            string status = string.Empty;
-            //get the member email address
+            if (ticket == null || string.IsNullOrEmpty(reason))
+            {
+                return;
+            }
 
-            var memberEmailAddress = ticket?.Member?.User?.Email ?? null;
-            var ticketCreatorAddress = ticket.CreatedBy.Email;
+            var memberEmailAddress = ticket.Member?.User?.Email;
+            var ticketCreatorAddress = ticket.CreatedBy?.Email;
+
+            if (string.IsNullOrEmpty(memberEmailAddress) && string.IsNullOrEmpty(ticketCreatorAddress))
+            {
+                return;
+            }
+
+            const string title = "Ticket Reopened Alert";
+
+            async Task SendEmailAndLogError(string recipient, string emailBody, string errorMessage, string createdById)
+            {
+                try
+                {
+                    EmailHelper.SendEmail(_jobEnqueuer, recipient, title, emailBody, ticket.AssignedTo?.SecondaryEmail);
+                }
+                catch (Exception ex)
+                {
+                    var errorLog = new ErrorLog
+                    {
+                        UserFriendlyMessage = errorMessage,
+                        DetailedMessage = ex.ToString(),
+                        DateOccurred = DateTime.UtcNow,
+                        CreatedById = createdById
+                    };
+                    _context.ErrorLogs.Add(errorLog);
+                    await _context.SaveChangesAsync();
+                }
+            }
 
             if (!string.IsNullOrEmpty(memberEmailAddress))
             {
-                string title = "Ticket Reopened Alert";
-                var bodyBuilder = new StringBuilder();
-                bodyBuilder.Append("Your ticket with reference number: ");
-                bodyBuilder.Append(ticket.TicketNumber);
-                bodyBuilder.Append($" has been reopened because {reason}\n");
-                string body = bodyBuilder.ToString();
-                this._jobEnqueuer.EnqueueEmailJob(ticket.AssignedTo.Email, title, body);
-               
-
-                status = "email sent";
+                string bodyMember = $"Your ticket with reference number: {ticket.TicketNumber} has been reopened because {reason}";
+                await SendEmailAndLogError(ticket.AssignedTo.Email, bodyMember,
+                    "Failed to send ticket reopened alert email", ticket.AssignedTo.Id);
             }
 
             if (!string.IsNullOrEmpty(ticketCreatorAddress) && memberEmailAddress != ticketCreatorAddress)
             {
-                string title = "Ticket Reopened Alert";
-                var bodyBuilder = new StringBuilder();
-                bodyBuilder.Append("You have reopened ticket: ");
-                bodyBuilder.Append(ticket.TicketNumber);
-                bodyBuilder.Append($" has been reopened because {reason}\n");
-                string body = bodyBuilder.ToString();
-                this._jobEnqueuer.EnqueueEmailJob(ticket.AssignedTo.Email, title, body);
-               
-
-                status = "email sent";
+                string bodyCreator = $"You have reopened ticket: {ticket.TicketNumber}. It has been reopened because {reason}";
+                await SendEmailAndLogError(ticketCreatorAddress, bodyCreator,
+                    "Failed to send ticket reopened alert email to creator", ticket.CreatedBy?.Id);
             }
-
-
-
-
-
-            //return status;
-
         }
-        //public async Task<List<Ticket?>> GetTickets(CursorParams @params)
-        //{
-        //    //check if the count has a value in it above zero before proceeding
-
-        //    if(@params.Take > 0)
-        //    {
-        //        //check if there is a search parameter
-        //        if (string.IsNullOrEmpty(@params.SearchTerm))
-        //        {
-        //            var records = (from tblOb in await this._context.Tickets
-        //                           .OrderBy(t =>t.CreatedDate)
-        //                           .Include(t => t.Member)
-        //                           .Include(t => t.AssignedTo)
-        //                           .Include(t => t.TicketAttachments)
-        //                           .Include(t => t.State)
-        //                           .Include(t => t.TicketCategory)
-        //                           .Include(t => t.TicketPriority)
-        //                           .Include(t => t.TicketEscalations)
-        //                           .Where(t => t.Status != Lambda.Deleted).Skip(@params.Skip)
-        //                           .Take(@params.Take)
-        //                           .ToListAsync() select tblOb);
-
-        //            //accountTypes.AsQueryable().OrderBy("gjakdgdag");
-
-        //            if (string.IsNullOrEmpty(@params.SortColum) && !string.IsNullOrEmpty(@params.SortDirection))
-        //            {
-        //                records = records.AsQueryable().OrderBy(@params.SortColum + " " + @params.SortDirection);
-
-        //            }
-
-
-        //            return records.ToList();
-        //        }
-        //        else
-        //        {
-        //            //include search query
-
-        //            var records = (from tblOb in await this._context.Tickets
-        //                           .Where(t => t.Status != Lambda.Deleted)
-        //                           .OrderBy(t => t.CreatedDate)
-        //                           .Include(t => t.AssignedTo)
-        //                           .Include(t => t.TicketAttachments)
-        //                           .Include(t => t.State)
-        //                           .Include(t => t.TicketCategory)
-        //                           .Include(t => t.TicketPriority)
-        //                           .Include(t => t.TicketEscalations)
-        //                           .Where(t => 
-        //                                   t.Title.ToLower().Trim().Contains(@params.SearchTerm.ToLower()) ||
-        //                                   t.Description.ToLower().Trim().Contains(@params.SearchTerm.ToLower()) ||
-        //                                   t.State.Name.ToLower().Trim().Contains(@params.SearchTerm.ToLower()) ||
-        //                                   t.Member.FirstName.ToLower().Trim().Contains(@params.SearchTerm.ToLower()) ||
-        //                                   t.Member.LastName.ToLower().Trim().Contains(@params.SearchTerm.ToLower()) ||
-        //                                   t.TicketCategory.Name.ToLower().Trim().Contains(@params.SearchTerm.ToLower()))
-        //                             .Skip(@params.Skip)
-        //                           .Take(@params.Take)
-                                 
-        //                           .ToListAsync()
-        //                           select tblOb);
-
-        //            //accountTypes.AsQueryable().OrderBy("gjakdgdag");
-
-        //            if (string.IsNullOrEmpty(@params.SortColum) && !string.IsNullOrEmpty(@params.SortDirection))
-        //            {
-        //                records = records.AsQueryable().OrderBy(@params.SortColum + " " + @params.SortDirection);
-
-        //            }
-
-        //            return records.ToList();
-        //        }
-        //    }
-        //    else
-        //    {
-        //        return null;
-        //    }
-        //}
-
-        // public async Task<List<Ticket?>> GetTickets(CursorParams @params, Department department = null, string ticketStatus = "")
-        // {
-        //     if (@params.Take <= 0)
-        //     {
-        //         return null;
-        //     }
-
-        //     var query = this._context.Tickets
-        //         .Include(t => t.AssignedTo)
-        //         .Include(t => t.TicketAttachments)
-        //         .Include(t => t.State)
-        //         .Include(t => t.TicketCategory)
-        //         .Include(t => t.TicketPriority)
-        //         .Include(t => t.TicketEscalations)
-        //         .Include(t => t.Member)
-        //         .ThenInclude(m => m.User)
-        //         .ThenInclude(u => u.Department)
-        //         .Where(t => t.Status != Lambda.Deleted);
-
-        //     if (!string.IsNullOrEmpty(ticketStatus))
-        //     {
-        //         var ticketStatusLower = ticketStatus.Trim().ToLower();
-        //         query = query.Where(t => t.State.Name.Trim().ToLower() == ticketStatusLower);
-        //     }
-
-        //     if (department != null)
-        //     {
-        //         query = query.Where(t => t.DepartmentId == department.Id);
-        //     }
-
-        //     if (!string.IsNullOrEmpty(@params.SearchTerm))
-        //     {
-        //         var searchTermLower = @params.SearchTerm.ToLower().Trim();
-        //         query = query.Where(t =>
-        //             t.Title.ToLower().Trim().Contains(searchTermLower) ||
-        //             t.Description.ToLower().Trim().Contains(searchTermLower) ||
-        //             t.State.Name.ToLower().Trim().Contains(searchTermLower) ||
-        //             t.Member.FirstName.ToLower().Trim().Contains(searchTermLower) ||
-        //             t.Member.LastName.ToLower().Trim().Contains(searchTermLower) ||
-        //             t.TicketCategory.Name.ToLower().Trim().Contains(searchTermLower)
-        //         );
-        //     }
-
-        //     if (!string.IsNullOrEmpty(@params.SortColum) && !string.IsNullOrEmpty(@params.SortDirection))
-        //     {
-        //         string sortExpression = @params.SortColum + " " + @params.SortDirection;
-        //         query = query.OrderBy(sortExpression);
-        //     }
-        //     else
-        //     {
-        //         query = query.OrderBy(t => t.CreatedDate);
-        //     }
-
-        //     return await query.Skip(@params.Skip).Take(@params.Take).ToListAsync();
-        // }
-        // // public async Task<int> GetTicketsTotalFilteredAsync(CursorParams @params, Department department = null, string ticketStatus = "")
-        // {
-        //     if (@params.Take <= 0)
-        //     {
-        //         return 0;
-        //     }
-
-        //     var query = this._context.Tickets.AsQueryable();
-
-        //     if (!string.IsNullOrEmpty(ticketStatus))
-        //     {
-        //         var ticketStatusLower = ticketStatus.Trim().ToLower();
-        //         query = query.Where(t => t.State.Name.Trim().ToLower() == ticketStatusLower);
-        //     }
-
-        //     if (department != null)
-        //     {
-        //         query = query.Where(t => t.DepartmentId == department.Id);
-        //     }
-
-        //     if (!string.IsNullOrEmpty(@params.SearchTerm))
-        //     {
-        //         var searchTermLower = @params.SearchTerm.ToLower().Trim();
-        //         query = query.Where(t =>
-        //             t.Title.ToLower().Trim().Contains(searchTermLower) ||
-        //             t.Description.ToLower().Trim().Contains(searchTermLower) ||
-        //             t.State.Name.ToLower().Trim().Contains(searchTermLower) ||
-        //             t.Member.FirstName.ToLower().Trim().Contains(searchTermLower) ||
-        //             t.Member.LastName.ToLower().Trim().Contains(searchTermLower) ||
-        //             t.TicketCategory.Name.ToLower().Trim().Contains(searchTermLower)
-        //         );
-        //     }
-
-        //     var records = await query.CountAsync();
-
-        //     return records;
-        // }
 
          private IQueryable<Ticket> GetBaseQuery(CursorParams @params, Department department = null, string ticketStatus = "")
         {
@@ -1514,12 +1380,27 @@ namespace UCS_CRM.Persistence.SQLRepositories
                     var assignedTo = await _context.EmailAddresses.FirstOrDefaultAsync(o => o.Owner == Lambda.CustomerServiceMemberEngagementManager);
 
                     if (assignedTo != null) {
-                        // sending the email 
-                        string title = "Un Assigned Tickets";
-                        var body = "Ticket number " + ticket.TicketNumber + " has not been assigned to anyone one yet";
-                        this._jobEnqueuer.EnqueueEmailJob(assignedTo.Email, title, body);
-                        
-                    } 
+                        try {
+                            // sending the email 
+                            string title = "Un Assigned Tickets";
+                            var body = "Ticket number " + ticket.TicketNumber + " has not been assigned to anyone one yet";
+                           
+                            
+                            EmailHelper.SendEmail(this._jobEnqueuer, assignedTo.Email, title, body, ticket.AssignedTo?.SecondaryEmail);
+                        }
+                        catch (Exception ex)
+                        {
+                            var errorLog = new ErrorLog
+                            {
+                                UserFriendlyMessage = "An error occurred while sending the unassigned ticket email.",
+                                DetailedMessage = ex.ToString(),
+                                DateOccurred = DateTime.UtcNow
+                            };
+
+                            _context.ErrorLogs.Add(errorLog);
+                            await _unitOfWork.SaveToDataStore();
+                        }
+                    }
                 }
 
                 
@@ -1541,18 +1422,30 @@ namespace UCS_CRM.Persistence.SQLRepositories
 
             var emailAddress = await _context.EmailAddresses.FirstOrDefaultAsync(o => o.Owner == Lambda.CustomerServiceMemberEngagementManager);
 
-            if(emailAddress != null)
+            try
             {
-                this._jobEnqueuer.EnqueueEmailJob(emailAddress.Email, title, body);
-                
+                if (emailAddress != null)
+                {
+                  
 
-               
-                    //return "message sent";
-
-              
+                    EmailHelper.SendEmail(this._jobEnqueuer, emailAddress.Email, title, body, ticket.AssignedTo?.SecondaryEmail);
+                }
             }
+            catch (Exception ex)
+            {
+                var errorLog = new ErrorLog
+                {
+                    UserFriendlyMessage = "An error occurred while sending the email.",
+                    DetailedMessage = ex.ToString(),
+                    DateOccurred = DateTime.UtcNow
+                };
 
-          
+                //add the error log to the context
+                _context.ErrorLogs.Add(errorLog);
+
+                // Sync changes to the database
+                await _unitOfWork.SaveToDataStore();
+            }
 
             //return string.Empty;
         }
@@ -1567,7 +1460,7 @@ namespace UCS_CRM.Persistence.SQLRepositories
 
             body = $"A ticket {ticket.TicketNumber} previously assigned to {previousAssigneeEmail} has been escalated to you. Please take note and respond to it accordingly";
 
-            this._jobEnqueuer.EnqueueEmailJob(ticketEscalation.EscalatedTo.Email, title, body);
+            EmailHelper.SendEmail(this._jobEnqueuer, ticketEscalation.EscalatedTo.Email, title, body, ticketEscalation.EscalatedTo.SecondaryEmail);
            
                              
             //send email to the department
@@ -1627,11 +1520,17 @@ namespace UCS_CRM.Persistence.SQLRepositories
 
             body = $"A {ticket.TicketNumber} has been reassigned to you .Please take note and respond to it accordingly";
 
-            this._jobEnqueuer.EnqueueEmailJob(newEmail, title, body);
-           
+            if (ticket != null && ticket.AssignedTo != null && newEmail == ticket.AssignedTo.Email)
+            {
+                EmailHelper.SendEmail(this._jobEnqueuer, newEmail, title, body, ticket.AssignedTo.SecondaryEmail);
+            }
+            else
+            {
+                this._jobEnqueuer.EnqueueEmailJob(newEmail, title, body);
+            }
 
            
-            //return "messages sent";
+
            
             //check if department is not null
             if (ticket.AssignedTo.Department!= null)
@@ -1641,9 +1540,7 @@ namespace UCS_CRM.Persistence.SQLRepositories
             
             }
 
-           
 
-            //return string.Empty;
         }
         public async Task SendEscalatedTicketsReminder()
         {
@@ -1675,8 +1572,7 @@ namespace UCS_CRM.Persistence.SQLRepositories
                         // sending the email 
                         string title = "Escalated Tickets";
                         var body = "Ticket number " + ticket.Ticket.TicketNumber + " was escalated and has not yet been resolved";
-                        this._jobEnqueuer.EnqueueEmailJob(emailAddress.Email, title, body);
-                        
+                        EmailHelper.SendEmail(this._jobEnqueuer, emailAddress.Email, title, body, emailAddress.SecondaryEmail);                        
                     }
                 }
 
@@ -1702,9 +1598,8 @@ namespace UCS_CRM.Persistence.SQLRepositories
             if (!string.IsNullOrEmpty(emailAddress))
             {
                 this._jobEnqueuer.EnqueueEmailJob(emailAddress, title, body);
-                
-
-                
+            
+    
 
                return "message sent";
 

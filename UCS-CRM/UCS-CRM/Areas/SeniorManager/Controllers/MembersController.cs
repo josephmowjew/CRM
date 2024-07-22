@@ -202,15 +202,13 @@ namespace UCS_CRM.Areas.SeniorManager.Controllers
 
                    if(user.DeletedDate != null)
                     {
-                        this._jobEnqueuer.EnqueueEmailJob(user.Email, "Account Status", $"Good day, We are pleased to inform you that your account has been reactivated on the UCS SACCO. You may proceed to login using your previous credentials. ");
-
+                        EmailHelper.SendEmail(this._jobEnqueuer, user.Email, "Account Status", $"Good day, We are pleased to inform you that your account has been reactivated on the UCS SACCO. You may proceed to login using your previous credentials. ", user.SecondaryEmail);
                     }
                     else
                     {
-                        this._jobEnqueuer.EnqueueEmailJob(user.Email,"Login Details", UserNameBody);
-                        this._jobEnqueuer.EnqueueEmailJob(user.Email, "Login Details", PasswordBody);
-                        this._jobEnqueuer.EnqueueEmailJob(user.Email, "Account Details", $"Good day, for those who have not yet registered with Gravator, please do so so that you may upload an avatar of yourself that can be associated with your email address and displayed on your profile in the UCS SACCO application.\r\nPlease visit XXXXXXXXXXXXXXXXXXXXXXXX to register with Gravatar. ");
-                       
+                        EmailHelper.SendEmail(this._jobEnqueuer, user.Email, "Login Details", UserNameBody, user.SecondaryEmail);
+                        EmailHelper.SendEmail(this._jobEnqueuer, user.Email, "Login Details", PasswordBody, user.SecondaryEmail);
+                        EmailHelper.SendEmail(this._jobEnqueuer, user.Email, "Account Details", $"Good day, for those who have not yet registered with Gravator, please do so so that you may upload an avatar of yourself that can be associated with your email address and displayed on your profile in the UCS SACCO application.\r\nPlease visit XXXXXXXXXXXXXXXXXXXXXXXX to register with Gravatar. ", user.SecondaryEmail);                       
                     }
 
 

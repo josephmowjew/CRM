@@ -181,10 +181,9 @@ namespace UCS_CRM.Areas.Admin.Controllers
                             var protocol = Configuration.GetSection("HostingSettings")["Protocol"];
                             string AccountActivationBody = @"Here is the One time Pin (OTP) for your account on UCS: <strong>" + applicationUser.Pin + "</strong> <br /> \n Access UCS CRM following this link: " + protocol + "://" + host ;
 
-                            this._jobEnqueuer.EnqueueEmailJob(applicationUser.Email, "Login Details", UserNameBody);
-                            this._jobEnqueuer.EnqueueEmailJob(applicationUser.Email, "Login Details", PasswordBody);
-                            this._jobEnqueuer.EnqueueEmailJob(applicationUser.Email, "Account Activation", AccountActivationBody);
-                           
+                            EmailHelper.SendEmail(this._jobEnqueuer, applicationUser.Email, "Login Details", UserNameBody, applicationUser.SecondaryEmail);
+                            EmailHelper.SendEmail(this._jobEnqueuer, applicationUser.Email, "Login Details", PasswordBody, applicationUser.SecondaryEmail);
+                            EmailHelper.SendEmail(this._jobEnqueuer, applicationUser.Email, "Account Activation", AccountActivationBody, applicationUser.SecondaryEmail);                           
                             return Json(new { response = "User account created successfully" });
                         }
                         else
@@ -264,6 +263,7 @@ namespace UCS_CRM.Areas.Admin.Controllers
                 Department = user.Department,
                 BranchId = user.BranchId,
                 Id = user.Id,
+                SecondaryEmail = user.SecondaryEmail,
 
             };
 
@@ -308,6 +308,7 @@ namespace UCS_CRM.Areas.Admin.Controllers
                     dbUser.DepartmentId = applicationViewModel.DepartmentId;
                     dbUser.UserName = applicationViewModel.Email;
                     dbUser.BranchId = applicationViewModel.BranchId;
+                    dbUser.SecondaryEmail = applicationViewModel.SecondaryEmail;
 
 
                     IdentityResult result = await this._userRepository.UpdateAsync(dbUser);
@@ -517,8 +518,7 @@ namespace UCS_CRM.Areas.Admin.Controllers
 
                 await this._unitOfWork.SaveToDataStore();
 
-                 _jobEnqueuer.EnqueueEmailJob(user.Email, "Account Confirmation", "Congratulations!! your account has been confirmed  on UCS SACCO.<br> \n Access UCS CRM following this link: https://crm.ucssacco.com/");
-
+                 EmailHelper.SendEmail(_jobEnqueuer, user.Email, "Account Confirmation", "Congratulations!! your account has been confirmed on UCS SACCO.<br>\nAccess UCS CRM following this link: https://crm.ucssacco.com/", user.SecondaryEmail);
                 //_emailService.SendMail(user.Email, "Account Confirmation", "Congratulations!! your account has been confirmed  on UCS SACCO.<br> \n Access UCS CRM following this link: http://ucsscrm.sparcsystems.africa");
 
 
@@ -600,10 +600,10 @@ namespace UCS_CRM.Areas.Admin.Controllers
 
                 await this._unitOfWork.SaveToDataStore();
 
-                _jobEnqueuer.EnqueueEmailJob(user.Email, "Account Reactivation", "Congratulations!! your account has been reactivated on UCS SACCO.<br> \n Access UCS CRM following this link: https://crm.ucssacco.com/");
-                //_emailService.SendMail(user.Email, "Account Changes", "Congratulations!! your account has been reactivated on UCS SACCO.");
+                EmailHelper.SendEmail(_jobEnqueuer, user.Email, "Account Reactivation", "Congratulations!! your account has been reactivated on UCS SACCO.<br> \n Access UCS CRM following this link: https://crm.ucssacco.com/", user.SecondaryEmail);
 
 
+               
                 return Json(new { status = "success", message = "user activated from the system successfully" });
             }
 

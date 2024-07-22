@@ -182,8 +182,7 @@ namespace UCS_CRM.Areas.Manager.Controllers
 
                 if (user != null)
                 {
-                     this._jobEnqueuer.EnqueueEmailJob(user.Email, $"Ticket {ticketDB.TicketNumber} Modification", emailBody);
-                   
+                    EmailHelper.SendEmail(this._jobEnqueuer, user.Email, $"Ticket {ticketDB.TicketNumber} Modification", emailBody, user.SecondaryEmail);                   
                 }
 
 

@@ -250,13 +250,11 @@ function EditForm(id, area = "") {
 
         var date = currentDate.getFullYear() + "-" + (month) + "-" + (day);
 
-        console.log(data)
-
         $("#edit_user_modal input[name ='FirstName']").val(data.firstName)
         $("#edit_user_modal input[name ='LastName']").val(data.lastName)
         $("#edit_user_modal select[name ='Gender']").val(data.gender)
         $("#edit_user_modal input[name ='Email']").val(data.email)
-        $("#edit_user_modal input[name ='SecondaryEmail']").val(data.secondaryemail)
+        $("#edit_user_modal input[name ='SecondaryEmail']").val(data.secondaryEmail)
         $("#edit_user_modal input[name ='PhoneNumber']").val(data.phoneNumber)
         $("#edit_user_modal input[name ='DateOfBirth']").val(date)
         $("#edit_user_modal select[name ='RoleName']").val(data.roleName)
@@ -401,7 +399,7 @@ function upDateUser() {
     var lastName = $("#edit_user_modal input[name ='LastName']").val()
     var gender = $("#edit_user_modal select[name ='Gender']").val()
     var email = $("#edit_user_modal input[name ='Email']").val()
-    var secondaryemail = $("#edit_user_modal input[name ='SecondaryEmail']").val()
+    var secondarymail = $("#edit_user_modal input[name ='SecondaryEmail']").val()
     var contact = $("#edit_user_modal input[name ='PhoneNumber']").val()
     var dateOfBirth = $("#edit_user_modal input[name ='DateOfBirth']").val()
     var role = $("#edit_user_modal select[name ='RoleName']").val()
@@ -409,7 +407,6 @@ function upDateUser() {
     var departmentId = $("#edit_user_modal select[name ='DepartmentId']").val()
     var id = $("#edit_user_modal input[name='Id']").val()
 
-    console.log(branchId)
     //prepare data for request pushing
 
     var userInput = {
@@ -423,10 +420,11 @@ function upDateUser() {
         RoleName: role,
         DepartmentId: departmentId,
         BranchId: branchId,
-        SecondaryEmail: secondaryemail,
+        SecondaryEmail: secondarymail,
         Id: id
     }
 
+    console.log(userInput);
     //send the request
 
     $.ajax({

@@ -211,6 +211,11 @@ namespace UCS_CRM.Areas.Clerk.Controllers
 
                         await this._unitOfWork.SaveToDataStore();
 
+                        
+
+                       
+                    }
+
                         //get user record by created by id
 
                         var userRecord = await this._userRepository.GetSingleUser(mappedTicket.CreatedById);
@@ -220,7 +225,9 @@ namespace UCS_CRM.Areas.Clerk.Controllers
                         {
                              string emailBody = "A ticket request for " + userRecord.FullName + " has been submitted in the system. </b> check the system for more details by clicking here " + Lambda.systemLink + "<br /> ";
 
-                            //email to send to support
+                            //send email to the owner
+                            EmailHelper.SendEmail(this._jobEnqueuer, userRecord.Email, "Ticket Creation", emailBody,userRecord.SecondaryEmail); 
+                                                       //email to send to support
                             var emailAddress = await _addressRepository.GetEmailAddressByOwner(Lambda.Support);
 
                             if(emailAddress != null)
@@ -230,9 +237,6 @@ namespace UCS_CRM.Areas.Clerk.Controllers
                                 
                             }
                         }
-
-                       
-                    }
 
 
 
@@ -389,10 +393,11 @@ namespace UCS_CRM.Areas.Clerk.Controllers
             if (user != null)
             {
                 string emailBody = $"A ticket has been modified in the system. <b>Check the system for more details by clicking here {Lambda.systemLink}</b>";
-                this._jobEnqueuer.EnqueueEmailJob(user.Email, $"Ticket {ticketDB.TicketNumber} Modification", emailBody);
+                EmailHelper.SendEmail(this._jobEnqueuer, user.Email,$"Ticket {ticketDB.TicketNumber} Modification", emailBody,user.SecondaryEmail);
             }
 
             return Json(new { status = "success", message = "User ticket updated successfully" });
+            
         }
 
         // GET: TicketController/Details/5

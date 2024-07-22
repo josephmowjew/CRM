@@ -207,7 +207,10 @@ namespace UCS_CRM.Areas.Member.Controllers
                         await this._unitOfWork.SaveToDataStore();
                         
 
-                        //email to send to support
+                        //_emailService.SendMail(mappedTicket.Member.Address, "Ticket Creation", emailBody);
+
+                    }
+                      //email to send to support
                         var emailAddress = await _addressRepository.GetEmailAddressByOwner(Lambda.Support);
 
                          var userRecord = await this._userRepository.GetSingleUser(mappedTicket.CreatedById);
@@ -215,10 +218,7 @@ namespace UCS_CRM.Areas.Member.Controllers
                         string emailBody = "Your ticket request for has been submitted in the system. </b> check the system for more details by clicking here " + Lambda.systemLink + "<br /> ";
                         string emailBod2y = "A ticket request for has been submitted in the system. </b> check the system for more details by clicking here " + Lambda.systemLink + "<br /> ";
                        
-                         this._jobEnqueuer.EnqueueEmailJob(userRecord.Email, "Ticket Creation", emailBody);
-                        //_emailService.SendMail(mappedTicket.Member.Address, "Ticket Creation", emailBody);
-
-                    }
+                        EmailHelper.SendEmail(this._jobEnqueuer, userRecord.Email, "Ticket Creation", emailBody, userRecord.SecondaryEmail);   
 
                     await populateViewBags();
 

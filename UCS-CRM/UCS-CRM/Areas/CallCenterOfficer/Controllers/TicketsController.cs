@@ -210,28 +210,33 @@ namespace UCS_CRM.Areas.CallCenterOfficer.Controllers
 
                         await this._unitOfWork.SaveToDataStore();
 
-                        //get user record by created by id
-
-                        var userRecord = await this._userRepository.GetSingleUser(mappedTicket.CreatedById);
-
-
-                        if(userRecord != null)
-                        {
-                             string emailBody = "A ticket request for " + userRecord.FullName + " has been submitted in the system. </b> check the system for more details by clicking here " + Lambda.systemLink + "<br /> ";
-
-                            //email to send to support
-                            var emailAddress = await _addressRepository.GetEmailAddressByOwner(Lambda.Support);
-
-                            if(emailAddress != null)
-                            {
-                                this._jobEnqueuer.EnqueueEmailJob(emailAddress.Email, "New Ticket Submitted", emailBody);
-                                
-                                
-                            }
-                        }
+                       
 
                        
                     }
+                    
+                    //get user record by created by id
+
+                    var userRecord = await this._userRepository.GetSingleUser(mappedTicket.CreatedById);
+
+
+                    if(userRecord != null)
+                    {
+                            string emailBody = "A ticket request for " + userRecord.FullName + " has been submitted in the system. </b> check the system for more details by clicking here " + Lambda.systemLink + "<br /> ";
+
+                        //send email to the owner
+                        EmailHelper.SendEmail(this._jobEnqueuer, userRecord.Email, "Ticket Creation", emailBody,userRecord.SecondaryEmail); 
+                                                    //email to send to support
+                        var emailAddress = await _addressRepository.GetEmailAddressByOwner(Lambda.Support);
+
+                        if(emailAddress != null)
+                        {
+                            this._jobEnqueuer.EnqueueEmailJob(emailAddress.Email, "Ticket Creation", emailBody);
+                            
+                            
+                        }
+                    }
+
 
 
 
@@ -394,7 +399,8 @@ namespace UCS_CRM.Areas.CallCenterOfficer.Controllers
                 if (user != null)
                 {
                     string emailBody = $"A ticket has been modified in the system. <b>Check the system for more details by clicking here {Lambda.systemLink}</b>";
-                    this._jobEnqueuer.EnqueueEmailJob(user.Email, $"Ticket {ticketDB.TicketNumber} Modification", emailBody);
+                    EmailHelper.SendEmail(this._jobEnqueuer, user.Email, $"Ticket {ticketDB.TicketNumber} Modification", emailBody, user.SecondaryEmail);              
+                    
                 }
 
 

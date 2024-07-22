@@ -30,11 +30,12 @@ namespace UCS_CRM.Areas.Clerk.Controllers
         private readonly IUserRepository _userRepository;
         private readonly ITicketCategoryRepository _ticketCategoryRepository;
         private readonly IEmailAddressRepository _addressRepository;
+        private readonly HangfireJobEnqueuer _jobEnqueuer;
         private readonly IEmailService _emailService;
         private readonly ITicketCommentRepository _ticketCommentRepository;
         public TicketEscalationsController(ITicketEscalationRepository ticketEscalationRepository, IMapper mapper, IUnitOfWork unitOfWork, ITicketRepository ticketRepository, IEmailAddressRepository addressRepository,
             IWebHostEnvironment env, IStateRepository stateRepository, ITicketPriorityRepository priorityRepository, IMemberRepository memberRepository, IUserRepository userRepository, IEmailService emailService,
-            ITicketCategoryRepository ticketCategoryRepository, ITicketCommentRepository ticketCommentRepository)
+            ITicketCategoryRepository ticketCategoryRepository, ITicketCommentRepository ticketCommentRepository,HangfireJobEnqueuer jobEnqueuer)
         {
             this._ticketEscalationRepository = ticketEscalationRepository;
             this._mapper = mapper;
@@ -48,6 +49,7 @@ namespace UCS_CRM.Areas.Clerk.Controllers
             _ticketCategoryRepository = ticketCategoryRepository;
             _addressRepository = addressRepository;
             _emailService = emailService;
+            _jobEnqueuer = jobEnqueuer;
             _ticketCategoryRepository = ticketCategoryRepository;
         }
 
@@ -232,11 +234,11 @@ namespace UCS_CRM.Areas.Clerk.Controllers
 
                 if (user != null)
                 {
-                    _emailService.SendMail(user.Email, "Ticket Escalation", emailBody);
+                    EmailHelper.SendEmail(this._jobEnqueuer, user.Email, "Ticket Escalation", emailBody, user.SecondaryEmail);                
                 }
                 var emailAddress = await _addressRepository.GetEmailAddressByOwner(Lambda.SeniorManager);
 
-                _emailService.SendMail(emailAddress.Email, "Ticket Escalation", emailBody);
+                    this._jobEnqueuer.EnqueueEmailJob(emailAddress.Email, "Ticket Escalation", emailBody);
 
 
                 return Json(new { status = "success", message = "ticket category details updated successfully" });
