@@ -90,7 +90,7 @@ namespace UCS_CRM.Core.Services
         public async Task SyncFintechMembersWithLocalDataStore()
         
         {
-            int take = 5000;
+            int take = 2500;
             long fidxno;
             bool fetchMore = true;
 
