@@ -37,8 +37,9 @@ namespace UCS_CRM.Core.DTOs.Member
         public string? Branch { get; set; }
 
         public string? Employer { get; set; }
-
-          public int MemberId { get; set; }
+        public string EmployeeNumber { get; set; }
+        public string AccountStatus { get; set; }
+        public int MemberId { get; set; }
         public string? AccountName { get; set; }
         public decimal Balance { get; set; }
         //public List<RelatedAccount> RelatedAccounts { get; set; }

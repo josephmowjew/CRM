@@ -23,6 +23,11 @@
                 PhoneNumber = datum.Mobile,
                 Branch = datum.Branch,
                 Employer = datum.Employer,
+                EmployeeNumber = datum.EmployeeNumber,
+                AccountStatus = datum.AccountStatus,
+                Gender = datum.Gender,
+                CreatedDate = datum.CreatedOn.DateTime,
+                Email = datum.Email,
                
             };
         }

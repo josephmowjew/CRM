@@ -30,6 +30,9 @@ namespace UCS_CRM.Core.Models
         [JsonProperty("lastName")]
         public string LastName { get; set; }
 
+        [JsonProperty("gender")]
+        public string Gender { get; set; }
+
         [JsonProperty("idno")]
         public string Idno { get; set; }
 
@@ -45,6 +48,9 @@ namespace UCS_CRM.Core.Models
         [JsonProperty("employer")]
         public string Employer { get; set; }
 
+        [JsonProperty("jobNumber")]
+        public string EmployeeNumber { get; set; }
+
         [JsonProperty("branch")]
         public string Branch { get; set; }
 
@@ -53,6 +59,9 @@ namespace UCS_CRM.Core.Models
 
         [JsonProperty("createdOn")]
         public DateTimeOffset CreatedOn { get; set; }
+
+        [JsonProperty("accountStatus")]
+        public string AccountStatus { get; set; }
     }
 
     public partial class FintechMember

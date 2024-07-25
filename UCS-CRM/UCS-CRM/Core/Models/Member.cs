@@ -39,6 +39,11 @@ namespace UCS_CRM.Core.Models
         public string? PhoneNumber { get; set; }
         public string? Branch { get; set; }
         public string? Employer { get; set; }
+        [StringLength(maximumLength: 70, MinimumLength = 1)]
+        public string EmployeeNumber { get; set; }
+        [StringLength(maximumLength: 100, MinimumLength = 1)]
+        public string AccountStatus { get; set; }
+        public string? Email { get; set; }
         public List<MemberAccount> MemberAccounts { get; set; }
 
         public string? CreatedById { get; set; }

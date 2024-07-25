@@ -58,7 +58,10 @@
                         </th>
 
                         <th>
-                            Date Of Birth
+                            Account Status
+                        </th>
+                        <th>
+                            Employee Number
                         </th>
                         <th>
                             Action
@@ -143,12 +146,26 @@
                         "orderable": false,
                     },
 
+                     {
+                        data: "accountStatus",
+                        name: "accountStatus",
+                        className: "text-left",
+                        "orderable": false,
+                    },
                     {
+                        data: "employeeNumber",
+                        name: "employeeNumber",
+                        className: "text-left",
+                        "orderable": false,
+                    },
+
+
+                    @* {
                         data: "formattedDateOfBirth",
                         name: "dateOfBirth",
                         className: "text-left",
                         "orderable": false,
-                    },
+                    }, *@
                     {
                         data: "id",
                         name: "id",
