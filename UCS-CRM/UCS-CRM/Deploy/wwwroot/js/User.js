@@ -72,6 +72,7 @@
                     //replace the form data with the data retrieved from the server
                     $("#create_user_modal").html(data)
 
+                    hideSpinner();
 
                     //rewire the onclick event on the form
 
@@ -100,6 +101,7 @@
             },
             error: function (xhr, ajaxOtions, thrownError) {
                 hideSpinner();
+
                 console.error(xhr.responseText)
             }
 
