@@ -168,11 +168,22 @@ namespace UCS_CRM.Areas.Clerk.Controllers
 
                     string ticketNumber = Lambda.IssuePrefix + (lastTicketId + 1);
 
+                    //assign the ticket to the user
+
+                    if (!string.IsNullOrEmpty(createTicketDTO.AssignedToId))
+                    {
+                        createTicketDTO.AssignedToId = createTicketDTO.AssignedToId;
+                    }
+                    else
+                    {
+                        mappedTicket.AssignedToId = claimsIdentitifier.Value;
+                    }
+
                     //assign ticket number to the mapped record
 
                     mappedTicket.TicketNumber = ticketNumber;
 
-                    mappedTicket.AssignedToId = claimsIdentitifier.Value;
+                    
 
                     //assign the ticket to the Customer Service and Member Engagement department
 
