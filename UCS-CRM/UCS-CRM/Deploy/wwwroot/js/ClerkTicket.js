@@ -110,16 +110,37 @@
         // Get the selected value
         var selectedValue = $(this).val();
 
-        // Send a GET request to the endpoint with the selected value
-        $.get('tickets/FetchReassignList', { selectedValue: selectedValue }, function (data) {
-            // Clear the options of the second dropdown list
-            $('#AssignedToId').empty();
+       
 
-            // Iterate through the received JSON data and create options for the second dropdown list
-            $.each(data, function (index, item) {
-                var option = $('<option>').val(item.value).text(item.text);
-                $('#AssignedToId').append(option);
-            });
+        $.get('tickets/FetchReassignList', { selectedValue: selectedValue }, function (data) {
+            var $select = $('#edit_ticket_modal select[name="AssignedToId"]');
+            console.log("this is the select", $select); // Check if the element is selected correctly
+            console.log(data); // Check the data returned
+
+            // Clear the options of the second dropdown list
+            $select.find('option').remove();
+
+            if (data && Array.isArray(data) && data.length > 0) {
+                // Iterate through the received JSON data and create options for the second dropdown list
+                $.each(data, function (index, item) {
+                    var option = $('<option>').val(item.value).text(item.text);
+                    $select.append(option);
+                });
+            } else {
+                console.warn("No data received or data is not in the expected format");
+            }
+
+           
+        }).fail(function (jqXHR, textStatus, errorThrown) {
+            console.error("Error fetching data: " + textStatus, errorThrown);
+            // Clear the options if there is an error
+            var $select = $('#AssignedToId');
+            $select.find('option').remove();
+
+            // If using selectpicker or another plugin, refresh it
+            if ($select.hasClass('selectpicker')) {
+                $select.selectpicker('refresh');
+            }
         });
     });
 
@@ -139,7 +160,7 @@ function EditForm(id, area = "") {
     }).done(function (data) {
 
 
-
+       
         const ticketFields = {
             Title: 'title',
             Description: 'description',
@@ -148,6 +169,7 @@ function EditForm(id, area = "") {
             AssignedToId: 'assignedToId',
             MemberId: 'memberId',
             StateId: 'stateId',
+            DepartmentId: 'departmentId',
             Id: 'id',
         };
 
