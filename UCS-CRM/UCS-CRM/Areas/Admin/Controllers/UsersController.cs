@@ -259,9 +259,9 @@ namespace UCS_CRM.Areas.Admin.Controllers
                 Gender = user.Gender,
                 PhoneNumber = user.PhoneNumber,
                 Email = user.Email,
-                DepartmentId = user.DepartmentId,
+                DepartmentId = (int)user.DepartmentId,
                 Department = user.Department,
-                BranchId = user.BranchId,
+                BranchId = (int)user.BranchId,
                 Id = user.Id,
                 SecondaryEmail = user.SecondaryEmail,
 
