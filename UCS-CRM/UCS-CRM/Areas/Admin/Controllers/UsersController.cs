@@ -259,12 +259,11 @@ namespace UCS_CRM.Areas.Admin.Controllers
                 Gender = user.Gender,
                 PhoneNumber = user.PhoneNumber,
                 Email = user.Email,
-                DepartmentId = (int)user.DepartmentId,
+                DepartmentId = user.DepartmentId ?? 0, // Default to 0 if null
                 Department = user.Department,
-                BranchId = (int)user.BranchId,
+                BranchId = user.BranchId ?? 0, // Default to 0 if null
                 Id = user.Id,
                 SecondaryEmail = user.SecondaryEmail,
-
             };
 
 
