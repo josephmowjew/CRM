@@ -47,7 +47,7 @@ builder.Services.AddAuthentication(options =>
 })
 .AddCookie(options =>
 {
-    options.ExpireTimeSpan = TimeSpan.FromMinutes(2);
+    options.ExpireTimeSpan = TimeSpan.FromMinutes(30);
     options.SlidingExpiration = true;
     options.LoginPath = "/Auth/Create";
     options.LogoutPath = "/Auth/Logout";
@@ -56,7 +56,7 @@ builder.Services.AddAuthentication(options =>
 
 builder.Services.AddSession(options =>
 {
-    options.IdleTimeout = TimeSpan.FromMinutes(2);
+    options.IdleTimeout = TimeSpan.FromMinutes(30);
     options.Cookie.HttpOnly = true;
     options.Cookie.IsEssential = true;
 });
@@ -161,7 +161,7 @@ public class UserInactivityMiddleware
             var currentTime = DateTime.Now;
 
             if (string.IsNullOrEmpty(lastActivity) || 
-                (currentTime - DateTime.Parse(lastActivity)).TotalMinutes > 2)
+                (currentTime - DateTime.Parse(lastActivity)).TotalMinutes > 30)
             {
                 await context.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
                 context.Response.Redirect("/Auth/Create");

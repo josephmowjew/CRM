@@ -49,7 +49,7 @@ namespace UCS_CRM.Persistence.SQLRepositories
 
         public async Task<ApplicationUser?> FindByIdAsync(string id)
         {
-            return await this._context.Users.FirstOrDefaultAsync(u => u.Id == id & u.Status != Lambda.Deleted);
+            return await this._context.Users.Include(u => u.Department).FirstOrDefaultAsync(u => u.Id == id & u.Status != Lambda.Deleted);
         }
 
         public async Task<ApplicationUser?> FindByIdDeleteInclusiveAsync(string id)

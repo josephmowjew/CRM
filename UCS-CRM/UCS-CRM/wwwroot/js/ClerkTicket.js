@@ -114,8 +114,7 @@
 
         $.get('tickets/FetchReassignList', { selectedValue: selectedValue }, function (data) {
             var $select = $('#edit_ticket_modal select[name="AssignedToId"]');
-            console.log("this is the select", $select); // Check if the element is selected correctly
-            console.log(data); // Check the data returned
+           
 
             // Clear the options of the second dropdown list
             $select.find('option').remove();
@@ -160,7 +159,7 @@ function EditForm(id, area = "") {
     }).done(function (data) {
 
 
-       
+    
         const ticketFields = {
             Title: 'title',
             Description: 'description',

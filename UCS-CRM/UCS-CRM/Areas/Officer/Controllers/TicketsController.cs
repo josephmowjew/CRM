@@ -168,6 +168,21 @@ namespace UCS_CRM.Areas.Clerk.Controllers
 
                     string ticketNumber = Lambda.IssuePrefix + (lastTicketId + 1);
 
+                      var userId = !string.IsNullOrEmpty(createTicketDTO.AssignedToId) 
+                        ? createTicketDTO.AssignedToId 
+                        : claimsIdentitifier.Value;
+
+                    mappedTicket.AssignedToId = userId;
+
+                    var findUser = await this._userRepository.FindByIdAsync(userId);
+
+                    if (findUser != null)
+                    {
+                        // Set the ticket department to the user's department
+                        mappedTicket.DepartmentId = findUser?.DepartmentId;
+                    }
+
+
                     //assign the ticket to the user
 
                     if (!string.IsNullOrEmpty(createTicketDTO.AssignedToId))
@@ -324,6 +339,13 @@ namespace UCS_CRM.Areas.Clerk.Controllers
 
             editTicketDTO.AssignedToId ??= ticketDB.AssignedToId;
             editTicketDTO.StateId ??= ticketDB.StateId;
+
+            // Assign the ticket to the department of the assigned user
+            if (ticketDB?.AssignedTo?.DepartmentId != null)
+            {
+                ticketDB.DepartmentId = ticketDB.AssignedTo.DepartmentId;
+            }
+
 
             var state = await this._stateRepository.GetStateAsync((int)editTicketDTO.StateId);
             var user = await this._userRepository.FindByIdAsync(editTicketDTO.AssignedToId);

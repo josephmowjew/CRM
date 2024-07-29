@@ -128,6 +128,12 @@ namespace UCS_CRM.Areas.SeniorManager.Controllers
 
                 editTicketDTO.AssignedToId = editTicketDTO.AssignedToId == null ? ticketDB.AssignedToId : editTicketDTO.AssignedToId;
 
+                 // Assign the ticket to the department of the assigned user
+                if (ticketDB?.AssignedTo?.DepartmentId != null)
+                {
+                    ticketDB.DepartmentId = ticketDB.AssignedTo.DepartmentId;
+                }
+
                 //check if the role name isn't already taken
                 var mappedTicket = this._mapper.Map<Ticket>(editTicketDTO);
 

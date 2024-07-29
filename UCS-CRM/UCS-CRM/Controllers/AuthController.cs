@@ -199,7 +199,7 @@ namespace UCS_CRM.Controllers
                     new AuthenticationProperties 
                     { 
                         IsPersistent = false,
-                        ExpiresUtc = DateTime.Now.AddMinutes(2) // Set an expiration time as needed
+                        ExpiresUtc = DateTime.Now.AddMinutes(30) // Set an expiration time as needed
                     }
                 );
 
