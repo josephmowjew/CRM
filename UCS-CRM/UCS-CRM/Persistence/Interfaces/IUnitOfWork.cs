@@ -3,5 +3,6 @@
     public interface IUnitOfWork
     {
         Task SaveToDataStore();
+        Task<int> SaveToDataStoreSync();
     }
 }

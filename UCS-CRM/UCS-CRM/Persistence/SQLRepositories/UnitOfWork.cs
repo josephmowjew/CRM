@@ -15,5 +15,10 @@ namespace UCS_CRM.Persistence.SQLRepositories
         {
             await _context.SaveChangesAsync();
         }
-    }
+        public async Task<int> SaveToDataStoreSync()
+        {
+            int recordsAffected = await _context.SaveChangesAsync();
+            return recordsAffected;
+        }    
+     }
 }

@@ -230,7 +230,18 @@ namespace UCS_CRM.Controllers
                 return RedirectToAction("Index", "Home", new { Area = "SeniorManager" });
             }
 
-                switch (role.ToLower())
+                if (string.IsNullOrEmpty(role))
+                {
+                    return RedirectToAction("Index", "Home", new { Area = "Officer" });
+                }
+
+                string roleLower = role.ToLower();
+                if (roleLower.Contains("manager"))
+                {
+                    return RedirectToAction("Index", "Home", new { Area = "Manager" });
+                }
+
+                switch (roleLower)
                 {
                     case "administrator":
                         return RedirectToAction("Index", "Home", new { Area = "Admin" });
@@ -238,19 +249,6 @@ namespace UCS_CRM.Controllers
                         return RedirectToAction("Index", "Home", new { Area = "Member" });
                     case "teller":
                         return RedirectToAction("Index", "Home", new { Area = "Teller" });
-                    case "general manager":
-                    case "customer service and member engagement manager":
-                    case "system branch networks manager":
-                    case "satellites manager":
-                    case "head of customer service and member engagement":
-                    case "head of operations":
-                    case "finance manager":
-                    case "risk and compliance manager":
-                    case "branch manager":
-                    case "satellite center manager":
-                    case "digital services and projects manager":
-                    case "sales and marketing manager":
-                        return RedirectToAction("Index", "Home", new { Area = "Manager" });
                     case "call center agent":
                         return RedirectToAction("Index", "Home", new { Area = "CallCenterOfficer" });
                     default:
@@ -289,11 +287,28 @@ namespace UCS_CRM.Controllers
                 // Set the last activity time for the idle timeout feature
                 HttpContext.Session.SetString("LastUserActivity",DateTime.Now.ToString());
 
+
                 if (string.IsNullOrEmpty(role))
                 {
                     return RedirectToAction("Index", "Home", new { Area = "Officer" });
                 }
-                switch (role.ToLower())
+
+
+
+                string roleLower = role.ToLower();
+
+                 if (confirmedUser?.Department?.Name.Contains("Executive suite", StringComparison.OrdinalIgnoreCase) == true)
+                {
+                
+                    return RedirectToAction("Index", "Home", new { Area = "SeniorManager" });
+                }
+                
+                if (roleLower.Contains("manager"))
+                {
+                    return RedirectToAction("Index", "Home", new { Area = "Manager" });
+                }
+
+                switch (roleLower)
                 {
                     case "administrator":
                         return RedirectToAction("Index", "Home", new { Area = "Admin" });
@@ -301,19 +316,6 @@ namespace UCS_CRM.Controllers
                         return RedirectToAction("Index", "Home", new { Area = "Member" });
                     case "teller":
                         return RedirectToAction("Index", "Home", new { Area = "Teller" });
-                    case "general manager":
-                    case "customer service and member engagement manager":
-                    case "system branch networks manager":
-                    case "satellites manager":
-                    case "head of customer service and member engagement":
-                    case "head of operations":
-                    case "finance manager":
-                    case "risk and compliance manager":
-                    case "branch manager":
-                    case "satellite center manager":
-                    case "digital services and projects manager":
-                    case "sales and marketing manager":
-                        return RedirectToAction("Index", "Home", new { Area = "Manager" });
                     case "call center agent":
                         return RedirectToAction("Index", "Home", new { Area = "CallCenterOfficer" });
                     default:
