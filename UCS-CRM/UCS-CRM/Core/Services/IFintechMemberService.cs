@@ -4,10 +4,9 @@ namespace UCS_CRM.Core.Services
 {
     public interface IFintechMemberService
     {
-        Task<List<Datum>> GetAllFintechMembersAsync();
-        Task<(List<Datum>, bool)> GetFintechMembersAsync(int take, long Fidxno);
-        Task SyncFintechMembersWithLocalDataStore();
-
+       
+        Task<(List<Datum>, string, bool)> GetFintechMembersAsync(int take, long Fidxno);
+        Task<List<long>> SyncFintechMembersWithLocalDataStore();
         Task<KeyValuePair<bool, string>> CreateAllMemberUserAccounts();
 
         Task<string> ApiAuthenticate();

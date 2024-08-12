@@ -102,92 +102,106 @@ namespace UCS_CRM.Core.Services
 
             return duplicates;
         }
-    [DisableConcurrentExecution(timeoutInSeconds: 6000)]
-    public async Task SyncFintechMembersWithLocalDataStore()
-    {
-        int take = 5000;
-        long fidxno;
-        bool fetchMore = true;
-        int totalProcessed = 0;
-        int batchNumber = 0;
-
-        // Get the last member sorted by Fidxno 
-        Member? member = await this._memberRepository.GetLastMemberByFidxno();
-        fidxno = member?.Fidxno ?? 0;
-
-        while (fetchMore)
+        [DisableConcurrentExecution(timeoutInSeconds: 6000)]
+        public async Task<List<long>> SyncFintechMembersWithLocalDataStore()
         {
-            batchNumber++;
-            List<Datum> fintechMemberData;
-            List<Member> mappedMembers;
-            bool errorOccurred;
+            int initialBatchSize = 500;
+            int maxBatchSize = 500; // Maximum batch size to prevent too large requests
+            int batchSize = initialBatchSize;
+            long fidxno;
+            bool fetchMore = true;
+            int totalProcessed = 0;
+            int batchNumber = 0;
+            List<long> errorFidxnos = new List<long>(); // List to store fidxno with errors
+            string accountNumberErrorMessage = "Account Number Does Not Match any Identification Details";
 
-            // Get Fintech members asynchronously
-            (fintechMemberData, errorOccurred) = await GetFintechMembersAsync(take, fidxno);
+            // Get the last member sorted by Fidxno 
+            Member? member = await this._memberRepository.GetLastMemberByFidxno();
+            fidxno = member?.Fidxno ?? 0;
 
-            // If we got the specific error, reduce 'take' and try again 
-            if (errorOccurred)
+            while (fetchMore)
             {
-                if (take == 1)
+                batchNumber++;
+                List<Datum> fintechMemberData;
+                bool apiErrorOccurred;
+                string responseBody = "";
+                bool batchProcessedSuccessfully = false; // Flag to check if the batch was processed successfully
+
+                // Get Fintech members asynchronously
+                (fintechMemberData, responseBody, apiErrorOccurred) = await GetFintechMembersAsync(batchSize, fidxno);
+
+                // Handle API error
+                if (apiErrorOccurred)
                 {
-                    await LogMessageAsync($"Batch {batchNumber}: Error occurred with take=1. Exiting loop to prevent endless iteration.");
+                    if (responseBody.Contains(accountNumberErrorMessage))
+                    {
+                        await LogMessageAsync($"Batch {batchNumber}: Error message '{accountNumberErrorMessage}' received. Stopping fetching.");
+                        fetchMore = false;
+                        break;
+                    }
+
+                    string errorMessage = "Process Failed:          0 String or binary data would be truncated.";
+                    if (batchSize == 1 && responseBody.Contains(errorMessage))
+                    {
+                        // Record fidxno with the error
+                        errorFidxnos.Add(fidxno);
+                        await LogMessageAsync($"Batch {batchNumber}: API error occurred with batchSize=1. Error message: {errorMessage}. Recording fidxno {fidxno}.");
+                        fidxno++; // Increment fidxno to fetch the next record
+                        continue;
+                    }
+
+                    // Reduce batchSize and retry if batchSize is greater than 1
+                    if (batchSize > 1)
+                    {
+                        batchSize = Math.Max(1, batchSize / 2);
+                        await LogMessageAsync($"Batch {batchNumber}: API error occurred. Reducing batchSize to {batchSize}.");
+                    }
+                    continue;
+                }
+
+                // If no data fetched, exit loop
+                if (fintechMemberData == null || fintechMemberData.Count == 0)
+                {
+                    await LogMessageAsync($"Batch {batchNumber}: No more data to fetch. Exiting loop.");
                     fetchMore = false;
                     break;
                 }
 
-                take = Math.Max(1, take / 2);
-                await LogMessageAsync($"Batch {batchNumber}: Error occurred. Reducing take to {take}.");
-                continue;
-            }
+                // Process each record individually
+                foreach (var datum in fintechMemberData)
+                {
+                    try
+                    {
+                        // Map Datum to member
+                        var mappedMember = MemberMapper.MapToMember(datum);
 
-            // If no data fetched, exit loop
-            if (fintechMemberData == null || fintechMemberData.Count == 0)
-            {
-                await LogMessageAsync($"Batch {batchNumber}: No more data to fetch. Exiting loop.");
-                fetchMore = false;
-                break;
-            }
+                        // Check for duplicates
+                        var duplicates = await FindDuplicatesAsync(new List<Member> { mappedMember });
+                        if (duplicates.Count > 0)
+                        {
+                            await LogMessageAsync($"Batch {batchNumber}: Record with fidxno {datum.FIdxno} is a duplicate and was not processed.");
+                            continue;
+                        }
 
-            // Map Datum to member
-            mappedMembers = MemberMapper.MapToMembers(fintechMemberData.OrderBy(fm => fm.FIdxno).ToList());
-
-            // Reorder in ascending order 
-            mappedMembers = mappedMembers.OrderBy(mm => mm.Fidxno).ToList();
-
-            // Check for duplicates
-            List<Member> duplicates = await FindDuplicatesAsync(mappedMembers);
-
-            // If duplicates found, stop fetching more records
-            if (duplicates.Count > 0)
-            {
-                //remove the duplicates 
-                mappedMembers = mappedMembers.Except(duplicates).ToList();
-                await LogMessageAsync($"Batch {batchNumber}: {duplicates.Count} duplicates found and removed.");
-                fetchMore = false;
-            }
-
-            if (mappedMembers.Count > 0)
-            {
-                // Insert records to local data store
-                await this._memberRepository.AddRangeAsync(mappedMembers);
+                        // Insert record to local data store
+                        this._memberRepository.Add(mappedMember);
+                        totalProcessed++;
+                        batchProcessedSuccessfully = true; // Mark batch as successfully processed
+                    }
+                    catch (Exception ex)
+                    {
+                        // Log the error with specific record details
+                        await this._errorService.LogErrorAsync(ex);
+                        await LogMessageAsync($"Batch {batchNumber}: Error processing record with fidxno {datum.FIdxno} - {ex.Message}");
+                        // Continue processing remaining records even if one fails
+                    }
+                }
 
                 // Save changes to the database
                 try
                 {
                     int savedCount = await _unitOfWork.SaveToDataStoreSync();
-                    totalProcessed += savedCount;
-                    await LogMessageAsync($"Batch {batchNumber}: Processed {mappedMembers.Count} members. Saved {savedCount} to database. Total processed: {totalProcessed}");
-
-                    if (savedCount != mappedMembers.Count)
-                    {
-                        await LogMessageAsync($"Batch {batchNumber}: Warning - Mismatch between processed ({mappedMembers.Count}) and saved ({savedCount}) records.");
-                    }
-
-                    if (fintechMemberData.Count > 0)
-                    {
-                        fidxno = fintechMemberData.Max(fm => fm.FIdxno);
-                        await LogMessageAsync($"Batch {batchNumber}: Updated fidxno to {fidxno}");
-                    }
+                    await LogMessageAsync($"Batch {batchNumber}: Processed {totalProcessed} members. Saved {savedCount} to database.");
                 }
                 catch (Exception ex)
                 {
@@ -195,27 +209,42 @@ namespace UCS_CRM.Core.Services
                     await this._errorService.LogErrorAsync(ex);
                     await LogMessageAsync($"Batch {batchNumber}: Error saving to database - {ex.Message}");
                 }
-            }
-            else
-            {
-                await LogMessageAsync($"Batch {batchNumber}: No new members to process after removing duplicates.");
+
+                // Update fidxno to the latest one fetched
+                if (fintechMemberData.Count > 0)
+                {
+                    fidxno = fintechMemberData.Max(fm => fm.FIdxno);
+                    await LogMessageAsync($"Batch {batchNumber}: Updated fidxno to {fidxno}");
+                }
+
+                // Increase batch size if batch processed successfully and it's below the maximum size
+                if (batchProcessedSuccessfully && batchSize < maxBatchSize)
+                {
+                    batchSize = Math.Min(maxBatchSize, batchSize * 2);
+                    await LogMessageAsync($"Batch {batchNumber}: Increasing batchSize to {batchSize}");
+                }
+
+                
+                // Add a small delay to prevent overwhelming the database
+                await Task.Delay(5000);
             }
 
-            // Add a small delay to prevent overwhelming the database
-            await Task.Delay(5000);
+            // Log the list of fidxnos with errors to a file
+            await LogErrorFidxnosToFileAsync(errorFidxnos);
+
+            await LogMessageAsync($"Sync completed. Total records processed: {totalProcessed}");
+            return errorFidxnos; // Return the list of fidxnos with errors
         }
 
-        await LogMessageAsync($"Sync completed. Total records processed: {totalProcessed}");
-    }
+        private async Task LogMessageAsync(string message)
+        {
+            // Implement this method to log messages to a file or database
+            // This will help in debugging and tracking the process
+            Console.WriteLine($"{DateTime.Now}: {message}");
+            // You might want to save this to a log file or database as well
+        }
 
-    private async Task LogMessageAsync(string message)
-    {
-        // Implement this method to log messages to a file or database
-        // This will help in debugging and tracking the process
-        Console.WriteLine($"{DateTime.Now}: {message}");
-        // You might want to save this to a log file or database as well
-    }
-        public async Task<(List<Datum>, bool)> GetFintechMembersAsync(int take, long Fidxno)
+        public async Task<(List<Datum>, string, bool)> GetFintechMembersAsync(int take, long Fidxno)
         {
             try
             {
@@ -224,7 +253,7 @@ namespace UCS_CRM.Core.Services
                 string fidxno = Fidxno < 1 ? "" : Fidxno.ToString();
 
                 if (string.IsNullOrEmpty(token))
-                    return (new List<Datum>(), false);
+                    return (new List<Datum>(), "", false);
 
                 // Set up payload
                 var jsonPayload = new { take = take, Fidxno = fidxno };
@@ -245,27 +274,61 @@ namespace UCS_CRM.Core.Services
                 // Check for the specific error response
                 if (responseBody.Contains("Process Failed:          0 String or binary data would be truncated."))
                 {
-                    return (new List<Datum>(), true);
+                    return (new List<Datum>(), responseBody, true);
                 }
 
                 // Check response status
                 if (response.IsSuccessStatusCode)
                 {
                     var responseData = JsonConvert.DeserializeObject<FintechMember>(responseBody);
-                    return (responseData.Data, false);
+                    return (responseData.Data, responseBody, false);
                 }
                 else
                 {
-                    // Log or handle unsuccessful response
-                    return (new List<Datum>(), false);
+                    // Return the response body with an error status
+                    return (new List<Datum>(), responseBody, false);
                 }
             }
             catch (Exception ex)
             {
                 // Log or handle any exceptions
-                return (new List<Datum>(), false);
+                return (new List<Datum>(), ex.Message, false);
             }
         }
+
+        private async Task LogErrorFidxnosToFileAsync(List<long> errorFidxnos)
+        {
+            // Get the directory of the application's executable
+            string baseDirectory = AppDomain.CurrentDomain.BaseDirectory;
+            string filePath = Path.Combine(baseDirectory, "errorFidxnos.txt");
+
+            try
+            {
+                // Ensure directory exists
+                string directory = Path.GetDirectoryName(filePath);
+                if (!Directory.Exists(directory))
+                {
+                    Directory.CreateDirectory(directory);
+                }
+
+                // Write the list of fidxnos to the file
+                using (StreamWriter writer = new StreamWriter(filePath, true)) // Append mode
+                {
+                    foreach (var fidxno in errorFidxnos)
+                    {
+                        await writer.WriteLineAsync(fidxno.ToString());
+                    }
+                }
+
+                await LogMessageAsync("Error fidxnos logged to file successfully.");
+            }
+            catch (Exception ex)
+            {
+                // Log the error to console or another logging mechanism
+                await LogMessageAsync($"Error logging fidxnos to file: {ex.Message}");
+            }
+        }
+
 
 
         public async Task<string> ApiAuthenticate()
