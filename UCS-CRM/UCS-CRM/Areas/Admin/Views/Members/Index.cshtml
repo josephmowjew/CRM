@@ -32,7 +32,7 @@
                     <th>
                         Account Number
                     </th>
-                     <th>
+                    <th>
                         National Id
                     </th>
                     <th>
@@ -50,20 +50,14 @@
                     </th>
 
                     <th>
-                        Date Of Birth
+                        Account Status
                     </th>
-                     <th>
-                       Branch
-                    </th>
-                     <th>
-                       Employer
+                    <th>
+                        Employee Number
                     </th>
                     <th>
                         Action
                     </th>
-
-
-
                 </tr>
             </thead>
             <tbody>
@@ -76,106 +70,106 @@
 
 @section Scripts{
 
-                <script>
-                    var datatable;
-                </script>
+    <script>
+        var datatable;
+    </script>
 
-                   <script src="~/js/Member.js"></script>
-                <script>
-                    $(document).ready(function () {
-                        datatable = $('#my_table').DataTable({
-
-
-                            "processing": true,
-                            "serverSide": true,
-                            "order": [[0, "desc"]],
-                            ajax: {
-                                url: 'members/GetMembers',
-                                type: 'post',
-                                datatype: 'Json'
+        <script src="~/js/Member.js"></script>
+                    
+        <script>
+        $(document).ready(function () {
+            datatable = $('#my_table').DataTable({
 
 
-                          },
-                            columnDefs: [
-                                {
-                                    defaultContent: "",
-                                    targets: "_all",
-                                    'orderable': true
-                                },
-                            ],
-                            columns: [
-
-                                {
-                                    data: "accountNumber",
-                                    name: "accountNumber",
-                                    className: "text-left",
-                                    "orderable": true,
-                                },
-                                {
-                                    data: "nationalId",
-                                    name: "nationalId",
-                                    className: "text-left",
-                                    "orderable": true,
-                                },
-                                {
-                                    data: "formattedFirstName",
-                                    name: "firstName",
-                                    className: "text-left",
-                                    "orderable": true,
-                                },
-                                {
-                                    data: "formattedLastName",
-                                    name: "lastName",
-                                    className: "text-left",
-                                    "orderable": true,
-                                },
-                                {
-                                    data: "formattedGender",
-                                    name: "gender",
-                                    className: "text-left",
-                                    "orderable": true,
-                                },
-                                {
-                                    data: "phoneNumber",
-                                    name: "phoneNumber",
-                                    className: "text-left",
-                                    "orderable": false,
-                                },
-
-                                 {
-                                    data: "formattedDateOfBirth",
-                                    name: "dateOfBirth",
-                                    className: "text-left",
-                                    "orderable": false,
-                                },
-                                    {
-                                    data: "branch",
-                                    name: "branch",
-                                    className: "text-left",
-                                    "orderable": false,
-                                },
-                                    {
-                                    data: "employer",
-                                        name: "employer",
-                                    className: "text-left",
-                                    "orderable": false,
-                                },
-                                  {
-                                    data: { state: "user.id"},
-                                    mRender: function (data, type, full) {
-                                                                        return data.user != null && data.user.status != 'Deleted' ?  "<a href='#' onclick=removeUserAccount('" + data.id + "') type='button' class='mdi mdi-account-remove' title='Remove User Account' ></a>" : "<a href='#' onclick=set_email_modal('" + data.id + "') type='button' class='feather icon-user-plus' title='Create User Account' ></a>";
-                                    }, "name": "user.name",
-                                    className: "text-left"
-                                },
-
-                            ],
-                            responsive: true,
-                            "autoWidth": false,
-                        });
-                    });
-                </script>
+                "processing": true,
+                "serverSide": true,
+                "order": [[0, "desc"]],
+                ajax: {
+                    url: 'members/GetMembers',
+                    type: 'post',
+                    datatype: 'Json'
 
 
+                },
+                columnDefs: [
+                    {
+                        defaultContent: "",
+                        targets: "_all",
+                        'orderable': true
+                    },
+                ],
+                columns: [
+
+                    {
+                        data: "accountNumber",
+                        name: "accountNumber",
+                        className: "text-left",
+                        "orderable": true,
+                    },
+                    {
+                        data: "nationalId",
+                        name: "nationalId",
+                        className: "text-left",
+                        "orderable": true,
+                    },
+                    {
+                        data: "formattedFirstName",
+                        name: "firstName",
+                        className: "text-left",
+                        "orderable": true,
+                    },
+                    {
+                        data: "formattedLastName",
+                        name: "lastName",
+                        className: "text-left",
+                        "orderable": true,
+                    },
+                    {
+                        data: "formattedGender",
+                        name: "gender",
+                        className: "text-left",
+                        "orderable": true,
+                    },
+                    {
+                        data: "phoneNumber",
+                        name: "phoneNumber",
+                        className: "text-left",
+                        "orderable": false,
+                    },
+
+                     {
+                        data: "accountStatus",
+                        name: "accountStatus",
+                        className: "text-left",
+                        "orderable": false,
+                    },
+                    {
+                        data: "employeeNumber",
+                        name: "employeeNumber",
+                        className: "text-left",
+                        "orderable": false,
+                    },
+
+                    @* {
+                        data: "formattedDateOfBirth",
+                        name: "dateOfBirth",
+                        className: "text-left",
+                        "orderable": false,
+                    }, *@
+                    {
+                        data: "id",
+                        name: "id",
+                        "orderable": false,
+                        render: function (data) {
+                            return "<a href='members/details/" + data + "' class='mdi mdi-eye'></a> "
+                        }
+                    },
+                ],
+                responsive: true,
+                "autoWidth": false,
+            });
+        });
+    </script>
     @{
         await Html.RenderPartialAsync("_ValidationScriptsPartial");
     }
