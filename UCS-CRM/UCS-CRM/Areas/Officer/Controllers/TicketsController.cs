@@ -49,9 +49,10 @@ namespace UCS_CRM.Areas.Clerk.Controllers
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly HangfireJobEnqueuer _jobEnqueuer;
         private readonly ApplicationDbContext _context;
+        private readonly ILogger<TicketsController> _logger;    
         public TicketsController(ITicketRepository ticketRepository, IMapper mapper, IUnitOfWork unitOfWork, IEmailService emailService, IEmailAddressRepository addressRepository,
             ITicketCategoryRepository ticketCategoryRepository, IStateRepository stateRepository, ITicketPriorityRepository priorityRepository,
-            IWebHostEnvironment env, ITicketCommentRepository ticketCommentRepository, IUserRepository userRepository, IMemberRepository memberRepository, ITicketEscalationRepository ticketEscalationRepository, IDepartmentRepository departmentRepository, ITicketStateTrackerRepository ticketStateTrackerRepository, UserManager<ApplicationUser> userManager, HangfireJobEnqueuer jobEnqueuer, ApplicationDbContext context)
+            IWebHostEnvironment env, ITicketCommentRepository ticketCommentRepository, IUserRepository userRepository, IMemberRepository memberRepository, ITicketEscalationRepository ticketEscalationRepository, IDepartmentRepository departmentRepository, ITicketStateTrackerRepository ticketStateTrackerRepository, UserManager<ApplicationUser> userManager, HangfireJobEnqueuer jobEnqueuer, ApplicationDbContext context, ILogger<TicketsController> logger)
         {
             _ticketRepository = ticketRepository;
             _mapper = mapper;
@@ -71,7 +72,7 @@ namespace UCS_CRM.Areas.Clerk.Controllers
             _userManager = userManager;
             _jobEnqueuer = jobEnqueuer;
             _context = context;
-            
+            _logger = logger;
         }
 
         // GET: TicketsController
@@ -597,6 +598,57 @@ namespace UCS_CRM.Areas.Clerk.Controllers
 
             await this._unitOfWork.SaveToDataStore();
 
+            // Send emails to all stakeholders
+            var ticket = await this._ticketRepository.GetTicket(ticketDbRecord.Id);
+            var stakeholders = new List<ApplicationUser> { ticket.CreatedBy, ticket.AssignedTo };
+            if (ticket.Member?.User != null)
+            {
+                stakeholders.Add(ticket.Member.User);
+            }
+
+            // Get all users involved in ticket escalations
+            var cursorParams = new CursorParams { Take = int.MaxValue }; // Retrieve all escalations
+            var ticketEscalations = await this._ticketEscalationRepository.GetTicketEscalations(ticketDbRecord.Id, cursorParams);
+            if (ticketEscalations != null)
+            {
+                foreach (var escalation in ticketEscalations)
+                {
+                    if (escalation.EscalatedTo != null && !stakeholders.Contains(escalation.EscalatedTo))
+                    {
+                        stakeholders.Add(escalation.EscalatedTo);
+                    }
+                }
+            }
+
+            foreach (var stakeholder in stakeholders)
+            {
+                string emailBody = $"A new comment has been added to ticket #{ticketDbRecord.Id}:<br><br>" +
+                                   $"<strong>Comment:</strong> {ticketComment.Comment}<br><br>" +
+                                   $"Please log in to the system to view the full details.";
+
+                string primaryEmail = stakeholder.Email ?? string.Empty;
+                string secondaryEmail = stakeholder.SecondaryEmail ?? string.Empty;
+
+                if (!string.IsNullOrEmpty(primaryEmail))
+                {
+                    try
+                    {
+                        EmailHelper.SendEmail(this._jobEnqueuer, primaryEmail, 
+                            $"New Comment on Ticket #{ticketDbRecord.Id}", 
+                            emailBody, 
+                            secondaryEmail);
+                    }
+                    catch (Exception ex)
+                    {
+                        // Log the error, but don't throw to prevent crashing
+                        _logger.LogError($"Failed to send email to {primaryEmail}: {ex.Message}");
+                    }
+                }
+                else
+                {
+                    _logger.LogWarning($"Skipped sending email for stakeholder with null primary email");
+                }
+            }
 
             return Json(new { status = "success", message = "comment added successfully" });
 
