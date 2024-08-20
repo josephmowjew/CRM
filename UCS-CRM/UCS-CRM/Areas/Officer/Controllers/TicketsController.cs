@@ -692,43 +692,31 @@ namespace UCS_CRM.Areas.Clerk.Controllers
         [HttpPost]
         public async Task<ActionResult> CloseTicket(CloseTicketDTO closeTicketDTO)
         {
-            //check for model validity
-
             closeTicketDTO.DataInvalid = "true";
 
             if (ModelState.IsValid)
             {
-                //find the ticket with the id sent
-
                 var ticket = await this._ticketRepository.GetTicket(closeTicketDTO.Id);
 
                 if (ticket == null)
                 {
-                    return Json(new {status="error", message = "Could not close ticket, try again or contact administrator if the error persist" });
+                    return Json(new { status = "error", message = "Could not close ticket, try again or contact administrator if the error persists" });
                 }
                 else
                 {
-                    //get the current user id
-
                     var userClaims = (ClaimsIdentity)User.Identity;
-
-                    var claimsIdentitifier = userClaims.FindFirst(ClaimTypes.NameIdentifier);
-
-                    var currentUserId = claimsIdentitifier.Value;
+                    var claimsIdentifier = userClaims.FindFirst(ClaimTypes.NameIdentifier);
+                    var currentUserId = claimsIdentifier.Value;
 
                     string currentState = ticket.State.Name;
 
-                    //get close state
-
-                    var closeState = this._stateRepository.Exists(Lambda.Closed);
-
-                    if(ticket.CreatedById == currentUserId)
+                    // Check if the current user is assigned to the ticket
+                    if (ticket.AssignedToId == currentUserId || ticket.CreatedById == currentUserId)
                     {
+                        var closeState = this._stateRepository.Exists(Lambda.Closed);
+
                         ticket.StateId = closeState.Id;
-
                         ticket.ClosedDate = DateTime.UtcNow;
-
-                        //sync changes to the datastore
 
                         // Detach the existing entry if it is not in the Modified state
                         var existingEntry = _context.ChangeTracker.Entries<Ticket>().FirstOrDefault(e => e.Entity.Id == ticket.Id);
@@ -742,28 +730,32 @@ namespace UCS_CRM.Areas.Clerk.Controllers
 
                         await this._unitOfWork.SaveToDataStore();
 
-                        UCS_CRM.Core.Models.TicketStateTracker ticketStateTracker = new TicketStateTracker() { CreatedById = currentUserId, TicketId = ticket.Id, NewState = ticket.State.Name, PreviousState = currentState, Reason = closeTicketDTO.Reason };
+                        UCS_CRM.Core.Models.TicketStateTracker ticketStateTracker = new TicketStateTracker() 
+                        { 
+                            CreatedById = currentUserId, 
+                            TicketId = ticket.Id, 
+                            NewState = ticket.State.Name, 
+                            PreviousState = currentState, 
+                            Reason = closeTicketDTO.Reason 
+                        };
 
                         this._ticketStateTrackerRepository.Add(ticketStateTracker);
 
                         await this._unitOfWork.SaveToDataStore();
 
-                        //send alert emails
-
+                        // Send alert emails
                         await this._ticketRepository.SendTicketClosureNotifications(ticket, closeTicketDTO.Reason);
 
                         return Json(new { status = "success", message = $"Ticket {ticket.TicketNumber} has been closed successfully" });
-
                     }
                     else
                     {
-                        return Json(new {status="error", message = $"Could not close ticket as it can only be closed by{ticket.CreatedBy.Email} " });
-
+                        return Json(new { status = "error", message = $"Could not close ticket as you are not currently assigned to it" });
                     }
                 }
             }
 
-            return Json(new { status="error", message = "Could not close ticket" });
+            return Json(new { status = "error", message = "Could not close ticket" });
         }
 
         [HttpPost]
