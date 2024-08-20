@@ -45,6 +45,7 @@ namespace UCS_CRM.Areas.Member.Controllers
         private readonly ILogger<TicketsController> _logger;
 
         private readonly IUserRepository _userRepository;
+        private readonly IConfiguration _configuration;
         public TicketsController(ITicketRepository ticketRepository,
             IMapper mapper, 
             IUnitOfWork unitOfWork,
@@ -61,7 +62,8 @@ namespace UCS_CRM.Areas.Member.Controllers
             ITicketStateTrackerRepository ticketStateTrackerRepository,
             IUserRepository userRepository,HangfireJobEnqueuer jobEnqueuer,
             ILogger<TicketsController> logger,
-            ApplicationDbContext context)
+            ApplicationDbContext context,
+            IConfiguration configuration)
         {
             _ticketRepository = ticketRepository;
             _mapper = mapper;
@@ -81,6 +83,7 @@ namespace UCS_CRM.Areas.Member.Controllers
             _jobEnqueuer = jobEnqueuer;
             _context = context;
             _logger = logger;
+            _configuration = configuration;
         }
 
         // GET: TicketsController
@@ -720,11 +723,12 @@ namespace UCS_CRM.Areas.Member.Controllers
                 }
             }
 
-            foreach (var stakeholder in stakeholders)
+           foreach (var stakeholder in stakeholders)
             {
+                string systemUrl = $"{_configuration["HostingSettings:Protocol"]}://{_configuration["HostingSettings:Host"]}";
                 string emailBody = $"A new comment has been added to ticket #{ticketDbRecord.Id}:<br><br>" +
                                    $"<strong>Comment:</strong> {ticketComment.Comment}<br><br>" +
-                                   $"Please log in to the system to view the full details.";
+                                   $"Please <a href='{systemUrl}'>click here</a> to view the full details in the system.";
 
                 string primaryEmail = stakeholder.Email ?? string.Empty;
                 string secondaryEmail = stakeholder.SecondaryEmail ?? string.Empty;
@@ -749,7 +753,6 @@ namespace UCS_CRM.Areas.Member.Controllers
                     _logger.LogWarning($"Skipped sending email for stakeholder with null primary email");
                 }
             }
-
 
             return Json(new { status = "success", message = "comment added successfully" });
 
