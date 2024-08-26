@@ -286,6 +286,152 @@ namespace UCS_CRM.Areas.SeniorManager.Controllers
             return Json(new { status = "error", message = "ticket could not be found from the system" });
         }
 
+               [HttpPost]
+        public async Task<ActionResult> CloseTicket(CloseTicketDTO closeTicketDTO)
+        {
+            closeTicketDTO.DataInvalid = "true";
+
+            if (ModelState.IsValid)
+            {
+                var ticket = await this._ticketRepository.GetTicket(closeTicketDTO.Id);
+
+                if (ticket == null)
+                {
+                    return Json(new { status = "error", message = "Could not close ticket, try again or contact administrator if the error persists" });
+                }
+                else
+                {
+                    var userClaims = (ClaimsIdentity)User.Identity;
+                    var claimsIdentifier = userClaims.FindFirst(ClaimTypes.NameIdentifier);
+                    var currentUserId = claimsIdentifier.Value;
+
+                    string currentState = ticket.State.Name;
+
+                    // Check if the current user is assigned to the ticket
+                    if (ticket.AssignedToId == currentUserId || ticket.CreatedById == currentUserId)
+                    {
+                        var closeState = this._stateRepository.Exists(Lambda.Closed);
+
+                        ticket.StateId = closeState.Id;
+                        ticket.ClosedDate = DateTime.UtcNow;
+
+                        // Detach the existing entry if it is not in the Modified state
+                        var existingEntry = _context.ChangeTracker.Entries<Ticket>().FirstOrDefault(e => e.Entity.Id == ticket.Id);
+                        if (existingEntry != null && existingEntry.State != EntityState.Modified)
+                        {
+                            existingEntry.State = EntityState.Detached;
+                        }
+
+                        // Attach the ticket to the context and set its state to Modified
+                        this._context.Entry(ticket).State = EntityState.Modified;
+
+                        await this._unitOfWork.SaveToDataStore();
+
+                        UCS_CRM.Core.Models.TicketStateTracker ticketStateTracker = new TicketStateTracker() 
+                        { 
+                            CreatedById = currentUserId, 
+                            TicketId = ticket.Id, 
+                            NewState = ticket.State.Name, 
+                            PreviousState = currentState, 
+                            Reason = closeTicketDTO.Reason 
+                        };
+
+                        this._ticketStateTrackerRepository.Add(ticketStateTracker);
+
+                        await this._unitOfWork.SaveToDataStore();
+
+                        // Send alert emails
+                        await this._ticketRepository.SendTicketClosureNotifications(ticket, closeTicketDTO.Reason);
+
+                        return Json(new { status = "success", message = $"Ticket {ticket.TicketNumber} has been closed successfully" });
+                    }
+                    else
+                    {
+                        return Json(new { status = "error", message = $"Could not close ticket as you are not currently assigned to it" });
+                    }
+                }
+            }
+
+            return Json(new { status = "error", message = "Could not close ticket" });
+        }
+
+        [HttpPost]
+        public async Task<ActionResult> ReopenTicket(CloseTicketDTO closeTicketDTO)
+        {
+            //check for model validity
+
+            closeTicketDTO.DataInvalid = "true";
+
+            if (ModelState.IsValid)
+            {
+                //find the ticket with the id sent
+
+                var ticket = await this._ticketRepository.GetTicket(closeTicketDTO.Id);
+
+                if (ticket == null)
+                {
+                    return Json(new { status = "error", message = "Could not re-open ticket, try again or contact administrator if the error persist" });
+                }
+                else
+                {
+                    //check if the ticket was opened by the current user
+                    //get the current user id
+
+                    var userClaims = (ClaimsIdentity)User.Identity;
+
+                    var claimsIdentitifier = userClaims.FindFirst(ClaimTypes.NameIdentifier);
+
+                    var currentUserId = claimsIdentitifier.Value;
+
+                    string currentState = ticket.State.Name;
+
+                    var reOpened = this._stateRepository.Exists(Lambda.ReOpened);
+
+                    if (ticket.CreatedById == currentUserId)
+                    {
+                        ticket.StateId = reOpened.Id;
+
+                        ticket.ClosedDate = null;
+
+                        // Detach the existing entry if it is not in the Modified state
+                        var existingEntry = _context.ChangeTracker.Entries<Ticket>().FirstOrDefault(e => e.Entity.Id == ticket.Id);
+                        if (existingEntry != null && existingEntry.State != EntityState.Modified)
+                        {
+                            existingEntry.State = EntityState.Detached;
+                        }
+
+                        // Attach the ticket to the context and set its state to Modified
+                        this._context.Entry(ticket).State = EntityState.Modified;
+
+                        await this._unitOfWork.SaveToDataStore();
+
+                        //update the ticket change state 
+
+                        UCS_CRM.Core.Models.TicketStateTracker ticketStateTracker = new TicketStateTracker() { CreatedById = currentUserId, TicketId = ticket.Id, NewState = ticket.State.Name, PreviousState = currentState, Reason = closeTicketDTO.Reason };
+
+                        this._ticketStateTrackerRepository.Add(ticketStateTracker);
+
+                        await this._unitOfWork.SaveToDataStore();
+
+                        //send alert emails
+
+                        await this._ticketRepository.SendTicketReopenedNotifications(ticket, closeTicketDTO.Reason);
+
+                        return Json(new { status = "success", message = $"Ticket {ticket.TicketNumber} has been reopened successfully" });
+
+                    }
+                    else
+                    {
+                        return Json(new { status = "error", message = $"Could not reopen ticket as it can only by{ticket.CreatedBy.Email} " });
+
+                    }
+                }
+            }
+
+            return Json(new { status = "error", message = "Could not reopen ticket" });
+        }
+
+
         // POST: TicketsController/close/5
         [HttpPost]
         public async Task<ActionResult> Close(int id)

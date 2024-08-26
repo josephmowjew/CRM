@@ -82,7 +82,7 @@
 
                 </div>
             </div>
-             <hr />
+                <hr />
                     @if(Model.State.Name.Trim().ToLower() != "closed" && @Model.AssignedToId == ViewBag.CurrentUserId ){
 
                     <button class="btn btn-danger text-white" data-bs-toggle="modal" data-bs-target="#close_ticket_modal">Close Ticket</button>
@@ -99,6 +99,59 @@
                     </div>
                 </div>
                 <hr/>
+
+                <div class="modal fade" id="close_ticket_modal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+                    <div class="modal-dialog" role="document">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title" id="exampleModalLabel">Close Ticket</h5>
+                                <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close">
+                                    <span aria-hidden="true">&times;</span>
+                                </button>
+                            </div>
+                            <div class="modal-body">
+                                <form asp-action="CloseTicket">
+                                    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+                                    <input type="hidden" asp-for="Id" />
+                                    <div class="form-group">
+                                        <label for="Reason" class="control-label"></label>
+                                        <textarea id="Reason" name="Reason" placeholder="Enter Reason" required class="form-control"></textarea>
+                                    </div>
+                                </form>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                                <button type="button" class="btn btn-primary" name="closeTicketfn" onclick="closeTicketfn(@Model.Id)">Close Ticket</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal fade" id="reopen_ticket_modal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+                    <div class="modal-dialog" role="document">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title" id="exampleModalLabel">Reopen Ticket</h5>
+                                <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close">
+                                    <span aria-hidden="true">&times;</span>
+                                </button>
+                            </div>
+                            <div class="modal-body">
+                                <form asp-action="ReopenTicket">
+                                    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+                                    <input type="hidden" asp-for="Id" />
+                                    <div class="form-group">
+                                        <label for="Reason" class="control-label"></label>
+                                        <textarea id="Reason" name="Reason" placeholder="Enter Reason Why" required class="form-control"></textarea>
+                                    </div>
+                                </form>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                                <button type="button" class="btn btn-primary" name="reopenTicketfn" onclick="reopenTicketfn(@Model.Id)">Re-Open Ticket</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
 
         </div>
     </div>
