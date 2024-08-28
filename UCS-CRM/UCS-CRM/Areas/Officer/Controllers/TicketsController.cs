@@ -878,9 +878,9 @@ namespace UCS_CRM.Areas.Clerk.Controllers
             {
                 foreach (var item in members)
                 {
-                    dynamicSelect.Add(new DynamicSelect { Id = item.Id.ToString(), Name = item.FullName + " (" + item.AccountNumber +
-                    ")" + " -- " + item.Branch,
-                        
+                    dynamicSelect.Add(new DynamicSelect { 
+                        Id = item.Id.ToString(), 
+                        Name = $"{item.FullName} ({item.AccountNumber}) -- {item.Branch} -- Employee #{item.EmployeeNumber}"
                     });
                 }
             }

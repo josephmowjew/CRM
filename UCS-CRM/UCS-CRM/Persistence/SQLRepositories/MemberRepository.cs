@@ -230,7 +230,8 @@ namespace UCS_CRM.Persistence.SQLRepositories
                     {
                         query = query.Where(m => m.FirstName.ToLower().Contains(term)
                             || m.LastName.ToLower().Contains(term)
-                            || m.AccountNumber.ToLower().Contains(term));
+                            || m.AccountNumber.ToLower().Contains(term)
+                            || m.EmployeeNumber.ToLower().Contains(term));
                     }
                 }
             }
@@ -280,6 +281,7 @@ namespace UCS_CRM.Persistence.SQLRepositories
                             m.FirstName.ToLower().Contains(term) ||
                             m.LastName.ToLower().Contains(term) ||
                             m.AccountNumber.ToLower().Contains(term) ||
+                            m.EmployeeNumber.ToLower().Contains(term) ||
                             m.Gender.ToLower().Contains(term) ||
                             m.PhoneNumber.ToLower().Contains(term)
                         );

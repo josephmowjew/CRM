@@ -873,9 +873,9 @@ public async Task<ActionResult> CloseTicket(CloseTicketDTO closeTicketDTO)
             {
                 foreach (var item in members)
                 {
-                    dynamicSelect.Add(new DynamicSelect { Id = item.Id.ToString(), Name = item.FullName + " (" + item.AccountNumber +
-                    ")" + " -- " + item.Branch,
-                        
+                     dynamicSelect.Add(new DynamicSelect { 
+                        Id = item.Id.ToString(), 
+                        Name = $"{item.FullName} ({item.AccountNumber}) -- {item.Branch} -- Employee #{item.EmployeeNumber}"
                     });
                 }
             }

@@ -602,7 +602,7 @@ namespace UCS_CRM.Persistence.SQLRepositories
         }
 
        public async Task<List<Ticket>> GetTickets(CursorParams @params, Department department = null, string ticketStatus = "")
-    {
+      {
         if (@params.Take <= 0)
         {
             return new List<Ticket>();
@@ -628,6 +628,8 @@ namespace UCS_CRM.Persistence.SQLRepositories
             .Include(t => t.TicketCategory)
             .Include(t => t.State)
             .Include(t => t.AssignedTo);
+
+        query = query.OrderByDescending(t => t.CreatedDate); // Changed to OrderByDescending
 
         // Apply pagination and select fields
         var result = await query
@@ -709,7 +711,7 @@ namespace UCS_CRM.Persistence.SQLRepositories
                     query = query.Where(t => t.Member.Branch == branch);
                 }
 
-                query = query.OrderBy(t => t.CreatedDate);
+                query = query.OrderByDescending(t => t.CreatedDate); // Changed to OrderByDescending
 
                
 
@@ -743,6 +745,7 @@ namespace UCS_CRM.Persistence.SQLRepositories
             if (cursorParams.Take > 0)
             {
                 IQueryable<Ticket> query = this._context.Tickets
+                    .OrderByDescending(t => t.CreatedDate) // Changed to OrderByDescending
                     .Where(t => t.Status != Lambda.Deleted);
 
                 if (categoryId > 0)
@@ -815,6 +818,7 @@ namespace UCS_CRM.Persistence.SQLRepositories
             if (cursorParams.Take > 0)
             {
                 IQueryable<Ticket> query = this._context.Tickets
+                    .OrderByDescending(t => t.CreatedDate) // Changed to OrderByDescending
                     .Where(t => t.Status != Lambda.Deleted);
 
                 if (categoryId > 0)
@@ -876,7 +880,8 @@ namespace UCS_CRM.Persistence.SQLRepositories
             if (cursorParams.Take > 0)
             {
                 IQueryable<Ticket> query = this._context.Tickets
-                    .Where(t => t.Status != Lambda.Deleted);
+                    .Where(t => t.Status != Lambda.Deleted)
+                    .OrderByDescending(t => t.CreatedDate); // Changed to OrderByDescending
 
                 if (categoryId > 0)
                 {
@@ -946,7 +951,8 @@ namespace UCS_CRM.Persistence.SQLRepositories
             if (cursorParams.Take > 0)
             {
                 IQueryable<Ticket> query = this._context.Tickets
-                    .Where(t => t.Status != Lambda.Deleted);
+                    .Where(t => t.Status != Lambda.Deleted)
+                    .OrderByDescending(t => t.CreatedDate); // Changed to OrderByDescending
 
                 if (categoryId > 0)
                 {
@@ -1014,6 +1020,7 @@ namespace UCS_CRM.Persistence.SQLRepositories
                                    .Include(t => t.TicketCategory)
                                    .Include(t => t.TicketPriority)
                                    .Include(t => t.TicketEscalations)
+                                   .OrderByDescending(t => t.CreatedDate) // Changed to OrderByDescending
                                    .Where(t => t.Status != Lambda.Deleted)
                                     .Where(t => t.ClosedDate != null || t.State.Name == Lambda.Closed)
                                       .Skip(@params.Skip)
@@ -1093,6 +1100,7 @@ namespace UCS_CRM.Persistence.SQLRepositories
                      .Include(t => t.TicketCategory)
                      .Include(t => t.TicketPriority)
                      .Include(t => t.TicketEscalations)
+                     .OrderByDescending(t => t.CreatedDate) // Changed to OrderByDescending
                      .Where(t => t.Status != Lambda.Deleted && t.MemberId == memberId)
                      .AsQueryable(); // Convert to IQueryable for dynamic ordering
 
@@ -1124,6 +1132,7 @@ namespace UCS_CRM.Persistence.SQLRepositories
                                                    .Include(t => t.State)
                                                    .Include(t => t.TicketCategory)
                                                    .Include(t => t.TicketPriority)
+                                                   .OrderByDescending(t => t.CreatedDate) // Changed to OrderByDescending
                                                    .Where(t =>
                                                                t.Title.ToLower().Trim().Contains(@params.SearchTerm.ToLower()) ||
                                                                t.Description.ToLower().Trim().Contains(@params.SearchTerm.ToLower()) ||
@@ -1155,84 +1164,54 @@ namespace UCS_CRM.Persistence.SQLRepositories
                 return null;
             }
         }
+
         public async Task<List<Ticket?>> GetAssignedToTickets(CursorParams @params, string assignedToId, string status = "")
         {
-            // Check if the count has a value in it above zero before proceeding
-            if (@params.Take > 0)
-            {
-                // Check if there is a search parameter
-                if (string.IsNullOrEmpty(@params.SearchTerm))
-                {
-                    var query = this._context.Tickets
-                        .Where(t => t.Status != Lambda.Deleted &&
-                                    (t.AssignedToId == assignedToId || t.CreatedById == assignedToId))
-                        .OrderBy(t => t.CreatedDate)
-                        .Include(t => t.Member)
-                        .Include(t => t.AssignedTo)
-                        .Include(t => t.TicketAttachments)
-                        .Include(t => t.State)
-                        .Include(t => t.TicketCategory)
-                        .Include(t => t.TicketPriority)
-                        .AsQueryable(); // Convert to IQueryable to enable dynamic ordering
-
-                    if (!string.IsNullOrEmpty(status))
-                    {
-                        query = query.Where(t => t.State.Name.Trim().ToLower() == status.Trim().ToLower());
-                    }
-
-                    if (!string.IsNullOrEmpty(@params.SortColum) && !string.IsNullOrEmpty(@params.SortDirection))
-                    {
-                        query = query.OrderBy(@params.SortColum + " " + @params.SortDirection);
-                    }
-
-                    var records = await query
-                        .Skip(@params.Skip)
-                        .Take(@params.Take)
-                        .ToListAsync();
-
-                    return records;
-                }
-                else
-                {
-                    // Include search query
-                    var query = this._context.Tickets
-                        .Where(t => t.Status != Lambda.Deleted && t.AssignedToId == assignedToId)
-                        .Include(t => t.AssignedTo)
-                        .Include(t => t.Member)
-                        .Include(t => t.TicketAttachments)
-                        .Include(t => t.State)
-                        .Include(t => t.TicketCategory)
-                        .Include(t => t.TicketPriority)
-                        .Where(t =>
-                            t.Title.ToLower().Trim().Contains(@params.SearchTerm.ToLower()) ||
-                            t.Description.ToLower().Trim().Contains(@params.SearchTerm.ToLower()) ||
-                            t.State.Name.ToLower().Trim().Contains(@params.SearchTerm.ToLower()) ||
-                            t.Member.FirstName.ToLower().Trim().Contains(@params.SearchTerm.ToLower()) ||
-                            t.Member.LastName.ToLower().Trim().Contains(@params.SearchTerm.ToLower()) ||
-                            t.TicketCategory.Name.ToLower().Trim().Contains(@params.SearchTerm.ToLower()))
-                        .OrderBy(t => t.CreatedDate)
-                        .Skip(@params.Skip)
-                        .Take(@params.Take)
-                        .AsQueryable();
-
-                    if (!string.IsNullOrEmpty(status))
-                    {
-                        query = query.Where(t => t.State.Name.Trim().ToLower() == status.Trim().ToLower());
-                    }
-
-                    if (!string.IsNullOrEmpty(@params.SortColum) && !string.IsNullOrEmpty(@params.SortDirection))
-                    {
-                        query = query.OrderBy(@params.SortColum + " " + @params.SortDirection);
-                    }
-
-                    return await query.ToListAsync();
-                }
-            }
-            else
+            if (@params.Take <= 0)
             {
                 return null;
             }
+
+            var query = this._context.Tickets
+                .Where(t => t.Status != Lambda.Deleted &&
+                            (t.AssignedToId == assignedToId || t.CreatedById == assignedToId))
+                .OrderByDescending(t => t.CreatedDate) // Changed to OrderByDescending
+                .Include(t => t.Member)
+                .Include(t => t.AssignedTo)
+                .Include(t => t.TicketAttachments)
+                .Include(t => t.State)
+                .Include(t => t.TicketCategory)
+                .Include(t => t.TicketPriority)
+                .AsQueryable();
+
+            if (!string.IsNullOrEmpty(status))
+            {
+                query = query.Where(t => t.State.Name.Trim().ToLower() == status.Trim().ToLower());
+            }
+
+            if (!string.IsNullOrEmpty(@params.SearchTerm))
+            {
+                var searchTerm = @params.SearchTerm.ToLower().Trim();
+                query = query.Where(t =>
+                    t.Title.ToLower().Contains(searchTerm) ||
+                    t.Description.ToLower().Contains(searchTerm) ||
+                    t.State.Name.ToLower().Contains(searchTerm) ||
+                    t.Member.FirstName.ToLower().Contains(searchTerm) ||
+                    t.Member.LastName.ToLower().Contains(searchTerm) ||
+                    t.TicketCategory.Name.ToLower().Contains(searchTerm));
+            }
+
+            if (!string.IsNullOrEmpty(@params.SortColum) && !string.IsNullOrEmpty(@params.SortDirection))
+            {
+                query = query.OrderBy(@params.SortColum + " " + @params.SortDirection);
+            }
+
+            return await query
+                .Skip(@params.Skip)
+                .Take(@params.Take)
+                .ToListAsync();
         }
+
         public async Task<int> GetAssignedToTicketsCountAsync(CursorParams @params, string assignedToId, string status = "")
         {
             //check if the count has a value in it above zero before proceeding
@@ -1249,6 +1228,7 @@ namespace UCS_CRM.Persistence.SQLRepositories
                                     .Include(t => t.State)
                                     .Include(t => t.TicketCategory)
                                     .Include(t => t.TicketPriority)
+                                    .OrderByDescending(t => t.CreatedDate) // Changed to OrderByDescending
                                     .Where(t => t.Status != Lambda.Deleted &&
                                                (t.AssignedToId == assignedToId || t.CreatedById == assignedToId));
 

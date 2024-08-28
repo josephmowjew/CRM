@@ -87,7 +87,7 @@ function initSelect2(options, containerId) {
     }
 
     function extractAccountNumber(optionValue) {
-        var matches = optionValue.match(/\((.*?)\)/);
+        var matches = optionValue.match(/\(([^)]+)\)/);
         return matches && matches.length > 1 ? matches[1] : null;
     }
 
