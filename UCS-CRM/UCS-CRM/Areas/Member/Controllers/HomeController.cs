@@ -109,14 +109,30 @@ namespace UCS_CRM.Areas.Member.Controllers
 
                 if (string.IsNullOrEmpty(token))
                 {
+                    _logger.LogWarning("API authentication token is null or empty");
                     return new List<MemberAccount>();
                 }
 
-                List<MemberAccount> accountDTOs = new List<MemberAccount>();
+                var userClaims = User.Identity as ClaimsIdentity;
+                if (userClaims == null)
+                {
+                    _logger.LogWarning("User claims identity is null");
+                    return new List<MemberAccount>();
+                }
 
-                var userClaims = (ClaimsIdentity)User.Identity;
-                var claimsIdentitifier = userClaims.FindFirst(ClaimTypes.NameIdentifier);
-                var member = await this._memberRepository.GetMemberByUserId(claimsIdentitifier.Value);
+                var claimsIdentifier = userClaims.FindFirst(ClaimTypes.NameIdentifier);
+                if (claimsIdentifier == null)
+                {
+                    _logger.LogWarning("NameIdentifier claim not found");
+                    return new List<MemberAccount>();
+                }
+
+                var member = await _memberRepository.GetMemberByUserId(claimsIdentifier.Value);
+                if (member == null)
+                {
+                    _logger.LogWarning($"Member not found for user ID: {claimsIdentifier.Value}");
+                    return new List<MemberAccount>();
+                }
 
                 _httpClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
 
@@ -124,7 +140,8 @@ namespace UCS_CRM.Areas.Member.Controllers
 
                 if (!baseAccountResponse.IsSuccessStatusCode)
                 {
-                    return accountDTOs;
+                    _logger.LogWarning($"API request failed with status code: {baseAccountResponse.StatusCode}");
+                    return new List<MemberAccount>();
                 }
 
                 var json = await baseAccountResponse.Content.ReadAsStringAsync();
@@ -133,24 +150,26 @@ namespace UCS_CRM.Areas.Member.Controllers
                 var status = document.RootElement.GetProperty("status").GetInt32();
                 var message = document.RootElement.GetProperty("message").GetString();
 
-                if (message.Equals("Account Number Does Not Match any Identification Details", StringComparison.CurrentCultureIgnoreCase))
+                if (message.Equals("Account Number Does Not Match any Identification Details", StringComparison.OrdinalIgnoreCase))
                 {
-                    return accountDTOs;
+                    _logger.LogWarning($"No matching account found for account number: {member.AccountNumber}");
+                    return new List<MemberAccount>();
                 }
 
                 if (status == 404)
                 {
-                    throw new Exception("Failed to create the user account from the member");
+                    _logger.LogWarning("API returned a 404 status");
+                    return new List<MemberAccount>();
                 }
 
+                var accountDTOs = new List<MemberAccount>();
                 var relatedAccounts = document.RootElement.GetProperty("data").GetProperty("related_accounts");
 
                 if (relatedAccounts.ValueKind == JsonValueKind.Array)
                 {
                     foreach (var relatedAccount in relatedAccounts.EnumerateArray())
                     {
-                        decimal balance;
-                        if (decimal.TryParse(relatedAccount.GetProperty("balance").GetString(), out balance))
+                        if (decimal.TryParse(relatedAccount.GetProperty("balance").GetString(), out decimal balance))
                         {
                             accountDTOs.Add(new MemberAccount()
                             {
@@ -167,7 +186,7 @@ namespace UCS_CRM.Areas.Member.Controllers
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error occurred while fetching accounts");
-                throw new Exception("An error occurred while fetching your accounts. Please try again later.");
+                return new List<MemberAccount>();
             }
         }
 
