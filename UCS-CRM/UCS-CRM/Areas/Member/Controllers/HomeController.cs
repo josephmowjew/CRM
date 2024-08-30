@@ -69,7 +69,7 @@ namespace UCS_CRM.Areas.Member.Controllers
             catch (Exception ex)
             {
                 TempData["errorResponse"] = ex.Message;
-                return RedirectToAction("Index", "Home", new { area = "" });
+                return RedirectToAction("Create", "Auth", new { area = "" });
             }
         }
 
