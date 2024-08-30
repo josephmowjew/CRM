@@ -593,66 +593,68 @@ namespace UCS_CRM.Areas.Member.Controllers
         [HttpPost]
         public async Task<ActionResult> GetTickets()
         {
-            //datatable stuff
-            var type = HttpContext.Request.Form["ticketType"].FirstOrDefault();
-            var draw = HttpContext.Request.Form["draw"].FirstOrDefault();
-            var start = HttpContext.Request.Form["start"].FirstOrDefault();
-            var length = HttpContext.Request.Form["length"].FirstOrDefault();
-
-            var sortColumn = HttpContext.Request.Form["columns[" + HttpContext.Request.Form["order[0][column]"].FirstOrDefault() + "][name]"].FirstOrDefault();
-            var sortColumnAscDesc = Request.Form["order[0][dir]"].FirstOrDefault();
-            var searchValue = Request.Form["search[value]"].FirstOrDefault();
-
-            int pageSize = length != null ? Convert.ToInt32(length) : 0;
-            int skip = start != null ? Convert.ToInt32(start) : 0;
-            int resultTotal = 0;
-
-            //create a cursor params based on the data coming from the data-table
-            CursorParams CursorParameters = new CursorParams() { SearchTerm = searchValue, Skip = skip, SortColum = sortColumn, SortDirection = sortColumnAscDesc, Take = pageSize };
-
-            
-
-            var userClaims = (ClaimsIdentity)User.Identity;
-
-            var claimsIdentitifier = userClaims.FindFirst(ClaimTypes.NameIdentifier);
-
-            var member = await this._memberRepository.GetMemberByUserId(claimsIdentitifier.Value);
-
-            resultTotal = await this._ticketRepository.TotalCountByMember(member.Id,type);
-
-            List<Ticket?> result = new List<Ticket>();
-
-            if(member != null)
+            try
             {
-                result = await this._ticketRepository.GetMemberTickets(CursorParameters,member.Id,type);
+                // Datatable parameters
+                var draw = HttpContext.Request.Form["draw"].FirstOrDefault();
+                var start = HttpContext.Request.Form["start"].FirstOrDefault();
+                var length = HttpContext.Request.Form["length"].FirstOrDefault();
+                var sortColumn = HttpContext.Request.Form["columns[" + HttpContext.Request.Form["order[0][column]"].FirstOrDefault() + "][name]"].FirstOrDefault();
+                var sortColumnDirection = Request.Form["order[0][dir]"].FirstOrDefault();
+                var searchValue = Request.Form["search[value]"].FirstOrDefault();
+                int pageSize = length != null ? Convert.ToInt32(length) : 0;
+                int skip = start != null ? Convert.ToInt32(start) : 0;
+                int recordsTotal = 0;
+
+                var userClaims = User.Identity as ClaimsIdentity;
+                if (userClaims == null)
+                {
+                    _logger.LogWarning("User claims identity is null");
+                    return Json(new { draw = draw, recordsFiltered = 0, recordsTotal = 0, data = new List<ReadTicketDTO>(), error = "User authentication failed" });
+                }
+
+                var claimsIdentifier = userClaims.FindFirst(ClaimTypes.NameIdentifier);
+                if (claimsIdentifier == null)
+                {
+                    _logger.LogWarning("NameIdentifier claim not found");
+                    return Json(new { draw = draw, recordsFiltered = 0, recordsTotal = 0, data = new List<ReadTicketDTO>(), error = "User identification failed" });
+                }
+
+                var member = await _memberRepository.GetMemberByUserId(claimsIdentifier.Value);
+                if (member == null)
+                {
+                    _logger.LogWarning($"Member not found for user ID: {claimsIdentifier.Value}");
+                    return Json(new { draw = draw, recordsFiltered = 0, recordsTotal = 0, data = new List<ReadTicketDTO>(), error = "Member account not found" });
+                }
+
+                // Create cursor parameters
+                CursorParams cursorParams = new CursorParams
+                {
+                    SearchTerm = searchValue,
+                    Skip = skip,
+                    SortColum = sortColumn,
+                    SortDirection = sortColumnDirection,
+                    Take = pageSize
+                };
+
+                recordsTotal = await _ticketRepository.TotalCountByMember(member.Id);
+                var tickets = await _ticketRepository.GetMemberTickets(cursorParams, member.Id);
+
+                if (tickets == null)
+                {
+                    _logger.LogWarning($"No tickets found for member ID: {member.Id}");
+                    return Json(new { draw = draw, recordsFiltered = 0, recordsTotal = 0, data = new List<ReadTicketDTO>() });
+                }
+
+                var ticketDTOs = _mapper.Map<List<ReadTicketDTO>>(tickets);
+
+                return Json(new { draw = draw, recordsFiltered = recordsTotal, recordsTotal = recordsTotal, data = ticketDTOs });
             }
-            else
+            catch (Exception ex)
             {
-                result = await this._ticketRepository.GetTickets(CursorParameters);
-
+                _logger.LogError(ex, "Error occurred while fetching tickets");
+                return Json(new { draw = "0", recordsFiltered = 0, recordsTotal = 0, data = new List<ReadTicketDTO>(), error = "An unexpected error occurred while fetching tickets" });
             }
-
-            //map the results to a read DTO
-
-            var mappedResult = this._mapper.Map<List<ReadTicketDTO>>(result);
-
-            var cleanResult = new List<ReadTicketDTO>();
-
-            //mappedResult.ForEach(record =>
-            //{
-            //    record.State.Tickets = null;
-            //    record.TicketAttachments.Select(r => r.Ticket = null);
-
-            //    cleanResult.Add(record);
-
-            //});
-
-
-            return Json(new { draw = draw, recordsFiltered = resultTotal, recordsTotal = resultTotal, data = mappedResult });
-           // return Json(new { draw = draw, recordsFiltered = result.Count, recordsTotal = resultTotal, data = mappedResult });
-
-           
-
         }
         [HttpPost]
         public async Task<ActionResult> AddTicketComment(CreateTicketCommentDTO createTicketCommentDTO)
