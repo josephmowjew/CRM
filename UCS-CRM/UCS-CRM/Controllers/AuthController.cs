@@ -19,6 +19,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using UCS_CRM.Core.Helpers;
+using System.Security.Authentication;
 
 namespace UCS_CRM.Controllers
 {
@@ -39,10 +40,11 @@ namespace UCS_CRM.Controllers
  
         public IConfiguration _configuration { get; }
         private readonly HangfireJobEnqueuer _jobEnqueuer;
+        private readonly ILogger<AuthController> _logger;
 
 
        public AuthController(UserManager<ApplicationUser> userManager, SignInManager<ApplicationUser> signInManager, IUserRepository userRepository, ApplicationDbContext context,
-            IMemberRepository memberRepository, IUnitOfWork unitOfWork, IEmailService emailService, HttpClient httpClient, IConfiguration config, IDepartmentRepository departmentRepository, IBranchRepository branchRepository, IConfiguration configuration, HangfireJobEnqueuer hangfireJobEnqueuer)
+            IMemberRepository memberRepository, IUnitOfWork unitOfWork, IEmailService emailService, HttpClient httpClient, IConfiguration config, IDepartmentRepository departmentRepository, IBranchRepository branchRepository, IConfiguration configuration, HangfireJobEnqueuer hangfireJobEnqueuer, ILogger<AuthController> logger)
         {
             _userManager = userManager;
             _signInManager = signInManager;
@@ -57,6 +59,7 @@ namespace UCS_CRM.Controllers
             _branchRepository = branchRepository;
             _configuration = configuration;
             _jobEnqueuer = hangfireJobEnqueuer;
+            _logger = logger;
         }
 
         public async Task<IActionResult> Create()
@@ -65,6 +68,8 @@ namespace UCS_CRM.Controllers
             {
                 return await RedirectLoggedInUser(User.Identity.Name);
             }
+            
+            // If there's an error message, it will be displayed in the view
             return View();
         }
 
@@ -603,44 +608,68 @@ namespace UCS_CRM.Controllers
 
         }
 
-        public async Task<string> ApiAuthenticate()
+        public async Task<IActionResult> ApiAuthenticate()
         {
-
-            // APIToken token = new APIToken();
-
-            var username = _configuration["APICredentials:Username"];
-            var password = _configuration["APICredentials:Password"];
-
-            APILogin apiLogin = new APILogin()
+            try
             {
-                Username = username,
-                Password = password,
-            };
+                var username = _configuration["APICredentials:Username"];
+                var password = _configuration["APICredentials:Password"];
 
+                APILogin apiLogin = new APILogin()
+                {
+                    Username = username,
+                    Password = password,
+                };
 
+                var jsonContent = JsonConvert.SerializeObject(apiLogin);
+                var stringContent = new StringContent(jsonContent, Encoding.UTF8, "application/json");
 
-            var jsonContent = JsonConvert.SerializeObject(apiLogin);
-            var stringContent = new StringContent(jsonContent, Encoding.UTF8, "application/json");
+                // Send POST request        
+                var tokenResponse = await _httpClient.PostAsync(_configuration["APIURL:link"] + $"Token", stringContent);
 
-            // Send POST request        
-            var tokenResponse = await _httpClient.PostAsync(_configuration["APIURL:link"] + $"Token", stringContent);
+                var json = await tokenResponse.Content.ReadAsStringAsync();
+                var document = JsonDocument.Parse(json);
 
-            var json = await tokenResponse.Content.ReadAsStringAsync();
-            var document = JsonDocument.Parse(json);
+                var status = document.RootElement.GetProperty("status").GetInt32();
 
-            var status = document.RootElement.GetProperty("status").GetInt32();
+                if (status == 404)
+                {
+                    TempData["errorResponse"] = "Failed to authenticate with the API. Please try again later or contact support.";
+                    return RedirectToAction("Create");
+                }
 
-            if (status == 404)
-            {
-
-                //
-                Console.WriteLine("Failed to login");
-                return "Failed to login";
+                var token = document.RootElement.GetProperty("token").GetString();
+                return Json(new { token });
             }
+            catch (HttpRequestException ex) when (ex.InnerException is AuthenticationException)
+            {
+                // Log the error
+                _logger.LogError(ex, "SSL Certificate validation failed when connecting to MHub API");
 
-            var token = document.RootElement.GetProperty("token").GetString();
+                // Send email to support
+                await NotifySupportAboutSSLIssue(ex);
 
-            return token;
+                // Redirect user with an error message
+                TempData["errorResponse"] = "There was a security issue connecting to our services. Our support team has been notified and is working on resolving it. Please try again later.";
+                return RedirectToAction("Create");
+            }
+            catch (Exception ex)
+            {
+                // Log the error
+                _logger.LogError(ex, "An unexpected error occurred when authenticating with MHub API");
+
+                // Redirect user with a generic error message
+                TempData["errorResponse"] = "An unexpected error occurred. Please try again later or contact support if the issue persists.";
+                return RedirectToAction("Create");
+            }
+        }
+
+        private async Task NotifySupportAboutSSLIssue(Exception ex)
+        {
+            string subject = "SSL Certificate Issue with MHub API";
+            string body = $"An SSL certificate validation error occurred when connecting to the MHub API. Details:\n\n{ex}";
+            
+             EmailHelper.SendEmail(_jobEnqueuer, _configuration["SupportEmail"], subject, body);
         }
 
     }

@@ -1,9 +1,7 @@
 ﻿using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Identity.UI.V4.Pages.Account.Internal;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
-using System.Configuration;
 using System.Net.Http;
 using System.Security.Claims;
 using System.Text;
@@ -14,6 +12,8 @@ using UCS_CRM.Core.DTOs.MemberAccount;
 using UCS_CRM.Core.Helpers;
 using UCS_CRM.Core.Models;
 using UCS_CRM.Persistence.Interfaces;
+using System.Security.Authentication;
+using UCS_CRM.Core.Services;
 
 namespace UCS_CRM.Areas.Member.Controllers
 {
@@ -26,11 +26,19 @@ namespace UCS_CRM.Areas.Member.Controllers
         private readonly IMemberAccountRepository _memberAccountRepository;
         private readonly IMapper _mapper;
         private readonly HttpClient _httpClient;
-        public IConfiguration _configuration { get; }
+        private readonly IConfiguration _configuration;
+        private readonly ILogger<HomeController> _logger;
+        private readonly HangfireJobEnqueuer _jobEnqueuer;
 
-
-        public HomeController(ITicketRepository ticketRepository, IMemberRepository memberRepository, IMemberAccountRepository memberAccountRepository,IMapper mapper, 
-            HttpClient httpClient, IConfiguration configuration)
+        public HomeController(
+            ITicketRepository ticketRepository,
+            IMemberRepository memberRepository,
+            IMemberAccountRepository memberAccountRepository,
+            IMapper mapper,
+            HttpClient httpClient,
+            IConfiguration configuration,
+            ILogger<HomeController> logger,
+            HangfireJobEnqueuer jobEnqueuer)
         {
             _ticketRepository = ticketRepository;
             _memberRepository = memberRepository;
@@ -38,156 +46,102 @@ namespace UCS_CRM.Areas.Member.Controllers
             _mapper = mapper;
             _httpClient = httpClient;
             _configuration = configuration;
+            _logger = logger;
+            _jobEnqueuer = jobEnqueuer;
         }
 
         public async Task<ActionResult> Index()
         {
-            ViewBag.allTicketsCount = await this.CountAllMyTickets();
-            ViewBag.closedTicketsCount = await this.CountTicketsByStatus("Closed");
-            ViewBag.archivedTicketsCount = await this.CountTicketsByStatus("Archived");
-            ViewBag.newTicketsCount = await this.CountTicketsByStatus("New");
-            ViewBag.resolvedTicketsCount = await this.CountTicketsByStatus("Resolved");
-            ViewBag.reopenedTicketsCount = await this.CountTicketsByStatus("Re-opened");
+            try
+            {
+                ViewBag.allTicketsCount = await this.CountAllMyTickets();
+                ViewBag.closedTicketsCount = await this.CountTicketsByStatus("Closed");
+                ViewBag.archivedTicketsCount = await this.CountTicketsByStatus("Archived");
+                ViewBag.newTicketsCount = await this.CountTicketsByStatus("New");
+                ViewBag.resolvedTicketsCount = await this.CountTicketsByStatus("Resolved");
+                ViewBag.reopenedTicketsCount = await this.CountTicketsByStatus("Re-opened");
 
-            //var accounts = await this.GetMemberAccountsAsync();
+                var accounts = await Accounts();
+                ViewBag.accounts = accounts;
 
-            var accounts = await Accounts();
-
-            ViewBag.accounts = accounts;
-
-            // ViewBag.memberAccounts = this._mapper.Map<List<ReadMemberAccountDTO>>(accounts);
-           
-            return View();
+                return View();
+            }
+            catch (Exception ex)
+            {
+                TempData["errorResponse"] = ex.Message;
+                return RedirectToAction("Index", "Home", new { area = "" });
+            }
         }
-
 
         private async Task<int> CountAllMyTickets()
         {
-            int count = 0;
-
             var userClaims = (ClaimsIdentity)User.Identity;
-
             var claimsIdentitifier = userClaims.FindFirst(ClaimTypes.NameIdentifier);
-
             var member = await this._memberRepository.GetMemberByUserId(claimsIdentitifier.Value);
 
             if (member != null)
             {
-                int myTickets = await this._ticketRepository.TotalCountByMember(member.Id);
-
-                if (myTickets > 0)
-                {
-                    count = myTickets;
-                }
-
+                return await this._ticketRepository.TotalCountByMember(member.Id);
             }
 
-            return count;
-
+            return 0;
         }
+
         private async Task<int> CountTicketsByStatus(string status)
         {
-            int count = 0;
-
             var userClaims = (ClaimsIdentity)User.Identity;
-
             var claimsIdentitifier = userClaims.FindFirst(ClaimTypes.NameIdentifier);
-
             var member = await this._memberRepository.GetMemberByUserId(claimsIdentitifier.Value);
 
             if (member != null)
             {
-                int myTickets = await this._ticketRepository.CountTicketsByStatusMember(status, member.Id);
+                return await this._ticketRepository.CountTicketsByStatusMember(status, member.Id);
+            }
 
-                if (myTickets > 0)
+            return 0;
+        }
+
+        public async Task<List<MemberAccount>> Accounts()
+        {
+            try
+            {
+                string token = await ApiAuthenticate();
+
+                if (string.IsNullOrEmpty(token))
                 {
-                    count = myTickets;
+                    return new List<MemberAccount>();
                 }
 
-            }
+                List<MemberAccount> accountDTOs = new List<MemberAccount>();
 
-            return count;
+                var userClaims = (ClaimsIdentity)User.Identity;
+                var claimsIdentitifier = userClaims.FindFirst(ClaimTypes.NameIdentifier);
+                var member = await this._memberRepository.GetMemberByUserId(claimsIdentitifier.Value);
 
-        }
+                _httpClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
 
-        private async Task<List<MemberAccount>?> GetMemberAccountsAsync()
-        {
-            List<MemberAccount> memberAccounts = new List<MemberAccount>();
+                var baseAccountResponse = await _httpClient.GetAsync(_configuration["APIURL:link"] + $"BaseAccountAndRelatedAccounts?account_number={member.AccountNumber}");
 
-            var userClaims = (ClaimsIdentity)User.Identity;
+                if (!baseAccountResponse.IsSuccessStatusCode)
+                {
+                    return accountDTOs;
+                }
 
-            var claimsIdentitifier = userClaims.FindFirst(ClaimTypes.NameIdentifier);
+                var json = await baseAccountResponse.Content.ReadAsStringAsync();
+                var document = JsonDocument.Parse(json);
 
-            var member = await this._memberRepository.GetMemberByUserId(claimsIdentitifier.Value);
+                var status = document.RootElement.GetProperty("status").GetInt32();
+                var message = document.RootElement.GetProperty("message").GetString();
 
-            if (member != null)
-            {
-                 memberAccounts = await this._memberAccountRepository.GetMemberAccountsAsync(member.Id);
+                if (message.Equals("Account Number Does Not Match any Identification Details", StringComparison.CurrentCultureIgnoreCase))
+                {
+                    return accountDTOs;
+                }
 
-
-            }
-
-            return memberAccounts;
-
-        }
-
-
-
-        public async Task<List<MemberAccount>> Accounts() 
-        {
-            //authenticate API
-            string token = await ApiAuthenticate();
-
-            bool error = false;
-
-            if (string.IsNullOrEmpty(token))
-            {
-                return new List<MemberAccount>();
-            }         
-
-
-            List<MemberAccount> accountDTOs = new List<MemberAccount>();
-
-            var userClaims = (ClaimsIdentity)User.Identity;
-
-            var claimsIdentitifier = userClaims.FindFirst(ClaimTypes.NameIdentifier);
-
-            var member = await this._memberRepository.GetMemberByUserId(claimsIdentitifier.Value);
-
-            _httpClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
-
-            var baseAccountResponse = await _httpClient.GetAsync(_configuration["APIURL:link"] + $"BaseAccountAndRelatedAccounts?account_number={member.AccountNumber}");
-
-            if (!baseAccountResponse.IsSuccessStatusCode)
-            {
-                return accountDTOs;
-            }
-
-            var json = await baseAccountResponse.Content.ReadAsStringAsync();
-            var document = JsonDocument.Parse(json);
-
-            var status = document.RootElement.GetProperty("status").GetInt32();
-
-            var message = document.RootElement.GetProperty("message").GetString();
-
-            if(message.Equals("Account Number Does Not Macth any Identification Details",StringComparison.CurrentCultureIgnoreCase)){
-                
-                 error = true;
-                return accountDTOs;
-            }
-
-            if (status == 404)
-            {
-                Json(new { error = "error", message = "failed to create the user account from the member" });
-
-                error = true;
-
-                return accountDTOs;
-            }
-
-            if(error == false)
-            {
-                var baseAccountElement = document.RootElement.GetProperty("data").GetProperty("base_account");
+                if (status == 404)
+                {
+                    throw new Exception("Failed to create the user account from the member");
+                }
 
                 var relatedAccounts = document.RootElement.GetProperty("data").GetProperty("related_accounts");
 
@@ -198,66 +152,84 @@ namespace UCS_CRM.Areas.Member.Controllers
                         decimal balance;
                         if (decimal.TryParse(relatedAccount.GetProperty("balance").GetString(), out balance))
                         {
-                            balance = balance;
+                            accountDTOs.Add(new MemberAccount()
+                            {
+                                AccountNumber = relatedAccount.GetProperty("account_number").GetString(),
+                                AccountName = relatedAccount.GetProperty("account_name").GetString(),
+                                Balance = balance
+                            });
                         }
-                        accountDTOs.Add(new MemberAccount()
-                        {
-                        
-                            AccountNumber = relatedAccount.GetProperty("account_number").GetString(),
-                            AccountName = relatedAccount.GetProperty("account_name").GetString(),
-                            Balance = balance
-                        });
                     }
                 }
+
+                return accountDTOs;
             }
-
-          
-
-     
-
-
-            return accountDTOs;
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error occurred while fetching accounts");
+                throw new Exception("An error occurred while fetching your accounts. Please try again later.");
+            }
         }
 
-
-        public async Task<string> ApiAuthenticate()
+        private async Task<string> ApiAuthenticate()
         {
-
-           // APIToken token = new APIToken();
-
-            var username = _configuration["APICredentials:Username"];
-            var password = _configuration["APICredentials:Password"];
-
-            APILogin apiLogin = new APILogin()
+            try
             {
-                Username = username,
-                Password = password,
-            };
+                var username = _configuration["APICredentials:Username"];
+                var password = _configuration["APICredentials:Password"];
 
-        
+                APILogin apiLogin = new APILogin()
+                {
+                    Username = username,
+                    Password = password,
+                };
 
-            var jsonContent = JsonConvert.SerializeObject(apiLogin);
-            var stringContent = new StringContent(jsonContent, Encoding.UTF8, "application/json");
+                var jsonContent = JsonConvert.SerializeObject(apiLogin);
+                var stringContent = new StringContent(jsonContent, Encoding.UTF8, "application/json");
 
-            // Send POST request        
-            var tokenResponse = await _httpClient.PostAsync(_configuration["APIURL:link"] + $"Token", stringContent);
+                var tokenResponse = await _httpClient.PostAsync(_configuration["APIURL:link"] + $"Token", stringContent);
 
-            var json = await tokenResponse.Content.ReadAsStringAsync();
-            var document = JsonDocument.Parse(json);
+                var json = await tokenResponse.Content.ReadAsStringAsync();
+                var document = JsonDocument.Parse(json);
 
-            var status = document.RootElement.GetProperty("status").GetInt32();
+                var status = document.RootElement.GetProperty("status").GetInt32();
 
-            if (status == 404)
-            {
-              
-                //
-                Console.WriteLine("Failed to login");
-                return "Failed to login";
+                if (status == 404)
+                {
+                    throw new Exception("Failed to authenticate with the API.");
+                }
+
+                return document.RootElement.GetProperty("token").GetString();
             }
+            catch (HttpRequestException ex) when (ex.InnerException is AuthenticationException)
+            {
+                _logger.LogError(ex, "SSL Certificate validation failed when connecting to MHub API");
+                await NotifySupportAboutSSLIssue(ex);
+                throw new Exception("There was a security issue connecting to our services. Our support team has been notified.");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "An unexpected error occurred when authenticating with MHub API");
+                throw new Exception("An unexpected error occurred. Please try again later or contact support.");
+            }
+        }
 
-            var token = document.RootElement.GetProperty("token").GetString();
-
-            return token;
+       private async Task NotifySupportAboutSSLIssue(Exception ex)
+        {
+            string subject = "SSL Certificate Issue with MHub API";
+            
+            string userFriendlyMessage = "An SSL certificate validation error occurred when connecting to the MHub API. This likely indicates an issue with the API server's SSL certificate.";
+            
+            string timeOfOccurrence = $"Time of occurrence: {DateTime.UtcNow:yyyy-MM-dd HH:mm:ss UTC}";
+            
+            if (ex is HttpRequestException httpEx && httpEx.InnerException is AuthenticationException authEx)
+            {
+                userFriendlyMessage += $"\n\nSpecific issue: {authEx.Message}";
+            }
+            
+            string body = $"{userFriendlyMessage}\n\n{timeOfOccurrence}\n\nPlease investigate and update the SSL certificate if necessary.";
+            
+            EmailHelper.SendEmail(_jobEnqueuer, _configuration["SupportEmail"], subject, body);
         }
     }
 }
