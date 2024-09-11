@@ -382,7 +382,7 @@ namespace UCS_CRM.Controllers
                
                //check if the member record already has an associted user account
 
-                if(dbmember.User != null)
+                if(dbmember?.User != null)
                 {
                     ModelState.AddModelError("", "There is a user account that is already associated with the ID, kindly login");
 
