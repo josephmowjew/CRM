@@ -242,21 +242,29 @@ namespace UCS_CRM.Areas.CallCenterOfficer.Controllers
 
                     if(userRecord != null)
                     {
-                            string emailBody = "A ticket request for " + userRecord.FullName + " has been submitted in the system. </b> check the system for more details by clicking here " + Lambda.systemLink + "<br /> ";
+                        string emailBody = "A ticket request for " + userRecord.FullName + " has been submitted in the system. </b> check the system for more details by clicking here " + Lambda.systemLink + "<br /> ";
 
-                        //send email to the owner
-                        EmailHelper.SendEmail(this._jobEnqueuer, userRecord.Email, "Ticket Creation", emailBody,userRecord.SecondaryEmail); 
-                                                    //email to send to support
+                        // Send email to the owner if they're not the assigned user
+                        if (userRecord.Id != findUser?.Id)
+                        {
+                            EmailHelper.SendEmail(this._jobEnqueuer, userRecord.Email, "Ticket Creation", emailBody, userRecord.SecondaryEmail);
+                        }
+
+                        // Email to send to support
                         var emailAddress = await _addressRepository.GetEmailAddressByOwner(Lambda.Support);
 
                         if(emailAddress != null)
                         {
                             this._jobEnqueuer.EnqueueEmailJob(emailAddress.Email, "Ticket Creation", emailBody);
-                            
-                            
                         }
                     }
 
+                    // Send an email to the user who is assigned to the ticket if different from the creator
+                    if(findUser != null && findUser.Id != userRecord?.Id)
+                    {
+                        string assignmentEmailBody = "A ticket has been assigned to you. </b> check the system for more details by clicking here " + Lambda.systemLink + "<br /> ";
+                        EmailHelper.SendEmail(this._jobEnqueuer, findUser.Email, "Ticket Assignment", assignmentEmailBody, findUser.SecondaryEmail);
+                    }
 
 
 
