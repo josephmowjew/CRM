@@ -214,7 +214,7 @@ namespace UCS_CRM.Areas.SeniorManager.Controllers
                         <h2>Ticket Modification Notice</h2>
                         <p>A ticket has been modified in the system.</p>
                         <p>Please review the changes by accessing the system:</p>
-                        <p><a href='{Lambda.systemLinkClean}' class='cta-button'>View Ticket Details</a></p>
+                        <p><a href='{Lambda.systemLinkClean}' class='cta-button' style='color: #ffffff;'>View Ticket Details</a></p>
                     </div>
                 </body>
                 </html>";

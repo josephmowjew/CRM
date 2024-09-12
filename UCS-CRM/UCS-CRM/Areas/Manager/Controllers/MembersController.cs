@@ -224,7 +224,7 @@ namespace UCS_CRM.Areas.Manager.Controllers
                                 <p>Your email address is: <strong>{user.Email}</strong></p>
                             </div>
                             <p>
-                                <a href='{Lambda.systemLinkClean}' class='cta-button'>Login to Your Account</a>
+                                <a href='{Lambda.systemLinkClean}' class='cta-button' style='color: #ffffff;'>Login to Your Account</a>
                             </p>
                             <p class='footer'>Thank you for joining UCS SACCO.</p>
                         </div>
@@ -259,7 +259,7 @@ namespace UCS_CRM.Areas.Manager.Controllers
                                 <p>Please change this password upon your first login.</p>
                             </div>
                             <p>
-                                <a href='{Lambda.systemLinkClean}' class='cta-button'>Login to Your Account</a>
+                                <a href='{Lambda.systemLinkClean}' class='cta-button' style='color: #ffffff;'>Login to Your Account</a>
                             </p>
                             <p class='footer'>For security reasons, please change your password immediately after logging in.</p>
                         </div>

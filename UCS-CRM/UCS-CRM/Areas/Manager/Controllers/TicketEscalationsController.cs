@@ -165,7 +165,7 @@ namespace UCS_CRM.Areas.Manager.Controllers
                                 <p>Please review the escalated ticket by accessing the system.</p>
                             </div>
                             <p style='text-align: center;'>
-                                <a href='{Lambda.systemLinkClean}' class='cta-button'>View Escalated Ticket</a>
+                                <a href='{Lambda.systemLinkClean}' class='cta-button' style='color: #ffffff;'>View Escalated Ticket</a>
                             </p>
                             <p class='footer'>Thank you for your prompt attention to this matter.</p>
                         </div>
@@ -361,7 +361,7 @@ namespace UCS_CRM.Areas.Manager.Controllers
                             <p>Please review the changes by accessing the system.</p>
                         </div>
                         <p style='text-align: center;'>
-                            <a href='{Lambda.systemLinkClean}' class='cta-button'>View Ticket Details</a>
+                            <a href='{Lambda.systemLinkClean}' class='cta-button' style='color: #ffffff;'>View Ticket Details</a>
                         </p>
                         <p class='footer'>Thank you for your prompt attention to this matter.</p>
                     </div>

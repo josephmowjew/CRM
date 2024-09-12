@@ -153,7 +153,7 @@ namespace UCS_CRM.Areas.Clerk.Controllers
                                 <p>A ticket has been escalated in the system.</p>
                             </div>
                             <p style='text-align: center;'>
-                                <a href='{Lambda.systemLinkClean}' class='cta-button'>View Ticket Details</a>
+                                <a href='{Lambda.systemLinkClean}' class='cta-button' style='color: #ffffff;'>View Ticket Details</a>
                             </p>
                             <p class='footer'>Please check the system for more details.</p>
                         </div>
@@ -285,7 +285,7 @@ namespace UCS_CRM.Areas.Clerk.Controllers
                         </div>
                         <p>Please check the system for more details by clicking the button below:</p>
                         <p style='text-align: center;'>
-                            <a href='{Lambda.systemLinkClean}' class='cta-button'>View Ticket Details</a>
+                            <a href='{Lambda.systemLinkClean}' class='cta-button' style='color: #ffffff;'>View Ticket Details</a>
                         </p>
                         <p class='footer'>Thank you for your attention to this matter.</p>
                     </div>

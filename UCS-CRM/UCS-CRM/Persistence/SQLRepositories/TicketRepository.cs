@@ -510,7 +510,7 @@ namespace UCS_CRM.Persistence.SQLRepositories
                                     <p>If you are not satisfied with the outcome, you have the option to re-open it.</p>
                                 </div>
                                 <p style='text-align: center;'>
-                                    <a href='{Lambda.systemLinkClean}' class='cta-button'>View Ticket Details</a>
+                                    <a href='{Lambda.systemLinkClean}' class='cta-button' style='color: #ffffff;'>View Ticket Details</a>
                                 </p>
                                 <p class='footer'>If you have any questions, please contact our support team.</p>
                             </div>
@@ -551,7 +551,7 @@ namespace UCS_CRM.Persistence.SQLRepositories
                                     <p>Reason: {reason}</p>
                                 </div>
                                 <p style='text-align: center;'>
-                                    <a href='{Lambda.systemLinkClean}' class='cta-button'>View Ticket Details</a>
+                                    <a href='{Lambda.systemLinkClean}' class='cta-button' style='color: #ffffff;'>View Ticket Details</a>
                                 </p>
                                 <p class='footer'>If you have any questions, please contact our support team.</p>
                             </div>
@@ -650,7 +650,7 @@ namespace UCS_CRM.Persistence.SQLRepositories
                             <p>Reason: {reason}</p>
                         </div>
                         <p style='text-align: center;'>
-                            <a href='{Lambda.systemLinkClean}' class='cta-button'>View Ticket Details</a>
+                            <a href='{Lambda.systemLinkClean}' class='cta-button' style='color: #ffffff;'>View Ticket Details</a>
                         </p>
                         <p class='footer'>If you have any questions, please contact our support team.</p>
                     </div>
@@ -690,7 +690,7 @@ namespace UCS_CRM.Persistence.SQLRepositories
                             <p>Reason for reopening: {reason}</p>
                         </div>
                         <p style='text-align: center;'>
-                            <a href='{Lambda.systemLinkClean}' class='cta-button'>View Ticket Details</a>
+                            <a href='{Lambda.systemLinkClean}' class='cta-button' style='color: #ffffff;'>View Ticket Details</a>
                         </p>
                         <p class='footer'>If you have any questions, please contact our support team.</p>
                     </div>
@@ -1541,7 +1541,7 @@ namespace UCS_CRM.Persistence.SQLRepositories
                                         <p>Ticket number {ticket.TicketNumber} has not been assigned to anyone yet.</p>
                                     </div>
                                     <p>
-                                        <a href='{Lambda.systemLinkClean}' class='cta-button'>View Ticket Details</a>
+                                        <a href='{Lambda.systemLinkClean}' class='cta-button' style='color: #ffffff;'>View Ticket Details</a>
                                     </p>
                                     <p class='footer'>Please assign this ticket to an appropriate team member.</p>
                                 </div>
@@ -1608,7 +1608,7 @@ namespace UCS_CRM.Persistence.SQLRepositories
                             <p>Ticket number {ticket.TicketNumber} has been created but not assigned to anyone yet.</p>
                         </div>
                         <p>
-                            <a href='{Lambda.systemLinkClean}' class='cta-button'>View Ticket Details</a>
+                            <a href='{Lambda.systemLinkClean}' class='cta-button' style='color: #ffffff;'>View Ticket Details</a>
                         </p>
                         <p class='footer'>Please assign this ticket to an appropriate team member.</p>
                     </div>
@@ -1681,7 +1681,7 @@ namespace UCS_CRM.Persistence.SQLRepositories
                             <p>Please review the ticket details and respond accordingly.</p>
                         </div>
                         <p style='text-align: center;'>
-                            <a href='{Lambda.systemLinkClean}' class='cta-button'>View Ticket Details</a>
+                            <a href='{Lambda.systemLinkClean}' class='cta-button' style='color: #ffffff;'>View Ticket Details</a>
                         </p>
                         <p class='footer'>Thank you for your prompt attention to this matter.</p>
                     </div>
@@ -1732,7 +1732,7 @@ namespace UCS_CRM.Persistence.SQLRepositories
                             <p>Please note this change and take appropriate action.</p>
                         </div>
                         <p style='text-align: center;'>
-                            <a href='{Lambda.systemLinkClean}' class='cta-button'>View Ticket Details</a>
+                            <a href='{Lambda.systemLinkClean}' class='cta-button' style='color: #ffffff;'>View Ticket Details</a>
                         </p>
                         <p class='footer'>Thank you for your attention to this matter.</p>
                     </div>
@@ -1771,7 +1771,7 @@ namespace UCS_CRM.Persistence.SQLRepositories
                             <p>Please take note and respond to it accordingly.</p>
                         </div>
                         <p style='text-align: center;'>
-                            <a href='{Lambda.systemLinkClean}' class='cta-button'>View Ticket Details</a>
+                            <a href='{Lambda.systemLinkClean}' class='cta-button' style='color: #ffffff;'>View Ticket Details</a>
                         </p>
                         <p class='footer'>Thank you for your prompt attention to this matter.</p>
                     </div>
@@ -1828,7 +1828,7 @@ namespace UCS_CRM.Persistence.SQLRepositories
                         <p>Please take note of this change.</p>
                     </div>
                     <p style='text-align: center;'>
-                        <a href='{Lambda.systemLinkClean}' class='cta-button'>View Ticket Details</a>
+                        <a href='{Lambda.systemLinkClean}' class='cta-button' style='color: #ffffff;'>View Ticket Details</a>
                     </p>
                     <p class='footer'>Thank you for your attention to this matter.</p>
                 </div>
@@ -1873,7 +1873,7 @@ namespace UCS_CRM.Persistence.SQLRepositories
                         <p>Please take note and respond to it accordingly.</p>
                     </div>
                     <p style='text-align: center;'>
-                        <a href='{Lambda.systemLinkClean}' class='cta-button'>View Ticket Details</a>
+                        <a href='{Lambda.systemLinkClean}' class='cta-button' style='color: #ffffff;'>View Ticket Details</a>
                     </p>
                     <p class='footer'>Thank you for your prompt attention to this matter.</p>
                 </div>
@@ -1959,7 +1959,7 @@ namespace UCS_CRM.Persistence.SQLRepositories
                                     <p>Please review and take necessary action.</p>
                                 </div>
                                 <p style='text-align: center;'>
-                                    <a href='{Lambda.systemLinkClean}' class='cta-button'>View Ticket Details</a>
+                                    <a href='{Lambda.systemLinkClean}' class='cta-button' style='color: #ffffff;'>View Ticket Details</a>
                                 </p>
                                 <p class='footer'>Thank you for your prompt attention to this matter.</p>
                             </div>

@@ -252,7 +252,7 @@ namespace UCS_CRM.Areas.Member.Controllers
                                 </div>
                                 <p>You can check the details by clicking the button below:</p>
                                 <p style='text-align: center;'>
-                                    <a href='{Lambda.systemLinkClean}' class='cta-button'>View Ticket Details</a>
+                                    <a href='{Lambda.systemLinkClean}' class='cta-button' style='color: #ffffff;'>View Ticket Details</a>
                                 </p>
                                 <p class='footer'>Thank you for using our service.</p>
                             </div>
@@ -296,7 +296,7 @@ namespace UCS_CRM.Areas.Member.Controllers
                                     </div>
                                     <p>Please review and take necessary action as soon as possible.</p>
                                     <p style='text-align: center;'>
-                                        <a href='{Lambda.systemLinkClean}' class='cta-button'>View Ticket Details</a>
+                                        <a href='{Lambda.systemLinkClean}' class='cta-button' style='color: #ffffff;'>View Ticket Details</a>
                                     </p>
                                     <p class='footer'>Thank you for your prompt attention to this matter.</p>
                                 </div>
@@ -834,7 +834,7 @@ namespace UCS_CRM.Areas.Member.Controllers
                             {ticketComment.Comment}
                         </div>
                         <p>
-                            <a href='{systemUrl}' class='cta-button'>View Full Details</a>
+                            <a href='{systemUrl}' class='cta-button' style='color: #ffffff;'>View Full Details</a>
                         </p>
                         <p class='footer'>Thank you for using our service.</p>
                     </div>

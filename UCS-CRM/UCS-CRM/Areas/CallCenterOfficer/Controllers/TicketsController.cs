@@ -284,7 +284,7 @@ namespace UCS_CRM.Areas.CallCenterOfficer.Controllers
                                 </div>
                                 <p>You can check the details by clicking the button below:</p>
                                 <p style='text-align: center;'>
-                                    <a href='{Lambda.systemLinkClean}' class='cta-button'>View Ticket Details</a>
+                                    <a href='{Lambda.systemLinkClean}' class='cta-button' style='color: #ffffff;'>View Ticket Details</a>
                                 </p>
                                 <p class='footer'>Thank you for using our service.</p>
                             </div>
@@ -334,7 +334,7 @@ namespace UCS_CRM.Areas.CallCenterOfficer.Controllers
                                     </div>
                                     <p>Please review and take necessary action as soon as possible.</p>
                                     <p style='text-align: center;'>
-                                        <a href='{Lambda.systemLinkClean}' class='cta-button'>View Ticket Details</a>
+                                        <a href='{Lambda.systemLinkClean}' class='cta-button' style='color: #ffffff;'>View Ticket Details</a>
                                     </p>
                                     <p class='footer'>Thank you for your prompt attention to this matter.</p>
                                 </div>
@@ -378,7 +378,7 @@ namespace UCS_CRM.Areas.CallCenterOfficer.Controllers
                                 </div>
                                 <p>Your prompt attention to this matter is crucial. Please review and take necessary action as soon as possible.</p>
                                 <p style='text-align: center;'>
-                                    <a href='{Lambda.systemLinkClean}' class='cta-button'>View Ticket Details</a>
+                                    <a href='{Lambda.systemLinkClean}' class='cta-button' style='color: #ffffff;'>View Ticket Details</a>
                                 </p>
                                 <p class='footer'>Thank you for your dedication to excellent service. If you have any questions, please don't hesitate to reach out to your supervisor.</p>
                             </div>
@@ -570,7 +570,7 @@ namespace UCS_CRM.Areas.CallCenterOfficer.Controllers
                             <h2>Ticket Modification Notice</h2>
                             <p>A ticket has been modified in the system.</p>
                             <p>Please review the changes by accessing the system:</p>
-                            <p><a href='{Lambda.systemLink}' class='cta-button'>View Ticket Details</a></p>
+                            <p><a href='{Lambda.systemLink}' class='cta-button' style='color: #ffffff;'>View Ticket Details</a></p>
                         </div>
                     </body>
                     </html>";
@@ -768,7 +768,7 @@ namespace UCS_CRM.Areas.CallCenterOfficer.Controllers
                             {ticketComment.Comment}
                         </div>
                         <p>
-                            <a href='{systemUrl}' class='cta-button'>View Full Details</a>
+                            <a href='{systemUrl}' class='cta-button' style='color: #ffffff;'>View Full Details</a>
                         </p>
                     </div>
                 </body>

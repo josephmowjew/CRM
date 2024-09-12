@@ -102,7 +102,37 @@ namespace UCS_CRM.Controllers
                     user.UpdatedDate = DateTime.Now;
                     await _userManager.UpdateAsync(user);
 
-                    string userNameBody = $"Your confirmation code is <b>{pin}</b> <br /> Enter this to login in";
+                    string userNameBody = $@"
+                    <html>
+                    <head>
+                        <style>
+                            @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Montserrat:wght@300;400;700&display=swap');
+                            body {{ font-family: 'Montserrat', sans-serif; line-height: 1.8; color: #333; background-color: #f4f4f4; }}
+                            .container {{ max-width: 600px; margin: 20px auto; padding: 30px; background-color: #ffffff; border-radius: 8px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); }}
+                            .logo {{ text-align: center; margin-bottom: 20px; }}
+                            .logo img {{ max-width: 150px; }}
+                            h2 {{ color: #0056b3; text-align: center; font-weight: 700; font-family: 'Playfair Display', serif; }}
+                            .confirmation-info {{ background-color: #f0f7ff; border-left: 4px solid #0056b3; padding: 15px; margin: 20px 0; }}
+                            .confirmation-info p {{ margin: 5px 0; }}
+                            .pin {{ font-size: 24px; font-weight: bold; text-align: center; color: #0056b3; }}
+                            .footer {{ margin-top: 30px; text-align: center; font-style: italic; color: #666; }}
+                        </style>
+                    </head>
+                    <body>
+                        <div class='container'>
+                            <div class='logo'>
+                                <img src='https://crm.ucssacco.com/images/LOGO(1).png' alt='UCS SACCO Logo'>
+                            </div>
+                            <h2>Confirmation Code</h2>
+                            <div class='confirmation-info'>
+                                <p>Your confirmation code is:</p>
+                                <p class='pin'>{pin}</p>
+                                <p>Enter this code to log in to your account.</p>
+                            </div>
+                            <p class='footer'>Thank you for using our service.</p>
+                        </div>
+                    </body>
+                    </html>";
                     EmailHelper.SendEmail(_jobEnqueuer, user.Email, "Login Details", userNameBody, user.SecondaryEmail);
                     TempData["response"] = $"Check your email for the confirmation code";
                     return RedirectToAction("ConfirmAccount", "Auth", new { email = loginModel.Email });
@@ -120,7 +150,38 @@ namespace UCS_CRM.Controllers
                 user.UpdatedDate = DateTime.Now;
                 await _userManager.UpdateAsync(user);
 
-                string userNameBody = $"Your confirmation code is <b>{pin}</b> <br /> Enter this to login in";
+                string userNameBody = $@"
+                <html>
+                <head>
+                    <style>
+                        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Montserrat:wght@300;400;700&display=swap');
+                        body {{ font-family: 'Montserrat', sans-serif; line-height: 1.8; color: #333; background-color: #f4f4f4; }}
+                        .container {{ max-width: 600px; margin: 20px auto; padding: 30px; background-color: #ffffff; border-radius: 8px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); }}
+                        .logo {{ text-align: center; margin-bottom: 20px; }}
+                        .logo img {{ max-width: 150px; }}
+                        h2 {{ color: #0056b3; text-align: center; font-weight: 700; font-family: 'Playfair Display', serif; }}
+                        .confirmation-info {{ background-color: #f0f7ff; border-left: 4px solid #0056b3; padding: 15px; margin: 20px 0; }}
+                        .confirmation-info p {{ margin: 5px 0; }}
+                        .pin {{ font-size: 24px; font-weight: bold; text-align: center; color: #0056b3; }}
+                        .footer {{ margin-top: 30px; text-align: center; font-style: italic; color: #666; }}
+                    </style>
+                </head>
+                <body>
+                    <div class='container'>
+                        <div class='logo'>
+                            <img src='https://crm.ucssacco.com/images/LOGO(1).png' alt='UCS SACCO Logo'>
+                        </div>
+                        <h2>Confirmation Code</h2>
+                        <div class='confirmation-info'>
+                            <p>Your confirmation code is:</p>
+                            <p class='pin'>{pin}</p>
+                            <p>Enter this code to log in to your account.</p>
+                        </div>
+                        <p class='footer'>Thank you for using our service.</p>
+                    </div>
+                </body>
+                </html>";
+                
                 EmailHelper.SendEmail(_jobEnqueuer, user.Email, "Login Details", userNameBody, user.SecondaryEmail);
                 TempData["response"] = $"Check your email for the confirmation code";
                 return RedirectToAction("ConfirmAccount", "Auth", new { email = loginModel.Email });
@@ -424,15 +485,119 @@ namespace UCS_CRM.Controllers
 
                     //send emails
 
-                    string UserNameBody = "An account has been created on UCS SACCO. Your email is " + "<b>" + user.Email + " <br /> ";
+                    string UserNameBody = $@"
+                    <html>
+                    <head>
+                        <style>
+                            @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Montserrat:wght@300;400;700&display=swap');
+                            body {{ font-family: 'Montserrat', sans-serif; line-height: 1.8; color: #333; background-color: #f4f4f4; }}
+                            .container {{ max-width: 600px; margin: 20px auto; padding: 30px; background-color: #ffffff; border-radius: 8px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); }}
+                            .logo {{ text-align: center; margin-bottom: 20px; }}
+                            .logo img {{ max-width: 150px; }}
+                            h2 {{ color: #0056b3; text-align: center; font-weight: 700; font-family: 'Playfair Display', serif; }}
+                            .account-info {{ background-color: #f0f7ff; border-left: 4px solid #0056b3; padding: 15px; margin: 20px 0; }}
+                            .account-info p {{ margin: 5px 0; }}
+                            .cta-button {{ display: inline-block; background-color: #0056b3; color: #ffffff; padding: 12px 24px; text-decoration: none; border-radius: 5px; font-weight: bold; margin-top: 20px; }}
+                            .cta-button:hover {{ background-color: #003d82; }}
+                            .footer {{ margin-top: 30px; text-align: center; font-style: italic; color: #666; }}
+                        </style>
+                    </head>
+                    <body>
+                        <div class='container'>
+                            <div class='logo'>
+                                <img src='https://crm.ucssacco.com/images/LOGO(1).png' alt='UCS SACCO Logo'>
+                            </div>
+                            <h2>Account Created</h2>
+                            <div class='account-info'>
+                                <p>An account has been created for you on UCS SACCO.</p>
+                                <p><strong>Your email:</strong> {user.Email}</p>
+                            </div>
+                            <p>
+                                <a href='https://crm.ucssacco.com/login' class='cta-button' style='color: #ffffff;'>Login to Your Account</a>
+                            </p>
+                            <p class='footer'>Thank you for choosing UCS SACCO.</p>
+                        </div>
+                    </body>
+                    </html>";
                    // string pin = "An account has been created on UCS SACCO. Your pin is " + "<b>" + user.Pin + " <br /> ";
-                    string PasswordBody = "An account has been created on UCS SACCO App. Your password is " + "<b> P@$$w0rd <br />";
+                    string PasswordBody = $@"
+                    <html>
+                    <head>
+                        <style>
+                            @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Montserrat:wght@300;400;700&display=swap');
+                            body {{ font-family: 'Montserrat', sans-serif; line-height: 1.8; color: #333; background-color: #f4f4f4; }}
+                            .container {{ max-width: 600px; margin: 20px auto; padding: 30px; background-color: #ffffff; border-radius: 8px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); }}
+                            .logo {{ text-align: center; margin-bottom: 20px; }}
+                            .logo img {{ max-width: 150px; }}
+                            h2 {{ color: #0056b3; text-align: center; font-weight: 700; font-family: 'Playfair Display', serif; }}
+                            .account-info {{ background-color: #f0f7ff; border-left: 4px solid #0056b3; padding: 15px; margin: 20px 0; }}
+                            .account-info p {{ margin: 5px 0; }}
+                            .cta-button {{ display: inline-block; background-color: #0056b3; color: #ffffff; padding: 12px 24px; text-decoration: none; border-radius: 5px; font-weight: bold; margin-top: 20px; }}
+                            .cta-button:hover {{ background-color: #003d82; }}
+                            .footer {{ margin-top: 30px; text-align: center; font-style: italic; color: #666; }}
+                        </style>
+                    </head>
+                    <body>
+                        <div class='container'>
+                            <div class='logo'>
+                                <img src='https://crm.ucssacco.com/images/LOGO(1).png' alt='UCS SACCO Logo'>
+                            </div>
+                            <h2>Account Password</h2>
+                            <div class='account-info'>
+                                <p>An account has been created for you on UCS SACCO App.</p>
+                                <p><strong>Your temporary password:</strong> P@$$w0rd</p>
+                                <p>Please change this password upon your first login.</p>
+                            </div>
+                            <p>
+                                <a href='https://crm.ucssacco.com/login' class='cta-button' style='color: #ffffff;'>Login to Your Account</a>
+                            </p>
+                            <p class='footer'>Thank you for choosing UCS SACCO.</p>
+                        </div>
+                    </body>
+                    </html>";
 
 
                     //check if this is a new user or not (old users will have a deleted date field set to an actual date)
                     if (user.DeletedDate != null)
                     {
-                        EmailHelper.SendEmail(this._jobEnqueuer, user.Email, "Account Status", $"Good day, We are pleased to inform you that your account has been reactivated on the UCS SACCO. You may proceed to login using your previous credentials.", user.SecondaryEmail);                        
+                        string emailBody = $@"
+                        <html>
+                        <head>
+                            <style>
+                                @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Montserrat:wght@300;400;700&display=swap');
+                                body {{ font-family: 'Montserrat', sans-serif; line-height: 1.8; color: #333; background-color: #f4f4f4; }}
+                                .container {{ max-width: 600px; margin: 20px auto; padding: 30px; background-color: #ffffff; border-radius: 8px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); }}
+                                .logo {{ text-align: center; margin-bottom: 20px; }}
+                                .logo img {{ max-width: 150px; }}
+                                h2 {{ color: #0056b3; text-align: center; font-weight: 700; font-family: 'Playfair Display', serif; }}
+                                .account-info {{ background-color: #f0f7ff; border-left: 4px solid #0056b3; padding: 15px; margin: 20px 0; }}
+                                .account-info p {{ margin: 5px 0; }}
+                                .cta-button {{ display: inline-block; background-color: #0056b3; color: #ffffff; padding: 12px 24px; text-decoration: none; border-radius: 5px; font-weight: bold; margin-top: 20px; }}
+                                .cta-button:hover {{ background-color: #003d82; }}
+                                .footer {{ margin-top: 30px; text-align: center; font-style: italic; color: #666; }}
+                            </style>
+                        </head>
+                        <body>
+                            <div class='container'>
+                                <div class='logo'>
+                                    <img src='https://crm.ucssacco.com/images/LOGO(1).png' alt='UCS SACCO Logo'>
+                                </div>
+                                <h2>Account Reactivation</h2>
+                                <div class='account-info'>
+                                    <p>Good day,</p>
+                                    <p>We are pleased to inform you that your account has been reactivated on the UCS SACCO.</p>
+                                    <p>You may proceed to login using your previous credentials.</p>
+                                    <p><strong>Your PIN:</strong> {user.Pin}</p>
+                                </div>
+                                <p>
+                                    <a href='https://crm.ucssacco.com/login' class='cta-button' style='color: #ffffff;'>Login to Your Account</a>
+                                </p>
+                                <p class='footer'>Thank you for choosing UCS SACCO.</p>
+                            </div>
+                        </body>
+                        </html>";
+
+                        EmailHelper.SendEmail(this._jobEnqueuer, user.Email, "Account Reactivation", emailBody, user.SecondaryEmail);
 
                     }
                     else
@@ -474,7 +639,25 @@ namespace UCS_CRM.Controllers
 
                 //send email
 
-                EmailHelper.SendEmail(this._jobEnqueuer, user.Email, "Password reset details", $"Good day, please use the following link to reset your password\n <br/> {link}", user.SecondaryEmail);                
+                EmailHelper.SendEmail(this._jobEnqueuer, user.Email, "Password Reset", $@"
+                    <html>
+                    <body style='font-family: Arial, sans-serif;'>
+                        <div style='max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #ddd; border-radius: 5px;'>
+                            <h2 style='color: #333;'>Password Reset Request</h2>
+                            <p>Hello,</p>
+                            <p>We received a request to reset your password. If you didn't make this request, you can ignore this email.</p>
+                            <p>To reset your password, please click the button below:</p>
+                            <p style='text-align: center;'>
+                                <a href='{link}' style='display: inline-block; padding: 10px 20px; background-color: #007bff; color: #ffffff; text-decoration: none; border-radius: 5px;'>Reset Password</a>
+                            </p>
+                            <p>If the button doesn't work, you can copy and paste the following link into your browser:</p>
+                            <p>{link}</p>
+                            <p>This link will expire in 24 hours for security reasons.</p>
+                            <p>If you need any assistance, please contact our support team.</p>
+                            <p>Best regards,<br>UCS SACCO Team</p>
+                        </div>
+                    </body>
+                    </html>", user.SecondaryEmail);
 
                 TempData["response"] = $"Password change request has been sent to your email {email}. Please open your email";
                 return RedirectToAction("Create");

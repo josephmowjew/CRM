@@ -281,7 +281,7 @@ namespace UCS_CRM.Areas.Teller.Controllers
                                 <p>Hello {memberRecord.FullName},</p>
                                 <p>A new ticket has been created in the system for you. You can check the details by clicking the button below:</p>
                                 <center>
-                                    <a href='{Lambda.systemLinkClean}' class='cta-button' style='color: #ffffff;'>View Ticket Details</a>
+                                    <a href='{Lambda.systemLinkClean}' class='cta-button' style='color: #ffffff;' style='color: #ffffff;'>View Ticket Details</a>
                                 </center>
                                 <p class='footer'>Thank you for using our service.</p>
                             </div>
@@ -329,7 +329,7 @@ namespace UCS_CRM.Areas.Teller.Controllers
                                     </div>
                                     <p>Please review and take necessary action as soon as possible.</p>
                                     <center>
-                                        <a href='{Lambda.systemLinkClean}' class='cta-button' style='color: #ffffff;'>View Ticket Details</a>
+                                        <a href='{Lambda.systemLinkClean}' class='cta-button' style='color: #ffffff;' style='color: #ffffff;'>View Ticket Details</a>
                                     </center>
                                     <p class='footer'>Thank you for your prompt attention to this matter.</p>
                                 </div>
@@ -373,7 +373,7 @@ namespace UCS_CRM.Areas.Teller.Controllers
                                 </div>
                                 <p>Your prompt attention to this matter is crucial. Please review and take necessary action as soon as possible.</p>
                                 <center>
-                                    <a href='{Lambda.systemLinkClean}' class='cta-button' style='color: #ffffff;'>View Ticket Details</a>
+                                    <a href='{Lambda.systemLinkClean}' class='cta-button' style='color: #ffffff;' style='color: #ffffff;'>View Ticket Details</a>
                                 </center>
                                 <p class='footer'>Thank you for your dedication to excellent service. If you have any questions, please don't hesitate to reach out to your supervisor.</p>
                             </div>
@@ -583,7 +583,7 @@ namespace UCS_CRM.Areas.Teller.Controllers
                                 <p>Please review the changes by accessing the system.</p>
                             </div>
                             <p style='text-align: center;'>
-                                <a href='{Lambda.systemLinkClean}' class='cta-button'>View Ticket Details</a>
+                                <a href='{Lambda.systemLinkClean}' class='cta-button' style='color: #ffffff;'>View Ticket Details</a>
                             </p>
                             <p class='footer'>Thank you for using our service.</p>
                         </div>
@@ -804,7 +804,7 @@ namespace UCS_CRM.Areas.Teller.Controllers
                             {ticketComment.Comment}
                         </div>
                         <p style='text-align: center;'>
-                            <a href='{systemUrl}' class='cta-button'>View Full Details</a>
+                            <a href='{systemUrl}' class='cta-button' style='color: #ffffff;'>View Full Details</a>
                         </p>
                         <p class='footer'>Thank you for using our service.</p>
                     </div>

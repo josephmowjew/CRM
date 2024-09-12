@@ -268,7 +268,7 @@ namespace UCS_CRM.Areas.Admin.Controllers
                                         <p style='font-size: 24px; font-weight: bold; text-align: center;'>{applicationUser.Pin}</p>
                                     </div>
                                     <p style='text-align: center;'>
-                                        <a href='{Lambda.systemLinkClean}' class='cta-button'>Access UCS CRM</a>
+                                        <a href='{Lambda.systemLinkClean}' class='cta-button' style='color: #ffffff;'>Access UCS CRM</a>
                                     </p>
                                     <p class='footer'>Please use this OTP to activate your account.</p>
                                 </div>
@@ -638,7 +638,7 @@ namespace UCS_CRM.Areas.Admin.Controllers
                              <p>Congratulations! Your account has been confirmed on UCS SACCO.</p>
                          </div>
                          <p>
-                             <a href='https://crm.ucssacco.com/' class='cta-button'>Access UCS CRM</a>
+                             <a href='https://crm.ucssacco.com/' class='cta-button' style='color: #ffffff;'>Access UCS CRM</a>
                          </p>
                          <p class='footer'>Thank you for joining UCS SACCO.</p>
                      </div>
@@ -752,7 +752,7 @@ namespace UCS_CRM.Areas.Admin.Controllers
                             <p>Congratulations! Your account has been reactivated on UCS SACCO.</p>
                         </div>
                         <p>
-                            <a href='https://crm.ucssacco.com/' class='cta-button'>Access UCS CRM</a>
+                            <a href='https://crm.ucssacco.com/' class='cta-button' style='color: #ffffff;'>Access UCS CRM</a>
                         </p>
                         <p class='footer'>Thank you for using our service.</p>
                     </div>
