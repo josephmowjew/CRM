@@ -1,8 +1,9 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace UCS_CRM.Core.Models
 {
-    public class Ticket :Meta
+    public class Ticket : Meta
     {
         public int Id { get; set; }
         [Required]
@@ -35,6 +36,14 @@ namespace UCS_CRM.Core.Models
         public int? DepartmentId { get; set; }
         public Department? Department { get; set; }
 
+        public string? InitiatorUserId { get; set; }
+        public int? InitiatorMemberId { get; set; }
+
+        [ForeignKey("InitiatorUserId")]
+        public ApplicationUser? InitiatorUser { get; set; }
+
+        [ForeignKey("InitiatorMemberId")]
+        public Member? InitiatorMember { get; set; }
 
         public Ticket()
         {
@@ -43,5 +52,9 @@ namespace UCS_CRM.Core.Models
             TicketEscalations = new List<TicketEscalation>();
         }
 
+        public object GetInitiator()
+        {
+            return InitiatorUser ?? (object)InitiatorMember;
+        }
     }
 }

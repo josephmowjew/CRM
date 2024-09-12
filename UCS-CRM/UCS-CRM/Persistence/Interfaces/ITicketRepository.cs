@@ -49,5 +49,7 @@ namespace UCS_CRM.Persistence.Interfaces
         Task<List<Ticket?>> GetEscalatedTicketsData(CursorParams cursorParams, DateTime? startDate, DateTime? endDate, string branch = "", int categoryId = 0);
         Task<List<Ticket>> GetMemberEngagementOfficerReport(DateTime? startDate, DateTime? endDate, string branch = "", int stateId = 0, int categoryId = 0, int departmentId = 0);
         Task SendTicketReassignmentEmail(string previousEmail, string newEmail, Ticket ticket);
+
+        Task<object> GetTicketInitiator(int ticketId);
     }
 }

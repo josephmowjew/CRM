@@ -62,6 +62,7 @@ namespace UCS_CRM.Persistence.SQLRepositories
 
         public void Add(Ticket ticket)
         {
+          
             this._context.Tickets.Add(ticket);
         }
 
@@ -452,6 +453,8 @@ namespace UCS_CRM.Persistence.SQLRepositories
                 .Include(t => t.CreatedBy)
                 .Include(t => t.AssignedTo).ThenInclude(a => a.Department)
                 .Include(t => t.Member).ThenInclude(t => t.User)
+                .Include(t => t.InitiatorUser)
+                .Include(t => t.InitiatorMember)
                 .AsNoTracking()
                 .FirstOrDefaultAsync(t => t.Id == id);
 
@@ -755,6 +758,8 @@ namespace UCS_CRM.Persistence.SQLRepositories
             .Include(t => t.TicketPriority)
             .Include(t => t.TicketCategory)
             .Include(t => t.State)
+            .Include(t => t.InitiatorUser)
+            .Include(t => t.InitiatorMember)
             .Include(t => t.AssignedTo);
 
         query = query.OrderByDescending(t => t.CreatedDate); // Changed to OrderByDescending
@@ -848,6 +853,8 @@ namespace UCS_CRM.Persistence.SQLRepositories
                     .Include(t => t.State)
                     .Include(t => t.TicketCategory)
                     .Include(t => t.TicketPriority)
+                    .Include(t => t.InitiatorUser)
+                    .Include(t => t.InitiatorMember)
                     .ToListAsync();
 
             
@@ -933,6 +940,8 @@ namespace UCS_CRM.Persistence.SQLRepositories
                     .Include(t => t.TicketCategory)
                     .Include(t => t.TicketPriority)
                     .Include(t => t.TicketEscalations)
+                    .Include(t => t.InitiatorUser)
+                    .Include(t => t.InitiatorMember)
                     .ToListAsync();
             }
 
@@ -1066,6 +1075,8 @@ namespace UCS_CRM.Persistence.SQLRepositories
                     .Include(t => t.CreatedBy)
                     .Include(t => t.TicketEscalations)
                     .ThenInclude(ts => ts.EscalatedTo)
+                    .Include(t => t.InitiatorUser)
+                    .Include(t => t.InitiatorMember)
                     .ToListAsync();
             }
 
@@ -1148,6 +1159,8 @@ namespace UCS_CRM.Persistence.SQLRepositories
                                    .Include(t => t.TicketCategory)
                                    .Include(t => t.TicketPriority)
                                    .Include(t => t.TicketEscalations)
+                                   .Include(t => t.InitiatorUser)
+                                    .Include(t => t.InitiatorMember)
                                    .OrderByDescending(t => t.CreatedDate) // Changed to OrderByDescending
                                    .Where(t => t.Status != Lambda.Deleted)
                                     .Where(t => t.ClosedDate != null || t.State.Name == Lambda.Closed)
@@ -1180,6 +1193,8 @@ namespace UCS_CRM.Persistence.SQLRepositories
                                    .Include(t => t.State)
                                    .Include(t => t.TicketCategory)
                                    .Include(t => t.TicketPriority)
+                                   .Include(t => t.InitiatorUser)
+                                    .Include(t => t.InitiatorMember)
                                    .Include(t => t.TicketEscalations)
                                    .Where(t =>
                                            t.Title.ToLower().Trim().Contains(@params.SearchTerm.ToLower()) ||
@@ -1228,6 +1243,8 @@ namespace UCS_CRM.Persistence.SQLRepositories
                      .Include(t => t.TicketCategory)
                      .Include(t => t.TicketPriority)
                      .Include(t => t.TicketEscalations)
+                     .Include(t => t.InitiatorUser)
+                     .Include(t => t.InitiatorMember)
                      .OrderByDescending(t => t.CreatedDate) // Changed to OrderByDescending
                      .Where(t => t.Status != Lambda.Deleted && t.MemberId == memberId)
                      .AsQueryable(); // Convert to IQueryable for dynamic ordering
@@ -1260,6 +1277,8 @@ namespace UCS_CRM.Persistence.SQLRepositories
                                                    .Include(t => t.State)
                                                    .Include(t => t.TicketCategory)
                                                    .Include(t => t.TicketPriority)
+                                                   .Include(t => t.InitiatorUser)
+                                                   .Include(t => t.InitiatorMember)
                                                    .OrderByDescending(t => t.CreatedDate) // Changed to OrderByDescending
                                                    .Where(t =>
                                                                t.Title.ToLower().Trim().Contains(@params.SearchTerm.ToLower()) ||
@@ -1310,6 +1329,8 @@ namespace UCS_CRM.Persistence.SQLRepositories
                 .Include(t => t.State)
                 .Include(t => t.TicketCategory)
                 .Include(t => t.TicketPriority)
+                .Include(t => t.InitiatorUser)
+                .Include(t => t.InitiatorMember)
                 .AsQueryable();
 
             if (!string.IsNullOrEmpty(status))
@@ -1356,6 +1377,8 @@ namespace UCS_CRM.Persistence.SQLRepositories
                                     .Include(t => t.State)
                                     .Include(t => t.TicketCategory)
                                     .Include(t => t.TicketPriority)
+                                    .Include(t => t.InitiatorUser)
+                                    .Include(t => t.InitiatorMember)
                                     .OrderByDescending(t => t.CreatedDate) // Changed to OrderByDescending
                                     .Where(t => t.Status != Lambda.Deleted &&
                                                (t.AssignedToId == assignedToId || t.CreatedById == assignedToId));
@@ -1956,6 +1979,16 @@ namespace UCS_CRM.Persistence.SQLRepositories
             }
 
             //return status;
+        }
+
+       public async Task<object> GetTicketInitiator(int ticketId)
+        {
+            var ticket = await _context.Tickets
+                .Include(t => t.InitiatorUser)
+                .Include(t => t.InitiatorMember)
+                .FirstOrDefaultAsync(t => t.Id == ticketId);
+
+            return ticket?.GetInitiator();
         }
         public async Task<string> SendDepartmentEmail(Department department, string emailSubject, string emailBody)
         {
