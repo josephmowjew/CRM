@@ -478,9 +478,41 @@ namespace UCS_CRM.Persistence.SQLRepositories
                     
                     if (!string.IsNullOrEmpty(memberEmailAddress))
                     {
-                        bodyBuilder.Append("Your ticket with reference number: ")
-                                   .Append(ticket.TicketNumber)
-                                   .Append($" has been closed because {reason}\nBut if you are not satisfied with the outcome, you have a chance to re-open it");
+                        bodyBuilder.Append($@"
+                        <html>
+                        <head>
+                            <style>
+                                @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Montserrat:wght@300;400;700&display=swap');
+                                body {{ font-family: 'Montserrat', sans-serif; line-height: 1.8; color: #333; background-color: #f4f4f4; }}
+                                .container {{ max-width: 600px; margin: 20px auto; padding: 30px; background-color: #ffffff; border-radius: 8px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); }}
+                                .logo {{ text-align: center; margin-bottom: 20px; }}
+                                .logo img {{ max-width: 150px; }}
+                                h2 {{ color: #0056b3; text-align: center; font-weight: 700; font-family: 'Playfair Display', serif; }}
+                                .ticket-info {{ background-color: #f0f7ff; border-left: 4px solid #0056b3; padding: 15px; margin: 20px 0; }}
+                                .ticket-info p {{ margin: 5px 0; }}
+                                .cta-button {{ display: inline-block; background-color: #0056b3; color: #ffffff; padding: 12px 24px; text-decoration: none; border-radius: 5px; font-weight: bold; margin-top: 20px; }}
+                                .cta-button:hover {{ background-color: #003d82; }}
+                                .footer {{ margin-top: 30px; text-align: center; font-style: italic; color: #666; }}
+                            </style>
+                        </head>
+                        <body>
+                            <div class='container'>
+                                <div class='logo'>
+                                    <img src='https://crm.ucssacco.com/images/LOGO(1).png' alt='UCS SACCO Logo'>
+                                </div>
+                                <h2>Ticket Closure Notification</h2>
+                                <div class='ticket-info'>
+                                    <p>Your ticket with reference number: {ticket.TicketNumber} has been closed.</p>
+                                    <p>Reason: {reason}</p>
+                                    <p>If you are not satisfied with the outcome, you have the option to re-open it.</p>
+                                </div>
+                                <p style='text-align: center;'>
+                                    <a href='{Lambda.systemLinkClean}' class='cta-button'>View Ticket Details</a>
+                                </p>
+                                <p class='footer'>If you have any questions, please contact our support team.</p>
+                            </div>
+                        </body>
+                        </html>");
                         
                         EmailHelper.SendEmail(_jobEnqueuer, ticket.AssignedTo.Email, title, bodyBuilder.ToString(), ticket.AssignedTo?.SecondaryEmail);
                     }
@@ -488,10 +520,40 @@ namespace UCS_CRM.Persistence.SQLRepositories
                     if (!string.IsNullOrEmpty(ticketCreatorAddress) && memberEmailAddress != ticketCreatorAddress)
                     {
                         bodyBuilder.Clear()
-                                   .Append("You have closed ticket: ")
-                                   .Append(ticket.TicketNumber)
-                                   .Append($" has been closed because {reason}");
-                        
+                                   .Append($@"
+                        <html>
+                        <head>
+                            <style>
+                                @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Montserrat:wght@300;400;700&display=swap');
+                                body {{ font-family: 'Montserrat', sans-serif; line-height: 1.8; color: #333; background-color: #f4f4f4; }}
+                                .container {{ max-width: 600px; margin: 20px auto; padding: 30px; background-color: #ffffff; border-radius: 8px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); }}
+                                .logo {{ text-align: center; margin-bottom: 20px; }}
+                                .logo img {{ max-width: 150px; }}
+                                h2 {{ color: #0056b3; text-align: center; font-weight: 700; font-family: 'Playfair Display', serif; }}
+                                .ticket-info {{ background-color: #f0f7ff; border-left: 4px solid #0056b3; padding: 15px; margin: 20px 0; }}
+                                .ticket-info p {{ margin: 5px 0; }}
+                                .cta-button {{ display: inline-block; background-color: #0056b3; color: #ffffff; padding: 12px 24px; text-decoration: none; border-radius: 5px; font-weight: bold; margin-top: 20px; }}
+                                .cta-button:hover {{ background-color: #003d82; }}
+                                .footer {{ margin-top: 30px; text-align: center; font-style: italic; color: #666; }}
+                            </style>
+                        </head>
+                        <body>
+                            <div class='container'>
+                                <div class='logo'>
+                                    <img src='https://crm.ucssacco.com/images/LOGO(1).png' alt='UCS SACCO Logo'>
+                                </div>
+                                <h2>Ticket Closure Notification</h2>
+                                <div class='ticket-info'>
+                                    <p>You have closed ticket: {ticket.TicketNumber}</p>
+                                    <p>Reason: {reason}</p>
+                                </div>
+                                <p style='text-align: center;'>
+                                    <a href='{Lambda.systemLinkClean}' class='cta-button'>View Ticket Details</a>
+                                </p>
+                                <p class='footer'>If you have any questions, please contact our support team.</p>
+                            </div>
+                        </body>
+                        </html>");
                         EmailHelper.SendEmail(_jobEnqueuer, ticketCreatorAddress, title, bodyBuilder.ToString(), ticket.AssignedTo?.SecondaryEmail);
                     }
 
@@ -557,14 +619,80 @@ namespace UCS_CRM.Persistence.SQLRepositories
 
             if (!string.IsNullOrEmpty(memberEmailAddress))
             {
-                string bodyMember = $"Your ticket with reference number: {ticket.TicketNumber} has been reopened because {reason}";
+                string bodyMember = $@"
+                <html>
+                <head>
+                    <style>
+                        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Montserrat:wght@300;400;700&display=swap');
+                        body {{ font-family: 'Montserrat', sans-serif; line-height: 1.8; color: #333; background-color: #f4f4f4; }}
+                        .container {{ max-width: 600px; margin: 20px auto; padding: 30px; background-color: #ffffff; border-radius: 8px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); }}
+                        .logo {{ text-align: center; margin-bottom: 20px; }}
+                        .logo img {{ max-width: 150px; }}
+                        h2 {{ color: #0056b3; text-align: center; font-weight: 700; font-family: 'Playfair Display', serif; }}
+                        .ticket-info {{ background-color: #f0f7ff; border-left: 4px solid #0056b3; padding: 15px; margin: 20px 0; }}
+                        .ticket-info p {{ margin: 5px 0; }}
+                        .cta-button {{ display: inline-block; background-color: #0056b3; color: #ffffff; padding: 12px 24px; text-decoration: none; border-radius: 5px; font-weight: bold; margin-top: 20px; }}
+                        .cta-button:hover {{ background-color: #003d82; }}
+                        .footer {{ margin-top: 30px; text-align: center; font-style: italic; color: #666; }}
+                    </style>
+                </head>
+                <body>
+                    <div class='container'>
+                        <div class='logo'>
+                            <img src='https://crm.ucssacco.com/images/LOGO(1).png' alt='UCS SACCO Logo'>
+                        </div>
+                        <h2>Ticket Reopened</h2>
+                        <div class='ticket-info'>
+                            <p>Your ticket with reference number: {ticket.TicketNumber} has been reopened.</p>
+                            <p>Reason: {reason}</p>
+                        </div>
+                        <p style='text-align: center;'>
+                            <a href='{Lambda.systemLinkClean}' class='cta-button'>View Ticket Details</a>
+                        </p>
+                        <p class='footer'>If you have any questions, please contact our support team.</p>
+                    </div>
+                </body>
+                </html>";
                 await SendEmailAndLogError(ticket.AssignedTo.Email, bodyMember,
                     "Failed to send ticket reopened alert email", ticket.AssignedTo.Id);
             }
 
             if (!string.IsNullOrEmpty(ticketCreatorAddress) && memberEmailAddress != ticketCreatorAddress)
             {
-                string bodyCreator = $"You have reopened ticket: {ticket.TicketNumber}. It has been reopened because {reason}";
+                string bodyCreator = $@"
+                <html>
+                <head>
+                    <style>
+                        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Montserrat:wght@300;400;700&display=swap');
+                        body {{ font-family: 'Montserrat', sans-serif; line-height: 1.8; color: #333; background-color: #f4f4f4; }}
+                        .container {{ max-width: 600px; margin: 20px auto; padding: 30px; background-color: #ffffff; border-radius: 8px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); }}
+                        .logo {{ text-align: center; margin-bottom: 20px; }}
+                        .logo img {{ max-width: 150px; }}
+                        h2 {{ color: #0056b3; text-align: center; font-weight: 700; font-family: 'Playfair Display', serif; }}
+                        .ticket-info {{ background-color: #f0f7ff; border-left: 4px solid #0056b3; padding: 15px; margin: 20px 0; }}
+                        .ticket-info p {{ margin: 5px 0; }}
+                        .cta-button {{ display: inline-block; background-color: #0056b3; color: #ffffff; padding: 12px 24px; text-decoration: none; border-radius: 5px; font-weight: bold; margin-top: 20px; }}
+                        .cta-button:hover {{ background-color: #003d82; }}
+                        .footer {{ margin-top: 30px; text-align: center; font-style: italic; color: #666; }}
+                    </style>
+                </head>
+                <body>
+                    <div class='container'>
+                        <div class='logo'>
+                            <img src='https://crm.ucssacco.com/images/LOGO(1).png' alt='UCS SACCO Logo'>
+                        </div>
+                        <h2>Ticket Reopened</h2>
+                        <div class='ticket-info'>
+                            <p>You have reopened ticket: {ticket.TicketNumber}.</p>
+                            <p>Reason for reopening: {reason}</p>
+                        </div>
+                        <p style='text-align: center;'>
+                            <a href='{Lambda.systemLinkClean}' class='cta-button'>View Ticket Details</a>
+                        </p>
+                        <p class='footer'>If you have any questions, please contact our support team.</p>
+                    </div>
+                </body>
+                </html>";
                 await SendEmailAndLogError(ticketCreatorAddress, bodyCreator,
                     "Failed to send ticket reopened alert email to creator", ticket.CreatedBy?.Id);
             }
@@ -1363,7 +1491,39 @@ namespace UCS_CRM.Persistence.SQLRepositories
                         try {
                             // sending the email 
                             string title = "Un Assigned Tickets";
-                            var body = "Ticket number " + ticket.TicketNumber + " has not been assigned to anyone one yet";
+                            var body = $@"
+                            <html>
+                            <head>
+                                <style>
+                                    @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Montserrat:wght@300;400;700&display=swap');
+                                    body {{ font-family: 'Montserrat', sans-serif; line-height: 1.8; color: #333; background-color: #f4f4f4; }}
+                                    .container {{ max-width: 600px; margin: 20px auto; padding: 30px; background-color: #ffffff; border-radius: 8px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); }}
+                                    .logo {{ text-align: center; margin-bottom: 20px; }}
+                                    .logo img {{ max-width: 150px; }}
+                                    h2 {{ color: #0056b3; text-align: center; font-weight: 700; font-family: 'Playfair Display', serif; }}
+                                    .ticket-info {{ background-color: #f0f7ff; border-left: 4px solid #0056b3; padding: 15px; margin: 20px 0; }}
+                                    .ticket-info p {{ margin: 5px 0; }}
+                                    .cta-button {{ display: inline-block; background-color: #0056b3; color: #ffffff; padding: 12px 24px; text-decoration: none; border-radius: 5px; font-weight: bold; margin-top: 20px; }}
+                                    .cta-button:hover {{ background-color: #003d82; }}
+                                    .footer {{ margin-top: 30px; text-align: center; font-style: italic; color: #666; }}
+                                </style>
+                            </head>
+                            <body>
+                                <div class='container'>
+                                    <div class='logo'>
+                                        <img src='https://crm.ucssacco.com/images/LOGO(1).png' alt='UCS SACCO Logo'>
+                                    </div>
+                                    <h2>Unassigned Ticket</h2>
+                                    <div class='ticket-info'>
+                                        <p>Ticket number {ticket.TicketNumber} has not been assigned to anyone yet.</p>
+                                    </div>
+                                    <p>
+                                        <a href='{Lambda.systemLinkClean}' class='cta-button'>View Ticket Details</a>
+                                    </p>
+                                    <p class='footer'>Please assign this ticket to an appropriate team member.</p>
+                                </div>
+                            </body>
+                            </html>";
                            
                             
                             EmailHelper.SendEmail(this._jobEnqueuer, assignedTo.Email, title, body, ticket.AssignedTo?.SecondaryEmail);
@@ -1398,7 +1558,39 @@ namespace UCS_CRM.Persistence.SQLRepositories
         {
             // Send an email to the previous assignee
             string title = "Unassigned Ticket";
-            string body = $"The Ticket {ticket.TicketNumber} was created by not assigned to anyone";
+            string emailBody = $@"
+                <html>
+                <head>
+                    <style>
+                        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Montserrat:wght@300;400;700&display=swap');
+                        body {{ font-family: 'Montserrat', sans-serif; line-height: 1.8; color: #333; background-color: #f4f4f4; }}
+                        .container {{ max-width: 600px; margin: 20px auto; padding: 30px; background-color: #ffffff; border-radius: 8px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); }}
+                        .logo {{ text-align: center; margin-bottom: 20px; }}
+                        .logo img {{ max-width: 150px; }}
+                        h2 {{ color: #0056b3; text-align: center; font-weight: 700; font-family: 'Playfair Display', serif; }}
+                        .ticket-info {{ background-color: #f0f7ff; border-left: 4px solid #0056b3; padding: 15px; margin: 20px 0; }}
+                        .ticket-info p {{ margin: 5px 0; }}
+                        .cta-button {{ display: inline-block; background-color: #0056b3; color: #ffffff; padding: 12px 24px; text-decoration: none; border-radius: 5px; font-weight: bold; margin-top: 20px; }}
+                        .cta-button:hover {{ background-color: #003d82; }}
+                        .footer {{ margin-top: 30px; text-align: center; font-style: italic; color: #666; }}
+                    </style>
+                </head>
+                <body>
+                    <div class='container'>
+                        <div class='logo'>
+                            <img src='https://crm.ucssacco.com/images/LOGO(1).png' alt='UCS SACCO Logo'>
+                        </div>
+                        <h2>Unassigned Ticket</h2>
+                        <div class='ticket-info'>
+                            <p>Ticket number {ticket.TicketNumber} has been created but not assigned to anyone yet.</p>
+                        </div>
+                        <p>
+                            <a href='{Lambda.systemLinkClean}' class='cta-button'>View Ticket Details</a>
+                        </p>
+                        <p class='footer'>Please assign this ticket to an appropriate team member.</p>
+                    </div>
+                </body>
+                </html>";
 
             var emailAddress = await _context.EmailAddresses.FirstOrDefaultAsync(o => o.Owner == Lambda.CustomerServiceMemberEngagementManager);
 
@@ -1408,7 +1600,7 @@ namespace UCS_CRM.Persistence.SQLRepositories
                 {
                   
 
-                    EmailHelper.SendEmail(this._jobEnqueuer, emailAddress.Email, title, body, ticket.AssignedTo?.SecondaryEmail);
+                    EmailHelper.SendEmail(this._jobEnqueuer, emailAddress.Email, title, emailBody, ticket.AssignedTo?.SecondaryEmail);
                 }
             }
             catch (Exception ex)
@@ -1438,7 +1630,40 @@ namespace UCS_CRM.Persistence.SQLRepositories
             this._jobEnqueuer.EnqueueEmailJob(previousAssigneeEmail, title, body);
 
 
-            body = $"A ticket {ticket.TicketNumber} previously assigned to {previousAssigneeEmail} has been escalated to you. Please take note and respond to it accordingly";
+            string emailBody = $@"
+                <html>
+                <head>
+                    <style>
+                        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Montserrat:wght@300;400;700&display=swap');
+                        body {{ font-family: 'Montserrat', sans-serif; line-height: 1.8; color: #333; background-color: #f4f4f4; }}
+                        .container {{ max-width: 600px; margin: 20px auto; padding: 30px; background-color: #ffffff; border-radius: 8px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); }}
+                        .logo {{ text-align: center; margin-bottom: 20px; }}
+                        .logo img {{ max-width: 150px; }}
+                        h2 {{ color: #0056b3; text-align: center; font-weight: 700; font-family: 'Playfair Display', serif; }}
+                        .ticket-info {{ background-color: #f0f7ff; border-left: 4px solid #0056b3; padding: 15px; margin: 20px 0; }}
+                        .ticket-info p {{ margin: 5px 0; }}
+                        .cta-button {{ display: inline-block; background-color: #0056b3; color: #ffffff; padding: 12px 24px; text-decoration: none; border-radius: 5px; font-weight: bold; margin-top: 20px; }}
+                        .cta-button:hover {{ background-color: #003d82; }}
+                        .footer {{ margin-top: 30px; text-align: center; font-style: italic; color: #666; }}
+                    </style>
+                </head>
+                <body>
+                    <div class='container'>
+                        <div class='logo'>
+                            <img src='https://crm.ucssacco.com/images/LOGO(1).png' alt='UCS SACCO Logo'>
+                        </div>
+                        <h2>Ticket Escalation Notice</h2>
+                        <div class='ticket-info'>
+                            <p>Ticket {ticket.TicketNumber}, previously assigned to {previousAssigneeEmail}, has been escalated to you.</p>
+                            <p>Please review the ticket details and respond accordingly.</p>
+                        </div>
+                        <p style='text-align: center;'>
+                            <a href='{Lambda.systemLinkClean}' class='cta-button'>View Ticket Details</a>
+                        </p>
+                        <p class='footer'>Thank you for your prompt attention to this matter.</p>
+                    </div>
+                </body>
+                </html>";
 
             EmailHelper.SendEmail(this._jobEnqueuer, ticketEscalation.EscalatedTo.Email, title, body, ticketEscalation.EscalatedTo.SecondaryEmail);
            
@@ -1456,13 +1681,79 @@ namespace UCS_CRM.Persistence.SQLRepositories
         {
             // Send an email to the previous assignee
             string title = "Ticket De-Escalation";
-            string body = $"Your ticket {ticket.TicketNumber} has been de-escalated to {ticket.AssignedTo.Email}";
+            string body = $@"
+                <html>
+                <head>
+                    <style>
+                        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Montserrat:wght@300;400;700&display=swap');
+                        body {{ font-family: 'Montserrat', sans-serif; line-height: 1.8; color: #333; background-color: #f4f4f4; }}
+                        .container {{ max-width: 600px; margin: 20px auto; padding: 30px; background-color: #ffffff; border-radius: 8px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); }}
+                        .logo {{ text-align: center; margin-bottom: 20px; }}
+                        .logo img {{ max-width: 150px; }}
+                        h2 {{ color: #0056b3; text-align: center; font-weight: 700; font-family: 'Playfair Display', serif; }}
+                        .ticket-info {{ background-color: #f0f7ff; border-left: 4px solid #0056b3; padding: 15px; margin: 20px 0; }}
+                        .ticket-info p {{ margin: 5px 0; }}
+                        .cta-button {{ display: inline-block; background-color: #0056b3; color: #ffffff; padding: 12px 24px; text-decoration: none; border-radius: 5px; font-weight: bold; margin-top: 20px; }}
+                        .cta-button:hover {{ background-color: #003d82; }}
+                        .footer {{ margin-top: 30px; text-align: center; font-style: italic; color: #666; }}
+                    </style>
+                </head>
+                <body>
+                    <div class='container'>
+                        <div class='logo'>
+                            <img src='https://crm.ucssacco.com/images/LOGO(1).png' alt='UCS SACCO Logo'>
+                        </div>
+                        <h2>Ticket De-Escalation Notice</h2>
+                        <div class='ticket-info'>
+                            <p>Your ticket {ticket.TicketNumber} has been de-escalated back to {ticket.AssignedTo.Email}.</p>
+                            <p>Please note this change and take appropriate action.</p>
+                        </div>
+                        <p style='text-align: center;'>
+                            <a href='{Lambda.systemLinkClean}' class='cta-button'>View Ticket Details</a>
+                        </p>
+                        <p class='footer'>Thank you for your attention to this matter.</p>
+                    </div>
+                </body>
+                </html>";
 
             this._jobEnqueuer.EnqueueEmailJob(previousAssigneeEmail, title, body);
             
            
            
-            body = $"A ticket {ticket.TicketNumber} previously escalated to {previousAssigneeEmail} has been de-escalated to you {ticket.AssignedTo.Email}. Please take note and respond to it accordingly";
+            body = $@"
+                <html>
+                <head>
+                    <style>
+                        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Montserrat:wght@300;400;700&display=swap');
+                        body {{ font-family: 'Montserrat', sans-serif; line-height: 1.8; color: #333; background-color: #f4f4f4; }}
+                        .container {{ max-width: 600px; margin: 20px auto; padding: 30px; background-color: #ffffff; border-radius: 8px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); }}
+                        .logo {{ text-align: center; margin-bottom: 20px; }}
+                        .logo img {{ max-width: 150px; }}
+                        h2 {{ color: #0056b3; text-align: center; font-weight: 700; font-family: 'Playfair Display', serif; }}
+                        .ticket-info {{ background-color: #f0f7ff; border-left: 4px solid #0056b3; padding: 15px; margin: 20px 0; }}
+                        .ticket-info p {{ margin: 5px 0; }}
+                        .cta-button {{ display: inline-block; background-color: #0056b3; color: #ffffff; padding: 12px 24px; text-decoration: none; border-radius: 5px; font-weight: bold; margin-top: 20px; }}
+                        .cta-button:hover {{ background-color: #003d82; }}
+                        .footer {{ margin-top: 30px; text-align: center; font-style: italic; color: #666; }}
+                    </style>
+                </head>
+                <body>
+                    <div class='container'>
+                        <div class='logo'>
+                            <img src='https://crm.ucssacco.com/images/LOGO(1).png' alt='UCS SACCO Logo'>
+                        </div>
+                        <h2>Ticket De-Escalation Notice</h2>
+                        <div class='ticket-info'>
+                            <p>A ticket {ticket.TicketNumber} previously escalated to {previousAssigneeEmail} has been de-escalated to you ({ticket.AssignedTo.Email}).</p>
+                            <p>Please take note and respond to it accordingly.</p>
+                        </div>
+                        <p style='text-align: center;'>
+                            <a href='{Lambda.systemLinkClean}' class='cta-button'>View Ticket Details</a>
+                        </p>
+                        <p class='footer'>Thank you for your prompt attention to this matter.</p>
+                    </div>
+                </body>
+                </html>";
 
             this._jobEnqueuer.EnqueueEmailJob(previousAssigneeEmail, title, body);
 
@@ -1486,7 +1777,40 @@ namespace UCS_CRM.Persistence.SQLRepositories
         {
             // Send an email to the previous assignee
             string title = $"Ticket {ticket.TicketNumber} Re-assignment";
-            string body = $"Your ticket {ticket.TicketNumber} has been reassigned to  {newEmail}";
+            string body = $@"
+            <html>
+            <head>
+                <style>
+                    @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Montserrat:wght@300;400;700&display=swap');
+                    body {{ font-family: 'Montserrat', sans-serif; line-height: 1.8; color: #333; background-color: #f4f4f4; }}
+                    .container {{ max-width: 600px; margin: 20px auto; padding: 30px; background-color: #ffffff; border-radius: 8px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); }}
+                    .logo {{ text-align: center; margin-bottom: 20px; }}
+                    .logo img {{ max-width: 150px; }}
+                    h2 {{ color: #0056b3; text-align: center; font-weight: 700; font-family: 'Playfair Display', serif; }}
+                    .ticket-info {{ background-color: #f0f7ff; border-left: 4px solid #0056b3; padding: 15px; margin: 20px 0; }}
+                    .ticket-info p {{ margin: 5px 0; }}
+                    .cta-button {{ display: inline-block; background-color: #0056b3; color: #ffffff; padding: 12px 24px; text-decoration: none; border-radius: 5px; font-weight: bold; margin-top: 20px; }}
+                    .cta-button:hover {{ background-color: #003d82; }}
+                    .footer {{ margin-top: 30px; text-align: center; font-style: italic; color: #666; }}
+                </style>
+            </head>
+            <body>
+                <div class='container'>
+                    <div class='logo'>
+                        <img src='https://crm.ucssacco.com/images/LOGO(1).png' alt='UCS SACCO Logo'>
+                    </div>
+                    <h2>Ticket Reassignment Notice</h2>
+                    <div class='ticket-info'>
+                        <p>Your ticket {ticket.TicketNumber} has been reassigned to {newEmail}.</p>
+                        <p>Please take note of this change.</p>
+                    </div>
+                    <p style='text-align: center;'>
+                        <a href='{Lambda.systemLinkClean}' class='cta-button'>View Ticket Details</a>
+                    </p>
+                    <p class='footer'>Thank you for your attention to this matter.</p>
+                </div>
+            </body>
+            </html>";
 
             string emailResponse = string.Empty;
 
@@ -1498,7 +1822,40 @@ namespace UCS_CRM.Persistence.SQLRepositories
             }
 
 
-            body = $"A {ticket.TicketNumber} has been reassigned to you .Please take note and respond to it accordingly";
+            body = $@"
+            <html>
+            <head>
+                <style>
+                    @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Montserrat:wght@300;400;700&display=swap');
+                    body {{ font-family: 'Montserrat', sans-serif; line-height: 1.8; color: #333; background-color: #f4f4f4; }}
+                    .container {{ max-width: 600px; margin: 20px auto; padding: 30px; background-color: #ffffff; border-radius: 8px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); }}
+                    .logo {{ text-align: center; margin-bottom: 20px; }}
+                    .logo img {{ max-width: 150px; }}
+                    h2 {{ color: #0056b3; text-align: center; font-weight: 700; font-family: 'Playfair Display', serif; }}
+                    .ticket-info {{ background-color: #f0f7ff; border-left: 4px solid #0056b3; padding: 15px; margin: 20px 0; }}
+                    .ticket-info p {{ margin: 5px 0; }}
+                    .cta-button {{ display: inline-block; background-color: #0056b3; color: #ffffff; padding: 12px 24px; text-decoration: none; border-radius: 5px; font-weight: bold; margin-top: 20px; }}
+                    .cta-button:hover {{ background-color: #003d82; }}
+                    .footer {{ margin-top: 30px; text-align: center; font-style: italic; color: #666; }}
+                </style>
+            </head>
+            <body>
+                <div class='container'>
+                    <div class='logo'>
+                        <img src='https://crm.ucssacco.com/images/LOGO(1).png' alt='UCS SACCO Logo'>
+                    </div>
+                    <h2>Ticket Assignment Notice</h2>
+                    <div class='ticket-info'>
+                        <p>Ticket {ticket.TicketNumber} has been assigned to you.</p>
+                        <p>Please take note and respond to it accordingly.</p>
+                    </div>
+                    <p style='text-align: center;'>
+                        <a href='{Lambda.systemLinkClean}' class='cta-button'>View Ticket Details</a>
+                    </p>
+                    <p class='footer'>Thank you for your prompt attention to this matter.</p>
+                </div>
+            </body>
+            </html>";
 
             if (ticket != null && ticket.AssignedTo != null && newEmail == ticket.AssignedTo.Email)
             {
@@ -1551,7 +1908,40 @@ namespace UCS_CRM.Persistence.SQLRepositories
                     {
                         // sending the email 
                         string title = "Escalated Tickets";
-                        var body = "Ticket number " + ticket.Ticket.TicketNumber + " was escalated and has not yet been resolved";
+                        var body = $@"
+                        <html>
+                        <head>
+                            <style>
+                                @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Montserrat:wght@300;400;700&display=swap');
+                                body {{ font-family: 'Montserrat', sans-serif; line-height: 1.8; color: #333; background-color: #f4f4f4; }}
+                                .container {{ max-width: 600px; margin: 20px auto; padding: 30px; background-color: #ffffff; border-radius: 8px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); }}
+                                .logo {{ text-align: center; margin-bottom: 20px; }}
+                                .logo img {{ max-width: 150px; }}
+                                h2 {{ color: #0056b3; text-align: center; font-weight: 700; font-family: 'Playfair Display', serif; }}
+                                .ticket-info {{ background-color: #f0f7ff; border-left: 4px solid #0056b3; padding: 15px; margin: 20px 0; }}
+                                .ticket-info p {{ margin: 5px 0; }}
+                                .cta-button {{ display: inline-block; background-color: #0056b3; color: #ffffff; padding: 12px 24px; text-decoration: none; border-radius: 5px; font-weight: bold; margin-top: 20px; }}
+                                .cta-button:hover {{ background-color: #003d82; }}
+                                .footer {{ margin-top: 30px; text-align: center; font-style: italic; color: #666; }}
+                            </style>
+                        </head>
+                        <body>
+                            <div class='container'>
+                                <div class='logo'>
+                                    <img src='https://crm.ucssacco.com/images/LOGO(1).png' alt='UCS SACCO Logo'>
+                                </div>
+                                <h2>Escalated Ticket Reminder</h2>
+                                <div class='ticket-info'>
+                                    <p>Ticket number {ticket.Ticket.TicketNumber} was escalated and has not yet been resolved.</p>
+                                    <p>Please review and take necessary action.</p>
+                                </div>
+                                <p style='text-align: center;'>
+                                    <a href='{Lambda.systemLinkClean}' class='cta-button'>View Ticket Details</a>
+                                </p>
+                                <p class='footer'>Thank you for your prompt attention to this matter.</p>
+                            </div>
+                        </body>
+                        </html>";
                         EmailHelper.SendEmail(this._jobEnqueuer, emailAddress.Email, title, body, emailAddress.SecondaryEmail);                        
                     }
                 }

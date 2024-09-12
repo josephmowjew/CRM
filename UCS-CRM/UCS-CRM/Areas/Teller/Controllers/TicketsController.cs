@@ -152,6 +152,8 @@ namespace UCS_CRM.Areas.Teller.Controllers
 
                 //save to the database
 
+                //save to the database
+
                 try
                 {
                     var userClaims = (ClaimsIdentity)User.Identity;
@@ -177,13 +179,14 @@ namespace UCS_CRM.Areas.Teller.Controllers
 
                     mappedTicket.AssignedToId = userId;
 
-                    var findUser = await this._userRepository.FindByIdAsync(userId);
+                    var assignedToUser = await this._userRepository.FindByIdAsync(userId);
 
-                    if (findUser != null)
+                    if (assignedToUser != null)
                     {
                         // Set the ticket department to the user's department
-                        mappedTicket.DepartmentId = findUser?.DepartmentId;
+                        mappedTicket.DepartmentId = assignedToUser?.DepartmentId;
                     }
+
 
                     //assign the ticket to the user
 
@@ -239,24 +242,56 @@ namespace UCS_CRM.Areas.Teller.Controllers
 
                         await this._unitOfWork.SaveToDataStore();
 
-                       
+                        
 
                        
                     }
 
-                     //get user record by created by id
+                        //get user record by created by id
 
-                    var userRecord = await this._userRepository.GetSingleUser(mappedTicket.CreatedById);
+                        var memberRecord = await this._memberRepository.GetMemberAsync(createTicketDTO.MemberId);
 
 
-                    if(userRecord != null)
-                    {
-                        string emailBody = "A ticket request for " + userRecord.FullName + " has been submitted in the system. </b> check the system for more details by clicking here " + Lambda.systemLink + "<br /> ";
+                      if(!string.IsNullOrEmpty(memberRecord.Email))
+                      {
+                        //generate email body for the member 
+
+                        string emailBody = $@"
+                        <html>
+                        <head>
+                            <style>
+                                @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Montserrat:wght@300;400;700&display=swap');
+                                body {{ font-family: 'Montserrat', sans-serif; line-height: 1.8; color: #333; background-color: #f4f4f4; }}
+                                .container {{ max-width: 600px; margin: 20px auto; padding: 30px; background-color: #ffffff; border-radius: 8px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); }}
+                                .logo {{ text-align: center; margin-bottom: 20px; }}
+                                .logo img {{ max-width: 150px; }}
+                                h2 {{ color: #0056b3; text-align: center; font-weight: 700; font-family: 'Playfair Display', serif; }}
+                                .ticket-info {{ background-color: #f0f7ff; border-left: 4px solid #0056b3; padding: 15px; margin: 20px 0; }}
+                                .cta-button {{ display: inline-block; background-color: #0056b3; color: #ffffff; padding: 12px 24px; text-decoration: none; border-radius: 5px; font-weight: bold; margin-top: 20px; }}
+                                .cta-button:hover {{ background-color: #003d82; }}
+                                .footer {{ margin-top: 30px; text-align: center; font-style: italic; color: #666; }}
+                            </style>
+                        </head>
+                        <body>
+                            <div class='container'>
+                                <div class='logo'>
+                                    <img src='https://crm.ucssacco.com/images/LOGO(1).png' alt='UCS SACCO Logo'>
+                                </div>
+                                <h2>New Ticket Created</h2>
+                                <p>Hello {memberRecord.FullName},</p>
+                                <p>A new ticket has been created in the system for you. You can check the details by clicking the button below:</p>
+                                <center>
+                                    <a href='{Lambda.systemLinkClean}' class='cta-button' style='color: #ffffff;'>View Ticket Details</a>
+                                </center>
+                                <p class='footer'>Thank you for using our service.</p>
+                            </div>
+                        </body>
+                        </html>";
 
                         // Send email to the owner if they're not the assigned user
-                        if (userRecord.Id != findUser?.Id)
+                        if (!string.IsNullOrEmpty(memberRecord.Email))
                         {
-                            EmailHelper.SendEmail(this._jobEnqueuer, userRecord.Email, "Ticket Creation", emailBody, userRecord.SecondaryEmail);
+                            EmailHelper.SendEmail(this._jobEnqueuer, memberRecord.Email, "Ticket Creation", emailBody, null);
                         }
 
                         // Email to send to support
@@ -264,15 +299,87 @@ namespace UCS_CRM.Areas.Teller.Controllers
 
                         if(emailAddress != null)
                         {
-                            this._jobEnqueuer.EnqueueEmailJob(emailAddress.Email, "Ticket Creation", emailBody);
+                            string supportEmailBody = $@"
+                            <html>
+                            <head>
+                                <style>
+                                    @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Montserrat:wght@300;400;700&display=swap');
+                                    body {{ font-family: 'Montserrat', sans-serif; line-height: 1.8; color: #333; background-color: #f4f4f4; }}
+                                    .container {{ max-width: 600px; margin: 20px auto; padding: 30px; background-color: #ffffff; border-radius: 8px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); }}
+                                    .logo {{ text-align: center; margin-bottom: 20px; }}
+                                    .logo img {{ max-width: 150px; }}
+                                    h2 {{ color: #0056b3; text-align: center; font-weight: 700; font-family: 'Playfair Display', serif; }}
+                                    .ticket-info {{ background-color: #f0f7ff; border-left: 4px solid #0056b3; padding: 15px; margin: 20px 0; }}
+                                    .ticket-info p {{ margin: 5px 0; }}
+                                    .cta-button {{ display: inline-block; background-color: #0056b3; color: #ffffff; padding: 12px 24px; text-decoration: none; border-radius: 5px; font-weight: bold; margin-top: 20px; }}
+                                    .cta-button:hover {{ background-color: #003d82; }}
+                                    .footer {{ margin-top: 30px; text-align: center; font-style: italic; color: #666; }}
+                                </style>
+                            </head>
+                            <body>
+                                <div class='container'>
+                                    <div class='logo'>
+                                        <img src='https://crm.ucssacco.com/images/LOGO(1).png' alt='UCS SACCO Logo'>
+                                    </div>
+                                    <h2>New Ticket Created</h2>
+                                    <p>Hello Support Team,</p>
+                                    <p>A new ticket has been created in the system for a member. Here are the details:</p>
+                                    <div class='ticket-info'>
+                                        <p><strong>Member Name:</strong> {memberRecord.FullName}</p>
+                                    </div>
+                                    <p>Please review and take necessary action as soon as possible.</p>
+                                    <center>
+                                        <a href='{Lambda.systemLinkClean}' class='cta-button' style='color: #ffffff;'>View Ticket Details</a>
+                                    </center>
+                                    <p class='footer'>Thank you for your prompt attention to this matter.</p>
+                                </div>
+                            </body>
+                            </html>";
+                            this._jobEnqueuer.EnqueueEmailJob(emailAddress.Email, "New Ticket Creation", supportEmailBody);
                         }
                     }
 
                     // Send an email to the user who is assigned to the ticket if different from the creator
-                    if(findUser != null && findUser.Id != userRecord?.Id)
+                    if(assignedToUser != null)
                     {
-                        string assignmentEmailBody = "A ticket has been assigned to you. </b> check the system for more details by clicking here " + Lambda.systemLink + "<br /> ";
-                        EmailHelper.SendEmail(this._jobEnqueuer, findUser.Email, "Ticket Assignment", assignmentEmailBody, findUser.SecondaryEmail);
+                        string assignmentEmailBody = $@"
+                        <html>
+                        <head>
+                            <style>
+                                @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Montserrat:wght@300;400;700&display=swap');
+                                body {{ font-family: 'Montserrat', sans-serif; line-height: 1.8; color: #333; background-color: #f4f4f4; }}
+                                .container {{ max-width: 600px; margin: 20px auto; padding: 30px; background-color: #ffffff; border-radius: 8px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); }}
+                                .logo {{ text-align: center; margin-bottom: 20px; }}
+                                .logo img {{ max-width: 150px; }}
+                                h2 {{ color: #0056b3; text-align: center; font-weight: 700; font-family: 'Playfair Display', serif; }}
+                                .ticket-info {{ background-color: #f0f7ff; border-left: 4px solid #0056b3; padding: 15px; margin: 20px 0; }}
+                                .ticket-info p {{ margin: 5px 0; }}
+                                .cta-button {{ display: inline-block; background-color: #0056b3; color: #ffffff; padding: 12px 24px; text-decoration: none; border-radius: 5px; font-weight: bold; margin-top: 20px; }}
+                                .cta-button:hover {{ background-color: #003d82; }}
+                                .footer {{ margin-top: 30px; text-align: center; font-style: italic; color: #666; }}
+                            </style>
+                        </head>
+                        <body>
+                            <div class='container'>
+                                <div class='logo'>
+                                    <img src='https://crm.ucssacco.com/images/LOGO(1).png' alt='UCS SACCO Logo'>
+                                </div>
+                                <h2>New Ticket Assignment</h2>
+                                <p>Hello,</p>
+                                <p>A new ticket has been assigned to you. Here are the details:</p>
+                                <div class='ticket-info'>
+                                    <p><strong>Ticket Number:</strong> {mappedTicket.TicketNumber}</p>
+                                    <p><strong>Title:</strong> {mappedTicket.Title}</p>
+                                </div>
+                                <p>Your prompt attention to this matter is crucial. Please review and take necessary action as soon as possible.</p>
+                                <center>
+                                    <a href='{Lambda.systemLinkClean}' class='cta-button' style='color: #ffffff;'>View Ticket Details</a>
+                                </center>
+                                <p class='footer'>Thank you for your dedication to excellent service. If you have any questions, please don't hesitate to reach out to your supervisor.</p>
+                            </div>
+                        </body>
+                        </html>";
+                        EmailHelper.SendEmail(this._jobEnqueuer, assignedToUser.Email, "New Ticket Assignment", assignmentEmailBody, assignedToUser.SecondaryEmail);
                     }
 
 
@@ -301,6 +408,7 @@ namespace UCS_CRM.Areas.Teller.Controllers
 
                     return PartialView("_CreateTicketPartial", createTicketDTO);
                 }
+
 
 
 
@@ -447,7 +555,40 @@ namespace UCS_CRM.Areas.Teller.Controllers
                 
                 if (user != null)
                 {
-                    string emailBody = $"A ticket has been modified in the system. <b>Check the system for more details by clicking here {Lambda.systemLink}</b>";
+                    string emailBody = $@"
+                    <html>
+                    <head>
+                        <style>
+                            @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Montserrat:wght@300;400;700&display=swap');
+                            body {{ font-family: 'Montserrat', sans-serif; line-height: 1.8; color: #333; background-color: #f4f4f4; }}
+                            .container {{ max-width: 600px; margin: 20px auto; padding: 30px; background-color: #ffffff; border-radius: 8px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); }}
+                            .logo {{ text-align: center; margin-bottom: 20px; }}
+                            .logo img {{ max-width: 150px; }}
+                            h2 {{ color: #0056b3; text-align: center; font-weight: 700; font-family: 'Playfair Display', serif; }}
+                            .ticket-info {{ background-color: #f0f7ff; border-left: 4px solid #0056b3; padding: 15px; margin: 20px 0; }}
+                            .ticket-info p {{ margin: 5px 0; }}
+                            .cta-button {{ display: inline-block; background-color: #0056b3; color: #ffffff; padding: 12px 24px; text-decoration: none; border-radius: 5px; font-weight: bold; margin-top: 20px; }}
+                            .cta-button:hover {{ background-color: #003d82; }}
+                            .footer {{ margin-top: 30px; text-align: center; font-style: italic; color: #666; }}
+                        </style>
+                    </head>
+                    <body>
+                        <div class='container'>
+                            <div class='logo'>
+                                <img src='https://crm.ucssacco.com/images/LOGO(1).png' alt='UCS SACCO Logo'>
+                            </div>
+                            <h2>Ticket Modification Notice</h2>
+                            <div class='ticket-info'>
+                                <p>A ticket has been modified in the system.</p>
+                                <p>Please review the changes by accessing the system.</p>
+                            </div>
+                            <p style='text-align: center;'>
+                                <a href='{Lambda.systemLinkClean}' class='cta-button'>View Ticket Details</a>
+                            </p>
+                            <p class='footer'>Thank you for using our service.</p>
+                        </div>
+                    </body>
+                    </html>";
                     this._jobEnqueuer.EnqueueEmailJob(user.Email, $"Ticket {ticketDB.TicketNumber} Modification", emailBody);
                 }
 
@@ -631,9 +772,44 @@ namespace UCS_CRM.Areas.Teller.Controllers
             foreach (var stakeholder in stakeholders)
             {
                 string systemUrl = $"{_configuration["HostingSettings:Protocol"]}://{_configuration["HostingSettings:Host"]}";
-                string emailBody = $"A new comment has been added to ticket #{ticketDbRecord.Id}:<br><br>" +
-                                   $"<strong>Comment:</strong> {ticketComment.Comment}<br><br>" +
-                                   $"Please <a href='{systemUrl}'>click here</a> to view the full details in the system.";
+                string emailBody = $@"
+                <html>
+                <head>
+                    <style>
+                        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Montserrat:wght@300;400;700&display=swap');
+                        body {{ font-family: 'Montserrat', sans-serif; line-height: 1.8; color: #333; background-color: #f4f4f4; }}
+                        .container {{ max-width: 600px; margin: 20px auto; padding: 30px; background-color: #ffffff; border-radius: 8px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); }}
+                        .logo {{ text-align: center; margin-bottom: 20px; }}
+                        .logo img {{ max-width: 150px; }}
+                        h2 {{ color: #0056b3; text-align: center; font-weight: 700; font-family: 'Playfair Display', serif; }}
+                        .ticket-info {{ background-color: #f0f7ff; border-left: 4px solid #0056b3; padding: 15px; margin: 20px 0; }}
+                        .ticket-info p {{ margin: 5px 0; }}
+                        .comment {{ background-color: #ffffff; padding: 15px; border-left: 4px solid #0056b3; margin-bottom: 20px; }}
+                        .cta-button {{ display: inline-block; background-color: #0056b3; color: #ffffff; padding: 12px 24px; text-decoration: none; border-radius: 5px; font-weight: bold; margin-top: 20px; }}
+                        .cta-button:hover {{ background-color: #003d82; }}
+                        .footer {{ margin-top: 30px; text-align: center; font-style: italic; color: #666; }}
+                    </style>
+                </head>
+                <body>
+                    <div class='container'>
+                        <div class='logo'>
+                            <img src='https://crm.ucssacco.com/images/LOGO(1).png' alt='UCS SACCO Logo'>
+                        </div>
+                        <h2>New Comment on Ticket #{ticketDbRecord.Id}</h2>
+                        <div class='ticket-info'>
+                            <p>A new comment has been added to your ticket.</p>
+                        </div>
+                        <div class='comment'>
+                            <strong>Comment:</strong><br>
+                            {ticketComment.Comment}
+                        </div>
+                        <p style='text-align: center;'>
+                            <a href='{systemUrl}' class='cta-button'>View Full Details</a>
+                        </p>
+                        <p class='footer'>Thank you for using our service.</p>
+                    </div>
+                </body>
+                </html>";
 
                 string primaryEmail = stakeholder.Email ?? string.Empty;
                 string secondaryEmail = stakeholder.SecondaryEmail ?? string.Empty;

@@ -40,6 +40,8 @@ namespace UCS_CRM.Core.Helpers
         //link
         public static string systemLink = "<a href='https://crm.ucssacco.com'>UCS Sacco System</a>";
 
+        public static string systemLinkClean = "https://crm.ucssacco.com";
+
 
         // issues filters
         public static string Categories = "Categories";

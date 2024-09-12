@@ -198,7 +198,26 @@ namespace UCS_CRM.Areas.SeniorManager.Controllers
                     await this._ticketRepository.SendTicketReassignmentEmail(currentAssignedUserEmail, newAssignedUserEmail, ticketDB);
                 }
 
-                string emailBody = "A ticket has been modified in the system. </b> check the system for more details by clicking here " + Lambda.systemLink + "<br /> ";
+                string emailBody = $@"
+                <html>
+                <head>
+                    <style>
+                        @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;700&display=swap');
+                        body {{ font-family: 'Montserrat', sans-serif; line-height: 1.6; color: #333; }}
+                        .container {{ max-width: 600px; margin: 20px auto; padding: 20px; background-color: #f9f9f9; border-radius: 5px; }}
+                        h2 {{ color: #0056b3; }}
+                        .cta-button {{ display: inline-block; background-color: #0056b3; color: #ffffff; padding: 10px 20px; text-decoration: none; border-radius: 3px; }}
+                    </style>
+                </head>
+                <body>
+                    <div class='container'>
+                        <h2>Ticket Modification Notice</h2>
+                        <p>A ticket has been modified in the system.</p>
+                        <p>Please review the changes by accessing the system:</p>
+                        <p><a href='{Lambda.systemLinkClean}' class='cta-button'>View Ticket Details</a></p>
+                    </div>
+                </body>
+                </html>";
 
                 //email to send to support
 

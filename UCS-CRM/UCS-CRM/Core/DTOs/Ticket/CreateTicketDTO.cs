@@ -23,7 +23,8 @@ namespace UCS_CRM.Core.DTOs.Ticket
         public string? AssignedToId { get; set; }
 
         [Display(Name = "Member")]
-        public int? MemberId { get; set; }
+        [Required]
+        public int MemberId { get; set; }
         [RequiredIfNotRole("Member")]
         [Display(Name = "Ticket Priority")]
         public int? TicketPriorityId { get; set; }
