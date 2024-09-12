@@ -9,7 +9,9 @@ namespace UCS_CRM.Core.Mapping
     {
         public TicketProfile()
         {
-            CreateMap<CreateTicketDTO, Ticket>();
+          CreateMap<CreateTicketDTO, Ticket>()
+            .ForMember(dest => dest.InitiatorUserId, opt => opt.Ignore())
+            .ForMember(dest => dest.InitiatorMemberId, opt => opt.Ignore());
             CreateMap<EditTicketDTO, Ticket>();
             CreateMap<EditManagerTicketDTO, Ticket>(); 
             CreateMap<Ticket, ReadTicketDTO>();
