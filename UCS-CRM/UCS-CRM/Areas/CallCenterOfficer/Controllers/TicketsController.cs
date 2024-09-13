@@ -1197,6 +1197,39 @@ public async Task<ActionResult> CloseTicket(CloseTicketDTO closeTicketDTO)
 
         }
 
+        [HttpGet]
+        public async Task<IActionResult> GetInitiators(string type, string search, int page = 1)
+        {
+            int pageSize = 10;
+            CursorParams cursorParams = new CursorParams
+            {
+                Skip = (page - 1) * pageSize,
+                Take = pageSize,
+                SearchTerm = search
+            };
+
+            if (type == "User")
+            {
+                var users = await _userRepository.GetUsersWithRoles(cursorParams);
+                var totalCount = await _userRepository.TotalFilteredUsersCount(cursorParams);
+                var results = users.Select(u => new { id = u.Id, text = $"{u.FirstName} {u.LastName}" });
+                return Json(new { 
+                    results = results,
+                    pagination = new { more = (page * pageSize) < totalCount }
+                });
+            }
+            else if (type == "Member")
+            {
+                var members = await _memberRepository.GetMembers(cursorParams);
+                var totalCount = await _memberRepository.TotalFilteredMembersCount(cursorParams);
+                var results = members.Select(m => new { id = m.Id.ToString(), text = $"{m.FirstName} {m.LastName}" });
+                return Json(new { 
+                    results = results,
+                    pagination = new { more = (page * pageSize) < totalCount }
+                });
+            }
+            return Json(new { results = new List<object>(), pagination = new { more = false } });
+        }
         //escalate ticket
         public async Task<ActionResult> Escalate(CreateTicketEscalationDTO createTicketEscalation)
         {

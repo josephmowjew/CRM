@@ -513,7 +513,7 @@ namespace UCS_CRM.Controllers
                                 <p><strong>Your email:</strong> {user.Email}</p>
                             </div>
                             <p>
-                                <a href='https://crm.ucssacco.com/login' class='cta-button' style='color: #ffffff;'>Login to Your Account</a>
+                                <a href='https://crm.ucssacco.com' class='cta-button' style='color: #ffffff;'>Login to Your Account</a>
                             </p>
                             <p class='footer'>Thank you for choosing UCS SACCO.</p>
                         </div>
@@ -549,7 +549,7 @@ namespace UCS_CRM.Controllers
                                 <p>Please change this password upon your first login.</p>
                             </div>
                             <p>
-                                <a href='https://crm.ucssacco.com/login' class='cta-button' style='color: #ffffff;'>Login to Your Account</a>
+                                <a href='https://crm.ucssacco.com' class='cta-button' style='color: #ffffff;'>Login to Your Account</a>
                             </p>
                             <p class='footer'>Thank you for choosing UCS SACCO.</p>
                         </div>
@@ -590,7 +590,7 @@ namespace UCS_CRM.Controllers
                                     <p><strong>Your PIN:</strong> {user.Pin}</p>
                                 </div>
                                 <p>
-                                    <a href='https://crm.ucssacco.com/login' class='cta-button' style='color: #ffffff;'>Login to Your Account</a>
+                                    <a href='https://crm.ucssacco.com' class='cta-button' style='color: #ffffff;'>Login to Your Account</a>
                                 </p>
                                 <p class='footer'>Thank you for choosing UCS SACCO.</p>
                             </div>

@@ -1,18 +1,18 @@
 ﻿
-.select2-container {
+.select3-container {
     position: relative;
     display: inline-block;
     width: 100%;
 }
 
-.select2-selection {
+.select3-selection {
     background-color: #fff;
     border: 1px solid #ccc;
     padding: 8px 16px;
     cursor: pointer;
 }
 
-.select2-dropdown {
+.select3-dropdown {
     display: none;
     position: absolute;
     background-color: #fff;
@@ -23,16 +23,16 @@
     z-index: 1;
 }
 
-.select2-dropdown-option {
+.select3-dropdown-option {
     padding: 8px 16px;
     cursor: pointer;
 }
 
-    .select2-dropdown-option:hover {
+    .select3-dropdown-option:hover {
         background-color: #f4f4f4;
     }
 
-.select2-search {
+.select3-search {
     position: sticky;
     top: 0;
     background-color: #fff;
@@ -40,7 +40,7 @@
     z-index: 1;
 }
 
-.select2-options {
+.select3-options {
     max-height: 150px;
     overflow-y: auto;
 }

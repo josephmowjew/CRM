@@ -1,4 +1,4 @@
-function initSelect2(options, containerId) {
+function initSelect3(options, containerId) {
     var containerElement = document.getElementById(containerId);
 
     if (!containerElement) {
