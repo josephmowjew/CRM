@@ -62,12 +62,16 @@
                         <th>
                             Assigned To
                         </th>
+                       
                         <th>
+                            Initiator
+                        </th>
+                        <th>
+                            Initiator Department
+                        </th>
+                         <th>
                             Action
                         </th>
-
-
-
                     </tr>
                 </thead>
                 <tbody>
@@ -224,6 +228,24 @@
                             return data.assignedTo != null && data.assignedTo.status != 'Deleted' ? data.assignedTo.fullName : "";
                         }, "name": "assignedTo.fullName",
                         className: "text-left"
+                    },
+                    {
+                        data: "initiatorName",
+                        name: "initiatorName",
+                        className: "text-left",
+                        "orderable": true,
+                    },
+                    {
+                        data: { initiatorType: "initiatorType", department: "initiatorUser.department.name" },
+                        mRender: function (data, type, full) {
+                            if (data.initiatorType === "Member") {
+                                return "Member Engagement Department";
+                            }
+                            return data.department || "";
+                        },
+                        name: "initiatorUser.department.name",
+                        className: "text-left",
+                        "orderable": true,
                     },
                     {
                         data: "id",
