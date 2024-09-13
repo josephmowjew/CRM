@@ -87,5 +87,10 @@ namespace UCS_CRM.Core.DTOs.Ticket
 
         }
 
+        public string InitiatorType { get; set; } // "User" or "Member"
+        public string InitiatorId { get; set; }
+        public string InitiatorName { get; set; }
+        public string InitiatorDepartmentName { get; set; }
+
     }
 }

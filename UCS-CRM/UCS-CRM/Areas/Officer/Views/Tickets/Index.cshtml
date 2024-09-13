@@ -83,12 +83,16 @@
                         <th>
                             Assigned To
                         </th>
+                       
                         <th>
+                            Initiator
+                        </th>
+                        <th>
+                            Initiator Department
+                        </th>
+                         <th>
                             Action
                         </th>
-
-
-
                     </tr>
                 </thead>
                 <tbody>
@@ -246,6 +250,24 @@
                         mRender: function (data, type, full) {
                             return data.assignedTo != null && data.assignedTo.status != 'Deleted' ? data.assignedTo.fullName : "";
                         }, "name": "assignedTo.fullName",
+                        className: "text-left"
+                    },
+                    {
+                        data: { state: "initiatorName", initiatorType: "initiatorType" },
+                        mRender: function (data, type, full) {
+                            return data.initiatorName || "";
+                        },
+                        "name": "initiatorName",
+                        className: "text-left"
+                    },
+                    {
+                        data: { state: "initiatorUser.department.name", initiatorType: "initiatorType" },
+                        mRender: function (data, type, full) {
+                            if (data.initiatorType === "Member") {
+                                return "Member Engagement Department";
+                            }
+                            return data.initiatorUser != null && data.initiatorUser.department != null ? data.initiatorUser.department.name : "";
+                        }, "name": "initiatorUser.department.name",
                         className: "text-left"
                     },
                     {

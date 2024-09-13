@@ -85,12 +85,16 @@
                         <th>
                             Assigned To
                         </th>
+                        
+                        <th>
+                            Initiator
+                        </th>
+                        <th>
+                            Initiator Department
+                        </th>
                         <th>
                             Action
                         </th>
-
-
-
                     </tr>
                 </thead>
                 <tbody>
@@ -250,15 +254,33 @@
                         }, "name": "assignedTo.fullName",
                         className: "text-left"
                     },
+                    
                     {
+                        data: "initiatorName",
+                        name: "initiatorName",
+                        className: "text-left",
+                        "orderable": true,
+                    },
+                    {
+                        data: { initiatorType: "initiatorType", department: "initiatorUser.department.name" },
+                        mRender: function (data, type, full) {
+                            if (data.initiatorType === "Member") {
+                                return "Member Engagement Department";
+                            }
+                            return data.department || "";
+                        },
+                        name: "initiatorUser.department.name",
+                        className: "text-left",
+                        "orderable": true,
+                    },
+                   {
                         data: "id",
                         name: "id",
                         "orderable": false,
                         render: function (data) {
                             return "<a href='#' onclick=EditForm('" + data + "') type='button' class='feather icon-edit' title='edit' ></a><a title='show more' href='tickets/details/" + data + "' class='mdi mdi-eye'></a>  <a href='#' type='button' onclick=EscalationForm('" + data + "') title='Escalate' class='mdi mdi-arrow-up-bold'></a>"
                         }
-                    },
-
+                    }
                 ],
                 responsive: true,
                 "autoWidth": false,

@@ -484,8 +484,9 @@ namespace UCS_CRM.Persistence.SQLRepositories
                 .Include(t => t.CreatedBy)
                 .Include(t => t.AssignedTo).ThenInclude(a => a.Department)
                 .Include(t => t.Member).ThenInclude(t => t.User)
-                .Include(t => t.InitiatorUser)
                 .Include(t => t.InitiatorMember)
+                .Include(t => t.InitiatorUser)
+                .ThenInclude(t => t!.Department)
                 .AsNoTracking()
                 .FirstOrDefaultAsync(t => t.Id == id);
 
@@ -885,6 +886,7 @@ namespace UCS_CRM.Persistence.SQLRepositories
                     .Include(t => t.TicketCategory)
                     .Include(t => t.TicketPriority)
                     .Include(t => t.InitiatorUser)
+                    .ThenInclude(t => t!.Department)
                     .Include(t => t.InitiatorMember)
                     .ToListAsync();
 
@@ -972,6 +974,7 @@ namespace UCS_CRM.Persistence.SQLRepositories
                     .Include(t => t.TicketPriority)
                     .Include(t => t.TicketEscalations)
                     .Include(t => t.InitiatorUser)
+                    .ThenInclude(t => t!.Department)
                     .Include(t => t.InitiatorMember)
                     .ToListAsync();
             }
@@ -1107,6 +1110,7 @@ namespace UCS_CRM.Persistence.SQLRepositories
                     .Include(t => t.TicketEscalations)
                     .ThenInclude(ts => ts.EscalatedTo)
                     .Include(t => t.InitiatorUser)
+                    .ThenInclude(t => t!.Department)
                     .Include(t => t.InitiatorMember)
                     .ToListAsync();
             }
@@ -1191,6 +1195,7 @@ namespace UCS_CRM.Persistence.SQLRepositories
                                    .Include(t => t.TicketPriority)
                                    .Include(t => t.TicketEscalations)
                                    .Include(t => t.InitiatorUser)
+                                   .Include(t => t.InitiatorUser!.Department)
                                     .Include(t => t.InitiatorMember)
                                    .OrderByDescending(t => t.CreatedDate) // Changed to OrderByDescending
                                    .Where(t => t.Status != Lambda.Deleted)
@@ -1225,6 +1230,7 @@ namespace UCS_CRM.Persistence.SQLRepositories
                                    .Include(t => t.TicketCategory)
                                    .Include(t => t.TicketPriority)
                                    .Include(t => t.InitiatorUser)
+                                    .Include(t => t.InitiatorUser!.Department)
                                     .Include(t => t.InitiatorMember)
                                    .Include(t => t.TicketEscalations)
                                    .Where(t =>
@@ -1275,6 +1281,7 @@ namespace UCS_CRM.Persistence.SQLRepositories
                      .Include(t => t.TicketPriority)
                      .Include(t => t.TicketEscalations)
                      .Include(t => t.InitiatorUser)
+                     .Include(t => t.InitiatorUser!.Department)
                      .Include(t => t.InitiatorMember)
                      .OrderByDescending(t => t.CreatedDate) // Changed to OrderByDescending
                      .Where(t => t.Status != Lambda.Deleted && t.MemberId == memberId)
@@ -1309,6 +1316,7 @@ namespace UCS_CRM.Persistence.SQLRepositories
                                                    .Include(t => t.TicketCategory)
                                                    .Include(t => t.TicketPriority)
                                                    .Include(t => t.InitiatorUser)
+                                                   .Include(t => t.InitiatorUser!.Department)
                                                    .Include(t => t.InitiatorMember)
                                                    .OrderByDescending(t => t.CreatedDate) // Changed to OrderByDescending
                                                    .Where(t =>
@@ -1363,6 +1371,7 @@ namespace UCS_CRM.Persistence.SQLRepositories
             .Include(t => t.TicketCategory)
             .Include(t => t.TicketPriority)
             .Include(t => t.InitiatorUser)
+            .Include(t => t.InitiatorUser!.Department)
             .Include(t => t.InitiatorMember)
             .AsQueryable();
 
