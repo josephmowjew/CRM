@@ -44,8 +44,11 @@ namespace UCS_CRM.Core.DTOs.Ticket
             Attachments = new List<IFormFile>();
 
         }
-
+        [Required]
+        [Display(Name = "Initiator Type (User or Member)")]
         public string InitiatorType { get; set; } // "User" or "Member"
+        [Required]
+        [Display(Name = "Initiator ID")]
         public string InitiatorId { get; set; } // This will be either UserId or MemberId
 
     }

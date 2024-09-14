@@ -1,4 +1,4 @@
-function initSelect3(options, containerId) {
+function initSelect2(options, containerId) {
     var containerElement = document.getElementById(containerId);
 
     if (!containerElement) {
@@ -7,9 +7,9 @@ function initSelect3(options, containerId) {
     }
 
     var selectSearch = containerElement.querySelector("#select-search");
-    var selectOptions = containerElement.querySelector(".select2-options");
-    var selectDropdown = containerElement.querySelector(".select2-dropdown");
-    var selectSelection = containerElement.querySelector(".select2-selection");
+    var selectOptions = containerElement.querySelector(".select3-options");
+    var selectDropdown = containerElement.querySelector(".select3-dropdown");
+    var selectSelection = containerElement.querySelector(".select3-selection");
     var uniqueOptions = new Set();
     var currentPage = 1;
     var hiddenFieldId = options.hiddenFieldId || "MemberId";
@@ -48,7 +48,7 @@ function initSelect3(options, containerId) {
 
                     if (!uniqueOptions.has(optionValue)) {
                         var newOption = document.createElement('div');
-                        newOption.classList.add('select2-dropdown-option');
+                        newOption.classList.add('select3-dropdown-option');
                         newOption.setAttribute('data-value', optionId);
                         newOption.textContent = optionValue;
 
