@@ -266,7 +266,7 @@
                             if (data.initiatorType === "Member") {
                                 return "Member Engagement Department";
                             }
-                            return data.initiatorUser != null && data.initiatorUser.department != null ? data.initiatorUser.department.name : "";
+                            return data.initiatorDepartmentName || "";
                         }, "name": "initiatorUser.department.name",
                         className: "text-left"
                     },

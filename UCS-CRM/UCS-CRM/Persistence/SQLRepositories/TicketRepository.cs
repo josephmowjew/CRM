@@ -791,6 +791,7 @@ namespace UCS_CRM.Persistence.SQLRepositories
             .Include(t => t.TicketCategory)
             .Include(t => t.State)
             .Include(t => t.InitiatorUser)
+            .Include(t => t.InitiatorUser!.Department)
             .Include(t => t.InitiatorMember)
             .Include(t => t.AssignedTo);
 
@@ -813,9 +814,26 @@ namespace UCS_CRM.Persistence.SQLRepositories
                 TicketPriority = t.TicketPriority,
                 TicketCategory = t.TicketCategory,
                 State = t.State,
-                CreatedDate = t.CreatedDate, // Added this as it might be used for the 'period' in your DataTable
+                CreatedDate = t.CreatedDate,
                 AssignedTo = t.AssignedTo != null ? new ApplicationUser { FullName = t.AssignedTo.FullName } : null,
-                TicketEscalations = t.TicketEscalations.Select(te => new TicketEscalation { Id = te.Id, Status = te.Status }).ToList()
+                TicketEscalations = t.TicketEscalations.Select(te => new TicketEscalation { Id = te.Id, Status = te.Status }).ToList(),
+                InitiatorMemberId = t.InitiatorMemberId,
+                InitiatorUserId = t.InitiatorUserId,
+                InitiatorUser = t.InitiatorUser != null ? new ApplicationUser 
+                { 
+                    Id = t.InitiatorUser.Id, 
+                    FullName = t.InitiatorUser.FullName,
+                    FirstName = t.InitiatorUser.FirstName,
+                    LastName = t.InitiatorUser.LastName,
+                    Department = t.InitiatorUser.Department != null ? new Department { Name = t.InitiatorUser.Department.Name } : null
+                } : null,
+                InitiatorMember = t.InitiatorMember != null ? new UCS_CRM.Core.Models.Member 
+                { 
+                    Id = t.InitiatorMember.Id, 
+                    AccountNumber = t.InitiatorMember.AccountNumber,
+                    FirstName = t.InitiatorMember.FirstName,
+                    LastName = t.InitiatorMember.LastName
+                } : null
             })
             .ToListAsync();
 
