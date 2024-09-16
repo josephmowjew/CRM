@@ -168,7 +168,7 @@ namespace UCS_CRM.Areas.Member.Controllers
                     var member = await this._memberRepository.GetMemberByUserId(mappedTicket.CreatedById);
 
                     //set up the member id
-                    mappedTicket.MemberId = member.Id;
+                    mappedTicket.MemberId = member?.Id;
 
                     //get the last ticket
 
@@ -183,6 +183,11 @@ namespace UCS_CRM.Areas.Member.Controllers
                     //assign ticket number to the mapped record
 
                     mappedTicket.TicketNumber = ticketNumber;
+
+                    //set ticket initiator
+
+                    mappedTicket.InitiatorMemberId = member?.Id;
+
 
 
                     this._ticketRepository.Add(mappedTicket);
