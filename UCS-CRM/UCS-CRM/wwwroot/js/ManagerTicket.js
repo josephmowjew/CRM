@@ -453,12 +453,18 @@ function addComment(ticketId) {
 }
 // Function to start the spinner
 function showSpinner() {
-    document.getElementById('spinner').style.display = 'block';
+    const spinner = document.getElementById('spinner');
+    if (spinner) {
+        spinner.style.display = 'block';
+    }
 }
 
 // Function to stop the spinner
 function hideSpinner() {
-    document.getElementById('spinner').style.display = 'none';
+    const spinner = document.getElementById('spinner');
+    if (spinner) {
+        spinner.style.display = 'none';
+    }
 }
 
 
