@@ -130,6 +130,31 @@ namespace UCS_CRM.Areas.Member.Controllers
                     createTicketDTO.TicketPriorityId = defaultPriority.Id;
                 }
 
+                //check initiator information 
+                var ticketInitiator = createTicketDTO.InitiatorId;
+
+                var ticketIniatorType = createTicketDTO.InitiatorType;
+
+                if(ticketIniatorType.ToLower().Trim() == "member".ToLower().Trim())
+                {
+                    var ticketInitiatorMember = await this._memberRepository.GetMemberByUserId(ticketInitiator);
+
+                    if(ticketInitiatorMember == null)
+                    {
+                        ModelState.AddModelError(string.Empty, "Sorry but you do not have a valid account with us, please contact administrator for assistance");
+                        await populateViewBags();
+                        return PartialView("_CreateTicketPartial", createTicketDTO);
+                    }
+
+                }
+                else
+                {
+                    //return an error back to the user 
+                    ModelState.AddModelError(string.Empty, "Invalid initiator type");
+                    await populateViewBags();
+                    return PartialView("_CreateTicketPartial", createTicketDTO);
+                }
+
                 
 
                 //check for article title presence
