@@ -91,6 +91,8 @@ namespace UCS_CRM.Areas.Member.Controllers
         {
             await populateViewBags();
             ViewBag.type = type;
+            var memberId = await GetMemberId();
+            ViewBag.MemberId = memberId;
 
             return View();
         }
@@ -1019,7 +1021,25 @@ namespace UCS_CRM.Areas.Member.Controllers
             ViewBag.categories = await GetTicketCategories();
         }
 
-        
+        private async Task<int?> GetMemberId()
+        {
+            var userClaims = (ClaimsIdentity?)User.Identity;
 
+                var claimsIdentitifier = userClaims?.FindFirst(ClaimTypes.NameIdentifier);
+
+                if (claimsIdentitifier != null)
+                {
+
+                    var currentUserId = claimsIdentitifier.Value;
+
+
+                    var member = await this._memberRepository.GetMemberByUserId(currentUserId);
+
+                    return member?.Id;
+
+                }
+
+                return null;
+        }
     }
 }

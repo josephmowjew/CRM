@@ -34,7 +34,9 @@
                   <label for="Attachments" class="form-label">Upload Ticket Attachments (PDF)</label>
                   <input class="form-control" type="file" id="Attachments" name="Attachments" multiple accept="application/pdf">
                 </div>
-                
+
+                <input type="hidden" name="InitiatorId" value="@ViewBag.MemberId" />
+                <input type="hidden" name="InitiatorType" value="Member" />
 
             </form>
         </div>
