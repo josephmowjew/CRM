@@ -248,10 +248,13 @@
                         className: "text-left"
                     },
                      {
-                        data: { state: "stateTracker.reason" },
+                        data: { state: "stateTrackers.0.reason" },
                         mRender: function (data, type, full) {
-                            return data.stateTracker != null && data.stateTracker.status != 'Deleted' ? data.stateTracker.reason : "";
-                        }, "name": "stateTracker.reason",
+                            return data.stateTrackers && data.stateTrackers[0] && data.stateTrackers[0].status !== 'Deleted' 
+                                ? data.stateTrackers[0].reason 
+                                : "";
+                        }, 
+                        name: "stateTrackers.0.reason",
                         className: "text-left"
                     },
                     {
