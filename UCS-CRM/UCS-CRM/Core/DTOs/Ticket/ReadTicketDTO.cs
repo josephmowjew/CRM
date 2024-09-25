@@ -42,6 +42,8 @@ namespace UCS_CRM.Core.DTOs.Ticket
 
         public ApplicationUser CreatedBy { get; set; }
 
+        public ICollection<Core.Models.TicketStateTracker>? StateTrackers { get; set; }
+
         public ReadTicketDTO()
         {
             TicketAttachments = new List<TicketAttachment>();

@@ -14,5 +14,6 @@ namespace UCS_CRM.Core.Models
         [StringLength(200)]
         [Required]
         public string Reason { get; set; }
+       
     }
 }

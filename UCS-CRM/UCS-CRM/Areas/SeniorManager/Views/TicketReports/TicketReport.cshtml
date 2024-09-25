@@ -31,6 +31,12 @@
                             Ticket Number
                         </th>
                         <th>
+                            Member Name
+                        </th>
+                        <th>
+                           Member Employee Number
+                        </th>
+                        <th>
                             Title
                         </th>
                         <th>
@@ -45,6 +51,9 @@
 
                         <th>
                             State
+                        </th>
+                        <th>
+                            Ticket Comment/ Resolution
                         </th>
                         <th>
                             Period
@@ -151,11 +160,24 @@
                         className: "text-left"
                     },
                     {
+                        data: "member.fullName",
+                        name: "memberName",
+                        className: "text-left",
+                        "orderable": true,
+                    },
+                    {
+                        data: "member.employeeNumber",
+                        name: "memberEmployeeNumber",
+                        className: "text-left",
+                        "orderable": true,
+                    },
+                    {
                         data: "title",
                         name: "title",
                         className: "text-left",
                         "orderable": true,
                     },
+                    
                     {
                         data: "description",
                         name: "description",
@@ -209,6 +231,16 @@
                             }
 
                         }, "name": "state.name",
+                        className: "text-left"
+                    },
+                    {
+                        data: { state: "stateTrackers.0.reason" },
+                        mRender: function (data, type, full) {
+                            return data.stateTrackers && data.stateTrackers[0] && data.stateTrackers[0].status !== 'Deleted' 
+                                ? data.stateTrackers[0].reason 
+                                : "";
+                        }, 
+                        name: "stateTrackers.0.reason",
                         className: "text-left"
                     },
                     {

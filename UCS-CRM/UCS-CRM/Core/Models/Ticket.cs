@@ -45,11 +45,14 @@ namespace UCS_CRM.Core.Models
         [ForeignKey("InitiatorMemberId")]
         public Member? InitiatorMember { get; set; }
 
+        public ICollection<TicketStateTracker>? StateTrackers { get; set; }
+
         public Ticket()
         {
             TicketAttachments = new List<TicketAttachment>();
             TicketComments  = new List<TicketComment>();
             TicketEscalations = new List<TicketEscalation>();
+            StateTrackers = new List<TicketStateTracker>();
         }
 
         public object GetInitiator()

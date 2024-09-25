@@ -1025,19 +1025,30 @@ namespace UCS_CRM.Persistence.SQLRepositories
                     query = query.Skip(cursorParams.Skip);
                 }
 
-                finalRecords = await query.Take(cursorParams.Take)
-                    .Include(t => t.Member)
-                    .Include(t => t.AssignedTo)
-                    .Include(t => t.TicketAttachments)
-                    .Include(t => t.State)
-                    .Include(t => t.TicketCategory)
-                    .Include(t => t.TicketPriority)
-                    .Include(t => t.TicketEscalations)
-                    .Include(t => t.InitiatorUser)
-                    .ThenInclude(t => t!.Department)
-                    .Include(t => t.InitiatorMember)
+               // Remove the invalid Include and use projection to get the latest StateTracker
+                finalRecords = await query
+                    .OrderByDescending(t => t.CreatedDate)
+                    .Skip(cursorParams.Skip)
+                    .Take(cursorParams.Take)
+                    .Select(t => new Ticket
+                    {
+                        Id = t.Id,
+                        TicketNumber = t.TicketNumber,
+                        Title = t.Title,
+                        Member = t.Member,
+                        AssignedTo = t.AssignedTo,
+                        TicketAttachments = t.TicketAttachments,
+                        State = t.State,
+                        TicketCategory = t.TicketCategory,
+                        TicketPriority = t.TicketPriority,
+                        TicketEscalations = t.TicketEscalations,
+                        InitiatorUser = t.InitiatorUser,
+                        InitiatorMember = t.InitiatorMember,
+                        // Select the latest StateTracker
+                        StateTrackers = new List<TicketStateTracker> { t.StateTrackers.OrderByDescending(st => st.CreatedDate).FirstOrDefault() }
+                    })
                     .ToListAsync();
-            }
+                    }
 
             return finalRecords;
         }
