@@ -869,7 +869,7 @@ namespace UCS_CRM.Areas.Admin.Controllers
             List<SelectListItem> roles = new List<SelectListItem>();
             UserViewModel newUser = new UserViewModel();
 
-            this._roleManager.Roles.ToList().ForEach(r =>
+            this._roleManager.Roles.Where(r => r.Name.ToLower() != "member").ToList().ForEach(r =>
             {
                 roles.Add(new SelectListItem { Text = r.Name, Value = r.Name });
             });

@@ -7,6 +7,12 @@
     <div class="col-12">
         <div class="card">
                 <div class="card-body">
+                  @if (ViewBag.MemberId == null || ViewBag.MemberId == 0)
+                  {
+                      <div class="alert alert-warning">
+                          <i class="fas fa-exclamation-triangle"></i> We apologize, but it appears that you do not have a valid member account. Please contact our administrator for further assistance.
+                      </div>
+                  }
                   <h4 class="card-title">Ticket Stats</h4>
                   <div class="row mt-4">
                     <!-- Column -->

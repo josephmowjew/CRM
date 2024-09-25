@@ -137,11 +137,13 @@ namespace UCS_CRM.Areas.Member.Controllers
 
                 if(ticketIniatorType.ToLower().Trim() == "member".ToLower().Trim())
                 {
-                    var ticketInitiatorMember = await this._memberRepository.GetMemberByUserId(ticketInitiator);
-
-                    if(ticketInitiatorMember == null)
+                    if (!int.TryParse(ticketInitiator, out int ticketInitiatorMember))
                     {
+                        // Set the DataInvalid flag to true and add a model error message
+                        createTicketDTO.DataInvalid = "true";
                         ModelState.AddModelError(string.Empty, "Sorry but you do not have a valid account with us, please contact administrator for assistance");
+
+                        // Populate view bags and return the partial view with the DTO
                         await populateViewBags();
                         return PartialView("_CreateTicketPartial", createTicketDTO);
                     }
@@ -372,7 +374,12 @@ namespace UCS_CRM.Areas.Member.Controllers
                 await populateViewBags();
 
                 
+                if (ModelState.ContainsKey("InitiatorId"))
+                {
+                    ModelState["InitiatorId"]?.Errors.Clear();
 
+                    ModelState.AddModelError("InitiatorId", "Sorry, you cannot create a ticket because you do not have a valid member account. Please contact administrator.");
+                }
                 return PartialView("_CreateTicketPartial", createTicketDTO);
             }
 

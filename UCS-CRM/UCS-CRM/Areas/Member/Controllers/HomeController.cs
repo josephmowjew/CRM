@@ -60,7 +60,8 @@ namespace UCS_CRM.Areas.Member.Controllers
                 ViewBag.newTicketsCount = await this.CountTicketsByStatus("New");
                 ViewBag.resolvedTicketsCount = await this.CountTicketsByStatus("Resolved");
                 ViewBag.reopenedTicketsCount = await this.CountTicketsByStatus("Re-opened");
-
+                var memberId = await GetMemberId();
+                ViewBag.MemberId = memberId;
                 var accounts = await Accounts();
                 ViewBag.accounts = accounts;
 
@@ -249,6 +250,27 @@ namespace UCS_CRM.Areas.Member.Controllers
             string body = $"{userFriendlyMessage}\n\n{timeOfOccurrence}\n\nPlease investigate and update the SSL certificate if necessary.";
             
             EmailHelper.SendEmail(_jobEnqueuer, _configuration["SupportEmail"], subject, body);
+        }
+
+        private async Task<int?> GetMemberId()
+        {
+            var userClaims = (ClaimsIdentity?)User.Identity;
+
+            var claimsIdentitifier = userClaims?.FindFirst(ClaimTypes.NameIdentifier);
+
+            if (claimsIdentitifier != null)
+            {
+
+                var currentUserId = claimsIdentitifier.Value;
+
+
+                var member = await this._memberRepository.GetMemberByUserId(currentUserId);
+
+                return member?.Id;
+
+            }
+
+            return null;
         }
     }
 }
