@@ -108,6 +108,8 @@ namespace UCS_CRM.Areas.Member.Controllers
 
                 createTicketDTO.DataInvalid = "";
 
+                ViewBag.MemberId = createTicketDTO.InitiatorId;
+
                 //search for the default state
 
                 var defaultState =  this._stateRepository.DefaultState(Lambda.NewTicket);
@@ -373,13 +375,16 @@ namespace UCS_CRM.Areas.Member.Controllers
             {
                 await populateViewBags();
 
-                
-                if (ModelState.ContainsKey("InitiatorId"))
+                if (ModelState.ContainsKey("InitiatorId") && ModelState["InitiatorId"].Errors.Any(e => e.ErrorMessage == "The InitiatorId field is required."))
                 {
                     ModelState["InitiatorId"]?.Errors.Clear();
-
                     ModelState.AddModelError("InitiatorId", "Sorry, you cannot create a ticket because you do not have a valid member account. Please contact administrator.");
+                    // Retain the InitiatorId value
+                    ViewBag.MemberId = createTicketDTO.InitiatorId;
+
                 }
+                ViewBag.MemberId = createTicketDTO.InitiatorId;
+
                 return PartialView("_CreateTicketPartial", createTicketDTO);
             }
 
