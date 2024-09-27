@@ -67,6 +67,10 @@ builder.Services.AddHangfire(config =>
            .UseDefaultTypeSerializer()
            .UseMemoryStorage());
 
+
+builder.Services.AddRazorPages()
+    .AddRazorRuntimeCompilation();
+    
 builder.Services.AddHangfireServer();
 
 builder.Services.AddControllersWithViews().AddNewtonsoftJson(x => x.SerializerSettings.ReferenceLoopHandling = Newtonsoft.Json.ReferenceLoopHandling.Ignore);

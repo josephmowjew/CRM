@@ -271,15 +271,19 @@
                         className: "text-left"
                     },
                     {
-                        data: "id",
+                        data: null,
                         name: "id",
                         "orderable": false,
-                        render: function (data) {
-                            console.log(data);
-                            return "<a href='#' onclick=EditForm('" + data + "') type='button' class='feather icon-edit' title='edit' ></a>" +
-                                "<a title='show more' href='tickets/details/" + data + "' class='mdi mdi-eye'></a>" +
-                                "<a href='#' type='button' onclick=EscalationForm('" + data + "') title='Escalate' class='mdi mdi-arrow-up-bold'></a>" +
-                                "<a href='#' type='button' onclick=PickTicket('" + data + "') title='Pick Ticket'><i class='fas fa-hand-paper'></i></a>";
+                        mRender: function (data, type, full) {
+                            var html = "<a href='#' onclick=EditForm('" + full.id + "') type='button' class='feather icon-edit' title='edit' ></a>" +
+                                "<a title='show more' href='tickets/details/" + full.id + "' class='mdi mdi-eye'></a>" +
+                                "<a href='#' type='button' onclick=EscalationForm('" + full.id + "') title='Escalate' class='mdi mdi-arrow-up-bold'></a>";
+                            
+                            if (full.assignedToId === "") {
+                                html += "<a href='#' type='button' onclick=PickTicket('" + full.id + "') title='Pick Ticket'><i class='fas fa-hand-paper'></i></a>";
+                            }
+                            
+                            return html;
                         }
                     },
 
