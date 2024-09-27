@@ -496,6 +496,31 @@ namespace UCS_CRM.Persistence.SQLRepositories
 
 
         }
+
+        public async Task<Ticket?> GetTicketWithTracking(int id)
+        {
+            // Retrieve the ticket using AsNoTracking for performance
+            var ticket = await this._context.Tickets
+                .Include(t => t.TicketCategory)
+                .Include(t => t.State)
+                .Include(t => t.TicketComments)
+                .Include(t => t.TicketAttachments)
+                .Include(t => t.TicketPriority)
+                .Include(t => t.CreatedBy)
+                .Include(t => t.AssignedTo).ThenInclude(a => a.Department)
+                .Include(t => t.Member).ThenInclude(t => t.User)
+                .Include(t => t.InitiatorMember)
+                .Include(t => t.InitiatorUser)
+                .ThenInclude(t => t!.Department)
+                .FirstOrDefaultAsync(t => t.Id == id);
+
+           
+
+            return ticket;
+
+
+        }
+
         public async Task SendTicketClosureNotifications(Ticket ticket, string reason)
         {
             string status = string.Empty;
@@ -1984,6 +2009,112 @@ namespace UCS_CRM.Persistence.SQLRepositories
             }
 
 
+        }
+
+
+        public void SendTicketPickedEmail(string pickerEmail, Ticket ticket)
+        {
+            if(ticket == null)
+            {
+                return;
+            }
+
+            if(string.IsNullOrEmpty(pickerEmail))
+            {
+                return;
+            }
+
+            string title = $"Ticket {ticket.TicketNumber} Picked";
+            string staffBody = $@"
+            <html>
+            <head>
+                <style>
+                    @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Montserrat:wght@300;400;700&display=swap');
+                    body {{ font-family: 'Montserrat', sans-serif; line-height: 1.8; color: #333; background-color: #f4f4f4; }}
+                    .container {{ max-width: 600px; margin: 20px auto; padding: 30px; background-color: #ffffff; border-radius: 8px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); }}
+                    .logo {{ text-align: center; margin-bottom: 20px; }}
+                    .logo img {{ max-width: 150px; }}
+                    h2 {{ color: #0056b3; text-align: center; font-weight: 700; font-family: 'Playfair Display', serif; }}
+                    .ticket-info {{ background-color: #f0f7ff; border-left: 4px solid #0056b3; padding: 15px; margin: 20px 0; }}
+                    .ticket-info p {{ margin: 5px 0; }}
+                    .cta-button {{ display: inline-block; background-color: #0056b3; color: #ffffff; padding: 12px 24px; text-decoration: none; border-radius: 5px; font-weight: bold; margin-top: 20px; }}
+                    .cta-button:hover {{ background-color: #003d82; }}
+                    .footer {{ margin-top: 30px; text-align: center; font-style: italic; color: #666; }}
+                </style>
+            </head>
+            <body>
+                <div class='container'>
+                    <div class='logo'>
+                        <img src='https://crm.ucssacco.com/images/LOGO(1).png' alt='UCS SACCO Logo'>
+                    </div>
+                    <h2>Ticket Picked Notice</h2>
+                    <div class='ticket-info'>
+                        <p>You have picked Ticket {ticket.TicketNumber}.</p>
+                        <p>Please handle this ticket promptly.</p>
+                    </div>
+                    <p style='text-align: center;'>
+                        <a href='{Lambda.systemLinkClean}' class='cta-button' style='color: #ffffff;'>View Ticket Details</a>
+                    </p>
+                    <p class='footer'>Thank you for your attention to this matter.</p>
+                </div>
+            </body>
+            </html>";
+
+            string ownerBody = $@"
+            <html>
+            <head>
+                <style>
+                    @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Montserrat:wght@300;400;700&display=swap');
+                    body {{ font-family: 'Montserrat', sans-serif; line-height: 1.8; color: #333; background-color: #f4f4f4; }}
+                    .container {{ max-width: 600px; margin: 20px auto; padding: 30px; background-color: #ffffff; border-radius: 8px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); }}
+                    .logo {{ text-align: center; margin-bottom: 20px; }}
+                    .logo img {{ max-width: 150px; }}
+                    h2 {{ color: #0056b3; text-align: center; font-weight: 700; font-family: 'Playfair Display', serif; }}
+                    .ticket-info {{ background-color: #f0f7ff; border-left: 4px solid #0056b3; padding: 15px; margin: 20px 0; }}
+                    .ticket-info p {{ margin: 5px 0; }}
+                    .cta-button {{ display: inline-block; background-color: #0056b3; color: #ffffff; padding: 12px 24px; text-decoration: none; border-radius: 5px; font-weight: bold; margin-top: 20px; }}
+                    .cta-button:hover {{ background-color: #003d82; }}
+                    .footer {{ margin-top: 30px; text-align: center; font-style: italic; color: #666; }}
+                </style>
+            </head>
+            <body>
+                <div class='container'>
+                    <div class='logo'>
+                        <img src='https://crm.ucssacco.com/images/LOGO(1).png' alt='UCS SACCO Logo'>
+                    </div>
+                    <h2>Ticket Update</h2>
+                    <div class='ticket-info'>
+                        <p>Your ticket {ticket.TicketNumber} has been picked up by our staff.</p>
+                        <p>We will process your request as soon as possible.</p>
+                    </div>
+                    <p style='text-align: center;'>
+                        <a href='{Lambda.systemLinkClean}' class='cta-button' style='color: #ffffff;'>View Ticket Details</a>
+                    </p>
+                    <p class='footer'>Thank you for your patience.</p>
+                </div>
+            </body>
+            </html>";
+
+            if (ticket != null && ticket.AssignedTo != null && pickerEmail == ticket.AssignedTo.Email)
+            {
+                EmailHelper.SendEmail(this._jobEnqueuer, pickerEmail, title, staffBody, ticket.AssignedTo.SecondaryEmail);
+            }
+            else
+            {
+                this._jobEnqueuer.EnqueueEmailJob(pickerEmail, title, staffBody);
+            }
+
+            if (ticket?.AssignedTo?.Department != null)
+            {
+                this._jobEnqueuer.EnqueueEmailJob(ticket.AssignedTo.Department.Email, title, staffBody);
+            }
+
+            // Send email to ticket owner
+            string ownerEmail = ticket.Member?.User?.Email ?? ticket.CreatedBy?.Email;
+            if (!string.IsNullOrEmpty(ownerEmail))
+            {
+                this._jobEnqueuer.EnqueueEmailJob(ownerEmail, title, ownerBody);
+            }
         }
         public async Task SendEscalatedTicketsReminder()
         {

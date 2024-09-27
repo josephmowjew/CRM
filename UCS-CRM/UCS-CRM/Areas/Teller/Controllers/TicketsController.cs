@@ -51,9 +51,27 @@ namespace UCS_CRM.Areas.Teller.Controllers
         private readonly ApplicationDbContext _context;
         private readonly IConfiguration _configuration;
         private readonly ILogger<TicketsController> _logger;
-        public TicketsController(ITicketRepository ticketRepository, IMapper mapper, IUnitOfWork unitOfWork, IEmailService emailService, IEmailAddressRepository addressRepository,
-            ITicketCategoryRepository ticketCategoryRepository, IStateRepository stateRepository, ITicketPriorityRepository priorityRepository,
-            IWebHostEnvironment env, ITicketCommentRepository ticketCommentRepository, IUserRepository userRepository, IMemberRepository memberRepository, ITicketEscalationRepository ticketEscalationRepository, IDepartmentRepository departmentRepository, ITicketStateTrackerRepository ticketStateTrackerRepository, UserManager<ApplicationUser> userManager,HangfireJobEnqueuer jobEnqueuer, ApplicationDbContext context, IConfiguration configuration, ILogger<TicketsController> logger)
+        private readonly IHttpContextAccessor _httpContextAccessor;
+        public TicketsController(
+            ITicketRepository ticketRepository, IMapper mapper,
+            IUnitOfWork unitOfWork, IEmailService emailService, 
+            IEmailAddressRepository addressRepository,
+            ITicketCategoryRepository ticketCategoryRepository,
+            IStateRepository stateRepository, 
+            ITicketPriorityRepository priorityRepository,
+            IWebHostEnvironment env,
+            ITicketCommentRepository ticketCommentRepository, 
+            IUserRepository userRepository,
+            IMemberRepository memberRepository,
+            ITicketEscalationRepository ticketEscalationRepository,
+            IDepartmentRepository departmentRepository,
+            ITicketStateTrackerRepository ticketStateTrackerRepository,
+            UserManager<ApplicationUser> userManager,
+            HangfireJobEnqueuer jobEnqueuer,
+            ApplicationDbContext context,
+            IConfiguration configuration,
+            ILogger<TicketsController> logger,
+            IHttpContextAccessor httpContextAccessor)
         {
             _ticketRepository = ticketRepository;
             _mapper = mapper;
@@ -75,6 +93,7 @@ namespace UCS_CRM.Areas.Teller.Controllers
             _context = context;
             _configuration = configuration;
             _logger = logger;
+            _httpContextAccessor = httpContextAccessor;
         }
 
         // GET: TicketsController
@@ -870,6 +889,57 @@ namespace UCS_CRM.Areas.Teller.Controllers
 
             return Json(new { draw = draw, recordsFiltered = result.Count, recordsTotal = resultTotal, data = mappedResult });
 
+        }
+
+         [HttpGet]
+        [Route("officer/tickets/PickTicket/{id}")]
+        public async Task<ActionResult> PickTicket(int id)
+        {
+            //check if the ticket exists
+            
+            var ticket = await this._ticketRepository.GetTicketWithTracking(id);
+
+            if(ticket == null)
+            {
+                return Json(new { status = "error", message = "Could not find a ticket with the identifier sent" });
+            }   
+
+            //check if ticket is already assigned to a user
+
+            if(!string.IsNullOrEmpty(ticket.AssignedToId))
+            {
+                return Json(new { status = "error", message = "Ticket is already assigned to a user" });
+            }
+
+            //assign the ticket to the current user
+
+            var currentUser = await CurrentUser.GetCurrentUserAsync(this._httpContextAccessor, this._userRepository);
+
+
+            if(currentUser == null)
+            {
+                return Json(new { status = "error", message = "Could not find the current user" });
+            }
+
+            ticket.AssignedToId = currentUser.Id;
+            //save the changes
+
+            int recordsAffected = await this._unitOfWork.SaveToDataStoreSync();
+
+            if(recordsAffected > 0)
+            {
+                //send an email to the new assignee
+                this._ticketRepository.SendTicketPickedEmail(currentUser.Email, ticket);
+
+                return Json(new { status = "success", message = "Ticket picked successfully" });
+            }
+            else
+            {
+                return Json(new { status = "error", message = "Could not pick ticket" });
+            }
+
+
+            return View(ticket);
         }
 
         [HttpPost]

@@ -51,5 +51,8 @@ namespace UCS_CRM.Persistence.Interfaces
         Task SendTicketReassignmentEmail(string previousEmail, string newEmail, Ticket ticket);
 
         Task<object> GetTicketInitiator(int ticketId);
+         Task<Ticket?> GetTicketWithTracking(int id);
+
+         void SendTicketPickedEmail(string pickerEmail, Ticket ticket);
     }
 }

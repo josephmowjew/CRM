@@ -49,11 +49,31 @@ namespace UCS_CRM.Areas.Clerk.Controllers
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly HangfireJobEnqueuer _jobEnqueuer;
         private readonly ApplicationDbContext _context;
-        private readonly ILogger<TicketsController> _logger;    
+        private readonly ILogger<TicketsController> _logger;
         private readonly IConfiguration _configuration;
-        public TicketsController(ITicketRepository ticketRepository, IMapper mapper, IUnitOfWork unitOfWork, IEmailService emailService, IEmailAddressRepository addressRepository,
-            ITicketCategoryRepository ticketCategoryRepository, IStateRepository stateRepository, ITicketPriorityRepository priorityRepository,
-            IWebHostEnvironment env, ITicketCommentRepository ticketCommentRepository, IUserRepository userRepository, IMemberRepository memberRepository, ITicketEscalationRepository ticketEscalationRepository, IDepartmentRepository departmentRepository, ITicketStateTrackerRepository ticketStateTrackerRepository, UserManager<ApplicationUser> userManager, HangfireJobEnqueuer jobEnqueuer, ApplicationDbContext context, ILogger<TicketsController> logger, IConfiguration configuration)
+        private readonly IHttpContextAccessor _httpContextAccessor;
+        public TicketsController
+        (ITicketRepository ticketRepository,
+         IMapper mapper,
+         IUnitOfWork unitOfWork,
+         IEmailService emailService,
+         IEmailAddressRepository addressRepository,
+         ITicketCategoryRepository ticketCategoryRepository,
+         IStateRepository stateRepository,
+         ITicketPriorityRepository priorityRepository,
+         IWebHostEnvironment env,
+         ITicketCommentRepository ticketCommentRepository,
+         IUserRepository userRepository,
+         IMemberRepository memberRepository,
+         ITicketEscalationRepository ticketEscalationRepository,
+         IDepartmentRepository departmentRepository,
+         ITicketStateTrackerRepository ticketStateTrackerRepository,
+         UserManager<ApplicationUser> userManager,
+         HangfireJobEnqueuer jobEnqueuer,
+         ApplicationDbContext context,
+         ILogger<TicketsController> logger,
+         IConfiguration configuration,
+         IHttpContextAccessor httpContextAccessor)
         {
             _ticketRepository = ticketRepository;
             _mapper = mapper;
@@ -75,6 +95,7 @@ namespace UCS_CRM.Areas.Clerk.Controllers
             _context = context;
             _logger = logger;
             _configuration = configuration;
+            _httpContextAccessor = httpContextAccessor;
         }
 
         // GET: TicketsController
@@ -89,7 +110,7 @@ namespace UCS_CRM.Areas.Clerk.Controllers
 
             //find the role of the currently logged in user
 
-            if(findUserDb != null)
+            if (findUserDb != null)
             {
                 ViewBag.role = _userManager.GetRolesAsync(findUserDb).Result.FirstOrDefault();
             }
@@ -132,7 +153,7 @@ namespace UCS_CRM.Areas.Clerk.Controllers
                 }
 
 
-              
+
 
                 var mappedTicket = this._mapper.Map<Ticket>(createTicketDTO);
 
@@ -160,7 +181,7 @@ namespace UCS_CRM.Areas.Clerk.Controllers
 
                     mappedTicket.CreatedById = claimsIdentitifier.Value;
 
-                    
+
                     //get the last ticket
 
                     Ticket lastTicket = await this._ticketRepository.LastTicket();
@@ -171,9 +192,9 @@ namespace UCS_CRM.Areas.Clerk.Controllers
 
                     string ticketNumber = Lambda.IssuePrefix + (lastTicketId + 1);
 
-                      var userId = !string.IsNullOrEmpty(createTicketDTO.AssignedToId) 
-                        ? createTicketDTO.AssignedToId 
-                        : claimsIdentitifier.Value;
+                    var userId = !string.IsNullOrEmpty(createTicketDTO.AssignedToId)
+                      ? createTicketDTO.AssignedToId
+                      : claimsIdentitifier.Value;
 
                     mappedTicket.AssignedToId = userId;
 
@@ -201,13 +222,13 @@ namespace UCS_CRM.Areas.Clerk.Controllers
 
                     mappedTicket.TicketNumber = ticketNumber;
 
-                    
+
 
                     //assign the ticket to the Customer Service and Member Engagement department
 
                     var customerServiceMemberEngagementDept = this._departmentRepository.Exists("Customer Service and Member Engagement");
 
-                    if(customerServiceMemberEngagementDept != null)
+                    if (customerServiceMemberEngagementDept != null)
                     {
                         mappedTicket.DepartmentId = customerServiceMemberEngagementDept.Id;
                     }
@@ -240,18 +261,18 @@ namespace UCS_CRM.Areas.Clerk.Controllers
 
                         await this._unitOfWork.SaveToDataStore();
 
-                        
 
-                       
+
+
                     }
 
-                        //get user record by created by id
+                    //get user record by created by id
 
-                        var memberRecord = await this._memberRepository.GetMemberAsync(createTicketDTO.MemberId);
+                    var memberRecord = await this._memberRepository.GetMemberAsync(createTicketDTO.MemberId);
 
 
-                      if(!string.IsNullOrEmpty(memberRecord.Email))
-                      {
+                    if (!string.IsNullOrEmpty(memberRecord.Email))
+                    {
                         //generate email body for the member 
 
                         string emailBody = $@"
@@ -300,7 +321,7 @@ namespace UCS_CRM.Areas.Clerk.Controllers
                         // Email to send to support
                         var emailAddress = await _addressRepository.GetEmailAddressByOwner(Lambda.Support);
 
-                        if(emailAddress != null)
+                        if (emailAddress != null)
                         {
                             string supportEmailBody = $@"
                             <html>
@@ -345,7 +366,7 @@ namespace UCS_CRM.Areas.Clerk.Controllers
                     }
 
                     // Send an email to the user who is assigned to the ticket if different from the creator
-                    if(assignedToUser != null)
+                    if (assignedToUser != null)
                     {
                         string assignmentEmailBody = $@"
                         <html>
@@ -490,7 +511,7 @@ namespace UCS_CRM.Areas.Clerk.Controllers
             // Map the edit ticket to the existing ticket instance
             this._mapper.Map(editTicketDTO, ticketDB);
 
-          
+
 
             // Detach the existing entry if it is not in the Modified state
             var existingEntry = _context.ChangeTracker.Entries<Ticket>().FirstOrDefault(e => e.Entity.Id == ticketDB.Id);
@@ -583,11 +604,11 @@ namespace UCS_CRM.Areas.Clerk.Controllers
                     </div>
                 </body>
                 </html>";
-                EmailHelper.SendEmail(this._jobEnqueuer, user.Email,$"Ticket {ticketDB.TicketNumber} Modification", emailBody,user.SecondaryEmail);
+                EmailHelper.SendEmail(this._jobEnqueuer, user.Email, $"Ticket {ticketDB.TicketNumber} Modification", emailBody, user.SecondaryEmail);
             }
 
             return Json(new { status = "success", message = "User ticket updated successfully" });
-            
+
         }
 
         // GET: TicketController/Details/5
@@ -675,17 +696,17 @@ namespace UCS_CRM.Areas.Clerk.Controllers
             //create a cursor params based on the data coming from the datatable
             CursorParams CursorParameters = new CursorParams() { SearchTerm = searchValue, Skip = skip, SortColum = sortColumn, SortDirection = sortColumnAscDesc, Take = pageSize };
 
-           
+
 
             var userClaims = (ClaimsIdentity)User.Identity;
 
             var claimsIdentitifier = userClaims.FindFirst(ClaimTypes.NameIdentifier);
 
-            resultTotal = await this._ticketRepository.GetAssignedToTicketsCountAsync(CursorParameters, claimsIdentitifier.Value,type);
+            resultTotal = await this._ticketRepository.GetAssignedToTicketsCountAsync(CursorParameters, claimsIdentitifier.Value, type);
 
 
-            var result = await this._ticketRepository.GetAssignedToTickets(CursorParameters, claimsIdentitifier.Value,type);
-            
+            var result = await this._ticketRepository.GetAssignedToTickets(CursorParameters, claimsIdentitifier.Value, type);
+
             //map the results to a read DTO
 
             var mappedResult = this._mapper.Map<List<ReadTicketDTO>>(result);
@@ -814,9 +835,9 @@ namespace UCS_CRM.Areas.Clerk.Controllers
                 {
                     try
                     {
-                        EmailHelper.SendEmail(this._jobEnqueuer, primaryEmail, 
-                            $"New Comment on Ticket #{ticketDbRecord.Id}", 
-                            emailBody, 
+                        EmailHelper.SendEmail(this._jobEnqueuer, primaryEmail,
+                            $"New Comment on Ticket #{ticketDbRecord.Id}",
+                            emailBody,
                             secondaryEmail);
                     }
                     catch (Exception ex)
@@ -908,13 +929,13 @@ namespace UCS_CRM.Areas.Clerk.Controllers
 
                         await this._unitOfWork.SaveToDataStore();
 
-                        UCS_CRM.Core.Models.TicketStateTracker ticketStateTracker = new TicketStateTracker() 
-                        { 
-                            CreatedById = currentUserId, 
-                            TicketId = ticket.Id, 
-                            NewState = ticket.State.Name, 
-                            PreviousState = currentState, 
-                            Reason = closeTicketDTO.Reason 
+                        UCS_CRM.Core.Models.TicketStateTracker ticketStateTracker = new TicketStateTracker()
+                        {
+                            CreatedById = currentUserId,
+                            TicketId = ticket.Id,
+                            NewState = ticket.State.Name,
+                            PreviousState = currentState,
+                            Reason = closeTicketDTO.Reason
                         };
 
                         this._ticketStateTrackerRepository.Add(ticketStateTracker);
@@ -1012,6 +1033,57 @@ namespace UCS_CRM.Areas.Clerk.Controllers
             return Json(new { status = "error", message = "Could not reopen ticket" });
         }
 
+
+        [HttpGet]
+        [Route("officer/tickets/PickTicket/{id}")]
+        public async Task<ActionResult> PickTicket(int id)
+        {
+            //check if the ticket exists
+            
+            var ticket = await this._ticketRepository.GetTicketWithTracking(id);
+
+            if(ticket == null)
+            {
+                return Json(new { status = "error", message = "Could not find a ticket with the identifier sent" });
+            }   
+
+            //check if ticket is already assigned to a user
+
+            if(!string.IsNullOrEmpty(ticket.AssignedToId))
+            {
+                return Json(new { status = "error", message = "Ticket is already assigned to a user" });
+            }
+
+            //assign the ticket to the current user
+
+            var currentUser = await CurrentUser.GetCurrentUserAsync(this._httpContextAccessor, this._userRepository);
+
+
+            if(currentUser == null)
+            {
+                return Json(new { status = "error", message = "Could not find the current user" });
+            }
+
+            ticket.AssignedToId = currentUser.Id;
+            //save the changes
+
+            int recordsAffected = await this._unitOfWork.SaveToDataStoreSync();
+
+            if(recordsAffected > 0)
+            {
+                //send an email to the new assignee
+                this._ticketRepository.SendTicketPickedEmail(currentUser.Email, ticket);
+
+                return Json(new { status = "success", message = "Ticket picked successfully" });
+            }
+            else
+            {
+                return Json(new { status = "error", message = "Could not pick ticket" });
+            }
+
+
+            return View(ticket);
+        }
         [HttpGet]
         public async Task<ActionResult> FetchReassignList(int selectedValue)
         {

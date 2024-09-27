@@ -275,7 +275,11 @@
                         name: "id",
                         "orderable": false,
                         render: function (data) {
-                            return "<a href='#' onclick=EditForm('" + data + "') type='button' class='feather icon-edit' title='edit' ></a><a title='show more' href='tickets/details/" + data + "' class='mdi mdi-eye'></a>  <a href='#' type='button' onclick=EscalationForm('" + data + "') title='Escalate' class='mdi mdi-arrow-up-bold'></a>"
+                            console.log(data);
+                            return "<a href='#' onclick=EditForm('" + data + "') type='button' class='feather icon-edit' title='edit' ></a>" +
+                                "<a title='show more' href='tickets/details/" + data + "' class='mdi mdi-eye'></a>" +
+                                "<a href='#' type='button' onclick=EscalationForm('" + data + "') title='Escalate' class='mdi mdi-arrow-up-bold'></a>" +
+                                "<a href='#' type='button' onclick=PickTicket('" + data + "') title='Pick Ticket'><i class='fas fa-hand-paper'></i></a>";
                         }
                     },
 

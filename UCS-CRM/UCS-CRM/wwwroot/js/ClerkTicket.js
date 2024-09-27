@@ -103,6 +103,8 @@
         });
     }
 
+
+
     //events
 
 
@@ -146,6 +148,55 @@
 
 })
 
+function PickTicket(id) {
+    bootbox.confirm({
+        message: "Are you sure you want to pick this ticket?",
+        buttons: {
+            confirm: {
+                label: 'Yes',
+                className: 'btn-success'
+            },
+            cancel: {
+                label: 'No',
+                className: 'btn-danger'
+            }
+        },
+        callback: function (result) {
+            if (result) {
+                $.ajax({
+                    url: 'tickets/PickTicket/' + id,
+                    type: 'GET',
+                    success: function(response) {
+                        if (response.status === "success") {
+                            toastr.options = {
+                                "positionClass": "toast-top-right",
+                                "backgroundColor": "#d4edda",
+                                "textColor": "#155724"
+                            };
+                            toastr.success(response.message || "Ticket picked successfully");
+                            datatable.ajax.reload();
+                        } else {
+                            toastr.options = {
+                                "positionClass": "toast-top-right",
+                                "backgroundColor": "#f8d7da",
+                                "textColor": "#721c24"
+                            };
+                            toastr.error(response.message || "Failed to pick ticket");
+                        }
+                    },
+                    error: function() {
+                        toastr.options = {
+                            "positionClass": "toast-top-right",
+                            "backgroundColor": "#f8d7da",
+                            "textColor": "#721c24"
+                        };
+                        toastr.error("An error occurred while picking the ticket");
+                    }
+                });
+            }
+        }
+    });
+}
 
 
 function EditForm(id, area = "") {
