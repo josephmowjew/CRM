@@ -20,6 +20,7 @@
                     <th>Member</th>
                     <th>Department</th>
                     <th>Branch</th>
+                    <th>Created Date</th>
                     <th>Action</th>
                 </tr>
             </thead>
@@ -33,7 +34,8 @@
 
 
 @section Scripts{
-
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js"></script>
+    
     <script>
         var datatable;
 
@@ -103,6 +105,15 @@
                         className: "text-left",
                         "orderable": true,
 
+                    },
+                    {
+                        data: "createdAt",
+                        name: "createdAt",
+                        className: "text-left",
+                        "orderable": true,
+                        render: function (data) {
+                            return moment(data).format('YYYY-MM-DD HH:mm:ss');
+                        }
                     },
                     {
                         data: "id",
