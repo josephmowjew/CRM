@@ -15,15 +15,12 @@
         <table class="table table-bordered table-responsive-sm" id="my_table">
             <thead>
                 <tr>
-                    <th>
-                        Description
-                    </th>
+                    <th>Description</th>
                     <th>Rate</th>
                     <th>Member</th>
-                    <th>
-                        Action
-                    </th>
-
+                    <th>Department</th>
+                    <th>Branch</th>
+                    <th>Action</th>
                 </tr>
             </thead>
             <tbody>
@@ -89,6 +86,20 @@
                     {
                         data: "createdBy.fullName",
                         name: "createdBy.fullName",
+                        className: "text-left",
+                        "orderable": true,
+
+                    },
+                    {
+                        data: "createdBy.department.name",
+                        name: "createdBy.department.name",
+                        className: "text-left",
+                        "orderable": true,
+
+                    },
+                    {
+                        data: "createdBy.branch.name",
+                        name: "createdBy.branch.name",
                         className: "text-left",
                         "orderable": true,
 

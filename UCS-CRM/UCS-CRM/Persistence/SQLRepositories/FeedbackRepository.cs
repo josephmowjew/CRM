@@ -48,7 +48,7 @@ namespace UCS_CRM.Persistence.SQLRepositories
                 {
                     if (string.IsNullOrEmpty(@params.SearchTerm))
                     {
-                        var stateList = (from tblObj in _context.Feedbacks.Where(s => s.Status != Lambda.Deleted && s.CreatedById == user.FindFirstValue(ClaimTypes.NameIdentifier)).Skip(@params.Skip).Take(@params.Take) select tblObj);
+                        var stateList = (from tblObj in _context.Feedbacks.Where(s => s.Status != Lambda.Deleted && s.CreatedById == user.FindFirstValue(ClaimTypes.NameIdentifier)).Include(c => c.CreatedBy).Include(c => c.CreatedBy.Department).Include(c => c.CreatedBy.Branch).Skip(@params.Skip).Take(@params.Take) select tblObj);
 
                         if (string.IsNullOrEmpty(@params.SortColum) && !string.IsNullOrEmpty(@params.SortDirection))
                         {
@@ -63,7 +63,7 @@ namespace UCS_CRM.Persistence.SQLRepositories
                     else
                     {
                         //include search text in the query
-                        var stateList = (from tblOb in _context.Feedbacks.Where(s => s.Description.ToLower().Trim().Contains(@params.SearchTerm.ToLower().Trim()) && s.Status != Lambda.Deleted && s.CreatedById == user.FindFirstValue(ClaimTypes.NameIdentifier))
+                        var stateList = (from tblOb in _context.Feedbacks.Include(c => c.CreatedBy).Include(c => c.CreatedBy.Department).Include(c => c.CreatedBy.Branch).Where(s => s.Description.ToLower().Trim().Contains(@params.SearchTerm.ToLower().Trim()) && s.Status != Lambda.Deleted && s.CreatedById == user.FindFirstValue(ClaimTypes.NameIdentifier))
                                             .Skip(@params.Skip)
                                             .Take(@params.Take)
                                          select tblOb);
@@ -79,7 +79,13 @@ namespace UCS_CRM.Persistence.SQLRepositories
                 {
                     if (string.IsNullOrEmpty(@params.SearchTerm))
                     {
-                        var stateList = (from tblObj in _context.Feedbacks.Where(s => s.Status != Lambda.Deleted).Include(c => c.CreatedBy).Skip(@params.Skip).Take(@params.Take) select tblObj);
+                        var stateList = (from tblObj in _context.Feedbacks.Where(s => s.Status != Lambda.Deleted)
+                                         .Include(c => c.CreatedBy)
+                                         .Include(c => c.CreatedBy.Department)
+                                         .Include(c => c.CreatedBy.Branch)
+                                         .Skip(@params.Skip)
+                                         .Take(@params.Take)
+                                         select tblObj);
 
                         if (string.IsNullOrEmpty(@params.SortColum) && !string.IsNullOrEmpty(@params.SortDirection))
                         {
@@ -96,8 +102,10 @@ namespace UCS_CRM.Persistence.SQLRepositories
                         //include search text in the query
                         var stateList = (from tblOb in _context.Feedbacks.Where(s => s.Description.ToLower().Trim().Contains(@params.SearchTerm.ToLower().Trim()) && s.Status != Lambda.Deleted)
                                          .Include(c => c.CreatedBy)
-                                            .Skip(@params.Skip)
-                                            .Take(@params.Take)
+                                         .Include(c => c.CreatedBy.Department)
+                                         .Include(c => c.CreatedBy.Branch)
+                                         .Skip(@params.Skip)
+                                         .Take(@params.Take)
                                          select tblOb);
 
                         stateList = stateList.AsQueryable().OrderBy(@params.SortColum + " " + @params.SortDirection);
