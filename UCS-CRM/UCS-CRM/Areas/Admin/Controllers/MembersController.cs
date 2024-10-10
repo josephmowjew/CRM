@@ -57,6 +57,12 @@ namespace UCS_CRM.Areas.Admin.Controllers
 
                 UCS_CRM.Core.Models.Member? databaseMemberRecord = await this._memberRepository.GetMemberAsync(model.Id);
 
+                //check if the member record has an account status of normal
+                if(databaseMemberRecord?.AccountStatus == null || !databaseMemberRecord.AccountStatus.ToLower().Contains("normal"))
+                {
+                    return Json(new { error = "error", message = "member account status does not contain normal" });
+                }
+
                 int pin = _memberRepository.RandomNumber();
 
                 if (databaseMemberRecord != null)

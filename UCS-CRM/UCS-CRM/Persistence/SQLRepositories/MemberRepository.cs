@@ -322,6 +322,16 @@ namespace UCS_CRM.Persistence.SQLRepositories
             return await this._context.Members.Include(m => m.User).FirstOrDefaultAsync(m => m.NationalId.Trim().ToLower() == nationalId.Trim().ToLower());
         }
 
+        public async Task<Member?> GetUnregisteredMemberByNationalId(string nationalId)
+        {
+            return await this._context.Members
+                .Include(m => m.User)
+                .Include(m => m.MemberAccounts)
+                .FirstOrDefaultAsync(m => 
+                    m.NationalId.Trim().ToLower() == nationalId.Trim().ToLower() && 
+                    m.AccountStatus.ToLower().Contains("normal"));
+        }
+
         public async Task<Member?> GetMemberByUserId(string userId)
         {
             return await this._context.Members.FirstOrDefaultAsync(m => m.User.Id == userId);

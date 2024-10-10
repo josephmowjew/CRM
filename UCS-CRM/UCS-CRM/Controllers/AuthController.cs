@@ -438,7 +438,7 @@ namespace UCS_CRM.Controllers
             {
                 //check if there is a member with the following national Id
 
-                Member? dbmember = await this._memberRepository.GetMemberByNationalId(clientRegisterViewModel.NationalId);
+                Member? dbmember = await this._memberRepository.GetUnregisteredMemberByNationalId(clientRegisterViewModel.NationalId);
 
                
                //check if the member record already has an associted user account
