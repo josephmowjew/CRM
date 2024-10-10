@@ -1,0 +1,144 @@
+﻿@{
+    ViewData["Title"] = "Ticket Feedbacks";
+    Layout = "~/Areas/CallCenterSupervisor/Views/Shared/_Layout.cshtml";
+}
+@using Microsoft.Extensions.Configuration
+@inject IConfiguration Configuration
+
+
+
+<div class="card">
+    <div class="card-header">
+        <h4 class="text-center text-uppercase">Feedback</h4>
+    </div>
+    <div class="card-body">
+        <table class="table table-bordered table-responsive-sm" id="my_table">
+            <thead>
+                <tr>
+                    <th>Description</th>
+                    <th>Rate</th>
+                    <th>Member</th>
+                    <th>Department</th>
+                    <th>Branch</th>
+                    <th>Created Date</th>
+                </tr>
+            </thead>
+            <tbody>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+
+
+
+@section Scripts{
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js"></script>
+    
+    <script>
+        var datatable;
+
+    </script>
+
+
+    <script src="~/js/Feedback.js"></script>
+    <script>
+
+
+        $(document).ready(function () {
+            datatable = $('#my_table').DataTable({
+
+
+                "processing": true,
+                "serverSide": true,
+                "order": [[0, "desc"]],
+                ajax: {
+                    url: 'Feedbacks/GetFeedbacks',
+                    type: 'post',
+                    datatype: 'Json',
+
+
+
+                },
+                columnDefs: [
+                    {
+                        defaultContent: "",
+                        targets: "_all",
+                        'orderable': true
+                    },
+                ],
+                columns: [
+                    {
+                        data: "description",
+                        name: "description",
+                        className: "text-left",
+                        "orderable": true,
+                        render: function (data) {
+                            return toTitleCase(data);
+                        }
+                    },
+                    {
+                        data: "rating",
+                        name: "rating",
+                        className: "text-left",
+                        "orderable": true,
+
+                    },
+                    {
+                        data: "createdBy.fullName",
+                        name: "createdBy.fullName",
+                        className: "text-left",
+                        "orderable": true,
+
+                    },
+                    {
+                        data: "createdBy.department.name",
+                        name: "createdBy.department.name",
+                        className: "text-left",
+                        "orderable": true,
+
+                    },
+                    {
+                        data: "createdBy.branch.name",
+                        name: "createdBy.branch.name",
+                        className: "text-left",
+                        "orderable": true,
+
+                    },
+                    {
+                        data: "createdAt",
+                        name: "createdAt",
+                        className: "text-left",
+                        "orderable": true,
+                        render: function (data) {
+                            return moment(data).format('YYYY-MM-DD HH:mm:ss');
+                        }
+                    },
+                ],
+
+                responsive: true,
+                "autoWidth": false,
+
+            });
+
+
+
+
+        });
+
+
+
+
+
+
+
+
+
+
+    </script>
+
+
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

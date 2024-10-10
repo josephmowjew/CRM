@@ -187,7 +187,7 @@ namespace UCS_CRM.Areas.SeniorManager.Controllers
 
             //filter closed state
 
-            ticketStates = ticketStates.Where(ts => ts.Name.Trim().ToLower() != Lambda.Closed.Trim().ToLower()).ToList();
+            ticketStates = ticketStates.ToList();
 
             var ticketStatesList = new List<SelectListItem>();
 

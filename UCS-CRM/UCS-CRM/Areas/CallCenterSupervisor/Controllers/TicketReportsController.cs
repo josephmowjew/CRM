@@ -15,9 +15,9 @@ using UCS_CRM.Core.DTOs.Ticket;
 using UCS_CRM.Core.Helpers;
 using UCS_CRM.ViewModel;
 
-namespace UCS_CRM.Areas.Manager.Controllers
+namespace UCS_CRM.Areas.CallCenterSupervisor.Controllers
 {
-    [Area("Manager")]
+    [Area("CallCenterSupervisor")]
     [Authorize]
     public class TicketReportsController : Controller
     {

@@ -1,0 +1,370 @@
+﻿@{
+    @using Microsoft.Extensions.Configuration
+    @inject IConfiguration Configuration
+    @model UCS_CRM.Core.DTOs.Ticket.ReadTicketDTO;
+    var host = Configuration.GetSection("HostingSettings")["Host"];
+
+}
+
+<div class="card">
+
+    <div class="tab-pane" id="profile" role="tabpanel">
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-3 col-xs-6 b-r">
+                    <strong>TITLE</strong>
+                    <br>
+                    <p class="text-muted">@Model.Title</p>
+                </div>
+                <div class="col-md-3 col-xs-6 b-r">
+                    <strong>ASSIGNED TO</strong>
+                    <br>
+                    <p class="text-muted">
+                        @{
+                            var assignee = Model.AssignedTo != null ? Model.AssignedTo.FullName : "Not Assigned";
+                        } @assignee
+                    </p>
+                </div>
+                <div class="col-md-3 col-xs-6 b-r">
+                    <strong>STATE</strong>
+                    <br>
+                    <p class="text-muted">@Model.State.Name</p>
+                </div>
+                <div class="col-md-3 col-xs-6">
+                    <strong>TICKET CATEGORY</strong>
+                    <br>
+                    <p class="text-muted">@Model.TicketCategory.Name</p>
+                </div>
+                <div class="col-md-3 col-xs-6 b-r">
+                    <strong>MEMBER</strong>
+                    <br>
+                    <p class="text-muted">
+                        @{
+                            var member = Model.Member != null ? Model.Member.FullName : "";
+                        } @member
+                    </p>
+                </div>
+                <div class="col-md-3 col-xs-6 b-r">
+                    <strong>TICKET PRIORITY</strong>
+                    <br>
+                    <p class="text-muted">@Model.TicketPriority.Name</p>
+                </div>
+                <div class="col-md-3 col-xs-6">
+                    <strong>TICKET DESCRIPTION</strong>
+                    <br>
+                    <p class="text-muted">@Model.Description</p>
+                </div>
+            </div>
+                <hr />
+                    @if(Model.State.Name.Trim().ToLower() != "closed" && @Model.AssignedToId == ViewBag.CurrentUserId ){
+
+                    <button class="btn btn-danger text-white" data-bs-toggle="modal" data-bs-target="#close_ticket_modal">Close Ticket</button>
+
+                    }
+
+                     @if(Model.State.Name.Trim().ToLower() == "closed" && @Model.AssignedToId == ViewBag.CurrentUserId ){
+                        
+                        <button class="btn btn-success text-white" data-bs-toggle="modal" data-bs-target="#reopen_ticket_modal"><i class="mdi mdi-file-plus"></i> Open Ticket</button>
+                        
+                    }
+                    <div>
+                        <img src="~/images/91.gif" id="spinner" />
+                    </div>
+                </div>
+                <hr/>
+            <div class="modal fade" id="close_ticket_modal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+                <div class="modal-dialog" role="document">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="exampleModalLabel">Close Ticket</h5>
+                            <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                        <div class="modal-body">
+                            <form asp-action="CloseTicket">
+                                <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+                                <input type="hidden" asp-for="Id" />
+                                <div class="form-group">
+                                    <label for="Reason" class="control-label"></label>
+                                    <textarea id="Reason" name="Reason" placeholder="Enter Reason" required class="form-control"></textarea>
+                                </div>
+                            </form>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                            <button type="button" class="btn btn-primary" name="closeTicketfn" onclick="closeTicketfn(@Model.Id)">Close Ticket</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal fade" id="reopen_ticket_modal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+                <div class="modal-dialog" role="document">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="exampleModalLabel">Reopen Ticket</h5>
+                            <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                        <div class="modal-body">
+                            <form asp-action="ReopenTicket">
+                                <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+                                <input type="hidden" asp-for="Id" />
+                                <div class="form-group">
+                                    <label for="Reason" class="control-label"></label>
+                                    <textarea id="Reason" name="Reason" placeholder="Enter Reason Why" required class="form-control"></textarea>
+                                </div>
+                            </form>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                            <button type="button" class="btn btn-primary" name="reopenTicketfn" onclick="reopenTicketfn(@Model.Id)">Re-Open Ticket</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <p class="font-normal p-3 mt-4 fw-bold">ATTACHMENTS</p>
+            <div class="container">
+                <div class="row">
+                    <div class="col-md-12">
+                    </div>
+                </div>
+                <div class="row">
+                    @foreach (var attachment in Model.TicketAttachments)
+                    {
+                        <div class="col-md-3">
+                            <div class="card">
+                                <div class="card-body">
+                                    <h6 class="card-title">
+                                        <i class="mdi mdi-file-pdf"></i>
+                                        @attachment.FileName
+                                    </h6>
+                                    <a href="/../@attachment.Url" class="btn btn-primary" download> <i class="mdi mdi-file-pdf"></i> Download</a>
+                                </div>
+                            </div>
+                        </div>
+
+                    }
+
+
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+</div>
+
+<div class="card">
+    <div class="card-body">
+
+        <div class="row p-3">
+            <h5 class="font-normal mt-4 fw-bold">COMMENTS</h5>
+            <hr class="mb-5" />
+            <form>
+                <div class="row">
+                    <div class="col-md-8 col-xs-8 b-r">
+                        <textarea class="form-control" style="background-color:#dee2e6;" name="ticketComment" id="ticketComment" placeholder="Type in your comment..."></textarea>
+                    </div>
+                    <div class="col-md-8 col-xs-8 b-r p-3">
+
+                        <input type="button" class="btn btn-primary" onclick="addComment(@Model.Id)" name="createComment" value="Add Comment" />
+                    </div>
+                </div>
+            </form>
+        </div>
+        <hr />
+        <table class="table table-bordered " id="my_table">
+            <thead>
+                <tr>
+                    <th>
+                        Comment
+                    </th>
+                    <th>
+                        Created By
+                    </th>
+                    <th>
+                        Date
+                    </th>
+                    <th>
+                        Action
+                    </th>
+                </tr>
+            </thead>
+            <tbody>
+            </tbody>
+        </table>
+    </div>
+
+</div>
+<div class="card">
+    <div class="card-body">
+        <div class="row p-3">
+            <h5 class="font-normal mt-4 text-uppercase fw-bold">Ticket Audit</h5>
+            <hr class="mb-5" />
+
+             <table class="table table-bordered " id="audit_table">
+                <thead>
+                    <tr>
+                        <th>
+                            Previous State
+                        </th>
+                        <th>
+                            New State
+                        </th>
+                        <th>
+                            Reason For Change
+                        </th>
+                        <th>
+                             Action Done By
+                        </th>
+                          <th>
+                            Date Action Performed
+                        </th>
+                       
+                    </tr>
+                </thead>
+                <tbody>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+
+@section Scripts{
+
+    <script>
+        var datatable;
+    </script>
+
+    <script src="~/js/MemberTicket.js"></script>
+    <script>
+        $(document).ready(function () {
+            datatable = $('#my_table').DataTable({
+
+
+                "processing": true,
+                "serverSide": true,
+                "order": [[0, "desc"]],
+                ajax: {
+                    url: '/manager/tickets/GetTicketComments/?ticketId=' + @Model.Id,
+                    type: 'post',
+                    datatype: 'Json',
+
+
+                },
+                columnDefs: [
+                    {
+                        defaultContent: "",
+                        targets: "_all",
+                        'orderable': true
+                    },
+                ],
+                columns: [
+
+                    {
+                        data: "comment",
+                        name: "comment",
+                        className: "text-left",
+                        "orderable": true,
+                    },
+                    {
+                        data: { state: "createdBy.fullName" },
+                        mRender: function (data, type, full) {
+                            return data.createdBy != null && data.createdBy.status != 'Deleted' ? data.createdBy.fullName : "";
+                        }, "name": "createdBy.name",
+                        className: "text-left"
+                    },
+                    {
+                        data: "formattedCreatedAt",
+                        name: "CreatedDate",
+                        className: "text-left",
+                        "orderable": true,
+                    },
+                    {
+                        data: "id",
+                        name: "id",
+                        "orderable": false,
+                        render: function (data) {
+                            return " <a href='#' type='button' onclick=DeleteComment('" + data + "') title='delete' class='feather icon-trash-2'></a>"
+                        }
+                    },
+
+                ],
+                responsive: true,
+                "autoWidth": false,
+            });
+        });
+    </script>
+    <script>
+        $(document).ready(function () {
+            datatable = $('#audit_table').DataTable({
+
+
+                "processing": true,
+                "serverSide": true,
+                "order": [[0, "desc"]],
+                ajax: {
+                    url: '/manager/tickets/GetTicketAuditData/?ticketId=' + @Model.Id,
+                    type: 'post',
+                    datatype: 'Json',
+
+
+                },
+                columnDefs: [
+                    {
+                        defaultContent: "",
+                        targets: "_all",
+                        'orderable': true
+                    },
+                ],
+                columns: [
+
+                    {
+                        data: "previousState",
+                        name: "previousState",
+                        className: "text-left",
+                        "orderable": true,
+                    },
+                    {
+                        data: "newState",
+                        name: "newState",
+                        className: "text-left",
+                        "orderable": true,
+                    },
+                    {
+                        data: "reason",
+                        name: "reason",
+                        className: "text-left",
+                        "orderable": false,
+                    },
+                    {
+                        data: { state: "createdBy.email" },
+                        mRender: function (data, type, full) {
+                            return data.createdBy != null && data.createdBy.status != 'Deleted' ? data.createdBy.email : "";
+                        }, "name": "createdBy.email",
+                        className: "text-left"
+                    },
+                    {
+                        data: "formattedCreatedAt",
+                        name: "CreatedDate",
+                        className: "text-left",
+                        "orderable": true,
+                    }
+                    
+                ],
+                responsive: true,
+                "autoWidth": false,
+            });
+        });
+    </script>
+
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+
+
+}

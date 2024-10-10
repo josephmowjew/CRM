@@ -1,0 +1,336 @@
+﻿@using Microsoft.Extensions.Configuration
+@inject IConfiguration Configuration
+@{
+    var host = Configuration.GetSection("HostingSettings")["Host"];
+    var path = Configuration.GetSection("HostingSettings")["path"];
+    var protocol = Configuration.GetSection("HostingSettings")["Protocol"];
+
+    var branch = ViewBag.branch;
+    var stateId = ViewBag.stateId;
+    var categoryId = ViewBag.categoryId;
+    var startDate = ViewBag.startDate;
+    var endDate = ViewBag.endDate;
+
+    ViewData["Title"] = "Tickets";
+    Layout = "~/Areas/CallCenterSupervisor/Views/shared/_Layout.cshtml";
+}
+
+
+<link href="~/css/datatable/css/buttons.bootstrap5.min.css" rel="stylesheet" />
+<link href="~/css/datatable/css/buttons.datatables.min.css" rel="stylesheet" />
+<link href="https://cdn.datatables.net/buttons/2.4.1/css/buttons.bootstrap5.min.css" rel="stylesheet" />
+<div class="card">
+    <div class="card-header">
+        <h4 class="text-center text-uppercase">Tickets Available In The System</h4>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-bordered " id="my_table">
+                <thead>
+                    <tr>
+                        <th>
+                            Ticket Number
+                        </th>
+                        <th>
+                            Member Name
+                        </th>
+                        <th>
+                            Member Employee Number
+                        </th>
+                        <th>
+                            Title
+                        </th>
+                        <th>
+                            Description
+                        </th>
+                        <th>
+                            Priority
+                        </th>
+                        <th>
+                            Category
+                        </th>
+
+                        <th>
+                            State
+                        </th>
+                        <th>
+                            Ticket Comment/ Resolution
+                        </th>
+                        <th>
+                            Period
+                        </th>
+                        <th>
+                            Assigned To
+                        </th>
+                        <th>
+                            Initiator Name
+                        </th>
+                        <th>
+                            Initiator Department
+                        </th>
+                      
+                    </tr>
+
+                </thead>
+                <tbody>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+
+@section Scripts{
+
+    <script>
+        var datatable;
+        var stateId = @Html.Raw(Json.Serialize(stateId));
+        var categoryId = @Html.Raw(Json.Serialize(categoryId));
+        var branch = @Html.Raw(Json.Serialize(branch));
+        var startDate = @Html.Raw(Json.Serialize(startDate));
+        var endDate = @Html.Raw(Json.Serialize(endDate));
+    </script>
+
+     <script src="https://cdn.datatables.net/1.13.5/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.colVis.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.5/js/dataTables.bootstrap5.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.4.1/js/dataTables.buttons.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.bootstrap5.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.bootstrap5.min.js"></script>
+     <script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.colVis.min.js"></script>
+   
+
+   
+    <script src="~/js/ManagerTicket.js"></script>
+    <script src="~/css/datatable/js/jquery.datatables.min.js"></script>
+    <script src="~/css/datatable/js/datatables.bootstrap5.min.js"></script>
+    <script src="~/css/datatable/js/datatables.buttons.min.js"></script>
+    <script src="~/css/datatable/js/buttons.bootstrap5.min.js"></script>
+    <script src="~/css/datatable/js/jszip.min.js"></script>
+    <script src="~/css/datatable/js/pdfmake.min.js"></script>
+    <script src="~/css/datatable/js/vfs_fonts.js"></script>
+    <script src="~/css/datatable/js/buttons.html5.min.js"></script>
+    <script src="~/css/datatable/js/buttons.print.min.js"></script>
+    <script src="~/css/datatable/js/buttons.colvis.min.js"></script>
+
+
+    <script>
+        $(document).ready(function () {
+            datatable = $('#my_table').DataTable({
+
+
+                "processing": true,
+                "serverSide": true,
+                "order": [[0, "desc"]],
+                ajax: {
+                    url: '/manager/TicketReports/GetTickets',
+                    type: 'post',
+                    datatype: 'Json',
+                    data:{
+                        stateId: stateId,
+                        categoryId: categoryId,
+                        branch: branch,
+                        startDate: startDate,
+                        endDate: endDate
+                    },
+                    error: function (XMLHttpRequest, textStatus, errorThrown) {
+
+                        console.log(XMLHttpRequest.responseText)
+
+
+                    }
+
+
+                },
+                columnDefs: [
+                    {
+                        defaultContent: "",
+                        targets: "_all",
+                        'orderable': true
+                    },
+                ],
+                columns: [
+
+                    {
+                        data: { state: "ticketEscalations.id" },
+                        mRender: function (data, type, full) {
+
+                            if (data.ticketEscalations != null && data.ticketEscalations.status != 'Deleted') {
+                                if (data.ticketEscalations.length == 1) {
+                                    return "<span class='bg-light-warning text-warning '>" + data.ticketNumber + "</span>"
+                                }
+                                if (data.ticketEscalations.length == 2) {
+                                    return "<span class='bg-light-danger text-danger '>" + data.ticketNumber + "</span>"
+                                }
+                                else {
+                                    return data.ticketNumber
+                                }
+
+                            }
+                            else {
+                                return ticketNumber
+                            }
+
+                        }, "name": "ticketNumber",
+                        className: "text-left"
+                    },
+                    {
+                        data: "member.fullName",
+                        name: "memberName",
+                        className: "text-left",
+                        "orderable": true,
+                    },
+                    {
+                        data: "member.employeeNumber",
+                        name: "memberEmployeeNumber",
+                        className: "text-left",
+                        "orderable": true,
+                    },
+                    {
+                        data: "title",
+                        name: "title",
+                        className: "text-left",
+                        "orderable": true,
+                    },
+                    {
+                        data: "description",
+                        name: "description",
+                        className: "text-left",
+                        "orderable": false,
+                    },
+                    {
+                        data: { state: "ticketPriority.name" },
+                        mRender: function (data, type, full) {
+                            return data.ticketPriority != null && data.ticketPriority.status != 'Deleted' ? data.ticketPriority.name : "";
+                        }, "name": "ticketPriority.name",
+                        className: "text-left"
+                    },
+                    {
+                        data: { state: "ticketCategory.name" },
+                        mRender: function (data, type, full) {
+                            return data.ticketCategory != null && data.ticketCategory.status != 'Deleted' ? data.ticketCategory.name : "";
+                        }, "name": "ticketCategory.name",
+                        className: "text-left"
+                    },
+                    {
+                        data: { state: "state.name" },
+                        mRender: function (data, type, full) {
+
+                            if (data.state != null && data.state.status != 'Deleted') {
+                                if (data.state.name == "In Progress") {
+                                    return "<span class=' bg-light-warning text-warning '>In Progress</span>"
+                                }
+                                if (data.state.name == "Pending") {
+                                    return "<span class=' text-primary '>Pending</span>"
+                                }
+                                if (data.state.name == "Resolved") {
+                                    return "<span class=' text-success '>Resolved</span>"
+                                }
+                                if (data.state.name == "Closed") {
+                                    return "<span class='  text-secondary '>Closed</span>"
+                                }
+                                if (data.state.name == "Re-Opened") {
+                                    return "<span class='  text-warning '>Re-Opened</span>"
+                                }
+                                if (data.state.name == "New") {
+                                    return "<span class='  text-danger '>New</span>"
+                                } if (data.state.name == "Open") {
+                                    return "<span class='  text-info '>Open</span>"
+                                }
+
+
+                            }
+                            else {
+                                return data.state.name
+                            }
+
+                        }, "name": "state.name",
+                        className: "text-left"
+                    },
+                     {
+                        data: { state: "stateTrackers.0.reason" },
+                        mRender: function (data, type, full) {
+                            return data.stateTrackers && data.stateTrackers[0] && data.stateTrackers[0].status !== 'Deleted' 
+                                ? data.stateTrackers[0].reason 
+                                : "";
+                        }, 
+                        name: "stateTrackers.0.reason",
+                        className: "text-left"
+                    },
+                    {
+                        data: "period",
+                        name: "period",
+                        className: "text-left",
+                        "orderable": true,
+                    },
+                    {
+                        data: { state: "assignedTo.fullName" },
+                        mRender: function (data, type, full) {
+                            return data.assignedTo != null && data.assignedTo.status != 'Deleted' ? data.assignedTo.fullName : "";
+                        }, "name": "assignedTo.fullName",
+                        className: "text-left"
+                    },
+
+                     {
+                                    data: "initiatorName",
+                                    name: "initiatorName",
+                                    className: "text-left",
+                                    "orderable": true,
+                    },
+                    {
+                        data: { initiatorType: "initiatorType", department: "initiatorUser.department.name" },
+                        mRender: function (data, type, full) {
+
+                            if (data.initiatorType === "Member") {
+
+                            return "Member Engagement Department";
+                        }
+                        return data.initiatorDepartmentName || "";
+
+                        },
+                        name: "initiatorUser.department.name",
+
+
+                        className: "text-left",
+                        "orderable": true,
+
+                    },
+
+                ],
+
+                responsive: true,
+                "autoWidth": false,
+                dom: 'Blfrtip',
+                buttons: [
+                    //'copy', 'csv', 'excel', 'pdf', 'print',
+                    {
+                        extend: "copy",
+                        className: "btn btn-block btn-success btn-primary"
+                    },
+                    {
+                        extend: "csv",
+                        className: "btn btn-block btn-info"
+                    },
+                    {
+                        extend: "excel",
+                        className: "btn btn-block btn-secondary"
+                    },
+                    {
+                        extend: "pdfHtml5",
+                        className: "btn btn-block btn-danger"
+                    },
+                   
+                    {
+                        extend: "print",
+                        className: "btn btn-block btn-warning"
+                    },
+                ]
+            });
+        });
+    </script>
+
+
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}
