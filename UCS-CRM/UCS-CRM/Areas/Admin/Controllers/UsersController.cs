@@ -88,294 +88,193 @@ namespace UCS_CRM.Areas.Admin.Controllers
         [ValidateAntiForgeryToken]
         public async Task<ActionResult> Create(UserViewModel userViewModel)
         {
+            if (!ModelState.IsValid)
+            {
+                return await HandleInvalidModelState(userViewModel);
+            }
 
+            var applicationUser = CreateApplicationUser(userViewModel);
+            var deletedUser = await this._userRepository.FindDeletedUserByEmail(applicationUser.Email);
+
+            if (deletedUser is not null)
+            {
+                ModelState.AddModelError(nameof(userViewModel.Email), "This account belongs to a deleted user, either restore the user or use a different email address");
+                return await HandleInvalidModelState(userViewModel);
+            }
+
+            var recordPresence = this._userRepository.Exists(applicationUser);
+            if (recordPresence is not null)
+            {
+                ModelState.AddModelError(nameof(userViewModel.Email), "This email is already in use by another account");
+                return await HandleInvalidModelState(userViewModel);
+            }
+
+            var result = await this._userRepository.CreateUserAsync(applicationUser, "P@$$w0rd");
+            if (!result.Succeeded)
+            {
+                return await HandleInvalidModelState(userViewModel);
+            }
+
+            var roleResult = await this._userRepository.AddUserToRoleAsync(applicationUser, userViewModel.RoleName);
+            if (!roleResult.Succeeded)
+            {
+                return await HandleInvalidModelState(userViewModel);
+            }
+
+            await SendUserEmails(applicationUser);
+            return Json(new { response = "User account created successfully" });
+        }
+
+        private async Task<ActionResult> HandleInvalidModelState(UserViewModel userViewModel)
+        {
             userViewModel.DataInvalid = "true";
-
-            List<SelectListItem> roles = new List<SelectListItem>();
-            UserViewModel newUser = new UserViewModel();
-
             await populateViewBags();
+            return PartialView("_CreateUserPartial", userViewModel);
+        }
 
-            //get the current user ID
-
+        private ApplicationUser CreateApplicationUser(UserViewModel userViewModel)
+        {
             var userClaims = (ClaimsIdentity)User.Identity;
-
             var claimsIdentitifier = userClaims.FindFirst(ClaimTypes.NameIdentifier);
-
             int pin = RandomNumber();
 
-            if (ModelState.IsValid)
+            return new ApplicationUser
             {
-                userViewModel.DataInvalid = "";
+                FirstName = userViewModel.FirstName,
+                LastName = userViewModel.LastName,
+                Gender = userViewModel.Gender,
+                Email = userViewModel.Email,
+                PhoneNumber = userViewModel.PhoneNumber,
+                UserName = userViewModel.Email,
+                EmailConfirmed = false,
+                DepartmentId = userViewModel.DepartmentId,
+                LastPasswordChangedDate = DateTime.Now,
+                BranchId = userViewModel.BranchId,
+                CreatedById = claimsIdentitifier.Value,
+                Pin = pin
+            };
+        }
 
+        private async Task SendUserEmails(ApplicationUser applicationUser)
+        {
+            string UserNameBody = GenerateUserNameEmailBody(applicationUser);
+            string PasswordBody = GeneratePasswordEmailBody();
+            string AccountActivationBody = GenerateAccountActivationEmailBody(applicationUser);
 
-                //create a record of the application user
+            EmailHelper.SendEmail(this._jobEnqueuer, applicationUser.Email, "Login Details", UserNameBody, applicationUser.SecondaryEmail);
+            EmailHelper.SendEmail(this._jobEnqueuer, applicationUser.Email, "Login Details", PasswordBody, applicationUser.SecondaryEmail);
+            EmailHelper.SendEmail(this._jobEnqueuer, applicationUser.Email, "Account Activation", AccountActivationBody, applicationUser.SecondaryEmail);
+        }
 
-                var applicationUser = new ApplicationUser
-                {
-                    FirstName = userViewModel.FirstName,
-                    LastName = userViewModel.LastName,
-                    Gender = userViewModel.Gender,
-                    Email = userViewModel.Email,
-                    PhoneNumber = userViewModel.PhoneNumber,
-                    UserName= userViewModel.Email,
-                    EmailConfirmed = true,
-                    DepartmentId = userViewModel.DepartmentId,
-                    LastPasswordChangedDate = DateTime.Now,
-                    BranchId = userViewModel.BranchId,
-                    CreatedById = claimsIdentitifier.Value,
-                    Pin = pin
+        private string GenerateUserNameEmailBody(ApplicationUser applicationUser)
+        {
+            return $@"
+            <html>
+            <head>
+                <style>
+                    @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Montserrat:wght@300;400;700&display=swap');
+                    body {{ font-family: 'Montserrat', sans-serif; line-height: 1.8; color: #333; background-color: #f4f4f4; }}
+                    .container {{ max-width: 600px; margin: 20px auto; padding: 30px; background-color: #ffffff; border-radius: 8px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); }}
+                    .logo {{ text-align: center; margin-bottom: 20px; }}
+                    .logo img {{ max-width: 150px; }}
+                    h2 {{ color: #0056b3; text-align: center; font-weight: 700; font-family: 'Playfair Display', serif; }}
+                    .account-info {{ background-color: #f0f7ff; border-left: 4px solid #0056b3; padding: 15px; margin: 20px 0; }}
+                    .account-info p {{ margin: 5px 0; }}
+                    .cta-button {{ display: inline-block; background-color: #0056b3; color: #ffffff; padding: 12px 24px; text-decoration: none; border-radius: 5px; font-weight: bold; margin-top: 20px; }}
+                    .cta-button:hover {{ background-color: #003d82; }}
+                    .footer {{ margin-top: 30px; text-align: center; font-style: italic; color: #666; }}
+                </style>
+            </head>
+            <body>
+                <div class='container'>
+                    <div class='logo'>
+                        <img src='https://crm.ucssacco.com/images/LOGO(1).png' alt='UCS SACCO Logo'>
+                    </div>
+                    <h2>New Account Created</h2>
+                    <div class='account-info'>
+                        <p>An account has been created for you on UCS SACCO.</p>
+                        <p>Your email address is: <strong>{applicationUser.Email}</strong></p>
+                    </div>
+                    <p class='footer'>Thank you for joining UCS SACCO.</p>
+                </div>
+            </body>
+            </html>";
+        }
 
-                };
+        private string GeneratePasswordEmailBody()
+        {
+            return $@"
+            <html>
+            <head>
+                <style>
+                    @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Montserrat:wght@300;400;700&display=swap');
+                    body {{ font-family: 'Montserrat', sans-serif; line-height: 1.8; color: #333; background-color: #f4f4f4; }}
+                    .container {{ max-width: 600px; margin: 20px auto; padding: 30px; background-color: #ffffff; border-radius: 8px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); }}
+                    .logo {{ text-align: center; margin-bottom: 20px; }}
+                    .logo img {{ max-width: 150px; }}
+                    h2 {{ color: #0056b3; text-align: center; font-weight: 700; font-family: 'Playfair Display', serif; }}
+                    .password-info {{ background-color: #f0f7ff; border-left: 4px solid #0056b3; padding: 15px; margin: 20px 0; }}
+                    .password-info p {{ margin: 5px 0; }}
+                    .cta-button {{ display: inline-block; background-color: #0056b3; color: #ffffff; padding: 12px 24px; text-decoration: none; border-radius: 5px; font-weight: bold; margin-top: 20px; }}
+                    .cta-button:hover {{ background-color: #003d82; }}
+                    .footer {{ margin-top: 30px; text-align: center; font-style: italic; color: #666; }}
+                </style>
+            </head>
+            <body>
+                <div class='container'>
+                    <div class='logo'>
+                        <img src='https://crm.ucssacco.com/images/LOGO(1).png' alt='UCS SACCO Logo'>
+                    </div>
+                    <h2>Account Password</h2>
+                    <div class='password-info'>
+                        <p>An account has been created for you on UCS SACCO App.</p>
+                        <p>Your temporary password is: <strong>P@$$w0rd</strong></p>
+                        <p>Please change this password upon your first login.</p>
+                    </div>
+                    <p class='footer'>For security reasons, please do not share this password with anyone.</p>
+                </div>
+            </body>
+            </html>";
+        }
 
-                
-
-                //check if the user is already in the system
-                var recordPresence = this._userRepository.Exists(applicationUser);
-
-                if(recordPresence is not null)
-                {
-                    //repopulate roles
-
-                    this._roleManager.Roles.ToList().ForEach(r =>
-                    {
-                        roles.Add(new SelectListItem { Text = r.Name, Value = r.Name });
-                    });
-
-                    userViewModel.DataInvalid = "true";
-                    ViewBag.rolesList = roles;
-                    ViewBag.genderList = newUser.GenderList;
-                    ModelState.AddModelError(nameof(userViewModel.Email), "This email is already in used by another account");
-
-                    return PartialView("_CreateUserPartial",userViewModel);
-
-                }
-                else
-                {
-                    //pre-activate the account
-
-                    applicationUser.EmailConfirmed= false;
-                    //save the record to the database
-                    var result = await this._userRepository.CreateUserAsync(applicationUser, "P@$$w0rd");
-
-                   
-
-
-
-                    if(result.Succeeded)
-                    {
-                        //associate user with a role
-
-                        var roleResult = await this._userRepository.AddUserToRoleAsync(applicationUser, userViewModel.RoleName);
-
-                        if(roleResult.Succeeded)
-                        {
-                            //send account creation and confirmation emails
-
-                            //_emailService.SendMail(applicationUser.Email, "UCS SACCO ACCOUNT INFO", $"Good day, for those who have not yet registered with Gravator, please do so so that you may upload an avatar of yourself that can be associated with your email address and displayed on your profile in the Mental Lab application.\r\nPlease visit https://en.gravatar.com/ to register with Gravatar. ");
-                            string UserNameBody = $@"
-                            <html>
-                            <head>
-                                <style>
-                                    @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Montserrat:wght@300;400;700&display=swap');
-                                    body {{ font-family: 'Montserrat', sans-serif; line-height: 1.8; color: #333; background-color: #f4f4f4; }}
-                                    .container {{ max-width: 600px; margin: 20px auto; padding: 30px; background-color: #ffffff; border-radius: 8px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); }}
-                                    .logo {{ text-align: center; margin-bottom: 20px; }}
-                                    .logo img {{ max-width: 150px; }}
-                                    h2 {{ color: #0056b3; text-align: center; font-weight: 700; font-family: 'Playfair Display', serif; }}
-                                    .account-info {{ background-color: #f0f7ff; border-left: 4px solid #0056b3; padding: 15px; margin: 20px 0; }}
-                                    .account-info p {{ margin: 5px 0; }}
-                                    .cta-button {{ display: inline-block; background-color: #0056b3; color: #ffffff; padding: 12px 24px; text-decoration: none; border-radius: 5px; font-weight: bold; margin-top: 20px; }}
-                                    .cta-button:hover {{ background-color: #003d82; }}
-                                    .footer {{ margin-top: 30px; text-align: center; font-style: italic; color: #666; }}
-                                </style>
-                            </head>
-                            <body>
-                                <div class='container'>
-                                    <div class='logo'>
-                                        <img src='https://crm.ucssacco.com/images/LOGO(1).png' alt='UCS SACCO Logo'>
-                                    </div>
-                                    <h2>New Account Created</h2>
-                                    <div class='account-info'>
-                                        <p>An account has been created for you on UCS SACCO.</p>
-                                        <p>Your email address is: <strong>{applicationUser.Email}</strong></p>
-                                    </div>
-                                    <p class='footer'>Thank you for joining UCS SACCO.</p>
-                                </div>
-                            </body>
-                            </html>";
-                            //string pin = "An account has been created on UCS SACCO. Your pin is " + "<b>" + applicationUser.Pin + " <br /> ";
-                            string PasswordBody = $@"
-                            <html>
-                            <head>
-                                <style>
-                                    @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Montserrat:wght@300;400;700&display=swap');
-                                    body {{ font-family: 'Montserrat', sans-serif; line-height: 1.8; color: #333; background-color: #f4f4f4; }}
-                                    .container {{ max-width: 600px; margin: 20px auto; padding: 30px; background-color: #ffffff; border-radius: 8px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); }}
-                                    .logo {{ text-align: center; margin-bottom: 20px; }}
-                                    .logo img {{ max-width: 150px; }}
-                                    h2 {{ color: #0056b3; text-align: center; font-weight: 700; font-family: 'Playfair Display', serif; }}
-                                    .password-info {{ background-color: #f0f7ff; border-left: 4px solid #0056b3; padding: 15px; margin: 20px 0; }}
-                                    .password-info p {{ margin: 5px 0; }}
-                                    .cta-button {{ display: inline-block; background-color: #0056b3; color: #ffffff; padding: 12px 24px; text-decoration: none; border-radius: 5px; font-weight: bold; margin-top: 20px; }}
-                                    .cta-button:hover {{ background-color: #003d82; }}
-                                    .footer {{ margin-top: 30px; text-align: center; font-style: italic; color: #666; }}
-                                </style>
-                            </head>
-                            <body>
-                                <div class='container'>
-                                    <div class='logo'>
-                                        <img src='https://crm.ucssacco.com/images/LOGO(1).png' alt='UCS SACCO Logo'>
-                                    </div>
-                                    <h2>Account Password</h2>
-                                    <div class='password-info'>
-                                        <p>An account has been created for you on UCS SACCO App.</p>
-                                        <p>Your temporary password is: <strong>P@$$w0rd</strong></p>
-                                        <p>Please change this password upon your first login.</p>
-                                    </div>
-                                    <p class='footer'>For security reasons, please do not share this password with anyone.</p>
-                                </div>
-                            </body>
-                            </html>";
-                           
-                            var host = Configuration.GetSection("HostingSettings")["Host"];
-                            var protocol = Configuration.GetSection("HostingSettings")["Protocol"];
-                            string AccountActivationBody = $@"
-                            <html>
-                            <head>
-                                <style>
-                                    @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Montserrat:wght@300;400;700&display=swap');
-                                    body {{ font-family: 'Montserrat', sans-serif; line-height: 1.8; color: #333; background-color: #f4f4f4; }}
-                                    .container {{ max-width: 600px; margin: 20px auto; padding: 30px; background-color: #ffffff; border-radius: 8px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); }}
-                                    .logo {{ text-align: center; margin-bottom: 20px; }}
-                                    .logo img {{ max-width: 150px; }}
-                                    h2 {{ color: #0056b3; text-align: center; font-weight: 700; font-family: 'Playfair Display', serif; }}
-                                    .otp-info {{ background-color: #f0f7ff; border-left: 4px solid #0056b3; padding: 15px; margin: 20px 0; }}
-                                    .otp-info p {{ margin: 5px 0; }}
-                                    .cta-button {{ display: inline-block; background-color: #0056b3; color: #ffffff; padding: 12px 24px; text-decoration: none; border-radius: 5px; font-weight: bold; margin-top: 20px; }}
-                                    .cta-button:hover {{ background-color: #003d82; }}
-                                    .footer {{ margin-top: 30px; text-align: center; font-style: italic; color: #666; }}
-                                </style>
-                            </head>
-                            <body>
-                                <div class='container'>
-                                    <div class='logo'>
-                                        <img src='https://crm.ucssacco.com/images/LOGO(1).png' alt='UCS SACCO Logo'>
-                                    </div>
-                                    <h2>Account Activation</h2>
-                                    <div class='otp-info'>
-                                        <p>Here is the One Time Pin (OTP) for your account on UCS:</p>
-                                        <p style='font-size: 24px; font-weight: bold; text-align: center;'>{applicationUser.Pin}</p>
-                                    </div>
-                                    <p style='text-align: center;'>
-                                        <a href='{Lambda.systemLinkClean}' class='cta-button' style='color: #ffffff;'>Access UCS CRM</a>
-                                    </p>
-                                    <p class='footer'>Please use this OTP to activate your account.</p>
-                                </div>
-                            </body>
-                            </html>";
-
-                        //     string gravatorEmailBody = $@"
-                        //     <html>
-                        //     <head>
-                        //     <style>
-                        //         @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Montserrat:wght@300;400;700&display=swap');
-                        //         body {{ font-family: 'Montserrat', sans-serif; line-height: 1.8; color: #333; background-color: #f4f4f4; }}
-                        //         .container {{ max-width: 600px; margin: 20px auto; padding: 30px; background-color: #ffffff; border-radius: 8px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); }}
-                        //         .logo {{ text-align: center; margin-bottom: 20px; }}
-                        //         .logo img {{ max-width: 150px; }}
-                        //         h2 {{ color: #0056b3; text-align: center; font-weight: 700; font-family: 'Playfair Display', serif; }}
-                        //         .account-info {{ background-color: #f0f7ff; border-left: 4px solid #0056b3; padding: 15px; margin: 20px 0; }}
-                        //         .account-info p {{ margin: 5px 0; }}
-                        //         .cta-button {{ display: inline-block; background-color: #0056b3; color: #ffffff; padding: 12px 24px; text-decoration: none; border-radius: 5px; font-weight: bold; margin-top: 20px; }}
-                        //         .cta-button:hover {{ background-color: #003d82; }}
-                        //         .footer {{ margin-top: 30px; text-align: center; font-style: italic; color: #666; }}
-                        //     </style>
-                        // </head>
-                        // <body>
-                        //     <div class='container'>
-                        //         <div class='logo'>
-                        //             <img src='https://crm.ucssacco.com/images/LOGO(1).png' alt='UCS SACCO Logo'>
-                        //         </div>
-                        //         <h2>Set Up Your Profile Picture</h2>
-                        //         <div class='account-info'>
-                        //             <p>Good day,</p>
-                        //             <p>To enhance your profile in the UCS SACCO application, we recommend setting up a profile picture using Gravatar.</p>
-                        //             <p>Gravatar allows you to associate an avatar with your email address, which will be displayed on your profile in our application.</p>
-                        //         </div>
-                        //         <p>
-                        //             <a href='https://en.gravatar.com/' class='cta-button' style='color: #ffffff;'>Register with Gravatar</a>
-                        //         </p>
-                        //         <p class='footer'>Thank you for being a part of UCS SACCO.</p>
-                        //     </div>
-                        // </body>
-                        // </html>";
-
-                            EmailHelper.SendEmail(this._jobEnqueuer, applicationUser.Email, "Login Details", UserNameBody, applicationUser.SecondaryEmail);
-                            EmailHelper.SendEmail(this._jobEnqueuer, applicationUser.Email, "Login Details", PasswordBody, applicationUser.SecondaryEmail);
-                            EmailHelper.SendEmail(this._jobEnqueuer, applicationUser.Email, "Account Activation", AccountActivationBody, applicationUser.SecondaryEmail);  
-                            //EmailHelper.SendEmail(this._jobEnqueuer, applicationUser.Email, "Set Up Your Profile Picture", gravatorEmailBody, applicationUser.SecondaryEmail);
-                            return Json(new { response = "User account created successfully" });
-                        }
-                        else
-                        {
-                            //repopulate roles
-
-                            this._roleManager.Roles.ToList().ForEach(r =>
-                            {
-                                roles.Add(new SelectListItem { Text = r.Name, Value = r.Name });
-                            });
-
-                            userViewModel.DataInvalid = "true";
-
-                            ViewBag.rolesList = roles;
-                            ViewBag.genderList = newUser.GenderList;
-                            //something is not right, could not save record to the database
-                            return PartialView("_CreateUserPartial", userViewModel);
-                        }
-
-                       
-                    }
-                    else
-                    {
-                        //repopulate roles
-
-                        this._roleManager.Roles.ToList().ForEach(r =>
-                        {
-                            roles.Add(new SelectListItem { Text = r.Name, Value = r.Name });
-                        });
-
-                        userViewModel.DataInvalid = "true";
-
-                        ViewBag.rolesList = roles;
-                        ViewBag.genderList = newUser.GenderList;
-                        //something is not right, could not save record to the database
-                        return PartialView("_CreateUserPartial", userViewModel);
-                    }
-
-
-
-                }
-            }
-            else
-            {
-                //repopulate roles
-
-                this._roleManager.Roles.ToList().ForEach(r =>
-                {
-                    roles.Add(new SelectListItem { Text = r.Name, Value = r.Name });
-                });
-
-                userViewModel.DataInvalid = "true";
-                ViewBag.rolesList = roles;
-                ViewBag.genderList = newUser.GenderList;
-                //something is not right with the 
-                return PartialView("_CreateUserPartial", userViewModel);
-            }
-            
-
-
-
+        private string GenerateAccountActivationEmailBody(ApplicationUser applicationUser)
+        {
+            var host = Configuration.GetSection("HostingSettings")["Host"];
+            var protocol = Configuration.GetSection("HostingSettings")["Protocol"];
+            return $@"
+            <html>
+            <head>
+                <style>
+                    @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Montserrat:wght@300;400;700&display=swap');
+                    body {{ font-family: 'Montserrat', sans-serif; line-height: 1.8; color: #333; background-color: #f4f4f4; }}
+                    .container {{ max-width: 600px; margin: 20px auto; padding: 30px; background-color: #ffffff; border-radius: 8px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); }}
+                    .logo {{ text-align: center; margin-bottom: 20px; }}
+                    .logo img {{ max-width: 150px; }}
+                    h2 {{ color: #0056b3; text-align: center; font-weight: 700; font-family: 'Playfair Display', serif; }}
+                    .otp-info {{ background-color: #f0f7ff; border-left: 4px solid #0056b3; padding: 15px; margin: 20px 0; }}
+                    .otp-info p {{ margin: 5px 0; }}
+                    .cta-button {{ display: inline-block; background-color: #0056b3; color: #ffffff; padding: 12px 24px; text-decoration: none; border-radius: 5px; font-weight: bold; margin-top: 20px; }}
+                    .cta-button:hover {{ background-color: #003d82; }}
+                    .footer {{ margin-top: 30px; text-align: center; font-style: italic; color: #666; }}
+                </style>
+            </head>
+            <body>
+                <div class='container'>
+                    <div class='logo'>
+                        <img src='https://crm.ucssacco.com/images/LOGO(1).png' alt='UCS SACCO Logo'>
+                    </div>
+                    <h2>Account Activation</h2>
+                    <div class='otp-info'>
+                        <p>Here is the One Time Pin (OTP) for your account on UCS:</p>
+                        <p style='font-size: 24px; font-weight: bold; text-align: center;'>{applicationUser.Pin}</p>
+                    </div>
+                    <p style='text-align: center;'>
+                        <a href='{Lambda.systemLinkClean}' class='cta-button' style='color: #ffffff;'>Access UCS CRM</a>
+                    </p>
+                    <p class='footer'>Please use this OTP to activate your account.</p>
+                </div>
+            </body>
+            </html>";
         }
 
         // GET: UsersController/Edit/5

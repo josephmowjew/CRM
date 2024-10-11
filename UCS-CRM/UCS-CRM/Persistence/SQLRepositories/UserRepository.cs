@@ -52,6 +52,11 @@ namespace UCS_CRM.Persistence.SQLRepositories
             return await this._context.Users.Include(u => u.Department).FirstOrDefaultAsync(u => u.Id == id & u.Status != Lambda.Deleted);
         }
 
+        public async Task<ApplicationUser?> FindDeletedUserByEmail(string email)
+        {
+            return await this._context.Users.Include(u => u.Department).FirstOrDefaultAsync(u => u.Email == email);
+        }
+
         public async Task<ApplicationUser?> FindByIdDeleteInclusiveAsync(string id)
         {
             return await this._context.Users.FirstOrDefaultAsync(u => u.Id == id);
