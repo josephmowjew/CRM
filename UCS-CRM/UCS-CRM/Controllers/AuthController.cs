@@ -307,6 +307,11 @@ namespace UCS_CRM.Controllers
                     return RedirectToAction("Index", "Home", new { Area = "Manager" });
                 }
 
+                if (roleLower.Contains("supervisor"))
+                {
+                    return RedirectToAction("Index", "Home", new { Area = "Supervisor" });
+                }
+
                 switch (roleLower)
                 {
                     case "administrator":
@@ -317,8 +322,6 @@ namespace UCS_CRM.Controllers
                         return RedirectToAction("Index", "Home", new { Area = "Teller" });
                     case "call center agent":
                         return RedirectToAction("Index", "Home", new { Area = "CallCenterOfficer" });
-                    case "call center supervisor":
-                        return RedirectToAction("Index", "Home", new { Area = "CallCenterSupervisor" });
                     default:
                         return RedirectToAction("Index", "Home", new { Area = "Officer" });
                 }
@@ -376,6 +379,11 @@ namespace UCS_CRM.Controllers
                     return RedirectToAction("Index", "Home", new { Area = "Manager" });
                 }
 
+                if (roleLower.Contains("supervisor"))
+                {
+                    return RedirectToAction("Index", "Home", new { Area = "Supervisor" });
+                }
+
                 switch (roleLower)
                 {
                     case "administrator":
@@ -386,8 +394,6 @@ namespace UCS_CRM.Controllers
                         return RedirectToAction("Index", "Home", new { Area = "Teller" });
                     case "call center agent":
                         return RedirectToAction("Index", "Home", new { Area = "CallCenterOfficer" });
-                    case "call center supervisor":
-                        return RedirectToAction("Index", "Home", new { Area = "CallCenterSupervisor" });
                     default:
                         return RedirectToAction("Index", "Home", new { Area = "Officer" });
                 }
