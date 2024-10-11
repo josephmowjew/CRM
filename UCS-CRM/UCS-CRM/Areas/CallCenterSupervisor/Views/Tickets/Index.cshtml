@@ -4,30 +4,52 @@
     var host = Configuration.GetSection("HostingSettings")["Host"];
     var path = Configuration.GetSection("HostingSettings")["path"];
     var protocol = Configuration.GetSection("HostingSettings")["Protocol"];
-    
 }
 @{
     ViewData["Title"] = "Tickets";
-    Layout = "~/Areas/CallCenterSupervisor/Views/Shared/_Layout.cshtml";
+    Layout = "~/Areas/CallCenterOfficer/Views/shared/_Layout.cshtml";
+    
 }
-
 
 @section Styles {
 
     <link href="~/css/custom_select.css" rel="stylesheet" />
 }
 
+<p>
+    @if (((string)ViewBag.role).Equals("Call Center Officer", StringComparison.OrdinalIgnoreCase) || ((string)ViewBag.role).Equals("Teller", StringComparison.OrdinalIgnoreCase))
+    {
+         <!-- Button trigger modal -->
+        <button type="button" class="btn btn-info" data-bs-toggle="modal" data-bs-target="#create_ticket_modal">
+            Create A Ticket
+        </button>
+    }
+   
+    
 
-<div class="modal fade" id="edit_ticket_modal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+</p>
+
+
+
+<div class="modal fade" id="create_ticket_modal" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <partial name="_CreateTicketPartial" />
+</div>
+
+<div class="modal fade" id="edit_ticket_modal"  role="dialog" aria-labelledby="example2ModalLabel" aria-hidden="true">
     <partial name="_EditTicketPartial" />
+</div>
+
+<div class="modal fade" id="escalate_ticket_modal" role="dialog" aria-labelledby="example3ModalLabel" aria-hidden="true">
+    <partial name="_FirstTicketEscalationPartial" />
 </div>
 
 <div class="card">
     <div class="card-header">
-        <h4 class="text-center text-uppercase">Tickets Available In The System</h4>
-        <div>
+        <h4 class="text-center text-uppercase">My Tickets Available In The System</h4>
+         <div>
             <img src="~/images/91.gif" id="spinner" />
         </div>
+       
     </div>
     <div class="card-body">
         <div class="table-responsive">
@@ -43,7 +65,7 @@
                         <th>
                             Member Account
                         </th>
-                         <th>
+                        <th>
                             Member Branch
                         </th>
                         <th>
@@ -59,17 +81,18 @@
                         <th>
                             Period
                         </th>
+
                         <th>
                             Assigned To
                         </th>
-                       
+                        
                         <th>
                             Initiator
                         </th>
                         <th>
                             Initiator Department
                         </th>
-                         <th>
+                        <th>
                             Action
                         </th>
                     </tr>
@@ -84,14 +107,15 @@
 
 @section Scripts{
 
-    
     <script>
         var datatable;
-        
     </script>
     <script src="~/js/custom_select.js"></script>
-    <script src="~/js/dselect.js"></script>
-    <script src="~/js/ManagerTicket.js"></script>
+
+
+    <script src="~/js/ClerkTicket.js"></script>
+   
+    
     <script>
         $(document).ready(function () {
 
@@ -103,14 +127,14 @@
                 "serverSide": true,
                 "order": [[0, "desc"]],
                 ajax: {
-                    url: '/manager/tickets/GetTickets',
+                    url: '/CallCenterOfficer/tickets/GetTickets',
                     data: { ticketType: ticketTypeValue },
                     type: 'post',
                     datatype: 'Json',
-
                     error: function (XMLHttpRequest, textStatus, errorThrown) {
 
                         console.log(XMLHttpRequest.responseText)
+
 
                     }
 
@@ -166,7 +190,6 @@
                         className: "text-left",
                         "orderable": false,
                     },
-                    
                     {
                         data: { state: "ticketPriority.name" },
                         mRender: function (data, type, full) {
@@ -198,15 +221,16 @@
                                 if (data.state.name == "Closed") {
                                     return "<span class='  text-secondary '>Closed</span>"
                                 }
-                                if (data.state.name == "Re-Opened") {
-                                    return "<span class='  text-warning '>Re-Opened</span>"
-                                }
                                 if (data.state.name == "New") {
                                     return "<span class='  text-danger '>New</span>"
-                                } if (data.state.name == "Open") {
+                                }
+                                if (data.state.name == "Open") {
                                     return "<span class='  text-info '>Open</span>"
                                 }
 
+                                if (data.state.name == "Re-Opened") {
+                                    return "<span class='  text-warning '>Re-Opened</span>"
+                                }
 
                             }
                             else {
@@ -216,6 +240,7 @@
                         }, "name": "state.name",
                         className: "text-left"
                     },
+
                     {
                         data: "period",
                         name: "period",
@@ -229,6 +254,7 @@
                         }, "name": "assignedTo.fullName",
                         className: "text-left"
                     },
+                    
                     {
                         data: "initiatorName",
                         name: "initiatorName",
@@ -247,15 +273,14 @@
                         className: "text-left",
                         "orderable": true,
                     },
-                    {
+                   {
                         data: "id",
                         name: "id",
                         "orderable": false,
                         render: function (data) {
-                            return "<a href='#' onclick=EditForm('" + data + "') type='button' class='feather icon-edit' title='edit' ></a><a title='show more' href='tickets/details/" + data + "' class='mdi mdi-eye'></a> "
+                            return "<a href='#' onclick=EditForm('" + data + "') type='button' class='feather icon-edit' title='edit' ></a><a title='show more' href='tickets/details/" + data + "' class='mdi mdi-eye'></a>  <a href='#' type='button' onclick=EscalationForm('" + data + "') title='Escalate' class='mdi mdi-arrow-up-bold'></a>"
                         }
-                    },
-
+                    }
                 ],
                 responsive: true,
                 "autoWidth": false,
@@ -263,9 +288,51 @@
         });
     </script>
 
+
+
+
+
+    <script>
+        $(document).ready(function () {
+
+            // let selectElements = document.querySelectorAll('.selectpicker')
+
+            // selectElements.forEach(function (element) {
+
+            //     // search
+            //     dselect(element, {
+            //         search: true
+            //     })
+            // });
+
+            
+            //$('.edit_member_select').select2();
+
+            //$('.create_member_select').select2();
+
+
+       
+
+            
+
+            //$('.selectpicker1').select2();
+
+        });
+    </script>
+
   
 
- 
+    <script>
+       
+        // Initialize Select2 with desired options
+        initSelect2({
+            url: "/CallCenterOfficer/Tickets/GetAllMembersJson",
+            hiddenFieldId: "MemberId",
+            pageSize: 20,
+            initialSearchValue: "",
+        }, "create_ticket_modal");
+    </script>
+
 
     @{
         await Html.RenderPartialAsync("_ValidationScriptsPartial");
