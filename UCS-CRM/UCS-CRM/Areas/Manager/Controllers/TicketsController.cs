@@ -26,6 +26,7 @@ namespace UCS_CRM.Areas.Manager.Controllers
         private readonly ITicketRepository _ticketRepository;
         private readonly IUserRepository _userRepository;
         private readonly ITicketCommentRepository _ticketCommentRepository;
+        private readonly IDepartmentRepository _departmentRepository;
         private readonly ITicketEscalationRepository _ticketEscalationRepository;
         private readonly ITicketCategoryRepository _ticketCategoryRepository;
         private readonly IStateRepository _stateRepository;
@@ -42,7 +43,7 @@ namespace UCS_CRM.Areas.Manager.Controllers
         private readonly ILogger<TicketsController> _logger;
         public TicketsController(ITicketRepository ticketRepository, IMapper mapper, IUnitOfWork unitOfWork, 
             ITicketCategoryRepository ticketCategoryRepository, IStateRepository stateRepository, ITicketPriorityRepository priorityRepository,
-            IWebHostEnvironment env, ITicketCommentRepository ticketCommentRepository, IUserRepository userRepository, IMemberRepository memberRepository, ITicketEscalationRepository ticketEscalationRepository, ITicketStateTrackerRepository ticketStateTrackerRepository, IEmailService emailService, HangfireJobEnqueuer jobEnqueuer, ApplicationDbContext context, IConfiguration configuration, ILogger<TicketsController> logger)
+            IWebHostEnvironment env, ITicketCommentRepository ticketCommentRepository, IUserRepository userRepository, IMemberRepository memberRepository, ITicketEscalationRepository ticketEscalationRepository, ITicketStateTrackerRepository ticketStateTrackerRepository, IEmailService emailService, HangfireJobEnqueuer jobEnqueuer, ApplicationDbContext context, IConfiguration configuration, ILogger<TicketsController> logger, IDepartmentRepository departmentRepository)
         {
             _ticketRepository = ticketRepository;
             _mapper = mapper;
@@ -61,6 +62,7 @@ namespace UCS_CRM.Areas.Manager.Controllers
             _context = context;
             _configuration = configuration;
             _logger = logger;
+            _departmentRepository = departmentRepository;
         }
 
         // GET: TicketsController
@@ -638,6 +640,8 @@ namespace UCS_CRM.Areas.Manager.Controllers
 
 
         }
+
+        
         [HttpPost]
         public async Task<ActionResult> AddTicketComment(CreateTicketCommentDTO createTicketCommentDTO)
         {
@@ -848,6 +852,36 @@ namespace UCS_CRM.Areas.Manager.Controllers
 
         }
 
+         private async Task<List<SelectListItem>> GetDepartments()
+        {
+            var departmentsList = new List<SelectListItem>();
+
+            string currentUserDepartment = string.Empty;
+
+            //fetch all departments from the system.
+
+            var dbDepartments = await this._departmentRepository.GetDepartments();
+
+            //get the current department of the logged in clerk
+
+            ApplicationUser? currentUser = await this._userRepository.FindByEmailsync(User.Identity.Name);
+
+            if (currentUser != null)
+            {
+                currentUserDepartment = currentUser.Department.Name;
+            }
+
+            //filter the department list from the database to remove the current user department
+           var filteredDepartmentList = dbDepartments.ToList();
+
+            filteredDepartmentList.ForEach(d =>
+            {
+                departmentsList.Add(new SelectListItem() { Text = d.Name, Value = d.Id.ToString() });
+            });
+
+            return departmentsList;
+        }
+
         private async Task<List<SelectListItem>> GetTicketPriorities()
         {
             var ticketPriorities = await this._priorityRepository.GetTicketPriorities();
@@ -962,6 +996,7 @@ namespace UCS_CRM.Areas.Manager.Controllers
             ViewBag.categories = await GetTicketCategories();
             ViewBag.assignees = await GetAssignees();
             ViewBag.states = await GetTicketStates();
+            ViewBag.departments = await GetDepartments();
             //ViewBag.members = await GetMembers();
         }
 

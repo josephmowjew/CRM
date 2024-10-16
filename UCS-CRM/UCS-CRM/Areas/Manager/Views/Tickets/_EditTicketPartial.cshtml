@@ -10,14 +10,14 @@
             </button>
         </div>
         <div class="modal-body">
-           
+            <input asp-for="DataInvalid" type="hidden"/>
             <form asp-action="Edit" enctype="multipart/form-data">
                 <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-                <input asp-for="DataInvalid" type="hidden" />
+               
                 <input type="hidden" asp-for="Id" />
                 <div class="form-group">
                     <label asp-for="Title" class="control-label"></label>
-                    <input asp-for="Title" placeholder="Enter Ticket Title" class="form-control" disabled="disabled"/>
+                    <input asp-for="Title" placeholder="Enter Ticket Title" class="form-control" disabled="disabled" />
                     <span asp-validation-for="Title" class="text-danger"></span>
                 </div>
                  <div class="form-group">
@@ -42,27 +42,34 @@
                 </div>
                 <div class="form-group">
                     <label asp-for="MemberId"></label>
-                    <div class="select2-container">
-                        <div class="select2-selection">Select an option</div>
-                        <div class="select2-dropdown" style="display: none;">
-                            <div class="select2-search">
+                    <div class="select3-container">
+                        <div class="select3-selection">Select an option</div>
+                        <div class="select3-dropdown" style="display: none;">
+                            <div class="select3-search">
                                 <input type="text" class="form-control" id="select-search" placeholder="Search...">
                             </div>
-                            <ul class="list-unstyled select2-options" style="max-height: 150px; overflow-y: auto;"></ul>
+                            <ul class="list-unstyled select3-options" style="max-height: 150px; overflow-y: auto;"></ul>
                         </div>
                     </div>
                     <input type="hidden" id="MemberId" name="MemberId">
                     <span asp-validation-for="MemberId" class="text-danger"></span>
                 </div>
                 <div class="form-group">
+                    <label asp-for="DepartmentId"></label>
+                    <select asp-for="DepartmentId" asp-items="@ViewBag.departments" class="form-control"></select>
+                    <span asp-validation-for="DepartmentId" class="text-danger"></span>
+                </div>
+
+                <div class="form-group">
                     <label asp-for="AssignedToId"></label>
-                    <select asp-for="AssignedToId" asp-items="@ViewBag.Assignees" class="form-control selectpicker" style="width:100%"></select>
+                    <select asp-for="AssignedToId" asp-items="@ViewBag.Assignees" class="form-control selectpicker"></select>
                     <span asp-validation-for="AssignedToId" class="text-danger"></span>
                 </div>
                 <div class="form-group">
-                  <label for="Attachments" class="form-label">Upload Ticket Attachments</label>
-                  <input class="form-control" type="file" id="Attachments" name="Attachments" multiple>
+                  <label for="Attachments" class="form-label">Upload Ticket Attachments (PDF)</label>
+                  <input class="form-control" type="file" id="Attachments" name="Attachments" multiple accept="application/pdf">
                 </div>
+                
 
 
             </form>
@@ -70,6 +77,7 @@
         <div class="modal-footer">
             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
             <button type="button" class="btn btn-primary" id="update_ticket_btn" name="update_ticket_btn">Edit Ticket</button>
+            
         </div>
     </div>
 </div>

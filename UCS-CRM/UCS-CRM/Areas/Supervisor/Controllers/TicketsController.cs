@@ -642,12 +642,7 @@ namespace UCS_CRM.Areas.Supervisor.Controllers
 
             //create a cursor params based on the data coming from the datatable
             CursorParams CursorParameters = new CursorParams() { SearchTerm = searchValue, Skip = skip, SortColum = sortColumn, SortDirection = sortColumnAscDesc, Take = pageSize };
-
-           
-
-            var userClaims = (ClaimsIdentity)User.Identity;
-
-            var claimsIdentitifier = userClaims.FindFirst(ClaimTypes.NameIdentifier);
+            //get the current user record
 
             var findUserDb = await this._userRepository.GetUserWithRole(User.Identity.Name);
 
@@ -659,15 +654,13 @@ namespace UCS_CRM.Areas.Supervisor.Controllers
             var mappedResult = this._mapper.Map<List<ReadTicketDTO>>(result);
 
             var cleanResult = new List<ReadTicketDTO>();
-          
 
 
-            //return Json(new { draw = draw, recordsFiltered = result.Count, recordsTotal = resultTotal, data = mappedResult });
             return Json(new { draw = draw, recordsFiltered = resultTotal, recordsTotal = resultTotal, data = mappedResult });
 
 
-
         }
+
         [HttpPost]
         public async Task<ActionResult> AddTicketComment(CreateTicketCommentDTO createTicketCommentDTO)
         {
