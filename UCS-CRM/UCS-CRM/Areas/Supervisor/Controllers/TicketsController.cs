@@ -649,28 +649,17 @@ namespace UCS_CRM.Areas.Supervisor.Controllers
 
             var claimsIdentitifier = userClaims.FindFirst(ClaimTypes.NameIdentifier);
 
-            resultTotal = await this._ticketRepository.GetAssignedToTicketsCountAsync(CursorParameters, claimsIdentitifier.Value,type);
+            var findUserDb = await this._userRepository.GetUserWithRole(User.Identity.Name);
 
-
-            var result = await this._ticketRepository.GetAssignedToTickets(CursorParameters, claimsIdentitifier.Value,type);
-            
-           
+            resultTotal = await this._ticketRepository.GetTicketsTotalFilteredAsync(CursorParameters, findUserDb.Department, type);
+            var result = await this._ticketRepository.GetTickets(CursorParameters, findUserDb.Department, type);
 
             //map the results to a read DTO
 
             var mappedResult = this._mapper.Map<List<ReadTicketDTO>>(result);
 
             var cleanResult = new List<ReadTicketDTO>();
-
-            //mappedResult.ForEach(record =>
-            //{
-            //    record.State.Tickets = null;
-            //    record.TicketAttachments.Select(r => r.Ticket = null);
-
-            //    cleanResult.Add(record);
-
-            //});
-
+          
 
 
             //return Json(new { draw = draw, recordsFiltered = result.Count, recordsTotal = resultTotal, data = mappedResult });
