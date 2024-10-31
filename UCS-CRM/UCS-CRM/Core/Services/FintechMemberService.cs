@@ -8,6 +8,7 @@ using System.Net.Http.Headers;
 using UCS_CRM.Persistence.Interfaces;
 using UCS_CRM.Core.Mapping;
 using Microsoft.EntityFrameworkCore;
+using System.Collections.Concurrent;
 using System.Linq;
 using Hangfire;
 
@@ -21,6 +22,7 @@ namespace UCS_CRM.Core.Services
         private readonly IUserRepository _userRepository;
         private readonly IErrorLogService _errorService;
         public IConfiguration _configuration { get; }
+        private readonly SemaphoreSlim _dbContextSemaphore = new SemaphoreSlim(1, 1); // Add this as class field
 
         public FintechMemberService(HttpClient httpClient, 
                                     IConfiguration configuration,
@@ -236,6 +238,300 @@ namespace UCS_CRM.Core.Services
             return errorFidxnos; // Return the list of fidxnos with errors
         }
 
+        [DisableConcurrentExecution(timeoutInSeconds: 6000)]
+        public async Task<List<long>> SyncMissingFintechMembers(CancellationToken cancellationToken = default)
+        {
+            const int BATCH_SIZE = 500;
+            const int CHUNK_SIZE = 100;
+            const int DELAY_MS = 1000; // Reduced from 2000
+            const int MAX_RETRY_ATTEMPTS = 3;
+            const int PARALLEL_CHUNKS = 2; // Reduced from 3
+            
+            long fidxno = 0;
+            int totalProcessed = 0;
+            int batchNumber = 0;
+            
+            var errorFidxnos = new ConcurrentBag<long>();
+            var processedFidxnos = new ConcurrentDictionary<long, byte>();
+            var semaphore = new SemaphoreSlim(PARALLEL_CHUNKS); // Control concurrent operations
+            
+            while (!cancellationToken.IsCancellationRequested)
+            {
+                batchNumber++;
+                try 
+                {
+                    var (fintechMemberData, _, apiErrorOccurred) = await RetryWithExponentialBackoff(
+                        () => GetFintechMembersAsync(BATCH_SIZE, fidxno),
+                        MAX_RETRY_ATTEMPTS,
+                        cancellationToken
+                    ).ConfigureAwait(false);
+
+                    if (apiErrorOccurred)
+                    {
+                        // Process failed records in smaller parallel batches
+                        var failedBatches = Enumerable.Range(0, BATCH_SIZE)
+                            .Chunk(CHUNK_SIZE)
+                            .Select(chunk => chunk.Select(i => fidxno + i));
+
+                        foreach (var failedBatch in failedBatches)
+                        {
+                            var tasks = failedBatch.Select(async currentFidxno =>
+                            {
+                                await semaphore.WaitAsync(cancellationToken);
+                                try
+                                {
+                                    var (singleMemberData, _, singleApiError) = 
+                                        await GetFintechMembersAsync(1, currentFidxno - 1)
+                                        .ConfigureAwait(false);
+
+                                    if (!singleApiError && singleMemberData?.Any() == true)
+                                    {
+                                        var processed = await ProcessBatchAsync(
+                                            singleMemberData,
+                                            processedFidxnos,
+                                            errorFidxnos,
+                                            batchNumber,
+                                            cancellationToken
+                                        ).ConfigureAwait(false);
+                                        
+                                        Interlocked.Add(ref totalProcessed, processed);
+                                    }
+                                    else
+                                    {
+                                        errorFidxnos.Add(currentFidxno);
+                                    }
+                                }
+                                catch (Exception ex)
+                                {
+                                    errorFidxnos.Add(currentFidxno);
+                                    await LogMessageAsync($"Error processing record {currentFidxno}: {ex.Message}")
+                                        .ConfigureAwait(false);
+                                }
+                                finally
+                                {
+                                    semaphore.Release();
+                                }
+                            });
+
+                            await Task.WhenAll(tasks).ConfigureAwait(false);
+                        }
+                        
+                        fidxno += BATCH_SIZE;
+                        continue;
+                    }
+
+                    if (fintechMemberData?.Any() != true)
+                    {
+                        break;
+                    }
+
+                    // Process chunks in parallel with controlled concurrency
+                    var chunks = fintechMemberData.Chunk(CHUNK_SIZE);
+                    var chunkTasks = chunks.Select(async chunk =>
+                    {
+                        await semaphore.WaitAsync(cancellationToken);
+                        try
+                        {
+                            var processed = await ProcessBatchAsync(
+                                chunk.ToList(),
+                                processedFidxnos,
+                                errorFidxnos,
+                                batchNumber,
+                                cancellationToken
+                            ).ConfigureAwait(false);
+                            
+                            Interlocked.Add(ref totalProcessed, processed);
+                        }
+                        finally
+                        {
+                            semaphore.Release();
+                        }
+                    });
+
+                    await Task.WhenAll(chunkTasks).ConfigureAwait(false);
+                    fidxno = fintechMemberData.Max(fm => fm.FIdxno) + 1;
+                    
+                    await Task.Delay(DELAY_MS, cancellationToken).ConfigureAwait(false);
+                }
+                catch (Exception ex) when (ex is not OperationCanceledException)
+                {
+                    await _errorService.LogErrorAsync(ex).ConfigureAwait(false);
+                    errorFidxnos.Add(fidxno++);
+                }
+            }
+
+            // Recovery phase with controlled parallelism
+            if (!errorFidxnos.IsEmpty)
+            {
+                var errorList = errorFidxnos.ToList();
+                var recoveryBatches = errorList.Chunk(CHUNK_SIZE);
+                
+                foreach (var batch in recoveryBatches)
+                {
+                    var recoveryTasks = batch.Select(async errorFidxno =>
+                    {
+                        await semaphore.WaitAsync(cancellationToken);
+                        try
+                        {
+                            var (singleMemberData, _, apiError) = 
+                                await GetFintechMembersAsync(1, errorFidxno - 1)
+                                .ConfigureAwait(false);
+
+                            if (!apiError && singleMemberData?.Any() == true)
+                            {
+                                var processed = await ProcessBatchAsync(
+                                    singleMemberData,
+                                    processedFidxnos,
+                                    errorFidxnos,
+                                    0,
+                                    cancellationToken
+                                ).ConfigureAwait(false);
+                                
+                                Interlocked.Add(ref totalProcessed, processed);
+                                return (errorFidxno, recovered: true);
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            await LogMessageAsync($"Failed to recover record {errorFidxno}: {ex.Message}")
+                                .ConfigureAwait(false);
+                        }
+                        finally
+                        {
+                            semaphore.Release();
+                        }
+                        return (errorFidxno, recovered: false);
+                    });
+
+                    var results = await Task.WhenAll(recoveryTasks).ConfigureAwait(false);
+                    errorList = results.Where(r => !r.recovered)
+                                     .Select(r => r.errorFidxno)
+                                     .ToList();
+                }
+                
+                await LogErrorFidxnosToFileAsync(errorList).ConfigureAwait(false);
+                return errorList;
+            }
+
+            return errorFidxnos.ToList();
+        }
+
+        private async Task<int> ProcessBatchAsync(
+            List<Datum> batch,
+            ConcurrentDictionary<long, byte> processedFidxnos,
+            ConcurrentBag<long> errorFidxnos,
+            int batchNumber,
+            CancellationToken cancellationToken)
+        {
+            var membersToAdd = new List<Member>(batch.Count);
+            var processedCount = 0;
+
+            foreach (var datum in batch)
+            {
+                if (cancellationToken.IsCancellationRequested)
+                    break;
+
+                if (!processedFidxnos.TryAdd(datum.FIdxno, 1))
+                    continue;
+
+                try
+                {
+                    var mappedMember = MemberMapper.MapToMember(datum);
+                    
+                    // Synchronize DbContext access
+                    await _dbContextSemaphore.WaitAsync(cancellationToken);
+                    try
+                    {
+                        if (await _memberRepository.ExistsAsync(mappedMember).ConfigureAwait(false) == null)
+                        {
+                            membersToAdd.Add(mappedMember);
+                            processedCount++;
+                        }
+                    }
+                    finally
+                    {
+                        _dbContextSemaphore.Release();
+                    }
+                }
+                catch (Exception ex)
+                {
+                    errorFidxnos.Add(datum.FIdxno);
+                    processedFidxnos.TryRemove(datum.FIdxno, out _);
+                    
+                    var errorDetails = new StringBuilder()
+                        .AppendLine($"Failed to process Fidxno {datum.FIdxno}")
+                        .AppendLine($"Error: {ex.Message}")
+                        .AppendLine($"Raw Data: {JsonConvert.SerializeObject(datum, Formatting.Indented)}")
+                        .AppendLine($"Stack Trace: {ex.StackTrace}")
+                        .ToString();
+                    
+                    await LogMessageAsync(errorDetails).ConfigureAwait(false);
+                }
+            }
+
+            if (membersToAdd.Any())
+            {
+                try
+                {
+                    // Synchronize DbContext access for batch save
+                    await _dbContextSemaphore.WaitAsync(cancellationToken);
+                    try 
+                    {
+                        await _memberRepository.AddRangeAsync(membersToAdd).ConfigureAwait(false);
+                        await _unitOfWork.SaveToDataStoreSync().ConfigureAwait(false);
+                    }
+                    finally
+                    {
+                        _dbContextSemaphore.Release();
+                    }
+                    
+                    if (batchNumber > 0)
+                    {
+                        await LogMessageAsync($"Batch {batchNumber}: Added {processedCount} members")
+                            .ConfigureAwait(false);
+                    }
+                    
+                    return processedCount;
+                }
+                catch (Exception ex)
+                {
+                    await _errorService.LogErrorAsync(ex).ConfigureAwait(false);
+                    var saveErrorDetails = $"Batch {batchNumber}: Failed to save changes - {ex.Message}\nStack Trace: {ex.StackTrace}";
+                    await LogMessageAsync(saveErrorDetails).ConfigureAwait(false);
+                    
+                    foreach (var member in membersToAdd)
+                    {
+                        processedFidxnos.TryRemove(member.Fidxno, out _);
+                        errorFidxnos.Add(member.Fidxno);
+                    }
+                    throw;
+                }
+            }
+
+            return 0;
+        }
+
+        private static async Task<T> RetryWithExponentialBackoff<T>(
+            Func<Task<T>> operation,
+            int maxAttempts,
+            CancellationToken cancellationToken,
+            int initialDelayMs = 100)
+        {
+            for (int i = 0; i < maxAttempts; i++)
+            {
+                try
+                {
+                    return await operation().ConfigureAwait(false);
+                }
+                catch (Exception) when (i < maxAttempts - 1)
+                {
+                    var delayMs = initialDelayMs * Math.Pow(2, i);
+                    await Task.Delay((int)delayMs, cancellationToken).ConfigureAwait(false);
+                }
+            }
+            return await operation().ConfigureAwait(false);
+        }
+
         private async Task LogMessageAsync(string message)
         {
             // Implement this method to log messages to a file or database
@@ -404,6 +700,54 @@ namespace UCS_CRM.Core.Services
             }
 
             return new KeyValuePair<bool, string> ( true, "users created successfully");
+        }
+
+        public async Task<(bool success, string message)> AddMemberByAccountNumber(string accountNumber)
+        {
+            try
+            {
+                // Authenticate API
+                string token = await ApiAuthenticate();
+                if (string.IsNullOrEmpty(token))
+                    return (false, "Authentication failed");
+
+                // Set HTTP request headers
+                _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+                // Send GET request
+                var response = await _httpClient.GetAsync($"{_configuration["APIURL:link"]}MemberBiodataByAccountNo?account_number={accountNumber}");
+                
+                if (!response.IsSuccessStatusCode)
+                    return (false, $"API request failed with status {response.StatusCode}");
+
+                string responseBody = await response.Content.ReadAsStringAsync();
+                var memberData = JsonConvert.DeserializeObject<FintechMember>(responseBody);
+
+                if (memberData?.Data == null || !memberData.Data.Any())
+                    return (false, "No member found with provided account number");
+
+                var datum = memberData.Data.First();
+                var mappedMember = MemberMapper.MapToMember(datum);
+                
+                // Set default AccountStatus if not available
+                if (string.IsNullOrEmpty(mappedMember.AccountStatus))
+                    mappedMember.AccountStatus = "Credit Only";
+
+                // Check for duplicates
+                var duplicates = await FindDuplicatesAsync(new List<Member> { mappedMember });
+                if (duplicates.Any())
+                    return (false, "Member already exists in the system");
+
+                _memberRepository.Add(mappedMember);
+                await _unitOfWork.SaveToDataStoreSync();
+
+                return (true, "Member added successfully");
+            }
+            catch (Exception ex)
+            {
+                await _errorService.LogErrorAsync(ex);
+                return (false, $"Error adding member: {ex.Message}");
+            }
         }
     }
 }
