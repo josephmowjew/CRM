@@ -33,7 +33,7 @@ namespace UCS_CRM.Migrations
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                 })
-                .Annotation("MySql:CharSet", "utf8mb4");
+                .Annotation("MySql:CharSet", "");
 
             migrationBuilder.CreateIndex(
                 name: "IX_DepartmentPosition_PositionsId",

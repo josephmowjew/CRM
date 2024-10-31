@@ -22,7 +22,7 @@ namespace UCS_CRM.Migrations
                 table: "TicketEscalations",
                 type: "longtext",
                 nullable: true)
-                .Annotation("MySql:CharSet", "utf8mb4");
+                .Annotation("MySql:CharSet", "");
         }
 
         /// <inheritdoc />

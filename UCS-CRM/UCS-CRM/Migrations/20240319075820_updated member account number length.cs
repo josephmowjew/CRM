@@ -19,8 +19,8 @@ namespace UCS_CRM.Migrations
                 oldClrType: typeof(string),
                 oldType: "varchar(10)",
                 oldMaxLength: 10)
-                .Annotation("MySql:CharSet", "utf8mb4")
-                .OldAnnotation("MySql:CharSet", "utf8mb4");
+                .Annotation("MySql:CharSet", "")
+                .OldAnnotation("MySql:CharSet", "");
         }
 
         /// <inheritdoc />
@@ -35,8 +35,8 @@ namespace UCS_CRM.Migrations
                 oldClrType: typeof(string),
                 oldType: "varchar(40)",
                 oldMaxLength: 40)
-                .Annotation("MySql:CharSet", "utf8mb4")
-                .OldAnnotation("MySql:CharSet", "utf8mb4");
+                .Annotation("MySql:CharSet", "")
+                .OldAnnotation("MySql:CharSet", "");
         }
     }
 }

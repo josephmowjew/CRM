@@ -1548,6 +1548,25 @@ public async Task<ActionResult> CloseTicket(CloseTicketDTO closeTicketDTO)
         }
 
 
+        [HttpGet]
+        public async Task<ActionResult> FetchAssigneesByDepartment(int departmentId)
+        {
+            var department = await _departmentRepository.GetDepartment(departmentId);
+            if (department == null)
+                return BadRequest();
+
+            var staff = department.Users
+                .Where(u => u.Email.Trim().ToLower() != User.Identity.Name.Trim().ToLower())
+                .Select(user => new SelectListItem { 
+                    Text = user.FullName, 
+                    Value = user.Id.ToString() 
+                })
+                .ToList();
+
+            return Json(staff);
+        }
+
+
 
     }
 }

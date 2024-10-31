@@ -97,9 +97,17 @@
 
                     <span asp-validation-for="MemberId" class="text-danger"></span>
                 </div>
-               <div class="form-group">
+                <div class="form-group">
+                    <label>Department</label>
+                    <select id="DepartmentId" name="DepartmentId" asp-items="@ViewBag.departments" class="form-control">
+                        <option value="">---- Select Department -------</option>
+                    </select>
+                </div>
+                <div class="form-group">
                     <label asp-for="AssignedToId"></label>
-                    <select asp-for="AssignedToId" asp-items="@ViewBag.Assignees" class="form-control"></select>
+                    <select asp-for="AssignedToId" class="form-control">
+                        <option value="">---- Select Assignee -------</option>
+                    </select>
                     <span asp-validation-for="AssignedToId" class="text-danger"></span>
                 </div>
                 <div class="form-group">
@@ -219,6 +227,26 @@
             var initiatorType = $('input[name="InitiatorType"]:checked').val();
             console.log("Changed to: " + initiatorType);
             $('#initiatorSelect').val(null).trigger('change');
+        });
+
+        $('#DepartmentId').change(function() {
+            var departmentId = $(this).val();
+            var assigneeSelect = $('#AssignedToId');
+            
+            // Clear current options
+            assigneeSelect.empty().append('<option value="">---- Select Assignee -------</option>');
+            
+            if (departmentId) {
+                $.get('@Url.Action("FetchAssigneesByDepartment", "Tickets")', { departmentId: departmentId })
+                    .done(function(data) {
+                        $.each(data, function(i, item) {
+                            assigneeSelect.append($('<option>', {
+                                value: item.value,
+                                text: item.text
+                            }));
+                        });
+                    });
+            }
         });
     });
 </script>

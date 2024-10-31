@@ -1,17 +1,58 @@
 ﻿@model UCS_CRM.Core.DTOs.Ticket.EditTicketDTO
-<!-- Modal -->
+
+<style>
+    .select2-results__option {
+        padding: 6px 12px;
+        user-select: none;
+        -webkit-user-select: none;
+    }
+    .select2-results__option[aria-selected] {
+        cursor: pointer;
+    }
+    .select2-container--bootstrap-5 .select2-selection--single {
+        height: calc(1.5em + 0.75rem + 2px);
+        padding: 0.375rem 0.75rem;
+    }
+    .select2-container--bootstrap-5 .select2-selection--single .select2-selection__placeholder {
+        color: #6c757d;
+        line-height: 1.5;
+    }
+    .select2-container--bootstrap-5 .select2-selection--single .select2-selection__arrow {
+        position: absolute;
+        top: 50%;
+        right: 3px;
+        width: 20px;
+    }
+    .select2-container--bootstrap-5 .select2-selection--single .select2-selection__arrow b {
+        top: 60%;
+        border-color: #6c757d transparent transparent transparent;
+        border-style: solid;
+        border-width: 5px 4px 0 4px;
+        width: 0;
+        height: 0;
+        left: 50%;
+        margin-left: -4px;
+        margin-top: -2px;
+        position: absolute;
+    }
+    .select2-container--bootstrap-5 .select2-selection--single .select2-selection__rendered {
+        line-height: 1.5;
+        padding-left: 0;
+        color: #495057;
+    }
+</style>
 
 <div class="modal-dialog" role="document">
     <div class="modal-content">
         <div class="modal-header">
-            <h5 class="modal-title" id="exampleModalLabel">Update Ticket</h5>
+            <h5 class="modal-title" id="editModalLabel">Update Ticket</h5>
             <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close">
                 <span aria-hidden="true">&times;</span>
             </button>
         </div>
         <div class="modal-body">
             <input asp-for="DataInvalid" type="hidden"/>
-            <form asp-action="Edit" enctype="multipart/form-data">
+            <form asp-action="Edit" enctype="multipart/form-data" id="editTicketForm">
                 <div asp-validation-summary="ModelOnly" class="text-danger"></div>
                
                 <input type="hidden" asp-for="Id" />
@@ -20,64 +61,200 @@
                     <input asp-for="Title" placeholder="Enter Ticket Title" class="form-control" disabled="disabled" />
                     <span asp-validation-for="Title" class="text-danger"></span>
                 </div>
-                 <div class="form-group">
+                <div class="form-group">
                     <label asp-for="Description" class="control-label"></label>
                     <textarea asp-for="Description" placeholder="Enter Description" class="form-control" disabled="disabled"></textarea>
                     <span asp-validation-for="Description" class="text-danger"></span>
                 </div>
                 <div class="form-group">
                     <label asp-for="TicketPriorityId"></label>
-                    <select asp-for="TicketPriorityId" asp-items="@ViewBag.priorities" class="form-control"></select>
+                    <select asp-for="TicketPriorityId" asp-items="@ViewBag.priorities" class="form-control" id="editPriorityId"></select>
                     <span asp-validation-for="TicketPriorityId" class="text-danger"></span>
                 </div>
                 <div class="form-group">
                     <label asp-for="TicketCategoryId"></label>
-                    <select asp-for="TicketCategoryId" asp-items="@ViewBag.categories" class="form-control"></select>
+                    <select asp-for="TicketCategoryId" asp-items="@ViewBag.categories" class="form-control" id="editCategoryId"></select>
                     <span asp-validation-for="TicketCategoryId" class="text-danger"></span>
                 </div>
                 <div class="form-group">
                     <label asp-for="StateId"></label>
-                    <select asp-for="StateId" asp-items="@ViewBag.states" class="form-control"></select>
+                    <select asp-for="StateId" asp-items="@ViewBag.states" class="form-control" id="editStateId"></select>
                     <span asp-validation-for="StateId" class="text-danger"></span>
                 </div>
                 <div class="form-group">
                     <label asp-for="MemberId"></label>
-                    <div class="select3-container">
-                        <div class="select3-selection">Select an option</div>
-                        <div class="select3-dropdown" style="display: none;">
-                            <div class="select3-search">
-                                <input type="text" class="form-control" id="select-search" placeholder="Search...">
-                            </div>
-                            <ul class="list-unstyled select3-options" style="max-height: 150px; overflow-y: auto;"></ul>
-                        </div>
-                    </div>
-                    <input type="hidden" id="MemberId" name="MemberId">
+                    <select asp-for="MemberId" id="editMemberSelect" class="form-select" style="width: 100%;">
+                        <option value="">Choose a member...</option>
+                    </select>
                     <span asp-validation-for="MemberId" class="text-danger"></span>
                 </div>
                 <div class="form-group">
-                    <label asp-for="DepartmentId"></label>
-                    <select asp-for="DepartmentId" asp-items="@ViewBag.departments" class="form-control"></select>
-                    <span asp-validation-for="DepartmentId" class="text-danger"></span>
+                    <label>Department</label>
+                    <select id="EditDepartmentId" name="DepartmentId" asp-items="@ViewBag.departments" class="form-select">
+                        <option value="">---- Select Department -------</option>
+                    </select>
                 </div>
-
                 <div class="form-group">
                     <label asp-for="AssignedToId"></label>
-                    <select asp-for="AssignedToId" asp-items="@ViewBag.Assignees" class="form-control selectpicker"></select>
+                    <select asp-for="AssignedToId" class="form-select" id="EditAssignedToId">
+                        <option value="">---- Select Assignee -------</option>
+                    </select>
                     <span asp-validation-for="AssignedToId" class="text-danger"></span>
                 </div>
                 <div class="form-group">
-                  <label for="Attachments" class="form-label">Upload Ticket Attachments (PDF)</label>
-                  <input class="form-control" type="file" id="Attachments" name="Attachments" multiple accept="application/pdf">
+                    <label for="EditAttachments" class="form-label">Upload Ticket Attachments (PDF)</label>
+                    <input class="form-control" type="file" id="EditAttachments" name="Attachments" multiple accept="application/pdf">
                 </div>
-                
+                <div class="form-group mt-4">
+                    <label class="form-label">Initiator Information</label>
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="mb-3">
+                                <label class="form-label">Initiator Type</label>
+                                <div class="btn-group w-100" role="group" aria-label="Initiator Type">
+                                    <input type="radio" class="btn-check" name="InitiatorType" id="editInitiatorTypeUser" value="User" checked autocomplete="off">
+                                    <label class="btn btn-outline-primary" for="editInitiatorTypeUser">Staff</label>
 
-
+                                    <input type="radio" class="btn-check" name="InitiatorType" id="editInitiatorTypeMember" value="Member" autocomplete="off">
+                                    <label class="btn btn-outline-primary" for="editInitiatorTypeMember">Member</label>
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <label for="InitiatorId" class="form-label">Select Initiator</label>
+                                <select asp-for="InitiatorId" id="editInitiatorSelect" class="form-select" style="width: 100%;">
+                                    <option value="">Choose an initiator...</option>
+                                </select>
+                                <span asp-validation-for="InitiatorId" class="text-danger"></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </form>
         </div>
         <div class="modal-footer">
             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-            <button type="button" class="btn btn-primary" id="update_ticket_btn" name="update_ticket_btn">Edit Ticket</button>
-            
+            <button type="button" class="btn btn-primary" id="edit_ticket_btn">Update Ticket</button>
         </div>
     </div>
 </div>
+
+<script>
+function loadEditSelect2() {
+    if (typeof $.fn.select2 === 'undefined') {
+        $.getScript('https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js', function() {
+            $('<link>').appendTo('head').attr({
+                type: 'text/css', 
+                rel: 'stylesheet',
+                href: 'https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css'
+            });
+            $('<link>').appendTo('head').attr({
+                type: 'text/css', 
+                rel: 'stylesheet',
+                href: 'https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css'
+            });
+            initializeEditSelect2();
+        });
+    } else {
+        initializeEditSelect2();
+    }
+}
+
+function initializeEditSelect2() {
+    $('#editMemberSelect, #editInitiatorSelect').select2({
+        theme: 'bootstrap-5',
+        placeholder: 'Search...',
+        allowClear: true,
+        ajax: {
+            url: '@Url.Action("GetMembers", "Tickets")',
+            dataType: 'json',
+            delay: 250,
+            data: function (params) {
+                return {
+                    search: params.term,
+                    page: params.page || 1
+                };
+            },
+            processResults: function (data, params) {
+                params.page = params.page || 1;
+                return {
+                    results: data.results,
+                    pagination: {
+                        more: data.pagination.more
+                    }
+                };
+            },
+            cache: true
+        },
+        minimumInputLength: 1
+    });
+
+    $('#editInitiatorSelect').select2({
+        theme: 'bootstrap-5',
+        placeholder: 'Choose an initiator...',
+        allowClear: true,
+        ajax: {
+            url: '@Url.Action("GetInitiators", "Tickets")',
+            dataType: 'json',
+            delay: 250,
+            data: function (params) {
+                return {
+                    type: $('input[name="InitiatorType"]:checked').val(),
+                    search: params.term,
+                    page: params.page || 1
+                };
+            },
+            processResults: function (data, params) {
+                params.page = params.page || 1;
+                return {
+                    results: data.results,
+                    pagination: {
+                        more: data.pagination.more
+                    }
+                };
+            },
+            cache: true
+        },
+        minimumInputLength: 0
+    });
+}
+
+$(document).ready(function() {
+    console.log("Edit script loaded");
+
+    // Load Select2 immediately
+    loadEditSelect2();
+
+    // Handle initiator type change
+    $('input[name="InitiatorType"]').change(function() {
+        $('#editInitiatorSelect').val(null).trigger('change');
+    });
+
+    // Handle department change
+    $('#EditDepartmentId').change(function() {
+        var departmentId = $(this).val();
+        var assigneeSelect = $('#EditAssignedToId');
+        
+        assigneeSelect.empty().append('<option value="">---- Select Assignee -------</option>');
+        
+        if (departmentId) {
+            $.get('@Url.Action("FetchAssigneesByDepartment", "Tickets")', { departmentId: departmentId })
+                .done(function(data) {
+                    $.each(data, function(i, item) {
+                        assigneeSelect.append($('<option>', {
+                            value: item.value,
+                            text: item.text
+                        }));
+                    });
+                })
+                .fail(function(jqXHR, textStatus, errorThrown) {
+                    console.error('Failed to fetch assignees:', textStatus, errorThrown);
+                });
+        }
+    });
+
+    // Initialize with current department's assignees if department is selected
+    if ($('#EditDepartmentId').val()) {
+        $('#EditDepartmentId').trigger('change');
+    }
+});
+</script>

@@ -23,7 +23,7 @@ namespace UCS_CRM.Migrations
                 table: "Users",
                 type: "longtext",
                 nullable: false)
-                .Annotation("MySql:CharSet", "utf8mb4");
+                .Annotation("MySql:CharSet", "");
         }
     }
 }

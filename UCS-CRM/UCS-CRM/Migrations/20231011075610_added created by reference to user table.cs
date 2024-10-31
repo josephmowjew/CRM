@@ -15,7 +15,7 @@ namespace UCS_CRM.Migrations
                 table: "Users",
                 type: "varchar(200)",
                 nullable: true)
-                .Annotation("MySql:CharSet", "utf8mb4");
+                .Annotation("MySql:CharSet", "");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Users_CreatedById",

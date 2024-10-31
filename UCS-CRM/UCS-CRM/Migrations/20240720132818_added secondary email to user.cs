@@ -16,7 +16,7 @@ namespace UCS_CRM.Migrations
                 type: "varchar(100)",
                 maxLength: 100,
                 nullable: true)
-                .Annotation("MySql:CharSet", "utf8mb4");
+                .Annotation("MySql:CharSet", "");
         }
 
         /// <inheritdoc />

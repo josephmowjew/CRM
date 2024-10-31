@@ -17,14 +17,14 @@ namespace UCS_CRM.Migrations
                 maxLength: 100,
                 nullable: false,
                 defaultValue: "")
-                .Annotation("MySql:CharSet", "utf8mb4");
+                .Annotation("MySql:CharSet", "");
 
             migrationBuilder.AddColumn<string>(
                 name: "Email",
                 table: "Members",
                 type: "longtext",
                 nullable: true)
-                .Annotation("MySql:CharSet", "utf8mb4");
+                .Annotation("MySql:CharSet", "");
 
             migrationBuilder.AddColumn<string>(
                 name: "EmployeeNumber",
@@ -33,7 +33,7 @@ namespace UCS_CRM.Migrations
                 maxLength: 70,
                 nullable: false,
                 defaultValue: "")
-                .Annotation("MySql:CharSet", "utf8mb4");
+                .Annotation("MySql:CharSet", "");
         }
 
         /// <inheritdoc />

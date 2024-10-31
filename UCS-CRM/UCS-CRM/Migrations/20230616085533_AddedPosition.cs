@@ -25,13 +25,13 @@ namespace UCS_CRM.Migrations
                     Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("MySql:ValueGenerationStrategy", MySqlValueGenerationStrategy.IdentityColumn),
                     Name = table.Column<string>(type: "varchar(150)", maxLength: 150, nullable: false)
-                        .Annotation("MySql:CharSet", "utf8mb4"),
+                        .Annotation("MySql:CharSet", ""),
                     Rating = table.Column<int>(type: "int", nullable: false),
                     CreatedDate = table.Column<DateTime>(type: "datetime(6)", nullable: false),
                     CreatedById = table.Column<string>(type: "varchar(200)", nullable: false)
-                        .Annotation("MySql:CharSet", "utf8mb4"),
+                        .Annotation("MySql:CharSet", ""),
                     Status = table.Column<string>(type: "longtext", nullable: false)
-                        .Annotation("MySql:CharSet", "utf8mb4"),
+                        .Annotation("MySql:CharSet", ""),
                     UpdatedDate = table.Column<DateTime>(type: "datetime(6)", nullable: false),
                     DeletedDate = table.Column<DateTime>(type: "datetime(6)", nullable: true)
                 },
@@ -45,7 +45,7 @@ namespace UCS_CRM.Migrations
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                 })
-                .Annotation("MySql:CharSet", "utf8mb4");
+                .Annotation("MySql:CharSet", "");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Users_PositionId",

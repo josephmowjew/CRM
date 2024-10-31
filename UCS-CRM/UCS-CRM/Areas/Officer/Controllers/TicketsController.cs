@@ -713,18 +713,7 @@ namespace UCS_CRM.Areas.Clerk.Controllers
 
             var cleanResult = new List<ReadTicketDTO>();
 
-            //mappedResult.ForEach(record =>
-            //{
-            //    record.State.Tickets = null;
-            //    record.TicketAttachments.Select(r => r.Ticket = null);
-
-            //    cleanResult.Add(record);
-
-            //});
-
-
-
-            //return Json(new { draw = draw, recordsFiltered = result.Count, recordsTotal = resultTotal, data = mappedResult });
+           
             return Json(new { draw = draw, recordsFiltered = resultTotal, recordsTotal = resultTotal, data = mappedResult });
 
 
@@ -1311,32 +1300,7 @@ namespace UCS_CRM.Areas.Clerk.Controllers
                     await this._ticketRepository.EscalateTicket(ticket, claimsIdentitifier.Value, createTicketEscalation.Reason);
                     
 
-                    // if (result != null)
-                    // {
-                    //     if(result.Equals("Could not find a user to escalate the ticket to", StringComparison.OrdinalIgnoreCase))
-                    //     {
-                    //         createTicketEscalation.DataInvalid = "true";
-
-                    //         ModelState.AddModelError("", "Could not find a user to escalate the ticket to");
-
-                    //         return PartialView("_FirstTicketEscalationPartial", createTicketEscalation);
-                    //     }
-                    //     if(result.Equals("ticket escalated", StringComparison.OrdinalIgnoreCase))
-                    //     {
-                    //         createTicketEscalation.DataInvalid = "";
-
-
-                    //         return PartialView("_FirstTicketEscalationPartial", createTicketEscalation);
-                    //     }
-                    // }
-                    // else
-                    // {
-                    //     createTicketEscalation.DataInvalid = "true";
-
-                    //     ModelState.AddModelError("","An error occurred while trying to escalate the ticket");
-
-                    //     return PartialView("_FirstTicketEscalationPartial", createTicketEscalation);
-                    // }
+                    
                 }
                 }
                 else
@@ -1351,182 +1315,7 @@ namespace UCS_CRM.Areas.Clerk.Controllers
 
 
 
-            //if(ticket != null)
-            //{
-            //    //get the user assigned to the ticket if available
-            //    currentAssignedUser = ticket.AssignedTo;
-
-            //    currentAssignedUserEmail = currentAssignedUser.Email;
-
-            //    if (currentAssignedUser != null)
-            //    {
-            //         currentAssignedUserRole = await this._userRepository.GetRoleAsync(currentAssignedUser.Id);
-
-            //        //check if the role of the user has been returned 
-
-            //        if(currentAssignedUserRole  != null)
-            //        {
-
-            //            //get the department of the current assigned user
-            //            currentAssignedUserDepartment = await this._departmentRepository.GetDepartment(currentAssignedUser.Department.Id);
-
-            //            //get roles that are associated with this department
-            //            rolesOfCurrentUserDepartment = currentAssignedUserDepartment.Roles;
-
-            //            //order the roles according to rating
-
-            //            SortedrolesOfCurrentUserDepartment = rolesOfCurrentUserDepartment.OrderBy(d => d.Rating).ToList();
-
-
-            //            //loop through the list of roles in the current department
-
-            //            if(SortedrolesOfCurrentUserDepartment.Count > 0)
-            //            {
-            //                //remove roles that are less than the one that the current assigned user is already in
-            //                SortedrolesOfCurrentUserDepartment = SortedrolesOfCurrentUserDepartment.Where(r => r.Rating > currentAssignedUserRole.Rating).ToList();
-
-            //                if(SortedrolesOfCurrentUserDepartment.Count > 0)
-            //                {
-            //                    for (int i = 0; i < SortedrolesOfCurrentUserDepartment.Count; i++)
-            //                    {
-
-            //                        var listOfUsers = await this._userRepository.GetUsersInRole(SortedrolesOfCurrentUserDepartment[i].Name);
-
-            //                        //filter users to only those on the same branch
-            //                        listOfUsers = listOfUsers.Where(u => u.BranchId == currentAssignedUser.BranchId).ToList();
-
-            //                        //get the first user if available
-
-            //                        var newTicketHandler = listOfUsers.FirstOrDefault();
-
-            //                        if (newTicketHandler != null)
-            //                        {
-            //                            //assign the ticket this person and break out of the loop
-
-            //                            ticket.AssignedToId = newTicketHandler.Id;
-
-            //                            ticketAssignedToNewUser = true;
-
-            //                            //break out of the loop
-            //                            break;
-            //                        }
-
-            //                    }
-
-            //                }
-            //                else
-            //                {
-            //                    //assign the ticket to a manager with a role rating higher than the current user even if the manager is in a different department but same branch
-
-
-            //                    //check if the ticket is already in the the branch networks and satellites department
-
-            //                    if(currentAssignedUserDepartment.Name.Trim().ToLower() == "Branch Networks and satellites Department".Trim().ToLower())
-            //                    {
-            //                        ticket.AssignedToId = await this.AssignTicketToDepartment("Executive suite");
-
-            //                        if(!string.IsNullOrEmpty(ticket.AssignedToId))
-            //                        {
-            //                            ticketAssignedToNewUser = true;
-            //                        }
-
-            //                    }
-            //                    else
-            //                    {
-            //                        ticket.AssignedToId = await this.AssignTicketToDepartment("Branch Networks and satellites Department");
-
-            //                        if (!string.IsNullOrEmpty(ticket.AssignedToId))
-            //                        {
-            //                            ticketAssignedToNewUser = true;
-            //                        }
-
-            //                    }
-
-
-            //                }
-
-            //            }
-
-            //        }
-            //        else
-            //        {
-            //            //Do something if the current user has no role
-            //        }
-            //    }
-            //    else
-            //    {
-            //        //do something is the ticket is not assigned to anyone
-
-            //        string result = await this._ticketRepository.SendUnassignedTicketEmail(ticket);
-            //    }
-
-            //}
-
-            //if (ticketAssignedToNewUser != true)
-            //{
-
-
-            //    createTicketEscalation.DataInvalid = "true";
-
-            //    ModelState.AddModelError("", $"Could not find a user to escalate the ticket to'");
-
-            //    return PartialView("_FirstTicketEscalationPartial", createTicketEscalation);
-            //}
-            //else
-            //{
-            //    //map the create ticket escalation DTO to ticket escalation
-
-            //    var mappedTicketEscalation = this._mapper.Map<TicketEscalation>(createTicketEscalation);
-
-            //    //update the escalated to to reflect to new user assigned to the ticket
-
-            //    mappedTicketEscalation.EscalatedTo = ticket.AssignedTo;
-
-
-            //    //save to the database
-
-            //    try
-            //    {
-            //        var userClaims = (ClaimsIdentity)User.Identity;
-
-            //        var claimsIdentitifier = userClaims.FindFirst(ClaimTypes.NameIdentifier);
-
-            //        mappedTicketEscalation.CreatedById = claimsIdentitifier.Value;
-
-
-            //        this._ticketEscalationRepository.Add(mappedTicketEscalation);
-
-
-            //        await this._unitOfWork.SaveToDataStore();
-
-
-            //        //send emails to previous assignee and the new assignee
-
-            //        string emails_response = await this._ticketRepository.SendTicketEscalationEmail(ticket, mappedTicketEscalation, currentAssignedUserEmail);
-
-
-            //        return PartialView("_FirstTicketEscalationPartial", createTicketEscalation);
-            //    }
-            //    catch (DbUpdateException ex)
-            //    {
-            //        createTicketEscalation.DataInvalid = "true";
-
-            //        ModelState.AddModelError(string.Empty, ex.InnerException.Message);
-
-            //        return PartialView("_FirstTicketEscalationPartial", createTicketEscalation);
-            //    }
-
-            //    catch (Exception ex)
-            //    {
-
-            //        createTicketEscalation.DataInvalid = "true";
-
-            //        ModelState.AddModelError(string.Empty, ex.Message);
-
-            //        return PartialView("_FirstTicketEscalationPartial", createTicketEscalation);
-            //    }
-            //}
-
+         
             return PartialView("_FirstTicketEscalationPartial", createTicketEscalation);
 
         }
@@ -1648,6 +1437,33 @@ namespace UCS_CRM.Areas.Clerk.Controllers
             return Json(new { results = new List<object>(), pagination = new { more = false } });
         }
 
+        [HttpGet]
+        [Area("Officer")]
+        public async Task<IActionResult> FetchAssigneesByDepartment(int departmentId)
+        {
+            try 
+            {
+                var staff = await _userRepository.GetUsersByDepartment(departmentId);
+                
+                var assignees = staff
+                    .Where(u => u.Email.ToLower().Trim() != User.Identity.Name.ToLower().Trim())
+                    .Select(user => new 
+                    { 
+                        value = user.Id.ToString(),
+                        text = user.FullName 
+                    })
+                    .ToList();
+
+                return Json(assignees);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error fetching assignees for department {DepartmentId}", departmentId);
+                return BadRequest("Failed to fetch assignees");
+            }
+        }
+
+        
 
     }
 }

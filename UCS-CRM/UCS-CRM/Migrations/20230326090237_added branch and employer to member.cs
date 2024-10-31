@@ -15,14 +15,14 @@ namespace UCS_CRM.Migrations
                 table: "Members",
                 type: "longtext",
                 nullable: true)
-                .Annotation("MySql:CharSet", "utf8mb4");
+                .Annotation("MySql:CharSet", "");
 
             migrationBuilder.AddColumn<string>(
                 name: "Employer",
                 table: "Members",
                 type: "longtext",
                 nullable: true)
-                .Annotation("MySql:CharSet", "utf8mb4");
+                .Annotation("MySql:CharSet", "");
         }
 
         /// <inheritdoc />

@@ -24,8 +24,8 @@ namespace UCS_CRM.Migrations
                 oldClrType: typeof(string),
                 oldType: "varchar(150)",
                 oldMaxLength: 150)
-                .Annotation("MySql:CharSet", "utf8mb4")
-                .OldAnnotation("MySql:CharSet", "utf8mb4");
+                .Annotation("MySql:CharSet", "")
+                .OldAnnotation("MySql:CharSet", "");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Users_DepartmentId",
@@ -63,8 +63,8 @@ namespace UCS_CRM.Migrations
                 nullable: false,
                 oldClrType: typeof(string),
                 oldType: "longtext")
-                .Annotation("MySql:CharSet", "utf8mb4")
-                .OldAnnotation("MySql:CharSet", "utf8mb4");
+                .Annotation("MySql:CharSet", "")
+                .OldAnnotation("MySql:CharSet", "");
         }
     }
 }

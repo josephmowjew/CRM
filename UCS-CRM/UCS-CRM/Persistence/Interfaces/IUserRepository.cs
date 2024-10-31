@@ -60,5 +60,7 @@ namespace UCS_CRM.Persistence.Interfaces
         Task<int> TotalFilteredUsersCount(CursorParams @params);
         Task<ApplicationUser?> FindDeletedUserByEmail(string email);
 
+        Task<List<ApplicationUser>> GetUsersByDepartment(int departmentId);
+
     }
 }

@@ -21,7 +21,7 @@ namespace UCS_CRM.Migrations
                 table: "Tickets",
                 type: "varchar(200)",
                 nullable: true)
-                .Annotation("MySql:CharSet", "utf8mb4");
+                .Annotation("MySql:CharSet", "");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Tickets_InitiatorMemberId",

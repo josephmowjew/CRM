@@ -56,13 +56,17 @@
                 </div>
                 <div class="form-group">
                     <label asp-for="DepartmentId"></label>
-                    <select asp-for="DepartmentId" asp-items="@ViewBag.departments" class="form-control"></select>
+                    <select asp-for="DepartmentId" asp-items="@ViewBag.departments" class="form-control" id="EditDepartmentId">
+                        <option value="">---- Select Department -------</option>
+                    </select>
                     <span asp-validation-for="DepartmentId" class="text-danger"></span>
                 </div>
 
                 <div class="form-group">
                     <label asp-for="AssignedToId"></label>
-                    <select asp-for="AssignedToId" asp-items="@ViewBag.Assignees" class="form-control selectpicker"></select>
+                    <select asp-for="AssignedToId" class="form-control" id="EditAssignedToId">
+                        <option value="">---- Select Assignee -------</option>
+                    </select>
                     <span asp-validation-for="AssignedToId" class="text-danger"></span>
                 </div>
                 <div class="form-group">
@@ -80,3 +84,42 @@
         </div>
     </div>
 </div>
+
+<script>
+$(document).ready(function() {
+    if ($('#EditDepartmentId').val()) {
+        loadAssignees($('#EditDepartmentId').val(), '@(Model?.AssignedToId ?? "")');
+    }
+
+    $('#EditDepartmentId').on('change', function() {
+        loadAssignees($(this).val());
+    });
+
+    function loadAssignees(departmentId, selectedAssigneeId = '') {
+        var assigneeSelect = $('#EditAssignedToId');
+        assigneeSelect.empty().append('<option value="">---- Select Assignee -------</option>');
+        
+        if (departmentId) {
+            $.ajax({
+                url: '@Url.Action("FetchAssigneesByDepartment", "Tickets")',
+                type: 'GET',
+                data: { departmentId: departmentId },
+                success: function(data) {
+                    $.each(data, function(i, item) {
+                        assigneeSelect.append($('<option>', {
+                            value: item.value,
+                            text: item.text,
+                            selected: selectedAssigneeId && item.value.toString() === selectedAssigneeId.toString()
+                        }));
+                    });
+                },
+                error: function(xhr, status, error) {
+                    console.error('Error fetching assignees:', error);
+                    console.error('Status:', status);
+                    console.error('Response:', xhr.responseText);
+                }
+            });
+        }
+    }
+});
+</script>

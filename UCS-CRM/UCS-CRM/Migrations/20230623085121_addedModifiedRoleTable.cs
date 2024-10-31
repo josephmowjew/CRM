@@ -15,7 +15,7 @@ namespace UCS_CRM.Migrations
                 table: "Roles",
                 type: "longtext",
                 nullable: false)
-                .Annotation("MySql:CharSet", "utf8mb4");
+                .Annotation("MySql:CharSet", "");
 
             migrationBuilder.AddColumn<int>(
                 name: "Rating",
@@ -29,7 +29,7 @@ namespace UCS_CRM.Migrations
                 {
                     DepartmentsId = table.Column<int>(type: "int", nullable: false),
                     RolesId = table.Column<string>(type: "varchar(85)", nullable: false)
-                        .Annotation("MySql:CharSet", "utf8mb4")
+                        .Annotation("MySql:CharSet", "")
                 },
                 constraints: table =>
                 {
@@ -47,7 +47,7 @@ namespace UCS_CRM.Migrations
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                 })
-                .Annotation("MySql:CharSet", "utf8mb4");
+                .Annotation("MySql:CharSet", "");
 
             migrationBuilder.CreateIndex(
                 name: "IX_DepartmentRole_RolesId",

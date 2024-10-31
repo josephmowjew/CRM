@@ -19,8 +19,8 @@ namespace UCS_CRM.Migrations
                 oldClrType: typeof(string),
                 oldType: "varchar(10)",
                 oldMaxLength: 10)
-                .Annotation("MySql:CharSet", "utf8mb4")
-                .OldAnnotation("MySql:CharSet", "utf8mb4");
+                .Annotation("MySql:CharSet", "")
+                .OldAnnotation("MySql:CharSet", "");
 
             migrationBuilder.AlterColumn<string>(
                 name: "Address",
@@ -31,8 +31,8 @@ namespace UCS_CRM.Migrations
                 oldClrType: typeof(string),
                 oldType: "varchar(200)",
                 oldMaxLength: 200)
-                .Annotation("MySql:CharSet", "utf8mb4")
-                .OldAnnotation("MySql:CharSet", "utf8mb4");
+                .Annotation("MySql:CharSet", "")
+                .OldAnnotation("MySql:CharSet", "");
 
             migrationBuilder.AddColumn<DateTime>(
                 name: "DateOfBirth",
@@ -45,14 +45,14 @@ namespace UCS_CRM.Migrations
                 table: "Members",
                 type: "longtext",
                 nullable: true)
-                .Annotation("MySql:CharSet", "utf8mb4");
+                .Annotation("MySql:CharSet", "");
 
             migrationBuilder.AddColumn<string>(
                 name: "Gender",
                 table: "Members",
                 type: "longtext",
                 nullable: false)
-                .Annotation("MySql:CharSet", "utf8mb4");
+                .Annotation("MySql:CharSet", "");
 
             migrationBuilder.AddColumn<string>(
                 name: "LastName",
@@ -60,7 +60,7 @@ namespace UCS_CRM.Migrations
                 type: "varchar(70)",
                 maxLength: 70,
                 nullable: true)
-                .Annotation("MySql:CharSet", "utf8mb4");
+                .Annotation("MySql:CharSet", "");
         }
 
         /// <inheritdoc />
@@ -90,8 +90,8 @@ namespace UCS_CRM.Migrations
                 nullable: false,
                 oldClrType: typeof(string),
                 oldType: "longtext")
-                .Annotation("MySql:CharSet", "utf8mb4")
-                .OldAnnotation("MySql:CharSet", "utf8mb4");
+                .Annotation("MySql:CharSet", "")
+                .OldAnnotation("MySql:CharSet", "");
 
             migrationBuilder.UpdateData(
                 table: "Members",
@@ -110,8 +110,8 @@ namespace UCS_CRM.Migrations
                 oldType: "varchar(200)",
                 oldMaxLength: 200,
                 oldNullable: true)
-                .Annotation("MySql:CharSet", "utf8mb4")
-                .OldAnnotation("MySql:CharSet", "utf8mb4");
+                .Annotation("MySql:CharSet", "")
+                .OldAnnotation("MySql:CharSet", "");
         }
     }
 }

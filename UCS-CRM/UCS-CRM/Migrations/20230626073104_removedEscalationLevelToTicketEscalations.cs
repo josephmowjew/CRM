@@ -25,7 +25,7 @@ namespace UCS_CRM.Migrations
                 type: "varchar(200)",
                 nullable: false,
                 defaultValue: "")
-                .Annotation("MySql:CharSet", "utf8mb4");
+                .Annotation("MySql:CharSet", "");
 
             migrationBuilder.CreateIndex(
                 name: "IX_TicketEscalations_EscalatedToId",
@@ -70,7 +70,7 @@ namespace UCS_CRM.Migrations
                 table: "TicketEscalations",
                 type: "longtext",
                 nullable: true)
-                .Annotation("MySql:CharSet", "utf8mb4");
+                .Annotation("MySql:CharSet", "");
         }
     }
 }

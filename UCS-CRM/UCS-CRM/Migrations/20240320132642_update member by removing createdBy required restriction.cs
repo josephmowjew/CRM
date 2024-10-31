@@ -21,8 +21,8 @@ namespace UCS_CRM.Migrations
                 nullable: true,
                 oldClrType: typeof(string),
                 oldType: "varchar(200)")
-                .Annotation("MySql:CharSet", "utf8mb4")
-                .OldAnnotation("MySql:CharSet", "utf8mb4");
+                .Annotation("MySql:CharSet", "")
+                .OldAnnotation("MySql:CharSet", "");
 
             migrationBuilder.AddForeignKey(
                 name: "FK_Members_Users_CreatedById",
@@ -54,8 +54,8 @@ namespace UCS_CRM.Migrations
                 oldClrType: typeof(string),
                 oldType: "varchar(200)",
                 oldNullable: true)
-                .Annotation("MySql:CharSet", "utf8mb4")
-                .OldAnnotation("MySql:CharSet", "utf8mb4");
+                .Annotation("MySql:CharSet", "")
+                .OldAnnotation("MySql:CharSet", "");
 
             migrationBuilder.AddForeignKey(
                 name: "FK_Members_Users_CreatedById",
