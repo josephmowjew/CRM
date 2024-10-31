@@ -1,6 +1,7 @@
 ﻿using AutoMapper;
 using Hangfire;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
@@ -41,9 +42,10 @@ namespace UCS_CRM.Areas.Manager.Controllers
         private readonly ApplicationDbContext _context;
         private readonly IConfiguration _configuration;
         private readonly ILogger<TicketsController> _logger;
+        private readonly UserManager<ApplicationUser> _userManager;
         public TicketsController(ITicketRepository ticketRepository, IMapper mapper, IUnitOfWork unitOfWork, 
             ITicketCategoryRepository ticketCategoryRepository, IStateRepository stateRepository, ITicketPriorityRepository priorityRepository,
-            IWebHostEnvironment env, ITicketCommentRepository ticketCommentRepository, IUserRepository userRepository, IMemberRepository memberRepository, ITicketEscalationRepository ticketEscalationRepository, ITicketStateTrackerRepository ticketStateTrackerRepository, IEmailService emailService, HangfireJobEnqueuer jobEnqueuer, ApplicationDbContext context, IConfiguration configuration, ILogger<TicketsController> logger, IDepartmentRepository departmentRepository)
+            IWebHostEnvironment env, ITicketCommentRepository ticketCommentRepository, IUserRepository userRepository, IMemberRepository memberRepository, ITicketEscalationRepository ticketEscalationRepository, ITicketStateTrackerRepository ticketStateTrackerRepository, IEmailService emailService, HangfireJobEnqueuer jobEnqueuer, ApplicationDbContext context, IConfiguration configuration, ILogger<TicketsController> logger, IDepartmentRepository departmentRepository, UserManager<ApplicationUser> userManager)
         {
             _ticketRepository = ticketRepository;
             _mapper = mapper;
@@ -63,6 +65,7 @@ namespace UCS_CRM.Areas.Manager.Controllers
             _configuration = configuration;
             _logger = logger;
             _departmentRepository = departmentRepository;
+            _userManager = userManager;
         }
 
         // GET: TicketsController
@@ -70,6 +73,15 @@ namespace UCS_CRM.Areas.Manager.Controllers
         {
             await populateViewBags();
             ViewBag.type = type;
+
+            var findUserDb = await this._userRepository.GetUserWithRole(User.Identity.Name);
+
+            //find the role of the currently logged in user
+
+            if(findUserDb != null)
+            {
+                ViewBag.role = _userManager.GetRolesAsync(findUserDb).Result.FirstOrDefault();
+            }
             return View();
         }
 
@@ -998,6 +1010,24 @@ namespace UCS_CRM.Areas.Manager.Controllers
             ViewBag.states = await GetTicketStates();
             ViewBag.departments = await GetDepartments();
             //ViewBag.members = await GetMembers();
+        }
+
+        [HttpGet]
+        public async Task<ActionResult> FetchAssigneesByDepartment(int departmentId)
+        {
+            var department = await _departmentRepository.GetDepartment(departmentId);
+            if (department == null)
+                return BadRequest();
+
+            var staff = department.Users
+                .Where(u => u.Email.Trim().ToLower() != User.Identity.Name.Trim().ToLower())
+                .Select(user => new SelectListItem { 
+                    Text = user.FullName, 
+                    Value = user.Id.ToString() 
+                })
+                .ToList();
+
+            return Json(staff);
         }
 
 

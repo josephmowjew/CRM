@@ -83,9 +83,16 @@
                 </div>
                 <div class="form-group">
                     <label asp-for="MemberId"></label>
-                    <select asp-for="MemberId" id="editMemberSelect" class="form-select" style="width: 100%;">
-                        <option value="">Choose a member...</option>
-                    </select>
+                   <div class="select3-container">
+                        <div class="select3-selection">Select an option</div>
+                        <div class="select3-dropdown" style="display: none;">
+                            <div class="select3-search">
+                                <input type="text" class="form-control" id="select-search" placeholder="Search...">
+                            </div>
+                            <ul class="list-unstyled select3-options" style="max-height: 150px; overflow-y: auto;"></ul>
+                        </div>
+                    </div>
+                    <input type="hidden" id="MemberId" name="MemberId">
                     <span asp-validation-for="MemberId" class="text-danger"></span>
                 </div>
                 <div class="form-group">
@@ -105,30 +112,7 @@
                     <label for="EditAttachments" class="form-label">Upload Ticket Attachments (PDF)</label>
                     <input class="form-control" type="file" id="EditAttachments" name="Attachments" multiple accept="application/pdf">
                 </div>
-                <div class="form-group mt-4">
-                    <label class="form-label">Initiator Information</label>
-                    <div class="card">
-                        <div class="card-body">
-                            <div class="mb-3">
-                                <label class="form-label">Initiator Type</label>
-                                <div class="btn-group w-100" role="group" aria-label="Initiator Type">
-                                    <input type="radio" class="btn-check" name="InitiatorType" id="editInitiatorTypeUser" value="User" checked autocomplete="off">
-                                    <label class="btn btn-outline-primary" for="editInitiatorTypeUser">Staff</label>
-
-                                    <input type="radio" class="btn-check" name="InitiatorType" id="editInitiatorTypeMember" value="Member" autocomplete="off">
-                                    <label class="btn btn-outline-primary" for="editInitiatorTypeMember">Member</label>
-                                </div>
-                            </div>
-                            <div class="mb-3">
-                                <label for="InitiatorId" class="form-label">Select Initiator</label>
-                                <select asp-for="InitiatorId" id="editInitiatorSelect" class="form-select" style="width: 100%;">
-                                    <option value="">Choose an initiator...</option>
-                                </select>
-                                <span asp-validation-for="InitiatorId" class="text-danger"></span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+                
             </form>
         </div>
         <div class="modal-footer">
