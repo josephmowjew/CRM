@@ -40,6 +40,7 @@ namespace UCS_CRM.Core.ViewModels
         {
             new SelectListItem { Value = "male", Text = "Male" },
             new SelectListItem { Value = "female", Text = "Female" },
+            new SelectListItem { Value = "other", Text = "Other" },
 
         };
     }

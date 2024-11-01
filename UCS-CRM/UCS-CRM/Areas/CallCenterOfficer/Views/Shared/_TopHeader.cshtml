@@ -69,11 +69,23 @@
                 <!-- ============================================================== -->
                 <li class="nav-item dropdown">
                     <a class="nav-link dropdown-toggle text-muted waves-effect waves-dark" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                        <img gravatar-email="@User.Identity.Name" gravatar-size="40" class="rounded-circle" alt="~" /> @textinfo.ToTitleCase(UserManager.FindByNameAsync(User.Identity.Name).Result.FullName) 
+                        <img gravatar-email="@User.Identity.Name" gravatar-size="40" class="rounded-circle" alt="~" /> 
+                        @{
+                            var currentUser = UserManager.FindByNameAsync(User.Identity.Name).Result;
+                            <span class="ms-2">
+                                <span class="fw-medium">@textinfo.ToTitleCase(currentUser.FullName)</span> |
+                                @if (currentUser.Branch != null || currentUser.Department != null)
+                                {
+                                   
+                                    <span class="text small">
+                                        @(currentUser.Branch?.Name ?? "") | @(currentUser.Department?.Name ?? "")
+                                    </span>
+                                }
+                            </span>
+                        }
                     </a>
                     <ul class="dropdown-menu" aria-labelledby="navbarDropdown"></ul>
                 </li>
-            </ul>
         </div>
     </nav>
 </header>
