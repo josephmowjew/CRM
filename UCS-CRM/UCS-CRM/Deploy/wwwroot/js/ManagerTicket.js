@@ -292,6 +292,7 @@ function MarkDone(id) {
 
 function updateTicket() {
 
+
     showSpinner();
     toastr.clear()
 
