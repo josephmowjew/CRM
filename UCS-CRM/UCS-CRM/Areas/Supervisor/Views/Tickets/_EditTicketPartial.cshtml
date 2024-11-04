@@ -215,30 +215,7 @@ $(document).ready(function() {
 
     // Handle department change
     $('#EditDepartmentId').change(function() {
-        var departmentId = $(this).val();
-        var assigneeSelect = $('#EditAssignedToId');
-        
-        assigneeSelect.empty().append('<option value="">---- Select Assignee -------</option>');
-        
-        if (departmentId) {
-            $.get('@Url.Action("FetchAssigneesByDepartment", "Tickets")', { departmentId: departmentId })
-                .done(function(data) {
-                    $.each(data, function(i, item) {
-                        assigneeSelect.append($('<option>', {
-                            value: item.value,
-                            text: item.text
-                        }));
-                    });
-                })
-                .fail(function(jqXHR, textStatus, errorThrown) {
-                    console.error('Failed to fetch assignees:', textStatus, errorThrown);
-                });
-        }
+        loadAssigneesForDepartment($(this).val());
     });
-
-    // Initialize with current department's assignees if department is selected
-    if ($('#EditDepartmentId').val()) {
-        $('#EditDepartmentId').trigger('change');
-    }
 });
 </script>
