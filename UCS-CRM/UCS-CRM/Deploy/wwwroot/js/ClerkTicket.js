@@ -200,20 +200,14 @@ function PickTicket(id) {
 
 
 function EditForm(id, area = "") {
-
-    
     //get the record from the database
-
     $.ajax({
         url: area + 'tickets/edit/' + id,
         type: 'GET'
     }).done(function (data) {
-
-
-    
         const ticketFields = {
             Title: 'title',
-            Description: 'description',
+            Description: 'description', 
             TicketCategoryId: 'ticketCategoryId',
             TicketPriorityId: 'ticketPriorityId',
             AssignedToId: 'assignedToId',
@@ -229,38 +223,36 @@ function EditForm(id, area = "") {
             const field = editTicketModal.find(`[name='${fieldName}']`);
 
             if (fieldName === 'MemberId') {
-
                 // If the field is MemberId, set the value and trigger initSelect2 with the retrieved member ID
                 field.val(data[dataKey]);
                 initSelect2({
                     url: "/officer/Tickets/GetAllMembersJson",
-                    hiddenFieldId: "MemberId",
+                    hiddenFieldId: "MemberId", 
                     pageSize: 20,
                     initialSearchValue: data.member.accountNumber
                 }, "edit_ticket_modal");
+            } else if (fieldName === 'DepartmentId') {
+                // For department, set value and trigger loadAssignees
+                field.val(data[dataKey]);
+                if (data[dataKey]) {
+                    loadAssigneesForDepartment(data[dataKey], data.assignedToId);
+                }
             } else {
                 // For other fields, set the value as usual
                 field.val(data[dataKey]);
             }
         });
 
-
-
         let selectElements = document.querySelectorAll('.selectpicker')
 
         selectElements.forEach(function (element) {
-
             // Create a new 'change' event
             var event = new Event('change');
-
             // Dispatch it.
             element.dispatchEvent(event);
         });
-
-      
       
         //hook up an event to the update role button
-
         $("#edit_ticket_modal button[name='update_ticket_btn']").unbind().click(function () { updateTicket() })
 
         var validator = $("#edit_ticket_modal form").validate();
@@ -268,7 +260,6 @@ function EditForm(id, area = "") {
         //validator.resetForm();
 
         $("#edit_ticket_modal").modal("show");
-
     })
 }
 //escalate ticket
@@ -670,6 +661,31 @@ function showSpinner() {
 // Function to stop the spinner
 function hideSpinner() {
     document.getElementById('spinner').style.display = 'none';
+}
+
+// Add this function at global scope
+function loadAssigneesForDepartment(departmentId, selectedAssigneeId = null) {
+    const assigneeSelect = $('#edit_ticket_modal select[name="AssignedToId"]');
+    assigneeSelect.empty().append('<option value="">---- Select Assignee -------</option>');
+    
+    if (departmentId) {
+        $.get('tickets/FetchReassignList', { selectedValue: departmentId })
+            .done(function(data) {
+                if (data && Array.isArray(data)) {
+                    data.forEach(item => {
+                        assigneeSelect.append($('<option>', {
+                            value: item.value,
+                            text: item.text
+                        }));
+                    });
+                  
+                   
+                }
+            })
+            .fail(function(jqXHR, textStatus, errorThrown) {
+                console.error('Failed to fetch assignees:', textStatus, errorThrown);
+            });
+    }
 }
 
 
