@@ -703,7 +703,11 @@ namespace UCS_CRM.Persistence.SQLRepositories
             {
                 try
                 {
-                    EmailHelper.SendEmail(_jobEnqueuer, recipient, title, emailBody, ticket.AssignedTo?.SecondaryEmail);
+                    string? ccEmail = ticket.AssignedTo != null ? (!string.IsNullOrEmpty(ticket.AssignedTo.Email) ? ticket.AssignedTo.Email : ticket.AssignedTo.SecondaryEmail) : null;
+                    if (!string.IsNullOrEmpty(ccEmail))
+                    {
+                        EmailHelper.SendEmail(_jobEnqueuer, recipient, title, emailBody, ccEmail);
+                    }
                 }
                 catch (Exception ex)
                 {
@@ -755,8 +759,11 @@ namespace UCS_CRM.Persistence.SQLRepositories
                     </div>
                 </body>
                 </html>";
-                await SendEmailAndLogError(ticket.AssignedTo.Email, bodyMember,
-                    "Failed to send ticket reopened alert email", ticket.AssignedTo.Id);
+                if (ticket.AssignedTo != null)
+                {
+                    await SendEmailAndLogError(ticket.AssignedTo.Email, bodyMember,
+                        "Failed to send ticket reopened alert email", ticket.AssignedTo.Id);
+                }
             }
 
             if (!string.IsNullOrEmpty(ticketCreatorAddress) && memberEmailAddress != ticketCreatorAddress)
