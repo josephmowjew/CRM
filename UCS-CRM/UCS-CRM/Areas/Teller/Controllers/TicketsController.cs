@@ -227,8 +227,27 @@ namespace UCS_CRM.Areas.Teller.Controllers
                     //assign the ticket to the Customer Service and Member Engagement department
 
                     var customerServiceMemberEngagementDept = this._departmentRepository.Exists("Customer Service and Member Engagement");
+                    var creditAndEvaluationsDept = this._departmentRepository.Exists("Credit and Evaluations");
 
-                    if(customerServiceMemberEngagementDept != null)
+                    // Get the ticket category
+                    var ticketCategory = await this._ticketCategoryRepository.GetTicketCategory(createTicketDTO.TicketCategoryId);
+
+                    if (ticketCategory?.Name?.Trim().ToLower() == "affordability check")
+                    {
+                        if (creditAndEvaluationsDept != null)
+                        {
+                            mappedTicket.DepartmentId = creditAndEvaluationsDept.Id;
+                            
+                            // Find and assign to a user in the Credit and Evaluations department
+                            var creditDeptUsers = await _userRepository.GetUsersByDepartment(creditAndEvaluationsDept.Id);
+                            var firstAvailableUser = creditDeptUsers.FirstOrDefault();
+                            if (firstAvailableUser != null)
+                            {
+                                mappedTicket.AssignedToId = firstAvailableUser.Id;
+                            }
+                        }
+                    }
+                    else if (customerServiceMemberEngagementDept != null)
                     {
                         mappedTicket.DepartmentId = customerServiceMemberEngagementDept.Id;
                     }

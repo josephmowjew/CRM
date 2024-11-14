@@ -166,8 +166,19 @@ namespace UCS_CRM.Areas.Member.Controllers
                 var mappedTicket = this._mapper.Map<Ticket>(createTicketDTO);
 
                 var customerServiceMemberEngagementDept = this._departmentRepository.Exists("Customer Service and Member Engagement");
+                var creditAndEvaluationsDept = this._departmentRepository.Exists("Credit and Evaluations");
 
-                if (customerServiceMemberEngagementDept != null)
+                // Get the ticket category
+                var ticketCategory = await this._ticketCategoryRepository.GetTicketCategory(createTicketDTO.TicketCategoryId);
+
+                if (ticketCategory?.Name?.Trim().ToLower() == "affordability check")
+                {
+                    if (creditAndEvaluationsDept != null)
+                    {
+                        mappedTicket.DepartmentId = creditAndEvaluationsDept.Id;
+                    }
+                }
+                else if (customerServiceMemberEngagementDept != null)
                 {
                     mappedTicket.DepartmentId = customerServiceMemberEngagementDept.Id;
                 }
