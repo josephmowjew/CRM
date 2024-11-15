@@ -41,10 +41,11 @@ namespace UCS_CRM.Controllers
         public IConfiguration _configuration { get; }
         private readonly HangfireJobEnqueuer _jobEnqueuer;
         private readonly ILogger<AuthController> _logger;
+        private readonly IFailedRegistrationRepository _failedRegistrationRepository;
 
 
        public AuthController(UserManager<ApplicationUser> userManager, SignInManager<ApplicationUser> signInManager, IUserRepository userRepository, ApplicationDbContext context,
-            IMemberRepository memberRepository, IUnitOfWork unitOfWork, IEmailService emailService, HttpClient httpClient, IConfiguration config, IDepartmentRepository departmentRepository, IBranchRepository branchRepository, IConfiguration configuration, HangfireJobEnqueuer hangfireJobEnqueuer, ILogger<AuthController> logger)
+            IMemberRepository memberRepository, IUnitOfWork unitOfWork, IEmailService emailService, HttpClient httpClient, IConfiguration config, IDepartmentRepository departmentRepository, IBranchRepository branchRepository, IConfiguration configuration, HangfireJobEnqueuer hangfireJobEnqueuer, ILogger<AuthController> logger, IFailedRegistrationRepository failedRegistrationRepository)
         {
             _userManager = userManager;
             _signInManager = signInManager;
@@ -60,6 +61,7 @@ namespace UCS_CRM.Controllers
             _configuration = configuration;
             _jobEnqueuer = hangfireJobEnqueuer;
             _logger = logger;
+            _failedRegistrationRepository = failedRegistrationRepository;
         }
 
         public async Task<IActionResult> Create()
@@ -463,6 +465,18 @@ namespace UCS_CRM.Controllers
 
                 if (dbmember == null)
                 {
+                    // Track failed registration
+                    var failedRegistration = new FailedRegistration
+                    {
+                        NationalId = clientRegisterViewModel.NationalId,
+                        Email = clientRegisterViewModel.Email,
+                        //PhoneNumber = clientRegisterViewModel.PhoneNumber,
+                        AttemptedAt = DateTime.UtcNow
+                    };
+                    
+                    await _failedRegistrationRepository.AddAsync(failedRegistration);
+                    await _unitOfWork.SaveToDataStore();
+
                     ModelState.AddModelError("", "No member was found with the National Id that was provided");
                     return View("Register", clientRegisterViewModel);
                 }
