@@ -97,6 +97,7 @@ builder.Services.AddScoped<IBranchRepository, BranchRepository>();
 builder.Services.AddScoped<IErrorLogRepository, ErrorLogRepository>();
 builder.Services.AddScoped<IErrorLogService, ErrorLogService>();
 builder.Services.AddScoped<ITicketStateTrackerRepository, TicketStateTrackerRepository>();
+builder.Services.AddScoped<IFailedRegistrationRepository, FailedRegistrationRepository>();
 //builder.Services.AddScoped<IPositionRepository, PositionRepository>();
 builder.Services.AddScoped<IFeedbackRepository, FeedbackRepository>();
 builder.Services.AddScoped<IFintechMemberService,FintechMemberService>();

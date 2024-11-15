@@ -463,33 +463,6 @@ namespace UCS_CRM.Controllers
 
                 if (dbmember == null)
                 {
-                    // Notify customer service about failed registration
-                    string emailBody = $@"
-                    <html>
-                    <head>
-                        <style>
-                            @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Montserrat:wght@300;400;700&display=swap');
-                            body {{ font-family: 'Montserrat', sans-serif; line-height: 1.8; color: #333; }}
-                            .container {{ max-width: 600px; padding: 20px; }}
-                            .alert {{ background-color: #fff3cd; border-left: 4px solid #ffc107; padding: 15px; }}
-                        </style>
-                    </head>
-                    <body>
-                        <div class='container'>
-                            <div class='alert'>
-                                <h3>Failed Member Registration Attempt</h3>
-                                <p><strong>National ID:</strong> {clientRegisterViewModel.NationalId}</p>
-                                <p><strong>Email:</strong> {clientRegisterViewModel.Email}</p>
-                                <p><strong>Time:</strong> {DateTime.Now}</p>
-                                <p>A potential member attempted to register but no matching record was found in the database.</p>
-                            </div>
-                        </div>
-                    </body>
-                    </html>";
-
-                    EmailHelper.SendEmail(_jobEnqueuer, _configuration["CustomerServiceEmail"], 
-                        "Failed Member Registration Alert", emailBody);
-
                     ModelState.AddModelError("", "No member was found with the National Id that was provided");
                     return View("Register", clientRegisterViewModel);
                 }

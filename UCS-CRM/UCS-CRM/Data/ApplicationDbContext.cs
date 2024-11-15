@@ -33,6 +33,7 @@ namespace UCS_CRM.Data
         public DbSet<Feedback> Feedbacks { get; set; }
         public DbSet<ErrorLog> ErrorLogs { get; set; }
         public DbSet<Role> Roles { get; set; }
+        public DbSet<FailedRegistration> FailedRegistrations { get; set; }
 
 
         protected override void OnModelCreating(ModelBuilder builder)
