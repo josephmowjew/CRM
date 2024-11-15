@@ -35,6 +35,7 @@ namespace UCS_CRM.Core.Models
         [Display(Name = "Last Name")]
         public string LastName { get; set; }
         [Required]
+        [Display(Name = "Sex")]
         public string Gender { get; set; }
         [StringLength(maximumLength:15, MinimumLength = 10)]
         [Display(Name = "Phone Number")]
