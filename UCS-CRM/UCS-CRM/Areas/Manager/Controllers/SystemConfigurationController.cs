@@ -10,6 +10,7 @@ namespace UCS_CRM.Controllers
 {
    
     [Area("Manager")]
+    [Authorize]
     public class SystemConfigurationController : Controller
     {
         private readonly ApplicationDbContext _context;
@@ -86,13 +87,12 @@ namespace UCS_CRM.Controllers
             return RedirectToAction(nameof(Index));
         }
 
-        [HttpGet]
-        public async Task<IActionResult> GetHolidays(DateTime start, DateTime end)
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> GetHolidays()
         {
             var holidays = await _context.Holidays
-                .Where(h => h.DeletedDate == null &&
-                           ((h.StartDate >= start && h.StartDate <= end) ||
-                            (h.EndDate >= start && h.EndDate <= end)))
+                .Where(h => h.DeletedDate == null)
                 .Select(h => new
                 {
                     h.Id,
@@ -104,7 +104,7 @@ namespace UCS_CRM.Controllers
                 })
                 .ToListAsync();
 
-            return Json(holidays);
+            return Json(new { data = holidays });
         }
     }
 }

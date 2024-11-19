@@ -363,3 +363,4 @@ MigrationBackup/
 FodyWeavers.xsd
 #/UCS-CRM/UCS-CRM/appsettings.json
 /UCS-CRM/UCS-CRM/errorFidxnos.txt
+UCS-CRM/UCS-CRM/appsettings.Development.json
