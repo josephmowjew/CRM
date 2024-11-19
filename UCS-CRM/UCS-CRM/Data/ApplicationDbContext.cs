@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using System.Reflection.Emit;
 using System.Reflection.Metadata;
 using UCS_CRM.Core.Models;
+using UCS_CRM.Models;
 
 namespace UCS_CRM.Data
 {
@@ -33,6 +34,8 @@ namespace UCS_CRM.Data
         public DbSet<Feedback> Feedbacks { get; set; }
         public DbSet<ErrorLog> ErrorLogs { get; set; }
         public DbSet<Role> Roles { get; set; }
+        public DbSet<Holiday> Holidays { get; set; }
+        public DbSet<SystemDateConfiguration> SystemDateConfigurations { get; set; }
 
 
         protected override void OnModelCreating(ModelBuilder builder)

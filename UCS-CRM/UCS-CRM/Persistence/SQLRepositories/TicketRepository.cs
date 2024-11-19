@@ -481,6 +481,7 @@ namespace UCS_CRM.Persistence.SQLRepositories
                 .Include(t => t.TicketComments)
                 .Include(t => t.TicketAttachments)
                 .Include(t => t.TicketPriority)
+                .Include(t => t.Department)
                 .Include(t => t.CreatedBy)
                 .Include(t => t.AssignedTo).ThenInclude(a => a.Department)
                 .Include(t => t.Member).ThenInclude(t => t.User)

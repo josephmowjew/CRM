@@ -55,11 +55,11 @@
                     <p class="text-muted">@Model.Description</p>
                 </div>
                  <div class="col-md-3 col-xs-6 ">
-                    <strong>Department</strong>
+                    <strong>CURRENT HANDLING DEPARTMENT</strong>
                     <br>
                     <p class="text-muted">
                          @{
-                            var department = Model.AssignedTo != null ? Model.AssignedTo.Department.Name : "";
+                            var department = Model.Department != null ? Model.Department.Name : "";
                         } @department
                     </p>
                 </div>

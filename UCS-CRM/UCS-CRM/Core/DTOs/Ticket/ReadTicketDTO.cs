@@ -26,6 +26,7 @@ namespace UCS_CRM.Core.DTOs.Ticket
         public int TicketPriorityId { get; set; }
         [Required]
         public int TicketCategoryId { get; set; }
+        public int? DepartmentId { get; set; }
         [Required]
         public int StateId { get; set; }
         public UCS_CRM.Core.Models.State State { get; set; }
@@ -37,6 +38,8 @@ namespace UCS_CRM.Core.DTOs.Ticket
         public ICollection<TicketAttachment> TicketAttachments { get; set; }
         public ICollection<Models.TicketComment> TicketComments { get; set; }
         public ICollection<Models.TicketEscalation> TicketEscalations { get; set; }
+
+        public UCS_CRM.Core.Models.Department? Department { get; set; }
 
         public string CreatedById { get; set; }
 

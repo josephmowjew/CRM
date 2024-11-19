@@ -54,6 +54,15 @@
                     <br>
                     <p class="text-muted">@Model.Description</p>
                 </div>
+                 <div class="col-md-3 col-xs-6 ">
+                    <strong>CURRENT HANDLING DEPARTMENT</strong>
+                    <br>
+                    <p class="text-muted">
+                         @{
+                            var department = Model.Department != null ? Model.Department.Name : "";
+                        } @department
+                    </p>
+                </div>
             </div>
                 <hr />
                     @if(Model.State.Name.Trim().ToLower() != "closed" && @Model.AssignedToId == ViewBag.CurrentUserId ){
