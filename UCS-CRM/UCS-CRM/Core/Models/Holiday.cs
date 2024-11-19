@@ -18,6 +18,7 @@ public class Holiday
     [Required]
     [Display(Name = "End Date")]
     [DataType(DataType.Date)]
+    [CustomValidation(typeof(Holiday), nameof(ValidateEndDate))]
     public DateTime EndDate { get; set; }
     
     [Display(Name = "Description")]
@@ -29,4 +30,14 @@ public class Holiday
     public DateTime CreatedDate { get; set; } = DateTime.Now;
     public DateTime? UpdatedDate { get; set; }
     public DateTime? DeletedDate { get; set; }
+
+    public static ValidationResult ValidateEndDate(DateTime endDate, ValidationContext context)
+    {
+        var holiday = (Holiday)context.ObjectInstance;
+        if (endDate < holiday.StartDate)
+        {
+            return new ValidationResult("End date must be equal to or later than start date");
+        }
+        return ValidationResult.Success;
+    }
 }
