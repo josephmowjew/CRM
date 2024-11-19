@@ -321,8 +321,6 @@ namespace UCS_CRM.Persistence.SQLRepositories
 
         public async Task SendTicketReminders()
         {
-
-            // Get all active tickets
             List<Ticket> tickets = await this._context.Tickets
                 .Include(t => t.State)
                 .Include(t => t.TicketPriority)
@@ -336,14 +334,17 @@ namespace UCS_CRM.Persistence.SQLRepositories
                             t.State.Name != Lambda.Archived)
                 .ToListAsync();
 
-
-            //loop through the tickets
             foreach (Ticket ticket in tickets)
             {
                 bool hasEscalations = ticket.TicketEscalations.Any();
                 var creationTime = hasEscalations ? ticket.TicketEscalations.Last().CreatedDate : ticket.CreatedDate;
                 var ticketPriorityMaxReponseTimeInHours = ticket.TicketPriority.MaximumResponseTimeHours;
-                var escalationTime = creationTime.AddHours(ticketPriorityMaxReponseTimeInHours);
+                
+                // Calculate next working day after response time
+                var escalationTime = await DateTimeHelper.GetNextWorkingDay(
+                    _context, 
+                    creationTime.AddHours(ticketPriorityMaxReponseTimeInHours)
+                );
 
                 if (DateTime.UtcNow > escalationTime)
                 {

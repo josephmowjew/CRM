@@ -160,6 +160,10 @@ namespace UCS_CRM.Areas.CallCenterOfficer.Controllers
 
                     mappedTicket.CreatedById = claimsIdentitifier.Value;
 
+                    // Get the next working day if current day is a holiday
+                    DateTime effectiveDate = await DateTimeHelper.GetNextWorkingDay(_context, DateTime.Now);
+                    mappedTicket.CreatedDate = effectiveDate;
+
                     
                     //get the last ticket
 
