@@ -76,15 +76,16 @@ namespace UCS_CRM.Controllers
         }
 
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteHoliday(int id)
         {
             var holiday = await _context.Holidays.FindAsync(id);
             if (holiday == null)
-                return NotFound();
+                return Json(new { status = "error", message = "Holiday not found" });
 
             holiday.DeletedDate = DateTime.Now;
             await _context.SaveChangesAsync();
-            return RedirectToAction(nameof(Index));
+            return Json(new { status = "success", message = "Holiday deleted successfully" });
         }
 
         [HttpPost]

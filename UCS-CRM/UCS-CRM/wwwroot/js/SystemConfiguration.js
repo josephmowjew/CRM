@@ -41,12 +41,18 @@ $(function () {
             {
                 data: "startDate",
                 name: "startDate",
-                className: "text-left"
+                className: "text-left",
+                render: function(data) {
+                    return moment(data).format('MMM D, YYYY');
+                }
             },
             {
-                data: "endDate",
+                data: "endDate", 
                 name: "endDate",
-                className: "text-left"
+                className: "text-left",
+                render: function(data) {
+                    return moment(data).format('MMM D, YYYY');
+                }
             },
             {
                 data: "isRecurring",
@@ -57,12 +63,12 @@ $(function () {
                 }
             },
             {
-                data: "id",
+                data: "id", 
                 name: "id",
                 orderable: false,
                 render: function (data) {
-                    return `<a href='#' onclick=EditHoliday('${data}') class='feather icon-edit' title='edit'></a>
-                           <a href='#' onclick=DeleteHoliday('${data}') class='feather icon-trash text-danger' title='delete'></a>`;
+                    return `<a href='#' onclick=EditHoliday('${data}') class='btn btn-sm btn-outline-primary me-2'><i class='feather icon-edit'></i></a>
+                           <a href='#' onclick=DeleteHoliday('${data}') class='btn btn-sm btn-outline-danger'><i class='fas fa-trash'></i></a>`;
                 }
             }
         ],
@@ -112,25 +118,40 @@ function EditHoliday(id) {
 }
 
 function DeleteHoliday(id) {
-    bootbox.confirm("Are you sure you want to delete this holiday?", function (result) {
-        if (result) {
-            $.ajax({
-                url: 'SystemConfiguration/DeleteHoliday/' + id,
-                type: 'POST',
-                headers: {
-                    'RequestVerificationToken': $('input:hidden[name="__RequestVerificationToken"]').val()
-                }
-            }).done(function (data) {
-                if (data.status == "success") {
-                    toastr.success(data.message);
-                } else {
-                    toastr.error(data.message);
-                }
-                datatable.ajax.reload();
-            }).fail(function (response) {
-                toastr.error(response.responseText);
-                datatable.ajax.reload();
-            });
+    bootbox.confirm({
+        message: "Are you sure you want to delete this holiday?",
+        buttons: {
+            confirm: {
+                label: 'Yes',
+                className: 'btn-danger'
+            },
+            cancel: {
+                label: 'No',
+                className: 'btn-secondary'
+            }
+        },
+        callback: function(result) {
+            if (result) {
+                $.ajax({
+                    url: '/Manager/SystemConfiguration/DeleteHoliday/' + id,
+                    type: 'POST',
+                    headers: {
+                        'RequestVerificationToken': $('input:hidden[name="__RequestVerificationToken"]').val()
+                    },
+                    success: function(data) {
+                        if (data.status === "success") {
+                            toastr.success(data.message || "Holiday deleted successfully");
+                            $('#holidaysTable').DataTable().ajax.reload();
+                        } else {
+                            toastr.error(data.message || "Error deleting holiday");
+                        }
+                    },
+                    error: function(xhr, status, error) {
+                        console.error(error);
+                        toastr.error("Error deleting holiday");
+                    }
+                });
+            }
         }
     });
 }
