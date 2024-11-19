@@ -106,5 +106,49 @@ namespace UCS_CRM.Controllers
 
             return Json(new { data = holidays });
         }
+
+        [HttpGet]
+        public async Task<IActionResult> EditHoliday(int id)
+        {
+            var holiday = await _context.Holidays
+                .Where(h => h.DeletedDate == null && h.Id == id)
+                .Select(h => new
+                {
+                    h.Id,
+                    h.Name,
+                    h.StartDate,
+                    h.EndDate,
+                    h.Description,
+                    h.IsRecurring
+                })
+                .FirstOrDefaultAsync();
+
+            if (holiday == null)
+                return NotFound();
+
+            return Json(holiday);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> UpdateHoliday(Holiday holiday)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            var existing = await _context.Holidays.FindAsync(holiday.Id);
+            if (existing == null)
+                return NotFound();
+
+            existing.Name = holiday.Name;
+            existing.StartDate = holiday.StartDate;
+            existing.EndDate = holiday.EndDate;
+            existing.Description = holiday.Description;
+            existing.IsRecurring = holiday.IsRecurring;
+            existing.UpdatedDate = DateTime.Now;
+
+            await _context.SaveChangesAsync();
+            return Json(new { status = "success", message = "Holiday updated successfully" });
+        }
     }
 }

@@ -85,23 +85,29 @@ $(function () {
 function EditHoliday(id) {
     $("#spinner").show();
     $.ajax({
-        url: 'SystemConfiguration/EditHoliday/' + id,
-        type: 'GET'
-    }).done(function (data) {
-        $("#spinner").hide();
-        var description = $("#edit_holiday_modal textarea[name='Description']").val(data.description);
-        var startDate = $("#edit_holiday_modal input[name='StartDate']").val(data.startDate);
-        var endDate = $("#edit_holiday_modal input[name='EndDate']").val(data.endDate);
-        var isRecurring = $("#edit_holiday_modal input[name='IsRecurring']").prop('checked', data.isRecurring);
-        $("#edit_holiday_modal input[name='Id']").val(data.id);
-
-        $("#edit_holiday_modal button[name='update_holiday_btn']").unbind().click(function () { 
-            updateHoliday(id);
-        });
-
-        $("#edit_holiday_modal").modal("show");
-    }).fail(function() {
-        $("#spinner").hide();
+        url: '/Manager/SystemConfiguration/EditHoliday/' + id,
+        type: 'GET',
+        success: function(data) {
+            $("#spinner").hide();
+            $("#edit_holiday_modal input[name='Id']").val(data.id);
+            $("#edit_holiday_modal input[name='Name']").val(data.name);
+            $("#edit_holiday_modal input[name='StartDate']").val(moment(data.startDate).format('YYYY-MM-DD'));
+            $("#edit_holiday_modal input[name='EndDate']").val(moment(data.endDate).format('YYYY-MM-DD'));
+            $("#edit_holiday_modal textarea[name='Description']").val(data.description);
+            $("#edit_holiday_modal input[name='IsRecurring']").prop('checked', data.isRecurring);
+            
+            // Bind click event to update button
+            $("#edit_holiday_modal button[name='update_holiday_btn']").off('click').on('click', function() {
+                updateHoliday(data.id);
+            });
+            
+            $("#edit_holiday_modal").modal('show');
+        },
+        error: function(xhr, status, error) {
+            $("#spinner").hide();
+            toastr.error("Error loading holiday details");
+            console.error(error);
+        }
     });
 }
 
@@ -167,7 +173,7 @@ function updateHoliday(id) {
                 $.validator.unobtrusive.parse(form);
             } else {
                 toastr.success(data.message || "Holiday updated successfully");
-                datatable.ajax.reload();
+                $('#holidaysTable').DataTable().ajax.reload();
                 $("#edit_holiday_modal").modal("hide");
             }
         },
