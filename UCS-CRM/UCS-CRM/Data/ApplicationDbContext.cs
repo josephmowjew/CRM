@@ -36,6 +36,13 @@ namespace UCS_CRM.Data
         public DbSet<Role> Roles { get; set; }
         public DbSet<Holiday> Holidays { get; set; }
         public DbSet<SystemDateConfiguration> SystemDateConfigurations { get; set; }
+        public DbSet<FailedRegistration> FailedRegistrations { get; set; }
+
+        public DbSet<Holiday> Holidays { get; set; }
+        public DbSet<SystemDateConfiguration> SystemDateConfigurations { get; set; }
+
+        public DbSet<FailedRegistration> FailedRegistrations { get; set; }
+
 
 
         protected override void OnModelCreating(ModelBuilder builder)

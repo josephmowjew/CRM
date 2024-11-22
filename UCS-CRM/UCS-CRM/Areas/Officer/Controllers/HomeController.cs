@@ -13,11 +13,16 @@ namespace UCS_CRM.Areas.Clerk.Controllers
     {
         private readonly ITicketRepository _ticketRepository;
         private readonly IUserRepository _userRepository;
+        private readonly IFailedRegistrationRepository _failedRegistrationRepository;
 
-        public HomeController(ITicketRepository ticketRepository, IUserRepository userRepository)
+        public HomeController(
+            ITicketRepository ticketRepository, 
+            IUserRepository userRepository,
+            IFailedRegistrationRepository failedRegistrationRepository)
         {
             _ticketRepository = ticketRepository;
             _userRepository = userRepository;
+            _failedRegistrationRepository = failedRegistrationRepository;
         }
 
         public async Task<IActionResult> Index()
@@ -28,6 +33,7 @@ namespace UCS_CRM.Areas.Clerk.Controllers
             ViewBag.newTicketsCount = await this.CountTicketsByStatus("New");
             ViewBag.resolvedTicketsCount = await this.CountTicketsByStatus("Resolved");
             ViewBag.reopenedTicketsCount = await this.CountTicketsByStatus("Re-opened");
+            ViewBag.failedRegistrationsCount = await _failedRegistrationRepository.GetUnresolvedCountAsync();
             return View();
         }
 

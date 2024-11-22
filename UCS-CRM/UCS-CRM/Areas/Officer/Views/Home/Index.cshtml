@@ -79,6 +79,24 @@
 
                     </div>
                     <!-- Column -->
+                    <div class="col-md-6 col-lg-3 col-xlg-3">
+                        <a asp-area="officer" asp-controller="FailedRegistrations" asp-action="Index" aria-expanded="false">
+                            <div class="card card-hover">
+                                <div class="p-2 rounded bg-light-danger text-center">
+                                    <h1 class="fw-light text-danger">@ViewBag.failedRegistrationsCount</h1>
+                                    <h6 class="text-danger">Failed Registrations</h6>
+                                    @if (ViewBag.failedRegistrationsCount > 0)
+                                    {
+                                        <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+                                            @ViewBag.failedRegistrationsCount
+                                            <span class="visually-hidden">unresolved registrations</span>
+                                        </span>
+                                    }
+                                </div>
+                            </div>
+                        </a>
+                    </div>
+                    <!-- Column -->
                 </div>
 
             </div>
