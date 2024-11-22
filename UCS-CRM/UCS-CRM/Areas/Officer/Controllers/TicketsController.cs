@@ -125,16 +125,11 @@ namespace UCS_CRM.Areas.Clerk.Controllers
         public async Task<ActionResult> Create(CreateTicketDTO createTicketDTO)
         {
             await populateViewBags();
-
             createTicketDTO.DataInvalid = "true";
 
             if (ModelState.IsValid)
             {
-
                 createTicketDTO.DataInvalid = "";
-
-                //search for the default state
-
                 var defaultState = this._stateRepository.DefaultState(Lambda.NewTicket);
 
                 if (defaultState == null)
@@ -147,96 +142,45 @@ namespace UCS_CRM.Areas.Clerk.Controllers
 
                     return PartialView("_CreateTicketPartial", createTicketDTO);
                 }
-                else
-                {
-                    createTicketDTO.StateId = defaultState.Id;
-                }
 
-
-
-
+                createTicketDTO.StateId = defaultState.Id;
                 var mappedTicket = this._mapper.Map<Ticket>(createTicketDTO);
-
-                var ticketPresence = this._ticketRepository.Exists(mappedTicket);
-
-                if (ticketPresence != null)
-                {
-                    createTicketDTO.DataInvalid = "true";
-
-                    ModelState.AddModelError(nameof(createTicketDTO.Title), $"title exists with the name submitted'");
-
-                    await populateViewBags();
-
-                    return PartialView("_CreateTicketPartial", createTicketDTO);
-                }
-
-
-                //save to the database
-
+                
                 try
                 {
                     var userClaims = (ClaimsIdentity)User.Identity;
-
                     var claimsIdentitifier = userClaims.FindFirst(ClaimTypes.NameIdentifier);
-
+                    
+                    // Set effective creation date considering holidays
+                    mappedTicket.CreatedDate = await DateTimeHelper.GetNextWorkingDay(_context, DateTime.UtcNow);
                     mappedTicket.CreatedById = claimsIdentitifier.Value;
 
-
-                    //get the last ticket
-
+                    // Get the last ticket and generate number
                     Ticket lastTicket = await this._ticketRepository.LastTicket();
-
-
-                    //generate ticket number
                     var lastTicketId = lastTicket == null ? 0 : lastTicket.Id;
-
                     string ticketNumber = Lambda.IssuePrefix + (lastTicketId + 1);
+                    mappedTicket.TicketNumber = ticketNumber;
 
+                    // Handle assignment
                     var userId = !string.IsNullOrEmpty(createTicketDTO.AssignedToId)
-                      ? createTicketDTO.AssignedToId
-                      : claimsIdentitifier.Value;
-
+                        ? createTicketDTO.AssignedToId
+                        : claimsIdentitifier.Value;
                     mappedTicket.AssignedToId = userId;
 
                     var assignedToUser = await this._userRepository.FindByIdAsync(userId);
-
                     if (assignedToUser != null)
                     {
-                        // Set the ticket department to the user's department
-                        mappedTicket.DepartmentId = assignedToUser?.DepartmentId;
+                        mappedTicket.DepartmentId = assignedToUser.DepartmentId;
                     }
 
-
-                    //assign the ticket to the user
-
-                    if (!string.IsNullOrEmpty(createTicketDTO.AssignedToId))
-                    {
-                        createTicketDTO.AssignedToId = createTicketDTO.AssignedToId;
-                    }
-                    else
-                    {
-                        mappedTicket.AssignedToId = claimsIdentitifier.Value;
-                    }
-
-                    //assign ticket number to the mapped record
-
-                    mappedTicket.TicketNumber = ticketNumber;
-
-
-
-                    //assign the ticket to the Customer Service and Member Engagement department
-
+                    // Set department if needed
                     var customerServiceMemberEngagementDept = this._departmentRepository.Exists("Customer Service and Member Engagement");
-
                     if (customerServiceMemberEngagementDept != null)
                     {
                         mappedTicket.DepartmentId = customerServiceMemberEngagementDept.Id;
                     }
 
                     this._ticketRepository.Add(mappedTicket);
-
-
-
 
                     //save ticket to the data store
 

@@ -105,9 +105,7 @@ namespace UCS_CRM.Areas.Member.Controllers
         {
             if (ModelState.IsValid)
             {
-
                 createTicketDTO.DataInvalid = "";
-
                 ViewBag.MemberId = createTicketDTO.InitiatorId;
 
                 //search for the default state
@@ -202,9 +200,11 @@ namespace UCS_CRM.Areas.Member.Controllers
                 try
                 {
                     var userClaims = (ClaimsIdentity)User.Identity;
-
                     var claimsIdentitifier = userClaims.FindFirst(ClaimTypes.NameIdentifier);
-
+                    mappedTicket = this._mapper.Map<Ticket>(createTicketDTO);
+                    
+                    // Set effective creation date considering holidays
+                    mappedTicket.CreatedDate = await DateTimeHelper.GetNextWorkingDay(_context, DateTime.UtcNow);
                     mappedTicket.CreatedById = claimsIdentitifier.Value;
 
                     var member = await this._memberRepository.GetMemberByUserId(mappedTicket.CreatedById);
