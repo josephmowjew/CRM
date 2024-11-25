@@ -61,7 +61,8 @@ namespace UCS_CRM.Areas.Admin.Controllers
 
         private async Task SetPendingUsersCount()
         {
-            ViewBag.PendingUsersCount = await _userManager.Users.CountAsync(u => !u.IsApproved);
+            var membersInRole = await _userRepository.GetUsersInRole("Member");
+            ViewBag.PendingUsersCount = membersInRole.Count(u => !u.IsApproved);
         }
 
         [HttpGet]
@@ -69,12 +70,7 @@ namespace UCS_CRM.Areas.Admin.Controllers
         {
             await SetPendingUsersCount();
             await populateViewBags();
-            var pendingUsers = await _userManager.Users
-                .Where(u => !u.IsApproved)
-                .OrderByDescending(u => u.CreatedDate)
-                .ToListAsync();
-
-            return View(pendingUsers);
+            return View();
         }
 
         [HttpPost]
@@ -172,6 +168,10 @@ namespace UCS_CRM.Areas.Admin.Controllers
             }
 
             var applicationUser = CreateApplicationUser(userViewModel);
+            
+            // Auto-approve if not a member
+            applicationUser.IsApproved = userViewModel.RoleName != "Member";
+            
             var deletedUser = await this._userRepository.FindDeletedUserByEmail(applicationUser.Email);
 
             if (deletedUser is not null)
@@ -237,11 +237,16 @@ namespace UCS_CRM.Areas.Admin.Controllers
         {
             string UserNameBody = GenerateUserNameEmailBody(applicationUser);
             string PasswordBody = GeneratePasswordEmailBody();
-            string AccountActivationBody = GenerateAccountActivationEmailBody(applicationUser);
+            
+            // Only send activation email for members who need approval
+            if (!applicationUser.IsApproved)
+            {
+                string AccountActivationBody = GenerateAccountActivationEmailBody(applicationUser);
+                EmailHelper.SendEmail(this._jobEnqueuer, applicationUser.Email, "Account Activation", AccountActivationBody, applicationUser.SecondaryEmail);
+            }
 
             EmailHelper.SendEmail(this._jobEnqueuer, applicationUser.Email, "Login Details", UserNameBody, applicationUser.SecondaryEmail);
             EmailHelper.SendEmail(this._jobEnqueuer, applicationUser.Email, "Login Details", PasswordBody, applicationUser.SecondaryEmail);
-            EmailHelper.SendEmail(this._jobEnqueuer, applicationUser.Email, "Account Activation", AccountActivationBody, applicationUser.SecondaryEmail);
         }
 
         private string GenerateUserNameEmailBody(ApplicationUser applicationUser)
@@ -881,11 +886,14 @@ namespace UCS_CRM.Areas.Admin.Controllers
                 int pageSize = length != null ? Convert.ToInt32(length) : 0;
                 int skip = start != null ? Convert.ToInt32(start) : 0;
 
-                var pendingUsersQuery = _userManager.Users.Where(u => !u.IsApproved);
+                // Get users in Member role who are not approved
+                var membersInRole = await _userRepository.GetUsersInRole("Member");
+                var pendingMembers = membersInRole.Where(u => !u.IsApproved).AsQueryable();
 
+                // Apply search filter
                 if (!string.IsNullOrEmpty(searchValue))
                 {
-                    pendingUsersQuery = pendingUsersQuery.Where(u =>
+                    pendingMembers = pendingMembers.Where(u =>
                         u.FirstName.Contains(searchValue) ||
                         u.LastName.Contains(searchValue) ||
                         u.Email.Contains(searchValue) ||
@@ -894,48 +902,49 @@ namespace UCS_CRM.Areas.Admin.Controllers
                     );
                 }
 
+                // Apply sorting
                 if (!(string.IsNullOrEmpty(sortColumn) && string.IsNullOrEmpty(sortColumnDirection)))
                 {
                     switch (sortColumn)
                     {
                         case "firstName":
-                            pendingUsersQuery = sortColumnDirection == "asc" ? 
-                                pendingUsersQuery.OrderBy(u => u.FirstName) : 
-                                pendingUsersQuery.OrderByDescending(u => u.FirstName);
+                            pendingMembers = sortColumnDirection == "asc" ? 
+                                pendingMembers.OrderBy(u => u.FirstName) : 
+                                pendingMembers.OrderByDescending(u => u.FirstName);
                             break;
                         case "lastName":
-                            pendingUsersQuery = sortColumnDirection == "asc" ? 
-                                pendingUsersQuery.OrderBy(u => u.LastName) : 
-                                pendingUsersQuery.OrderByDescending(u => u.LastName);
+                            pendingMembers = sortColumnDirection == "asc" ? 
+                                pendingMembers.OrderBy(u => u.LastName) : 
+                                pendingMembers.OrderByDescending(u => u.LastName);
                             break;
                         case "email":
-                            pendingUsersQuery = sortColumnDirection == "asc" ? 
-                                pendingUsersQuery.OrderBy(u => u.Email) : 
-                                pendingUsersQuery.OrderByDescending(u => u.Email);
+                            pendingMembers = sortColumnDirection == "asc" ? 
+                                pendingMembers.OrderBy(u => u.Email) : 
+                                pendingMembers.OrderByDescending(u => u.Email);
                             break;
                         case "gender":
-                            pendingUsersQuery = sortColumnDirection == "asc" ? 
-                                pendingUsersQuery.OrderBy(u => u.Gender) : 
-                                pendingUsersQuery.OrderByDescending(u => u.Gender);
+                            pendingMembers = sortColumnDirection == "asc" ? 
+                                pendingMembers.OrderBy(u => u.Gender) : 
+                                pendingMembers.OrderByDescending(u => u.Gender);
                             break;
                         case "phoneNumber":
-                            pendingUsersQuery = sortColumnDirection == "asc" ? 
-                                pendingUsersQuery.OrderBy(u => u.PhoneNumber) : 
-                                pendingUsersQuery.OrderByDescending(u => u.PhoneNumber);
+                            pendingMembers = sortColumnDirection == "asc" ? 
+                                pendingMembers.OrderBy(u => u.PhoneNumber) : 
+                                pendingMembers.OrderByDescending(u => u.PhoneNumber);
                             break;
                         case "createdDate":
-                            pendingUsersQuery = sortColumnDirection == "asc" ? 
-                                pendingUsersQuery.OrderBy(u => u.CreatedDate) : 
-                                pendingUsersQuery.OrderByDescending(u => u.CreatedDate);
+                            pendingMembers = sortColumnDirection == "asc" ? 
+                                pendingMembers.OrderBy(u => u.CreatedDate) : 
+                                pendingMembers.OrderByDescending(u => u.CreatedDate);
                             break;
                         default:
-                            pendingUsersQuery = pendingUsersQuery.OrderByDescending(u => u.CreatedDate);
+                            pendingMembers = pendingMembers.OrderByDescending(u => u.CreatedDate);
                             break;
                     }
                 }
 
-                var recordsTotal = await pendingUsersQuery.CountAsync();
-                var data = await pendingUsersQuery
+                var recordsTotal = pendingMembers.Count();
+                var data = pendingMembers
                     .Skip(skip)
                     .Take(pageSize)
                     .Select(u => new
@@ -948,7 +957,7 @@ namespace UCS_CRM.Areas.Admin.Controllers
                         phoneNumber = u.PhoneNumber,
                         formattedCreatedDate = u.CreatedDate.ToString("dd-MM-yyyy HH:mm")
                     })
-                    .ToListAsync();
+                    .ToList();
 
                 return Json(new
                 {
@@ -960,7 +969,7 @@ namespace UCS_CRM.Areas.Admin.Controllers
             }
             catch (Exception ex)
             {
-                return Json(new { error = "Failed to load pending users data" });
+                return Json(new { error = "Failed to load pending members data" });
             }
         }
 
