@@ -69,6 +69,8 @@ namespace UCS_CRM.Core.Models
 
         public int Pin { get; set; }
 
+        public bool IsApproved { get; set; } = false;
+
         [NotMapped]
         public String FullName
         {   

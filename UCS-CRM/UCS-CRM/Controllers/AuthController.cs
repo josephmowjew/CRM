@@ -90,6 +90,12 @@ namespace UCS_CRM.Controllers
                 return View("Create", loginModel);
             }
 
+            if (!user.IsApproved && !await _userManager.IsInRoleAsync(user, "Administrator"))
+            {
+                ModelState.AddModelError(string.Empty, "Your account is pending administrator approval");
+                return View("Create", loginModel);
+            }
+
             if (user.LastPasswordChangedDate < DateTime.Now.AddDays(-90))
             {
                 var token = await _userManager.GeneratePasswordResetTokenAsync(user);
@@ -535,10 +541,8 @@ namespace UCS_CRM.Controllers
                             <div class='account-info'>
                                 <p>An account has been created for you on UCS SACCO.</p>
                                 <p><strong>Your email:</strong> {user.Email}</p>
+                                <p>Your account is pending administrator approval. You will receive another email once your account has been approved.</p>
                             </div>
-                            <p>
-                                <a href='https://crm.ucssacco.com' class='cta-button' style='color: #ffffff;'>Login to Your Account</a>
-                            </p>
                             <p class='footer'>Thank you for choosing UCS SACCO.</p>
                         </div>
                     </body>

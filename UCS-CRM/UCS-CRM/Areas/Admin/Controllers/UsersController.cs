@@ -14,6 +14,7 @@ using Microsoft.IdentityModel.Tokens;
 using System.Security.Claims;
 using UCS_CRM.Persistence.SQLRepositories;
 using Hangfire;
+using Microsoft.EntityFrameworkCore;
 
 namespace UCS_CRM.Areas.Admin.Controllers
 {
@@ -48,15 +49,92 @@ namespace UCS_CRM.Areas.Admin.Controllers
         }
 
         // GET: UsersController
-        public async Task<ActionResult> Index()
+        [HttpGet]
+        public async Task<IActionResult> Index()
         {
-
-
-            //ViewBag.rolesList = roles;
-
+            var roles = await _roleManager.Roles.ToListAsync();
+            ViewBag.rolesList = roles;
             await populateViewBags();
-
+            await SetPendingUsersCount();
             return View();
+        }
+
+        private async Task SetPendingUsersCount()
+        {
+            ViewBag.PendingUsersCount = await _userManager.Users.CountAsync(u => !u.IsApproved);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> PendingUsers()
+        {
+            await SetPendingUsersCount();
+            await populateViewBags();
+            var pendingUsers = await _userManager.Users
+                .Where(u => !u.IsApproved)
+                .OrderByDescending(u => u.CreatedDate)
+                .ToListAsync();
+
+            return View(pendingUsers);
+        }
+
+        [HttpPost]
+        [Authorize]
+        public async Task<IActionResult> ApproveUser(string userId)
+        {
+            var user = await _userManager.FindByIdAsync(userId);
+            if (user == null)
+            {
+                return Json(new { success = false, message = "User not found" });
+            }
+
+            user.IsApproved = true;
+            var result = await _userManager.UpdateAsync(user);
+
+            if (result.Succeeded)
+            {
+                // Send approval notification email
+                string approvalEmailBody = $@"
+                <html>
+                <head>
+                    <style>
+                        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Montserrat:wght@300;400;700&display=swap');
+                        body {{ font-family: 'Montserrat', sans-serif; line-height: 1.8; color: #333; background-color: #f4f4f4; }}
+                        .container {{ max-width: 600px; margin: 20px auto; padding: 30px; background-color: #ffffff; border-radius: 8px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); }}
+                        .logo {{ text-align: center; margin-bottom: 20px; }}
+                        .logo img {{ max-width: 150px; }}
+                        h2 {{ color: #0056b3; text-align: center; font-weight: 700; font-family: 'Playfair Display', serif; }}
+                        .account-info {{ background-color: #f0f7ff; border-left: 4px solid #0056b3; padding: 15px; margin: 20px 0; }}
+                        .account-info p {{ margin: 5px 0; }}
+                        .cta-button {{ display: inline-block; background-color: #0056b3; color: #ffffff; padding: 12px 24px; text-decoration: none; border-radius: 5px; font-weight: bold; margin-top: 20px; }}
+                        .cta-button:hover {{ background-color: #003d82; }}
+                        .footer {{ margin-top: 30px; text-align: center; font-style: italic; color: #666; }}
+                    </style>
+                </head>
+                <body>
+                    <div class='container'>
+                        <div class='logo'>
+                            <img src='https://crm.ucssacco.com/images/LOGO(1).png' alt='UCS SACCO Logo'>
+                        </div>
+                        <h2>Account Approved</h2>
+                        <div class='account-info'>
+                            <p>Your UCS SACCO account has been approved by an administrator.</p>
+                            <p>You can now log in to your account using your credentials.</p>
+                        </div>
+                        <p>
+                            <a href='https://crm.ucssacco.com' class='cta-button' style='color: #ffffff;'>Login to Your Account</a>
+                        </p>
+                        <p class='footer'>Thank you for choosing UCS SACCO.</p>
+                    </div>
+                </body>
+                </html>";
+
+                EmailHelper.SendEmail(_jobEnqueuer, user.Email, "Account Approved", approvalEmailBody, user.SecondaryEmail);
+                
+                await SetPendingUsersCount();
+                return Json(new { success = true, message = "User approved successfully" });
+            }
+
+            return Json(new { success = false, message = "Failed to approve user" });
         }
 
         private async Task<List<SelectListItem>> GetBranches()
@@ -787,6 +865,103 @@ namespace UCS_CRM.Areas.Admin.Controllers
             int number = generator.Next(100000, 999999);
 
             return number;
+        }
+
+        [HttpPost]
+        public async Task<JsonResult> GetPendingUsers()
+        {
+            try
+            {
+                var draw = Request.Form["draw"].FirstOrDefault();
+                var start = Request.Form["start"].FirstOrDefault();
+                var length = Request.Form["length"].FirstOrDefault();
+                var sortColumn = Request.Form["columns[" + Request.Form["order[0][column]"].FirstOrDefault() + "][name]"].FirstOrDefault();
+                var sortColumnDirection = Request.Form["order[0][dir]"].FirstOrDefault();
+                var searchValue = Request.Form["search[value]"].FirstOrDefault();
+                int pageSize = length != null ? Convert.ToInt32(length) : 0;
+                int skip = start != null ? Convert.ToInt32(start) : 0;
+
+                var pendingUsersQuery = _userManager.Users.Where(u => !u.IsApproved);
+
+                if (!string.IsNullOrEmpty(searchValue))
+                {
+                    pendingUsersQuery = pendingUsersQuery.Where(u =>
+                        u.FirstName.Contains(searchValue) ||
+                        u.LastName.Contains(searchValue) ||
+                        u.Email.Contains(searchValue) ||
+                        u.PhoneNumber.Contains(searchValue) ||
+                        u.Gender.Contains(searchValue)
+                    );
+                }
+
+                if (!(string.IsNullOrEmpty(sortColumn) && string.IsNullOrEmpty(sortColumnDirection)))
+                {
+                    switch (sortColumn)
+                    {
+                        case "firstName":
+                            pendingUsersQuery = sortColumnDirection == "asc" ? 
+                                pendingUsersQuery.OrderBy(u => u.FirstName) : 
+                                pendingUsersQuery.OrderByDescending(u => u.FirstName);
+                            break;
+                        case "lastName":
+                            pendingUsersQuery = sortColumnDirection == "asc" ? 
+                                pendingUsersQuery.OrderBy(u => u.LastName) : 
+                                pendingUsersQuery.OrderByDescending(u => u.LastName);
+                            break;
+                        case "email":
+                            pendingUsersQuery = sortColumnDirection == "asc" ? 
+                                pendingUsersQuery.OrderBy(u => u.Email) : 
+                                pendingUsersQuery.OrderByDescending(u => u.Email);
+                            break;
+                        case "gender":
+                            pendingUsersQuery = sortColumnDirection == "asc" ? 
+                                pendingUsersQuery.OrderBy(u => u.Gender) : 
+                                pendingUsersQuery.OrderByDescending(u => u.Gender);
+                            break;
+                        case "phoneNumber":
+                            pendingUsersQuery = sortColumnDirection == "asc" ? 
+                                pendingUsersQuery.OrderBy(u => u.PhoneNumber) : 
+                                pendingUsersQuery.OrderByDescending(u => u.PhoneNumber);
+                            break;
+                        case "createdDate":
+                            pendingUsersQuery = sortColumnDirection == "asc" ? 
+                                pendingUsersQuery.OrderBy(u => u.CreatedDate) : 
+                                pendingUsersQuery.OrderByDescending(u => u.CreatedDate);
+                            break;
+                        default:
+                            pendingUsersQuery = pendingUsersQuery.OrderByDescending(u => u.CreatedDate);
+                            break;
+                    }
+                }
+
+                var recordsTotal = await pendingUsersQuery.CountAsync();
+                var data = await pendingUsersQuery
+                    .Skip(skip)
+                    .Take(pageSize)
+                    .Select(u => new
+                    {
+                        id = u.Id,
+                        formattedFirstName = u.FirstName,
+                        formattedLastName = u.LastName,
+                        formattedGender = u.Gender,
+                        email = u.Email,
+                        phoneNumber = u.PhoneNumber,
+                        formattedCreatedDate = u.CreatedDate.ToString("dd-MM-yyyy HH:mm")
+                    })
+                    .ToListAsync();
+
+                return Json(new
+                {
+                    draw = draw,
+                    recordsFiltered = recordsTotal,
+                    recordsTotal = recordsTotal,
+                    data = data
+                });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { error = "Failed to load pending users data" });
+            }
         }
 
     }

@@ -1,0 +1,171 @@
+@using Microsoft.Extensions.Configuration
+@inject IConfiguration Configuration
+@{
+    var host = Configuration.GetSection("HostingSettings")["Host"];
+    var path = Configuration.GetSection("HostingSettings")["path"];
+    var protocol = Configuration.GetSection("HostingSettings")["Protocol"];
+}
+@{
+    ViewData["Title"] = "Pending Users";
+    Layout = "~/Areas/Admin/Views/shared/_Layout.cshtml";
+}
+
+<div class="card">
+    <div class="card-header">
+        <h4 class="text-center text-uppercase">Pending User Approvals</h4>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-bordered" id="pendingUsersTable">
+                <thead>
+                    <tr>
+                        <th>First Name</th>
+                        <th>Surname</th>
+                        <th>Gender</th>
+                        <th>Email</th>
+                        <th>Contact</th>
+                        <th>Date Added</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        var datatable;
+        $(document).ready(function () {
+            datatable = $('#pendingUsersTable').DataTable({
+                "processing": true,
+                "serverSide": true,
+                "order": [[5, "desc"]], // Sort by Date Added by default
+                ajax: {
+                    url: 'GetPendingUsers',
+                    type: 'post',
+                    datatype: 'Json'
+                },
+                columnDefs: [
+                    {
+                        defaultContent: "",
+                        targets: "_all",
+                        'orderable': true
+                    }
+                ],
+                columns: [
+                    {
+                        data: "formattedFirstName",
+                        name: "firstName",
+                        className: "text-left",
+                        orderable: true
+                    },
+                    {
+                        data: "formattedLastName",
+                        name: "lastName",
+                        className: "text-left",
+                        orderable: true
+                    },
+                    {
+                        data: "formattedGender",
+                        name: "gender",
+                        className: "text-left",
+                        orderable: true
+                    },
+                    {
+                        data: "email",
+                        name: "email",
+                        className: "text-left",
+                        orderable: true
+                    },
+                    {
+                        data: "phoneNumber",
+                        name: "phoneNumber",
+                        className: "text-left",
+                        orderable: true
+                    },
+                    {
+                        data: "formattedCreatedDate",
+                        name: "createdDate",
+                        className: "text-left",
+                        orderable: true
+                    },
+                    {
+                        data: "id",
+                        name: "id",
+                        orderable: false,
+                        render: function (data) {
+                            return `<button class="btn btn-success btn-sm approve-user" data-user-id="${data}">
+                                        <i class="fas fa-check"></i> Approve
+                                    </button>`;
+                        }
+                    }
+                ],
+                responsive: true,
+                "autoWidth": false
+            });
+
+            // Handle approve button click
+            $('#pendingUsersTable').on('click', '.approve-user', function() {
+                var btn = $(this);
+                var userId = btn.data('user-id');
+                var row = btn.closest('tr');
+                var userData = datatable.row(row).data();
+                
+                bootbox.dialog({
+                    title: '<i class="fas fa-user-check"></i> Approve User',
+                    message: `<div class="text-center">
+                                <p>Are you sure you want to approve this user?</p>
+                                <div class="alert alert-info">
+                                    <strong>User Details:</strong><br>
+                                    Name: ${userData.formattedFirstName} ${userData.formattedLastName}<br>
+                                    Email: ${userData.email}<br>
+                                    Registration Date: ${userData.formattedCreatedDate}
+                                </div>
+                            </div>`,
+                    buttons: {
+                        cancel: {
+                            label: '<i class="fas fa-times"></i> Cancel',
+                            className: 'btn-secondary'
+                        },
+                        approve: {
+                            label: '<i class="fas fa-check"></i> Approve',
+                            className: 'btn-success',
+                            callback: function() {
+                                $.ajax({
+                                    url: '@Url.Action("ApproveUser")',
+                                    type: 'POST',
+                                    data: { userId: userId },
+                                    success: function(response) {
+                                        if (response.success) {
+                                            toastr.success(response.message);
+                                            datatable.row(row).remove().draw();
+                                            
+                                            // Update the pending count in sidebar
+                                            var badgeElement = $('.sidebar-link[href*="PendingUsers"] .badge');
+                                            var currentCount = parseInt(badgeElement.text() || '0');
+                                            if (currentCount > 1) {
+                                                badgeElement.text(currentCount - 1);
+                                            } else {
+                                                badgeElement.remove();
+                                            }
+                                        } else {
+                                            toastr.error(response.message);
+                                        }
+                                    },
+                                    error: function() {
+                                        toastr.error('An error occurred while approving the user.');
+                                    }
+                                });
+                            }
+                        }
+                    },
+                    centerVertical: true,
+                    closeButton: false
+                });
+            });
+        });
+    </script>
+} 

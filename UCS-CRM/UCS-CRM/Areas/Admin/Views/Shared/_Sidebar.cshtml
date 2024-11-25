@@ -21,6 +21,21 @@
 
                 <li class="sidebar-item">
                     <a class="sidebar-link waves-effect waves-dark sidebar-link"
+                       asp-area="Admin" asp-controller="users" asp-action="PendingUsers" aria-expanded="false">
+                        <i class="mdi me-2 mdi-account-multiple-plus"></i>
+                        <span class="hide-menu">Pending Users</span>
+                        @{
+                            var pendingCount = ViewBag.PendingUsersCount ?? 0;
+                            if (pendingCount > 0)
+                            {
+                                <span class="badge rounded-pill bg-info ms-auto">@pendingCount</span>
+                            }
+                        }
+                    </a>
+                </li>
+
+                <li class="sidebar-item">
+                    <a class="sidebar-link waves-effect waves-dark sidebar-link"
                        asp-area="Admin" asp-controller="roles" asp-action="Index" aria-expanded="false">
                         <i class="mdi me-2 mdi-account-network"></i><span class="hide-menu">Roles</span>
                     </a>
