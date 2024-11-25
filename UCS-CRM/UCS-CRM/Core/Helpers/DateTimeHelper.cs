@@ -98,4 +98,34 @@ public static class DateTimeHelper
 
         return totalWorkingTime;
     }
+
+    public static async Task<bool> IsWithinBusinessHours(ApplicationDbContext context, DateTime time)
+    {
+        var workingHours = await context.WorkingHours.FirstOrDefaultAsync(w => !w.DeletedDate.HasValue);
+        
+        if (workingHours == null)
+        {
+            // Use default working hours if not configured
+            workingHours = new WorkingHours
+            {
+                StartTime = new TimeSpan(8, 0, 0),
+                EndTime = new TimeSpan(17, 0, 0),
+                BreakStartTime = new TimeSpan(12, 0, 0),
+                BreakEndTime = new TimeSpan(13, 0, 0)
+            };
+        }
+
+        // Adjust to local time if stored in UTC
+        var localTime = time.Kind == DateTimeKind.Utc ? time.ToLocalTime() : time;
+        
+        // Check if it's a weekend
+        if (localTime.DayOfWeek == DayOfWeek.Saturday || localTime.DayOfWeek == DayOfWeek.Sunday)
+            return false;
+        
+        var currentTime = localTime.TimeOfDay;
+        
+        // Check if within working hours and not during break
+        return (currentTime >= workingHours.StartTime && currentTime <= workingHours.EndTime) &&
+               !(currentTime >= workingHours.BreakStartTime && currentTime <= workingHours.BreakEndTime);
+    }
 }
