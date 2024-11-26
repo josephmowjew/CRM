@@ -1377,7 +1377,6 @@ namespace UCS_CRM.Persistence.SQLRepositories
                 if (string.IsNullOrEmpty(@params.SearchTerm))
                 {
                     var query = this._context.Tickets
-                     .OrderBy(t => t.CreatedDate)
                      .Include(t => t.Member)
                      .Include(t => t.AssignedTo)
                      .Include(t => t.TicketAttachments)
@@ -1388,9 +1387,9 @@ namespace UCS_CRM.Persistence.SQLRepositories
                      .Include(t => t.InitiatorUser)
                      .Include(t => t.InitiatorUser!.Department)
                      .Include(t => t.InitiatorMember)
-                     .OrderByDescending(t => t.CreatedDate) // Changed to OrderByDescending
+                     .OrderByDescending(t => t.CreatedDate)
                      .Where(t => t.Status != Lambda.Deleted && t.MemberId == memberId)
-                     .AsQueryable(); // Convert to IQueryable for dynamic ordering
+                     .AsQueryable();
 
                     if (!string.IsNullOrEmpty(stateName))
                     {
@@ -1411,8 +1410,6 @@ namespace UCS_CRM.Persistence.SQLRepositories
                 }
                 else
                 {
-
-
                     var query =  this._context.Tickets
                                                    .Where(t => t.Status != Lambda.Deleted && t.MemberId == memberId)
                                                    .Include(t => t.AssignedTo)
@@ -1423,7 +1420,7 @@ namespace UCS_CRM.Persistence.SQLRepositories
                                                    .Include(t => t.InitiatorUser)
                                                    .Include(t => t.InitiatorUser!.Department)
                                                    .Include(t => t.InitiatorMember)
-                                                   .OrderByDescending(t => t.CreatedDate) // Changed to OrderByDescending
+                                                   .OrderByDescending(t => t.CreatedDate)
                                                    .Where(t =>
                                                                t.Title.ToLower().Trim().Contains(@params.SearchTerm.ToLower()) ||
                                                                t.Description.ToLower().Trim().Contains(@params.SearchTerm.ToLower()) ||
@@ -1431,7 +1428,6 @@ namespace UCS_CRM.Persistence.SQLRepositories
                                                                t.Member.FirstName.ToLower().Trim().Contains(@params.SearchTerm.ToLower()) ||
                                                                t.Member.LastName.ToLower().Trim().Contains(@params.SearchTerm.ToLower()) ||
                                                                t.TicketCategory.Name.ToLower().Trim().Contains(@params.SearchTerm.ToLower()))
-                                                   .OrderBy(t => t.CreatedDate)
                                                    .Skip(@params.Skip)
                                                    .Take(@params.Take);
 
@@ -1440,11 +1436,9 @@ namespace UCS_CRM.Persistence.SQLRepositories
                         query = query.Where(t => t.State.Name.Trim().ToLower() == stateName.Trim().ToLower());
                     }
 
-
                     if (string.IsNullOrEmpty(@params.SortColum) && !string.IsNullOrEmpty(@params.SortDirection))
                     {
                         query = query.AsQueryable().OrderBy(@params.SortColum + " " + @params.SortDirection);
-
                     }
 
                     return await query.ToListAsync();

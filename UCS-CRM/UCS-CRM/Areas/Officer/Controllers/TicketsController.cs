@@ -135,11 +135,8 @@ namespace UCS_CRM.Areas.Clerk.Controllers
                 if (defaultState == null)
                 {
                     createTicketDTO.DataInvalid = "true";
-
                     ModelState.AddModelError("", "Sorry but the application failed to log your ticket because of a missing state, please contact administrator for assistance");
-
                     await populateViewBags();
-
                     return PartialView("_CreateTicketPartial", createTicketDTO);
                 }
 
@@ -154,6 +151,84 @@ namespace UCS_CRM.Areas.Clerk.Controllers
                     // Set effective creation date considering holidays
                     mappedTicket.CreatedDate = await DateTimeHelper.GetNextWorkingDay(_context, DateTime.UtcNow);
                     mappedTicket.CreatedById = claimsIdentitifier.Value;
+
+                    // Add automatic out-of-hours response if needed
+                    bool isWithinBusinessHours = await DateTimeHelper.IsWithinBusinessHours(_context, DateTime.Now);
+                    if (!isWithinBusinessHours)
+                    {
+                        var workingHours = await _context.WorkingHours.FirstOrDefaultAsync(w => !w.DeletedDate.HasValue);
+                        var startTime = workingHours?.StartTime ?? new TimeSpan(8, 0, 0);
+                        var endTime = workingHours?.EndTime ?? new TimeSpan(17, 0, 0);
+                        
+                        var outOfHoursComment = new TicketComment
+                        {
+                            Comment = $@"This ticket was received outside of our business hours. 
+                                        It will be processed on {mappedTicket.CreatedDate:dddd, MMMM dd, yyyy} at {startTime:hh\\:mm tt}.
+                                        Our business hours are Monday to Friday, {startTime:hh\\:mm tt} to {endTime:hh\\:mm tt} EAT, 
+                                        excluding public holidays and lunch break.",
+                            TicketId = mappedTicket.Id,
+                            CreatedById = claimsIdentitifier.Value,
+                            CreatedDate = DateTime.Now
+                        };
+                        
+                        _ticketCommentRepository.Add(outOfHoursComment);
+
+                        // Send out-of-hours notification email
+                        var notificationRecipient = await this._memberRepository.GetMemberAsync(createTicketDTO.MemberId);
+                        
+                        if (notificationRecipient != null && !string.IsNullOrEmpty(notificationRecipient.Email))
+                        {
+                            string outOfHoursEmailBody = $@"
+                            <html>
+                            <head>
+                                <style>
+                                    @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Montserrat:wght@300;400;700&display=swap');
+                                    body {{ font-family: 'Montserrat', sans-serif; line-height: 1.8; color: #333; background-color: #f4f4f4; }}
+                                    .container {{ max-width: 600px; margin: 20px auto; padding: 30px; background-color: #ffffff; border-radius: 8px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); }}
+                                    .logo {{ text-align: center; margin-bottom: 20px; }}
+                                    .logo img {{ max-width: 150px; }}
+                                    h2 {{ color: #0056b3; text-align: center; font-weight: 700; font-family: 'Playfair Display', serif; }}
+                                    .ticket-info {{ background-color: #f0f7ff; border-left: 4px solid #0056b3; padding: 15px; margin: 20px 0; }}
+                                    .processing-info {{ background-color: #fff3cd; border-left: 4px solid #ffc107; padding: 15px; margin: 20px 0; }}
+                                    .footer {{ margin-top: 30px; text-align: center; font-style: italic; color: #666; }}
+                                </style>
+                            </head>
+                            <body>
+                                <div class='container'>
+                                    <div class='logo'>
+                                        <img src='https://crm.ucssacco.com/images/LOGO(1).png' alt='UCS SACCO Logo'>
+                                    </div>
+                                    <h2>Ticket Received Outside Business Hours</h2>
+                                    <p>Hello {notificationRecipient.FullName},</p>
+                                    <div class='ticket-info'>
+                                        <p><strong>Ticket Number:</strong> {mappedTicket.TicketNumber}</p>
+                                        <p><strong>Title:</strong> {mappedTicket.Title}</p>
+                                    </div>
+                                    <div class='processing-info'>
+                                        <p>Your ticket was received outside our business hours and will be processed on:</p>
+                                        <p><strong>Date:</strong> {mappedTicket.CreatedDate:dddd, MMMM dd, yyyy}</p>
+                                        <p><strong>Time:</strong> {startTime:hh\\:mm tt}</p>
+                                        <p><strong>Our Business Hours:</strong></p>
+                                        <p>Monday to Friday, {startTime:hh\\:mm tt} to {endTime:hh\\:mm tt} EAT</p>
+                                        <p>(Excluding public holidays and lunch break)</p>
+                                    </div>
+                                    <p style='text-align: center;'>
+                                        <a href='{Lambda.systemLinkClean}' class='cta-button' style='color: #ffffff;'>View Ticket Details</a>
+                                    </p>
+                                    <p class='footer'>Thank you for your patience. We will process your request during our next business hours.</p>
+                                </div>
+                            </body>
+                            </html>";
+
+                            EmailHelper.SendEmail(
+                                this._jobEnqueuer, 
+                                notificationRecipient.Email, 
+                                $"Ticket {mappedTicket.TicketNumber} - Out of Hours Notification", 
+                                outOfHoursEmailBody, 
+                                notificationRecipient?.User?.SecondaryEmail
+                            );
+                        }
+                    }
 
                     // Get the last ticket and generate number
                     Ticket lastTicket = await this._ticketRepository.LastTicket();
@@ -653,11 +728,9 @@ namespace UCS_CRM.Areas.Clerk.Controllers
 
             //map the results to a read DTO
 
-            var mappedResult = this._mapper.Map<List<ReadTicketDTO>>(result);
-
-            var cleanResult = new List<ReadTicketDTO>();
-
-           
+            var mappedResult = this._mapper.Map<List<ReadTicketDTO>>(result)
+                                .OrderByDescending(t => t.CreatedDate)
+                                .ToList();
             return Json(new { draw = draw, recordsFiltered = resultTotal, recordsTotal = resultTotal, data = mappedResult });
 
 
