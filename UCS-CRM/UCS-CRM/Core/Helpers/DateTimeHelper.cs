@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using UCS_CRM.Data;
+using UCS_CRM.Core.Models;
 
 namespace UCS_CRM.Core.Helpers;
 
@@ -8,18 +9,45 @@ public static class DateTimeHelper
     public static async Task<DateTime> GetNextWorkingDay(ApplicationDbContext context, DateTime date)
     {
         var nextDay = date;
-        bool isWorkingDay = false;
+        var workingHours = await context.WorkingHours.FirstOrDefaultAsync(w => !w.DeletedDate.HasValue);
+        
+        if (workingHours == null)
+        {
+            // Default working hours if not configured
+            workingHours = new WorkingHours
+            {
+                StartTime = new TimeSpan(8, 0, 0),
+                EndTime = new TimeSpan(17, 0, 0),
+                BreakStartTime = new TimeSpan(12, 0, 0),
+                BreakEndTime = new TimeSpan(13, 0, 0)
+            };
+        }
 
+        bool isWorkingDay = false;
         while (!isWorkingDay)
         {
-            // Check if it's weekend
             if (nextDay.DayOfWeek == DayOfWeek.Saturday)
             {
-                nextDay = nextDay.AddDays(2); // Skip to Monday
+                nextDay = nextDay.AddDays(2).Date + workingHours.StartTime;
             }
             else if (nextDay.DayOfWeek == DayOfWeek.Sunday)
             {
-                nextDay = nextDay.AddDays(1); // Skip to Monday
+                nextDay = nextDay.AddDays(1).Date + workingHours.StartTime;
+            }
+
+            var currentTime = nextDay.TimeOfDay;
+            
+            // If outside working hours, move to next working day start
+            if (currentTime < workingHours.StartTime || currentTime > workingHours.EndTime)
+            {
+                nextDay = nextDay.AddDays(1).Date + workingHours.StartTime;
+                continue;
+            }
+
+            // If during lunch break, move to after break
+            if (currentTime >= workingHours.BreakStartTime && currentTime <= workingHours.BreakEndTime)
+            {
+                nextDay = nextDay.Date + workingHours.BreakEndTime;
             }
 
             // Check if it's a holiday
@@ -39,10 +67,65 @@ public static class DateTimeHelper
             }
             else
             {
-                nextDay = nextDay.AddDays(1);
+                nextDay = nextDay.AddDays(1).Date + workingHours.StartTime;
             }
         }
 
         return nextDay;
+    }
+
+    public static async Task<TimeSpan> CalculateWorkingHours(ApplicationDbContext context, DateTime startDate, DateTime endDate)
+    {
+        var workingHours = await context.WorkingHours.FirstOrDefaultAsync(w => !w.DeletedDate.HasValue);
+        var totalWorkingTime = TimeSpan.Zero;
+        var currentDate = startDate;
+
+        while (currentDate <= endDate)
+        {
+            if (currentDate.DayOfWeek != DayOfWeek.Saturday && 
+                currentDate.DayOfWeek != DayOfWeek.Sunday)
+            {
+                var workStart = workingHours.StartTime;
+                var workEnd = workingHours.EndTime;
+                var breakStart = workingHours.BreakStartTime;
+                var breakEnd = workingHours.BreakEndTime;
+
+                var dailyWorkingTime = (workEnd - workStart) - (breakEnd - breakStart);
+                totalWorkingTime += dailyWorkingTime;
+            }
+            currentDate = currentDate.AddDays(1);
+        }
+
+        return totalWorkingTime;
+    }
+
+    public static async Task<bool> IsWithinBusinessHours(ApplicationDbContext context, DateTime time)
+    {
+        var workingHours = await context.WorkingHours.FirstOrDefaultAsync(w => !w.DeletedDate.HasValue);
+        
+        if (workingHours == null)
+        {
+            // Use default working hours if not configured
+            workingHours = new WorkingHours
+            {
+                StartTime = new TimeSpan(8, 0, 0),
+                EndTime = new TimeSpan(17, 0, 0),
+                BreakStartTime = new TimeSpan(12, 0, 0),
+                BreakEndTime = new TimeSpan(13, 0, 0)
+            };
+        }
+
+        // Adjust to local time if stored in UTC
+        var localTime = time.Kind == DateTimeKind.Utc ? time.ToLocalTime() : time;
+        
+        // Check if it's a weekend
+        if (localTime.DayOfWeek == DayOfWeek.Saturday || localTime.DayOfWeek == DayOfWeek.Sunday)
+            return false;
+        
+        var currentTime = localTime.TimeOfDay;
+        
+        // Check if within working hours and not during break
+        return (currentTime >= workingHours.StartTime && currentTime <= workingHours.EndTime) &&
+               !(currentTime >= workingHours.BreakStartTime && currentTime <= workingHours.BreakEndTime);
     }
 }

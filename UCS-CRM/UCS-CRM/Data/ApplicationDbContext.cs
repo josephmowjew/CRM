@@ -37,7 +37,7 @@ namespace UCS_CRM.Data
         public DbSet<Holiday> Holidays { get; set; }
         public DbSet<SystemDateConfiguration> SystemDateConfigurations { get; set; }
         public DbSet<FailedRegistration> FailedRegistrations { get; set; }
-
+        public DbSet<WorkingHours> WorkingHours { get; set; }
 
 
 

@@ -37,7 +37,7 @@ namespace UCS_CRM.Areas.Admin.Controllers
         {
             ViewBag.departmentsCounts = await this.CountDepartmentsAvailable();
             ViewBag.statesCount = await this.CountStatesAvailable();
-            ViewBag.branchesCount = await this.CountStatesAvailable();
+            ViewBag.branchesCount = await this.CountBranchesAvailable();
             ViewBag.usersCount = await this.CountUsersAvailable();
             ViewBag.membersCount = await this.CountMembersAvailable();
             return View();
