@@ -468,6 +468,31 @@ namespace UCS_CRM.Areas.CallCenterOfficer.Controllers
             return PartialView("_CreateTicketPartial", createTicketDTO);
         }
 
+        [HttpGet]
+        public async Task<IActionResult> FetchAssigneesByDepartment(int departmentId)
+        {
+            try 
+            {
+                var staff = await _userRepository.GetUsersByDepartment(departmentId);
+                
+                var assignees = staff
+                    .Where(u => u.Email.ToLower().Trim() != User.Identity.Name.ToLower().Trim())
+                    .Select(user => new 
+                    { 
+                        value = user.Id.ToString(),
+                        text = user.FullName 
+                    })
+                    .ToList();
+
+                return Json(assignees);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error fetching assignees for department {DepartmentId}", departmentId);
+                return BadRequest("Failed to fetch assignees");
+            }
+        }
+
         // GET: TicketsController/Edit/5
         public async Task<ActionResult> Edit(int id)
         {
