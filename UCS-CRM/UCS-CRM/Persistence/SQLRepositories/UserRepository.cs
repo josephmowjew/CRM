@@ -567,8 +567,10 @@ namespace UCS_CRM.Persistence.SQLRepositories
 
         public async Task<List<ApplicationUser>> GetUsersByDepartmentAsync(int departmentId)
         {
-
-            return await this._context.Users.Include(u => u.Department).Where(u => u.Department.Id == departmentId).ToListAsync();
+            return await this._context.Users
+                .Include(u => u.Department)
+                .Where(u => u.Department.Id == departmentId && u.DeletedDate == null)
+                .ToListAsync();
         }
 
     }
