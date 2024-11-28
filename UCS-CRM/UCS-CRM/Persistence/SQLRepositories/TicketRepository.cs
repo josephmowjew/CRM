@@ -329,6 +329,7 @@ namespace UCS_CRM.Persistence.SQLRepositories
                 .ThenInclude(u => u.Department)
                 .Where(t => t.Status != Lambda.Deleted &&
                             t.AssignedTo != null &&
+                            t.AssignedTo.Status != Lambda.Deleted && // Add check for deleted users
                             t.State.Name != Lambda.Closed &&
                             t.State.Name != Lambda.Resolved &&
                             t.State.Name != Lambda.Archived)
