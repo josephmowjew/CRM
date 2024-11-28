@@ -44,9 +44,10 @@ namespace UCS_CRM.Areas.SeniorManager.Controllers
         private readonly IConfiguration _configuration;
         private readonly ILogger<TicketsController> _logger;
         private readonly ApplicationDbContext _context;
+        private readonly IDepartmentRepository _departmentRepository;
         public TicketsController(ITicketRepository ticketRepository, IMapper mapper, IUnitOfWork unitOfWork, 
             ITicketCategoryRepository ticketCategoryRepository, IStateRepository stateRepository, ITicketPriorityRepository priorityRepository,IEmailAddressRepository addressRepository,
-            IWebHostEnvironment env, ITicketCommentRepository ticketCommentRepository, IUserRepository userRepository, IMemberRepository memberRepository, ITicketEscalationRepository ticketEscalationRepository, ITicketStateTrackerRepository ticketStateTrackerRepository, IEmailService emailService, HangfireJobEnqueuer jobEnqueuer, ApplicationDbContext context, IConfiguration configuration, ILogger<TicketsController> logger)
+            IWebHostEnvironment env, ITicketCommentRepository ticketCommentRepository, IUserRepository userRepository, IMemberRepository memberRepository, ITicketEscalationRepository ticketEscalationRepository, ITicketStateTrackerRepository ticketStateTrackerRepository, IEmailService emailService, HangfireJobEnqueuer jobEnqueuer, ApplicationDbContext context, IConfiguration configuration, ILogger<TicketsController> logger, IDepartmentRepository departmentRepository)
         {
             _ticketRepository = ticketRepository;
             _mapper = mapper;
@@ -66,12 +67,13 @@ namespace UCS_CRM.Areas.SeniorManager.Controllers
             _context = context;
             _configuration = configuration;
             _logger = logger;
+            _departmentRepository = departmentRepository;
         }
 
         // GET: TicketsController
         public async Task<ActionResult> Index(string type = "")
         {
-            //await populateViewBags();
+            await populateViewBags();
             ViewBag.type = type;
             return View();
         }
@@ -305,7 +307,271 @@ namespace UCS_CRM.Areas.SeniorManager.Controllers
             return Json(new { status = "error", message = "ticket could not be found from the system" });
         }
 
-               [HttpPost]
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<ActionResult> Create(CreateTicketDTO createTicketDTO)
+        {
+            await populateViewBags();
+            createTicketDTO.DataInvalid = "true";
+
+            if (ModelState.IsValid)
+            {
+                createTicketDTO.DataInvalid = "";
+                var defaultState = this._stateRepository.DefaultState(Lambda.NewTicket);
+
+                if (defaultState == null)
+                {
+                    createTicketDTO.DataInvalid = "true";
+                    ModelState.AddModelError("", "Sorry but the application failed to log your ticket because of a missing state, please contact administrator for assistance");
+                    await populateViewBags();
+                    return PartialView("_CreateTicketPartial", createTicketDTO);
+                }
+
+                createTicketDTO.StateId = defaultState.Id;
+                var mappedTicket = this._mapper.Map<Ticket>(createTicketDTO);
+                
+                try
+                {
+                    var userClaims = (ClaimsIdentity)User.Identity;
+                    var claimsIdentitifier = userClaims.FindFirst(ClaimTypes.NameIdentifier);
+                    
+                    // Set effective creation date considering holidays
+                    mappedTicket.CreatedDate = await DateTimeHelper.GetNextWorkingDay(_context, DateTime.UtcNow);
+                    mappedTicket.CreatedById = claimsIdentitifier.Value;
+
+                    // Add automatic out-of-hours response if needed
+                    bool isWithinBusinessHours = await DateTimeHelper.IsWithinBusinessHours(_context, DateTime.Now);
+                    if (!isWithinBusinessHours)
+                    {
+                        var workingHours = await _context.WorkingHours.FirstOrDefaultAsync(w => !w.DeletedDate.HasValue);
+                        var startTime = workingHours?.StartTime ?? new TimeSpan(8, 0, 0);
+                        var endTime = workingHours?.EndTime ?? new TimeSpan(17, 0, 0);
+                        
+                        var outOfHoursComment = new TicketComment
+                        {
+                            Comment = $@"This ticket was received outside of our business hours. 
+                                        It will be processed on {mappedTicket.CreatedDate:dddd, MMMM dd, yyyy} at {startTime:hh\\:mm tt}.
+                                        Our business hours are Monday to Friday, {startTime:hh\\:mm tt} to {endTime:hh\\:mm tt} EAT, 
+                                        excluding public holidays and lunch break.",
+                            TicketId = mappedTicket.Id,
+                            CreatedById = claimsIdentitifier.Value,
+                            CreatedDate = DateTime.Now
+                        };
+                        
+                        _ticketCommentRepository.Add(outOfHoursComment);
+                    }
+
+                    // Get the last ticket and generate number
+                    Ticket lastTicket = await this._ticketRepository.LastTicket();
+                    var lastTicketId = lastTicket == null ? 0 : lastTicket.Id;
+                    string ticketNumber = Lambda.IssuePrefix + (lastTicketId + 1);
+                    mappedTicket.TicketNumber = ticketNumber;
+
+                    // Handle assignment
+                    var userId = !string.IsNullOrEmpty(createTicketDTO.AssignedToId)
+                        ? createTicketDTO.AssignedToId
+                        : claimsIdentitifier.Value;
+                    mappedTicket.AssignedToId = userId;
+
+                    var assignedToUser = await this._userRepository.FindByIdAsync(userId);
+                    if (assignedToUser != null)
+                    {
+                        mappedTicket.DepartmentId = assignedToUser.DepartmentId;
+                    }
+
+                    this._ticketRepository.Add(mappedTicket);
+                    await this._unitOfWork.SaveToDataStore();
+
+                    if (createTicketDTO.Attachments.Count > 0)
+                    {
+                        var attachments = createTicketDTO.Attachments.Select(async attachment =>
+                        {
+                            string fileUrl = await Lambda.UploadFile(attachment, this._env.WebRootPath);
+                            return new TicketAttachment()
+                            {
+                                FileName = attachment.FileName,
+                                TicketId = mappedTicket.Id,
+                                Url = fileUrl
+                            };
+                        });
+
+                        var mappedAttachments = await Task.WhenAll(attachments);
+                        mappedTicket.TicketAttachments.AddRange(mappedAttachments);
+                        await this._unitOfWork.SaveToDataStore();
+                    }
+
+                    // Send notifications
+                    await SendTicketCreationNotifications(mappedTicket, createTicketDTO.MemberId);
+
+                    return PartialView("_CreateTicketPartial", createTicketDTO);
+                }
+                catch (DbUpdateException ex)
+                {
+                    createTicketDTO.DataInvalid = "true";
+                    ModelState.AddModelError(string.Empty, ex.InnerException.Message);
+                    await populateViewBags();
+                    return PartialView("_CreateTicketPartial", createTicketDTO);
+                }
+                catch (Exception ex)
+                {
+                    createTicketDTO.DataInvalid = "true";
+                    ModelState.AddModelError(string.Empty, ex.Message);
+                    await populateViewBags();
+                    return PartialView("_CreateTicketPartial", createTicketDTO);
+                }
+            }
+
+            return PartialView("_CreateTicketPartial", createTicketDTO);
+        }
+
+        private async Task SendTicketCreationNotifications(Ticket ticket, int memberId)
+        {
+            var memberRecord = await this._memberRepository.GetMemberAsync(memberId);
+            if (memberRecord?.Email != null)
+            {
+                string emailBody = $@"
+                <html>
+                <head>
+                    <style>
+                        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Montserrat:wght@300;400;700&display=swap');
+                        body {{ font-family: 'Montserrat', sans-serif; line-height: 1.8; color: #333; background-color: #f4f4f4; }}
+                        .container {{ max-width: 600px; margin: 20px auto; padding: 30px; background-color: #ffffff; border-radius: 8px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); }}
+                        .logo {{ text-align: center; margin-bottom: 20px; }}
+                        .logo img {{ max-width: 150px; }}
+                        h2 {{ color: #0056b3; text-align: center; font-weight: 700; font-family: 'Playfair Display', serif; }}
+                        .ticket-info {{ background-color: #f0f7ff; border-left: 4px solid #0056b3; padding: 15px; margin: 20px 0; }}
+                        .cta-button {{ display: inline-block; background-color: #0056b3; color: #ffffff; padding: 12px 24px; text-decoration: none; border-radius: 5px; font-weight: bold; margin-top: 20px; }}
+                        .cta-button:hover {{ background-color: #003d82; }}
+                        .footer {{ margin-top: 30px; text-align: center; font-style: italic; color: #666; }}
+                    </style>
+                </head>
+                <body>
+                    <div class='container'>
+                        <div class='logo'>
+                            <img src='https://crm.ucssacco.com/images/LOGO(1).png' alt='UCS SACCO Logo'>
+                        </div>
+                        <h2>New Ticket Created</h2>
+                        <p>Hello {memberRecord.FullName},</p>
+                        <div class='ticket-info'>
+                            <p>A new ticket has been created in the system for you with the following details:</p>
+                            <p><strong>Ticket Number:</strong> {ticket.TicketNumber}</p>
+                            <p><strong>Title:</strong> {ticket.Title}</p>
+                        </div>
+                        <p>You can check the details by clicking the button below:</p>
+                        <p style='text-align: center;'>
+                            <a href='{Lambda.systemLinkClean}' class='cta-button' style='color: #ffffff;'>View Ticket Details</a>
+                        </p>
+                        <p class='footer'>Thank you for using our service.</p>
+                    </div>
+                </body>
+                </html>";
+
+                EmailHelper.SendEmail(this._jobEnqueuer, memberRecord.Email, "Ticket Creation", emailBody, null);
+
+                // Send notification to support team
+                var supportEmail = await _addressRepository.GetEmailAddressByOwner(Lambda.Support);
+                if (supportEmail != null)
+                {
+                    string supportEmailBody = $@"
+                    <html>
+                    <head>
+                        <style>
+                            @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Montserrat:wght@300;400;700&display=swap');
+                            body {{ font-family: 'Montserrat', sans-serif; line-height: 1.8; color: #333; background-color: #f4f4f4; }}
+                            .container {{ max-width: 600px; margin: 20px auto; padding: 30px; background-color: #ffffff; border-radius: 8px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); }}
+                            .logo {{ text-align: center; margin-bottom: 20px; }}
+                            .logo img {{ max-width: 150px; }}
+                            h2 {{ color: #0056b3; text-align: center; font-weight: 700; font-family: 'Playfair Display', serif; }}
+                            .ticket-info {{ background-color: #f0f7ff; border-left: 4px solid #0056b3; padding: 15px; margin: 20px 0; }}
+                            .ticket-info p {{ margin: 5px 0; }}
+                            .cta-button {{ display: inline-block; background-color: #0056b3; color: #ffffff; padding: 12px 24px; text-decoration: none; border-radius: 5px; font-weight: bold; margin-top: 20px; }}
+                            .cta-button:hover {{ background-color: #003d82; }}
+                            .footer {{ margin-top: 30px; text-align: center; font-style: italic; color: #666; }}
+                        </style>
+                    </head>
+                    <body>
+                        <div class='container'>
+                            <div class='logo'>
+                                <img src='https://crm.ucssacco.com/images/LOGO(1).png' alt='UCS SACCO Logo'>
+                            </div>
+                            <h2>New Ticket Created</h2>
+                            <p>Hello Support Team,</p>
+                            <div class='ticket-info'>
+                                <p>A new ticket has been created in the system for a member. Here are the details:</p>
+                                <p><strong>Member Name:</strong> {memberRecord.FullName}</p>
+                                <p><strong>Ticket Number:</strong> {ticket.TicketNumber}</p>
+                                <p><strong>Title:</strong> {ticket.Title}</p>
+                            </div>
+                            <p>Please review and take necessary action as soon as possible.</p>
+                            <p style='text-align: center;'>
+                                <a href='{Lambda.systemLinkClean}' class='cta-button' style='color: #ffffff;'>View Ticket Details</a>
+                            </p>
+                            <p class='footer'>Thank you for your prompt attention to this matter.</p>
+                        </div>
+                    </body>
+                    </html>";
+                    this._jobEnqueuer.EnqueueEmailJob(supportEmail.Email, "New Ticket Creation", supportEmailBody);
+                }
+
+                // Add notification for assigned user
+                if (ticket.AssignedTo != null)
+                {
+                    string assignmentEmailBody = $@"
+                    <html>
+                    <head>
+                        <style>
+                            @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Montserrat:wght@300;400;700&display=swap');
+                            body {{ font-family: 'Montserrat', sans-serif; line-height: 1.8; color: #333; background-color: #f4f4f4; }}
+                            .container {{ max-width: 600px; margin: 20px auto; padding: 30px; background-color: #ffffff; border-radius: 8px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); }}
+                            .logo {{ text-align: center; margin-bottom: 20px; }}
+                            .logo img {{ max-width: 150px; }}
+                            h2 {{ color: #0056b3; text-align: center; font-weight: 700; font-family: 'Playfair Display', serif; }}
+                            .ticket-info {{ background-color: #f0f7ff; border-left: 4px solid #0056b3; padding: 15px; margin: 20px 0; }}
+                            .ticket-info p {{ margin: 5px 0; }}
+                            .cta-button {{ display: inline-block; background-color: #0056b3; color: #ffffff; padding: 12px 24px; text-decoration: none; border-radius: 5px; font-weight: bold; margin-top: 20px; }}
+                            .cta-button:hover {{ background-color: #003d82; }}
+                            .footer {{ margin-top: 30px; text-align: center; font-style: italic; color: #666; }}
+                        </style>
+                    </head>
+                    <body>
+                        <div class='container'>
+                            <div class='logo'>
+                                <img src='https://crm.ucssacco.com/images/LOGO(1).png' alt='UCS SACCO Logo'>
+                            </div>
+                            <h2>New Ticket Assignment</h2>
+                            <p>Hello {ticket.AssignedTo.FullName},</p>
+                            <div class='ticket-info'>
+                                <p>A new ticket has been assigned to you. Here are the details:</p>
+                                <p><strong>Ticket Number:</strong> {ticket.TicketNumber}</p>
+                                <p><strong>Title:</strong> {ticket.Title}</p>
+                                <p><strong>Member:</strong> {memberRecord?.FullName}</p>
+                            </div>
+                            <p>Your prompt attention to this matter is crucial. Please review and take necessary action as soon as possible.</p>
+                            <p style='text-align: center;'>
+                                <a href='{Lambda.systemLinkClean}' class='cta-button' style='color: #ffffff;'>View Ticket Details</a>
+                            </p>
+                            <p class='footer'>Thank you for your dedication to excellent service. If you have any questions, please don't hesitate to reach out to your supervisor.</p>
+                        </div>
+                    </body>
+                    </html>";
+
+                    try
+                    {
+                        EmailHelper.SendEmail(
+                            this._jobEnqueuer,
+                            ticket.AssignedTo.Email,
+                            $"New Ticket Assignment - {ticket.TicketNumber}",
+                            assignmentEmailBody,
+                            ticket.AssignedTo.SecondaryEmail
+                        );
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogError($"Failed to send assignment email for ticket {ticket.TicketNumber}: {ex.Message}");
+                    }
+                }
+            }
+        }
         public async Task<ActionResult> CloseTicket(CloseTicketDTO closeTicketDTO)
         {
             closeTicketDTO.DataInvalid = "true";
@@ -859,15 +1125,99 @@ namespace UCS_CRM.Areas.SeniorManager.Controllers
 
         }
 
+         private async Task<List<SelectListItem>> GetDepartments()
+        {
+            var departmentsList = new List<SelectListItem>();
+
+            string currentUserDepartment = string.Empty;
+
+            //fetch all departments from the system.
+
+            var dbDepartments = await this._departmentRepository.GetDepartments();
+
+            //get the current department of the logged in clerk
+
+            ApplicationUser? currentUser = await this._userRepository.FindByEmailsync(User.Identity.Name);
+
+            if (currentUser != null)
+            {
+                currentUserDepartment = currentUser.Department.Name;
+            }
+
+            //filter the department list from the database to remove the current user department
+           var filteredDepartmentList = dbDepartments.ToList();
+
+            filteredDepartmentList.ForEach(d =>
+            {
+                departmentsList.Add(new SelectListItem() { Text = d.Name, Value = d.Id.ToString() });
+            });
+
+            return departmentsList;
+        }
+
+
+
         private async Task populateViewBags()
         {
             ViewBag.priorities = await GetTicketPriorities();
             ViewBag.categories = await GetTicketCategories();
             ViewBag.assignees = await GetAssignees();
             ViewBag.states = await GetTicketStates();
-            ViewBag.members = await GetMembers();
+            ViewBag.departments = await GetDepartments();
         }
 
+       
+         [HttpGet]
+        public async Task<ActionResult> FetchAssigneesByDepartment(int departmentId)
+        {
+            var department = await this._departmentRepository.GetDepartment(departmentId);
+            if (department == null)
+                return BadRequest();
+
+            var staff = department.Users
+                .Where(u => u.Email.Trim().ToLower() != User.Identity.Name.Trim().ToLower())
+                .Select(user => new SelectListItem { 
+                    Text = user.FullName, 
+                    Value = user.Id.ToString() 
+                })
+                .ToList();
+
+            return Json(staff);
+        }
+
+         [HttpGet]
+        public async Task<IActionResult> GetInitiators(string type, string search, int page = 1)
+        {
+            int pageSize = 10;
+            CursorParams cursorParams = new CursorParams
+            {
+                Skip = (page - 1) * pageSize,
+                Take = pageSize,
+                SearchTerm = search
+            };
+
+            if (type == "User")
+            {
+                var users = await _userRepository.GetUsersWithRoles(cursorParams);
+                var totalCount = await _userRepository.TotalFilteredUsersCount(cursorParams);
+                var results = users.Select(u => new { id = u.Id, text = $"{u.FirstName} {u.LastName}" });
+                return Json(new { 
+                    results = results,
+                    pagination = new { more = (page * pageSize) < totalCount }
+                });
+            }
+            else if (type == "Member")
+            {
+                var members = await _memberRepository.GetMembers(cursorParams);
+                var totalCount = await _memberRepository.TotalFilteredMembersCount(cursorParams);
+                var results = members.Select(m => new { id = m.Id.ToString(), text = $"{m.FirstName} {m.LastName}" });
+                return Json(new { 
+                    results = results,
+                    pagination = new { more = (page * pageSize) < totalCount }
+                });
+            }
+            return Json(new { results = new List<object>(), pagination = new { more = false } });
+        }
 
 
     }

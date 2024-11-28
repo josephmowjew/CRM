@@ -17,7 +17,21 @@
     <link href="~/css/custom_select.css" rel="stylesheet" />
 }
 
+<p>
+   
+         <!-- Button trigger modal -->
+        <button type="button" class="btn btn-info" data-bs-toggle="modal" data-bs-target="#create_ticket_modal">
+            Create A Ticket
+        </button>
+  
+   
+    
 
+</p>
+
+<div class="modal fade" id="create_ticket_modal" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <partial name="_CreateTicketPartial" />
+</div>
 <div class="modal fade" id="edit_ticket_modal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
     <partial name="_EditTicketPartial" />
 </div>

@@ -15,6 +15,7 @@ namespace UCS_CRM.Areas.Admin.Controllers
         private readonly IStateRepository _stateRepository;
         private readonly IBranchRepository _branchRepository;
         private readonly IMemberRepository _memberRepository;
+        private readonly IFailedRegistrationRepository _failedRegistrationRepository;
         
 
         public HomeController(ITicketRepository ticketRepository,
@@ -22,7 +23,8 @@ namespace UCS_CRM.Areas.Admin.Controllers
                               IDepartmentRepository departmentRepository,
                               IStateRepository stateRepository,
                               IBranchRepository branchRepository,
-                              IMemberRepository memberRepository)
+                              IMemberRepository memberRepository,
+                              IFailedRegistrationRepository failedRegistrationRepository)
         {
             this._ticketRepository = ticketRepository;
             this._userRepository = userRepository;
@@ -30,7 +32,7 @@ namespace UCS_CRM.Areas.Admin.Controllers
             this._stateRepository = stateRepository;
             this._branchRepository = branchRepository;
             this._memberRepository = memberRepository;
-
+            this._failedRegistrationRepository = failedRegistrationRepository;
         }
 
         public async Task<IActionResult> Index()
@@ -40,6 +42,7 @@ namespace UCS_CRM.Areas.Admin.Controllers
             ViewBag.branchesCount = await this.CountBranchesAvailable();
             ViewBag.usersCount = await this.CountUsersAvailable();
             ViewBag.membersCount = await this.CountMembersAvailable();
+            ViewBag.failedRegistrationsCount = await _failedRegistrationRepository.GetUnresolvedCountAsync();
             return View();
         }
 
