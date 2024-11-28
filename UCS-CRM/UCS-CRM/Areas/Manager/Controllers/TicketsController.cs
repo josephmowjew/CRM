@@ -44,10 +44,11 @@ namespace UCS_CRM.Areas.Manager.Controllers
         private readonly ILogger<TicketsController> _logger;
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly IEmailAddressRepository _addressRepository;
+        private readonly IErrorLogService _errorLogService;
 
         public TicketsController(ITicketRepository ticketRepository, IMapper mapper, IUnitOfWork unitOfWork, 
             ITicketCategoryRepository ticketCategoryRepository, IStateRepository stateRepository, ITicketPriorityRepository priorityRepository,
-            IWebHostEnvironment env, ITicketCommentRepository ticketCommentRepository, IUserRepository userRepository, IMemberRepository memberRepository, ITicketEscalationRepository ticketEscalationRepository, ITicketStateTrackerRepository ticketStateTrackerRepository, IEmailService emailService, HangfireJobEnqueuer jobEnqueuer, ApplicationDbContext context, IConfiguration configuration, ILogger<TicketsController> logger, IDepartmentRepository departmentRepository, UserManager<ApplicationUser> userManager, IEmailAddressRepository addressRepository)
+            IWebHostEnvironment env, ITicketCommentRepository ticketCommentRepository, IUserRepository userRepository, IMemberRepository memberRepository, ITicketEscalationRepository ticketEscalationRepository, ITicketStateTrackerRepository ticketStateTrackerRepository, IEmailService emailService, HangfireJobEnqueuer jobEnqueuer, ApplicationDbContext context, IConfiguration configuration, ILogger<TicketsController> logger, IDepartmentRepository departmentRepository, UserManager<ApplicationUser> userManager, IEmailAddressRepository addressRepository, IErrorLogService errorLogService)
         {
             _ticketRepository = ticketRepository;
             _mapper = mapper;
@@ -69,6 +70,7 @@ namespace UCS_CRM.Areas.Manager.Controllers
             _departmentRepository = departmentRepository;
             _userManager = userManager;
             _addressRepository = addressRepository;
+            _errorLogService = errorLogService;
         }
 
         // GET: TicketsController
@@ -1016,24 +1018,7 @@ namespace UCS_CRM.Areas.Manager.Controllers
             //ViewBag.members = await GetMembers();
         }
 
-        [HttpGet]
-        public async Task<ActionResult> FetchAssigneesByDepartment(int departmentId)
-        {
-            var department = await _departmentRepository.GetDepartment(departmentId);
-            if (department == null)
-                return BadRequest();
-
-            var staff = department.Users
-                .Where(u => u.Email.Trim().ToLower() != User.Identity.Name.Trim().ToLower())
-                .Select(user => new SelectListItem { 
-                    Text = user.FullName, 
-                    Value = user.Id.ToString() 
-                })
-                .ToList();
-
-            return Json(staff);
-        }
-
+       
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<ActionResult> Create(CreateTicketDTO createTicketDTO)
@@ -1150,6 +1135,74 @@ namespace UCS_CRM.Areas.Manager.Controllers
 
             return PartialView("_CreateTicketPartial", createTicketDTO);
         }
+
+        [HttpGet]
+        public async Task<IActionResult> FetchAssigneesByDepartment(int departmentId)
+        {
+            try 
+            {
+                var staff = await _userRepository.GetUsersByDepartment(departmentId);
+                
+                var assignees = staff
+                    .Where(u => u.Email.ToLower().Trim() != User.Identity.Name.ToLower().Trim())
+                    .Select(user => new 
+                    { 
+                        value = user.Id.ToString(),
+                        text = user.FullName 
+                    })
+                    .ToList();
+
+                return Json(assignees);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error fetching assignees for department {DepartmentId}", departmentId);
+                return BadRequest("Failed to fetch assignees");
+            }
+        }
+
+        [HttpGet]
+        public async Task<ActionResult> FetchReassignList(int selectedValue)
+        {
+            try
+            {
+                var currentUserEmail = User?.Identity?.Name;
+                if (string.IsNullOrEmpty(currentUserEmail))
+                {
+                    _logger.LogWarning("Current user email is null when fetching reassign list");
+                    return BadRequest("User not authenticated");
+                }
+
+                var department = await _departmentRepository.GetDepartment(selectedValue);
+                if (department == null)
+                {
+                    _logger.LogWarning("Department not found: {DepartmentId}", selectedValue);
+                    return BadRequest("Department not found");
+                }
+
+                var staff = department.Users
+                    .Where(u => !string.IsNullOrEmpty(u.Email) && 
+                               !string.IsNullOrEmpty(u.FullName) &&
+                               !u.Email.Equals(currentUserEmail, StringComparison.OrdinalIgnoreCase))
+                    .Select(user => new SelectListItem 
+                    { 
+                        Text = user.FullName,
+                        Value = user.Id.ToString()
+                    })
+                    .ToList();
+
+                return Json(staff);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error fetching reassign list for department {DepartmentId}", selectedValue);
+                await _errorLogService.LogErrorAsync(ex);
+                return BadRequest("Failed to fetch reassign list");
+            }
+        }
+
+
+
 
         private async Task SendTicketCreationNotifications(Ticket ticket, int memberId)
         {

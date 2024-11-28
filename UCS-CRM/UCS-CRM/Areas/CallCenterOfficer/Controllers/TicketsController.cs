@@ -51,9 +51,11 @@ namespace UCS_CRM.Areas.CallCenterOfficer.Controllers
         private readonly ApplicationDbContext _context;
         private readonly ILogger<TicketsController> _logger;
         private readonly IConfiguration _configuration;
+        private readonly IErrorLogService _errorLogService;
+
         public TicketsController(ITicketRepository ticketRepository, IMapper mapper, IUnitOfWork unitOfWork, IEmailService emailService, IEmailAddressRepository addressRepository,
             ITicketCategoryRepository ticketCategoryRepository, IStateRepository stateRepository, ITicketPriorityRepository priorityRepository,
-            IWebHostEnvironment env, ITicketCommentRepository ticketCommentRepository, IUserRepository userRepository, IMemberRepository memberRepository, ITicketEscalationRepository ticketEscalationRepository, IDepartmentRepository departmentRepository, ITicketStateTrackerRepository ticketStateTrackerRepository, UserManager<ApplicationUser> userManager, HangfireJobEnqueuer jobEnqueuer, ApplicationDbContext context, ILogger<TicketsController> logger, IConfiguration configuration)
+            IWebHostEnvironment env, ITicketCommentRepository ticketCommentRepository, IUserRepository userRepository, IMemberRepository memberRepository, ITicketEscalationRepository ticketEscalationRepository, IDepartmentRepository departmentRepository, ITicketStateTrackerRepository ticketStateTrackerRepository, UserManager<ApplicationUser> userManager, HangfireJobEnqueuer jobEnqueuer, ApplicationDbContext context, ILogger<TicketsController> logger, IConfiguration configuration, IErrorLogService errorLogService)
         {
             _ticketRepository = ticketRepository;
             _mapper = mapper;
@@ -75,6 +77,7 @@ namespace UCS_CRM.Areas.CallCenterOfficer.Controllers
             _context = context;
             _logger = logger;
             _configuration = configuration;
+            _errorLogService = errorLogService;
         }
 
         // GET: TicketsController
@@ -901,74 +904,74 @@ namespace UCS_CRM.Areas.CallCenterOfficer.Controllers
 
         }
 
-[HttpPost]
-public async Task<ActionResult> CloseTicket(CloseTicketDTO closeTicketDTO)
-{
-    closeTicketDTO.DataInvalid = "true";
-
-    if (ModelState.IsValid)
-    {
-        var ticket = await this._ticketRepository.GetTicket(closeTicketDTO.Id);
-
-        if (ticket == null)
+        [HttpPost]
+        public async Task<ActionResult> CloseTicket(CloseTicketDTO closeTicketDTO)
         {
-            return Json(new { status = "error", message = "Could not close ticket, try again or contact administrator if the error persists" });
-        }
-        else
-        {
-            var userClaims = (ClaimsIdentity)User.Identity;
-            var claimsIdentifier = userClaims.FindFirst(ClaimTypes.NameIdentifier);
-            var currentUserId = claimsIdentifier.Value;
+            closeTicketDTO.DataInvalid = "true";
 
-            string currentState = ticket.State.Name;
-
-            // Check if the current user is assigned to the ticket or is the creator
-            if (ticket.AssignedToId == currentUserId || ticket.CreatedById == currentUserId)
+            if (ModelState.IsValid)
             {
-                var closeState = this._stateRepository.Exists(Lambda.Closed);
+                var ticket = await this._ticketRepository.GetTicket(closeTicketDTO.Id);
 
-                ticket.StateId = closeState.Id;
-                ticket.ClosedDate = DateTime.UtcNow;
-
-                // Detach the existing entry if it is not in the Modified state
-                var existingEntry = _context.ChangeTracker.Entries<Ticket>().FirstOrDefault(e => e.Entity.Id == ticket.Id);
-                if (existingEntry != null && existingEntry.State != EntityState.Modified)
+                if (ticket == null)
                 {
-                    existingEntry.State = EntityState.Detached;
+                    return Json(new { status = "error", message = "Could not close ticket, try again or contact administrator if the error persists" });
                 }
+                else
+                {
+                    var userClaims = (ClaimsIdentity)User.Identity;
+                    var claimsIdentifier = userClaims.FindFirst(ClaimTypes.NameIdentifier);
+                    var currentUserId = claimsIdentifier.Value;
 
-                // Attach the ticket to the context and set its state to Modified
-                this._context.Entry(ticket).State = EntityState.Modified;
+                    string currentState = ticket.State.Name;
 
-                await this._unitOfWork.SaveToDataStore();
+                    // Check if the current user is assigned to the ticket or is the creator
+                    if (ticket.AssignedToId == currentUserId || ticket.CreatedById == currentUserId)
+                    {
+                        var closeState = this._stateRepository.Exists(Lambda.Closed);
 
-                UCS_CRM.Core.Models.TicketStateTracker ticketStateTracker = new TicketStateTracker() 
-                { 
-                    CreatedById = currentUserId, 
-                    TicketId = ticket.Id, 
-                    NewState = ticket.State.Name, 
-                    PreviousState = currentState, 
-                    Reason = closeTicketDTO.Reason 
-                };
+                        ticket.StateId = closeState.Id;
+                        ticket.ClosedDate = DateTime.UtcNow;
 
-                this._ticketStateTrackerRepository.Add(ticketStateTracker);
+                        // Detach the existing entry if it is not in the Modified state
+                        var existingEntry = _context.ChangeTracker.Entries<Ticket>().FirstOrDefault(e => e.Entity.Id == ticket.Id);
+                        if (existingEntry != null && existingEntry.State != EntityState.Modified)
+                        {
+                            existingEntry.State = EntityState.Detached;
+                        }
 
-                await this._unitOfWork.SaveToDataStore();
+                        // Attach the ticket to the context and set its state to Modified
+                        this._context.Entry(ticket).State = EntityState.Modified;
 
-                // Send alert emails
-                await this._ticketRepository.SendTicketClosureNotifications(ticket, closeTicketDTO.Reason);
+                        await this._unitOfWork.SaveToDataStore();
 
-                return Json(new { status = "success", message = $"Ticket {ticket.TicketNumber} has been closed successfully" });
+                        UCS_CRM.Core.Models.TicketStateTracker ticketStateTracker = new TicketStateTracker() 
+                        { 
+                            CreatedById = currentUserId, 
+                            TicketId = ticket.Id, 
+                            NewState = ticket.State.Name, 
+                            PreviousState = currentState, 
+                            Reason = closeTicketDTO.Reason 
+                        };
+
+                        this._ticketStateTrackerRepository.Add(ticketStateTracker);
+
+                        await this._unitOfWork.SaveToDataStore();
+
+                        // Send alert emails
+                        await this._ticketRepository.SendTicketClosureNotifications(ticket, closeTicketDTO.Reason);
+
+                        return Json(new { status = "success", message = $"Ticket {ticket.TicketNumber} has been closed successfully" });
+                    }
+                    else
+                    {
+                        return Json(new { status = "error", message = $"Could not close ticket as you are not currently assigned to it or the creator" });
+                    }
+                }
             }
-            else
-            {
-                return Json(new { status = "error", message = $"Could not close ticket as you are not currently assigned to it or the creator" });
-            }
+
+            return Json(new { status = "error", message = "Could not close ticket" });
         }
-    }
-
-    return Json(new { status = "error", message = "Could not close ticket" });
-}
         public async Task<ActionResult> Details(int id)
         {
             var ticketDB = await this._ticketRepository.GetTicket(id);
@@ -1076,30 +1079,41 @@ public async Task<ActionResult> CloseTicket(CloseTicketDTO closeTicketDTO)
         [HttpGet]
         public async Task<ActionResult> FetchReassignList(int selectedValue)
         {
-
-            //get users from the selected value department
-
-            Department? department = await this._departmentRepository.GetDepartment(selectedValue);
-
-            if (department == null)
-                return BadRequest();
-
-
-            //var users = await this._userRepository.GetUsers();
-
-            var staff = department.Users.Where(u => u.Email.Trim().ToLower() != User.Identity.Name.Trim().ToLower()).ToList();
-
-            var usersList = new List<SelectListItem>();
-
-
-            //usersList.Add(new SelectListItem() { Text = "---- Select Assignee -------", Value = "" });
-
-            staff.ForEach(user =>
+            try
             {
-                usersList.Add(new SelectListItem() { Text = user.FullName, Value = user.Id.ToString() });
-            });
+                var currentUserEmail = User?.Identity?.Name;
+                if (string.IsNullOrEmpty(currentUserEmail))
+                {
+                    _logger.LogWarning("Current user email is null when fetching reassign list");
+                    return BadRequest("User not authenticated");
+                }
 
-            return Json(usersList);
+                var department = await _departmentRepository.GetDepartment(selectedValue);
+                if (department == null)
+                {
+                    _logger.LogWarning("Department not found: {DepartmentId}", selectedValue);
+                    return BadRequest("Department not found");
+                }
+
+                var staff = department.Users
+                    .Where(u => !string.IsNullOrEmpty(u.Email) && 
+                               !string.IsNullOrEmpty(u.FullName) &&
+                               !u.Email.Equals(currentUserEmail, StringComparison.OrdinalIgnoreCase))
+                    .Select(user => new SelectListItem 
+                    { 
+                        Text = user.FullName,
+                        Value = user.Id.ToString()
+                    })
+                    .ToList();
+
+                return Json(staff);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error fetching reassign list for department {DepartmentId}", selectedValue);
+                await _errorLogService.LogErrorAsync(ex);
+                return BadRequest("Failed to fetch reassign list");
+            }
         }
 
         [HttpGet]
