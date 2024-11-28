@@ -1096,30 +1096,41 @@ namespace UCS_CRM.Areas.Clerk.Controllers
         [HttpGet]
         public async Task<ActionResult> FetchReassignList(int selectedValue)
         {
-
-            //get users from the selected value department
-
-            Department? department = await this._departmentRepository.GetDepartment(selectedValue);
-
-            if (department == null)
-                return BadRequest();
-
-
-            //var users = await this._userRepository.GetUsers();
-
-            var staff = department.Users.Where(u => u.Email.Trim().ToLower() != User.Identity.Name.Trim().ToLower()).ToList();
-
-            var usersList = new List<SelectListItem>();
-
-
-            //usersList.Add(new SelectListItem() { Text = "---- Select Assignee -------", Value = "" });
-
-            staff.ForEach(user =>
+            try
             {
-                usersList.Add(new SelectListItem() { Text = user.FullName, Value = user.Id.ToString() });
-            });
+                var currentUserEmail = User?.Identity?.Name;
+                if (string.IsNullOrEmpty(currentUserEmail))
+                {
+                    _logger.LogWarning("Current user email is null when fetching reassign list");
+                    return BadRequest("User not authenticated");
+                }
 
-            return Json(usersList);
+                var department = await _departmentRepository.GetDepartment(selectedValue);
+                if (department == null)
+                {
+                    _logger.LogWarning("Department not found: {DepartmentId}", selectedValue);
+                    return BadRequest("Department not found");
+                }
+
+                var staff = department.Users
+                    .Where(u => !string.IsNullOrEmpty(u.Email) && 
+                               !string.IsNullOrEmpty(u.FullName) &&
+                               !u.Email.Equals(currentUserEmail, StringComparison.OrdinalIgnoreCase))
+                    .Select(user => new SelectListItem 
+                    { 
+                        Text = user.FullName,
+                        Value = user.Id.ToString()
+                    })
+                    .ToList();
+
+                return Json(staff);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error fetching reassign list for department {DepartmentId}", selectedValue);
+                await _errorLogService.LogErrorAsync(ex);
+                return BadRequest("Failed to fetch reassign list");
+            }
         }
 
         [HttpGet]
