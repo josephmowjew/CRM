@@ -1454,32 +1454,6 @@ namespace UCS_CRM.Areas.ictofficer.Controllers
             return Json(new { results = new List<object>(), pagination = new { more = false } });
         }
 
-        [HttpGet]
-        [Area("Officer")]
-        public async Task<IActionResult> FetchAssigneesByDepartment(int departmentId)
-        {
-            try 
-            {
-                var staff = await _userRepository.GetUsersByDepartment(departmentId);
-                
-                var assignees = staff
-                    .Where(u => u.Email.ToLower().Trim() != User.Identity.Name.ToLower().Trim())
-                    .Select(user => new 
-                    { 
-                        value = user.Id.ToString(),
-                        text = user.FullName 
-                    })
-                    .ToList();
-
-                return Json(assignees);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error fetching assignees for department {DepartmentId}", departmentId);
-                return BadRequest("Failed to fetch assignees");
-            }
-        }
-
         
 
     }
