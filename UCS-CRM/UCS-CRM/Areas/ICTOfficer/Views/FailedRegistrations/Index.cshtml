@@ -1,0 +1,125 @@
+@using Microsoft.Extensions.Configuration
+@inject IConfiguration Configuration
+@{
+    ViewData["Title"] = "Failed Registrations";
+    Layout = "~/Areas/Admin/Views/shared/_Layout.cshtml";
+}
+
+<div class="card">
+    <div class="card-header">
+        <h4 class="text-center text-uppercase">Failed Member Registrations</h4>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-bordered" id="failed_registrations_table">
+                <thead>
+                    <tr>
+                        <th>National ID</th>
+                        <th>Email</th>
+                        <th>Phone Number</th>
+                        <th>Attempted At</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        var datatable;
+    </script>
+
+    <script>
+        $(document).ready(function () {
+            datatable = $('#failed_registrations_table').DataTable({
+                "processing": true,
+                "serverSide": true,
+                "order": [[3, "desc"]],
+                ajax: {
+                    url: 'FailedRegistrations/GetFailedRegistrations',
+                    type: 'post',
+                    datatype: 'Json'
+                },
+                columnDefs: [{
+                    defaultContent: "",
+                    targets: "_all",
+                    'orderable': true
+                }],
+                columns: [
+                    {
+                        data: "nationalId",
+                        name: "nationalId",
+                        className: "text-left",
+                        orderable: true
+                    },
+                    {
+                        data: "email",
+                        name: "email",
+                        className: "text-left",
+                        orderable: true
+                    },
+                    {
+                        data: "phoneNumber",
+                        name: "phoneNumber",
+                        className: "text-left",
+                        orderable: false
+                    },
+                    {
+                        data: "attemptedAt",
+                        name: "attemptedAt",
+                        className: "text-left",
+                        orderable: true,
+                        render: function(data) {
+                            return moment(data).format('YYYY-MM-DD HH:mm:ss');
+                        }
+                    },
+                    {
+                        data: "id",
+                        name: "id",
+                        orderable: false,
+                        render: function(data) {
+                            return `<button class="btn btn-success btn-sm resolve-btn" onclick="markAsResolved(${data})">
+                                        <i class="mdi mdi-check"></i> Resolve
+                                   </button>`;
+                        }
+                    }
+                ],
+                responsive: true,
+                "autoWidth": false
+            });
+        });
+
+        function markAsResolved(id) {
+            Swal.fire({
+                title: 'Resolution Notes',
+                input: 'textarea',
+                inputPlaceholder: 'Enter resolution notes...',
+                showCancelButton: true,
+                confirmButtonText: 'Resolve',
+                showLoaderOnConfirm: true,
+                preConfirm: (notes) => {
+                    return $.ajax({
+                        url: 'FailedRegistrations/MarkAsResolved',
+                        type: 'POST',
+                        data: { id: id, notes: notes }
+                    });
+                }
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    if (result.value.status === 'success') {
+                        Swal.fire('Resolved!', result.value.message, 'success');
+                        datatable.ajax.reload();
+                    } else {
+                        Swal.fire('Error!', result.value.message, 'error');
+                    }
+                }
+            });
+        }
+    </script>
+}

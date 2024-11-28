@@ -1,0 +1,136 @@
+﻿@{
+    ViewData["Title"] = "Branches";
+    Layout = "~/Areas/Admin/Views/Shared/_Layout.cshtml";
+}
+@using Microsoft.Extensions.Configuration
+@inject IConfiguration Configuration
+
+
+<p>
+
+    <!-- Button trigger modal -->
+    <button type="button" class="btn btn-info" data-bs-toggle="modal" data-bs-target="#create_branch_modal">
+        Create Branch
+    </button>
+
+
+
+</p>
+
+
+<div class="modal fade" id="create_branch_modal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <partial name="_CreateBranchPartial" />
+</div>
+
+<div class="modal fade" id="edit_branch_modal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <partial name="_EditBranchPartial" />
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h4 class="text-center text-uppercase">Branches Available In The System</h4>
+    </div>
+    <div class="card-body">
+        <table class="table table-bordered table-responsive-sm" id="my_table">
+            <thead>
+                <tr>
+                    <th>
+                        Name
+                    </th>
+                    <th>
+                        Action
+                    </th>
+
+                </tr>
+            </thead>
+            <tbody>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+
+
+
+@section Scripts{
+
+        <script>
+            var datatable;
+            
+        </script>
+        <script src="~/js/Branch.js" asp-append-version="true"></script>
+        
+        
+        <script>
+
+
+            $(document).ready(function () {
+                datatable = $('#my_table').DataTable({
+
+
+                    "processing" : true,
+                    "serverSide": true,
+                    "order": [[0, "desc"]],
+                    ajax: {
+                        url: 'Branches/GetBranches',
+                        type: 'post',
+                        datatype: 'Json',
+
+
+
+                    },
+                    columnDefs: [
+                        {
+                            defaultContent: "",
+                            targets: "_all",
+                           'orderable': true
+                        },
+                    ],
+                    columns: [
+                        {
+                            data: "name",
+                            name: "name",
+                            className: "text-left",
+                            "orderable": true,
+                              render: function(data)
+                            {
+                                return toTitleCase(data);
+                            }
+                        },
+                        {
+                            data: "id",
+                            name: "id",
+                            "orderable": false,
+                            render: function (data) {
+                                return "<a href='#' onclick=EditForm('" + data + "') type='button' class='feather icon-edit' title='edit' ></a> <a href='#' type='button' onclick=Delete('" +data + "') title='delete' class='feather icon-trash-2'></a>"
+                            }
+                        }
+
+                    ],
+
+                    responsive: true,
+                    "autoWidth": false,
+
+               });
+
+
+
+
+            });
+
+
+
+
+
+
+
+
+
+
+        </script>
+
+
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

@@ -1,0 +1,177 @@
+﻿
+@using Microsoft.Extensions.Configuration
+@inject IConfiguration Configuration
+@{
+    var host = Configuration.GetSection("HostingSettings")["Host"];
+    var path = Configuration.GetSection("HostingSettings")["path"];
+    var protocol = Configuration.GetSection("HostingSettings")["Protocol"];
+}
+@{
+    ViewData["Title"] = "Index";
+    Layout = "~/Areas/Admin/Views/shared/_Layout.cshtml";
+}
+
+
+
+<div class="modal fade" id="set_email_modal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <partial name="_SetEmailPartial" />
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h4 class="text-center text-uppercase">Members Available In The System</h4>
+        <div>
+            <img src="~/images/91.gif" id="spinner" />
+        </div>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-bordered " id="my_table">
+            <thead>
+                <tr>
+                    <th>
+                        Account Number
+                    </th>
+                    <th>
+                        National Id
+                    </th>
+                    <th>
+                        First Name
+                    </th>
+                    <th>
+                        Surname
+                    </th>
+                    <th>
+                        Gender
+                    </th>
+
+                    <th>
+                        Phone Number
+                    </th>
+
+                    <th>
+                        Account Status
+                    </th>
+                    <th>
+                        Employee Number
+                    </th>
+                    <th>
+                        Action
+                    </th>
+                </tr>
+            </thead>
+            <tbody>
+            </tbody>
+        </table>
+        </div>
+    </div>
+</div>
+
+
+@section Scripts{
+
+    <script>
+        var datatable;
+    </script>
+
+        <script src="~/js/Member.js"></script>
+                    
+        <script>
+        $(document).ready(function () {
+            datatable = $('#my_table').DataTable({
+
+
+                "processing": true,
+                "serverSide": true,
+                "order": [[0, "desc"]],
+                ajax: {
+                    url: 'members/GetMembers',
+                    type: 'post',
+                    datatype: 'Json'
+
+
+                },
+                columnDefs: [
+                    {
+                        defaultContent: "",
+                        targets: "_all",
+                        'orderable': true
+                    },
+                ],
+                columns: [
+
+                    {
+                        data: "accountNumber",
+                        name: "accountNumber",
+                        className: "text-left",
+                        "orderable": true,
+                    },
+                    {
+                        data: "nationalId",
+                        name: "nationalId",
+                        className: "text-left",
+                        "orderable": true,
+                    },
+                    {
+                        data: "formattedFirstName",
+                        name: "firstName",
+                        className: "text-left",
+                        "orderable": true,
+                    },
+                    {
+                        data: "formattedLastName",
+                        name: "lastName",
+                        className: "text-left",
+                        "orderable": true,
+                    },
+                    {
+                        data: "formattedGender",
+                        name: "gender",
+                        className: "text-left",
+                        "orderable": true,
+                    },
+                    {
+                        data: "phoneNumber",
+                        name: "phoneNumber",
+                        className: "text-left",
+                        "orderable": false,
+                    },
+
+                     {
+                        data: "accountStatus",
+                        name: "accountStatus",
+                        className: "text-left",
+                        "orderable": false,
+                    },
+                    {
+                        data: "employeeNumber",
+                        name: "employeeNumber",
+                        className: "text-left",
+                        "orderable": false,
+                    },
+
+                    @* {
+                        data: "formattedDateOfBirth",
+                        name: "dateOfBirth",
+                        className: "text-left",
+                        "orderable": false,
+                    }, *@
+                     {
+                        data: { state: "user.id"},
+                        mRender: function (data, type, full) 
+                        {
+                            return data.user != null && data.user.status != 'Deleted' ?  "<a href='#' onclick=removeUserAccount('" + data.id + "') type='button' class='mdi mdi-account-remove' title='Remove User Account' ></a>" : "<a href='#' onclick=set_email_modal('" + data.id + "') type='button' class='feather icon-user-plus' title='Create User Account' ></a>";
+                        }, 
+                        "name": "user.name",
+                        className: "text-left"
+                    },
+                ],
+                responsive: true,
+                "autoWidth": false,
+            });
+        });
+    </script>
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

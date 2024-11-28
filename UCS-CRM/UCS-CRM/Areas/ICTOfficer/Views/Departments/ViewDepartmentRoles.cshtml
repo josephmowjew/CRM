@@ -1,0 +1,150 @@
+﻿@{
+    ViewData["Title"] = "Departments";
+    Layout = "~/Areas/Admin/Views/Shared/_Layout.cshtml";
+}
+@using Microsoft.Extensions.Configuration
+@inject IConfiguration Configuration
+
+
+<p>
+
+    <!-- Button trigger modal -->
+    <button type="button" class="btn btn-info" data-bs-toggle="modal" data-bs-target="#add_role_to_department_modal">
+        Add Role To Department
+    </button>
+
+
+
+</p>
+
+
+<div class="modal fade" id="add_role_to_department_modal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <partial name="_AddRoleToDepartmentPartial" />
+</div>
+
+
+
+<div class="card">
+    <div class="card-header">
+        <h4 class="text-center text-uppercase">Roles Available In The @ViewBag.department.Name Department</h4>
+        <span style="display:none" id="departmentId">@ViewBag.department.Id</span>
+    </div>
+    <div class="card-body">
+        <table class="table table-bordered table-responsive-sm" id="my_table">
+            <thead>
+                <tr>
+                    <th>
+                        Name
+                    </th>
+                     <th>
+                        Rating (Descending Order)
+                    </th>
+                    <th>
+                        Action
+                    </th>
+
+                </tr>
+            </thead>
+            <tbody>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+
+
+
+@section Scripts{
+
+        <script>
+
+            var datatable;
+            
+        </script>
+        <script src="~/js/Departments.js" asp-append-version="true"></script>
+        
+        
+        <script>
+
+
+            $(document).ready(function () {
+                datatable = $('#my_table').DataTable({
+
+
+                    "processing" : true,
+                    "serverSide": true,
+                    
+                    ajax: {
+                        url: '/Admin/Departments/GetDepartmentRoles/'+@ViewBag.department.Id,
+                        type: 'post',
+                        datatype: 'Json',
+                   
+
+
+
+                    },
+                    columnDefs: [
+                        {
+                            defaultContent: "",
+                            targets: "_all",
+                           'orderable': false
+                        },
+                    ],
+                    columns: [
+                        {
+                            data: "name",
+                            name: "name",
+                            className: "text-left",
+                            "orderable": false,
+                              render: function(data)
+                            {
+                                return toTitleCase(data);
+                            }
+                        },
+                         {
+                            data: "rating",
+                            name: "rating",
+                            className: "text-left",
+                            "orderable": false,
+                              render: function(data)
+                            {
+                                return data;
+                            }
+                        },
+                        {
+                            data: "id",
+                            name: "id",
+                            "orderable": false,
+                            render: function (data) {
+                                return "<a href='#' type='button' onclick=DeleteRoleFromDepartment('"+data + "') title='delete' class='feather icon-trash-2'></a>"
+                            }
+                        }
+
+                    ],
+
+                    responsive: true,
+                    "autoWidth": false,
+
+               });
+
+
+
+
+            });
+
+
+
+
+
+
+
+
+
+
+        </script>
+
+
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

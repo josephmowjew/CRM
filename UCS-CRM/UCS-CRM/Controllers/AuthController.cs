@@ -330,6 +330,8 @@ namespace UCS_CRM.Controllers
                         return RedirectToAction("Index", "Home", new { Area = "Teller" });
                     case "call center agent":
                         return RedirectToAction("Index", "Home", new { Area = "CallCenterOfficer" });
+                    case "ict officer":
+                        return RedirectToAction("Index", "Home", new { Area = "ICTOfficer" });
                     default:
                         return RedirectToAction("Index", "Home", new { Area = "Officer" });
                 }
@@ -402,6 +404,8 @@ namespace UCS_CRM.Controllers
                         return RedirectToAction("Index", "Home", new { Area = "Teller" });
                     case "call center agent":
                         return RedirectToAction("Index", "Home", new { Area = "CallCenterOfficer" });
+                    case "ict officer":
+                        return RedirectToAction("Index", "Home", new { Area = "ICTOfficer" });
                     default:
                         return RedirectToAction("Index", "Home", new { Area = "Officer" });
                 }

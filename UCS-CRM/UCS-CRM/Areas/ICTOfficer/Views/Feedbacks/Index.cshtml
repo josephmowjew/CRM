@@ -1,0 +1,131 @@
+﻿@{
+    ViewData["Title"] = "Ticket Feedbacks";
+    Layout = "~/Areas/Admin/Views/Shared/_Layout.cshtml";
+}
+@using Microsoft.Extensions.Configuration
+@inject IConfiguration Configuration
+
+
+
+<div class="card">
+    <div class="card-header">
+        <h4 class="text-center text-uppercase">Feedback</h4>
+    </div>
+    <div class="card-body">
+        <table class="table table-bordered table-responsive-sm" id="my_table">
+            <thead>
+                <tr>
+                    <th>
+                        Description
+                    </th>
+                    <th>Rate</th>
+                    <th>Member</th>
+                    <th>
+                        Action
+                    </th>
+
+                </tr>
+            </thead>
+            <tbody>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+
+
+
+@section Scripts{
+
+    <script>
+        var datatable;
+
+    </script>
+
+
+    <script src="~/js/Feedback.js"></script>
+    <script>
+
+
+        $(document).ready(function () {
+            datatable = $('#my_table').DataTable({
+
+
+                "processing": true,
+                "serverSide": true,
+                "order": [[0, "desc"]],
+                ajax: {
+                    url: 'Feedbacks/GetFeedbacks',
+                    type: 'post',
+                    datatype: 'Json',
+
+
+
+                },
+                columnDefs: [
+                    {
+                        defaultContent: "",
+                        targets: "_all",
+                        'orderable': true
+                    },
+                ],
+                columns: [
+                    {
+                        data: "description",
+                        name: "description",
+                        className: "text-left",
+                        "orderable": true,
+                        render: function (data) {
+                            return toTitleCase(data);
+                        }
+                    },
+                    {
+                        data: "rating",
+                        name: "rating",
+                        className: "text-left",
+                        "orderable": true,
+
+                    }, {
+                        data: "createdBy.fullName",
+                        name: "createdBy.fullName",
+                        className: "text-left",
+                        "orderable": true,
+
+                    },
+                    {
+                        data: "id",
+                        name: "id",
+                        "orderable": false,
+                        render: function (data) {
+                            return " <a href='#' type='button' onclick=Delete('" + data + "') title='delete' class='feather icon-trash-2'></a>"
+                        }
+                    }
+
+                ],
+
+                responsive: true,
+                "autoWidth": false,
+
+            });
+
+
+
+
+        });
+
+
+
+
+
+
+
+
+
+
+    </script>
+
+
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

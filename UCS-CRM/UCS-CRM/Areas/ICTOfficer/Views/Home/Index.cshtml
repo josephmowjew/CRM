@@ -1,0 +1,93 @@
+﻿@*
+    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
+*@
+@{
+}
+
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body">
+                <h4 class="card-title">Ticket Stats</h4>
+                <div class="row mt-4">
+                    <!-- Column -->
+                    <div class="col-md-6 col-lg-3 col-xlg-3">
+                        <a asp-area="admin" asp-controller="Users" asp-action="Index" aria-expanded="false">
+                            <div class="card card-hover">
+                                <div class="p-2 rounded bg-light-primary text-center">
+                                    <h1 class="fw-light text-primary">@ViewBag.usersCount</h1>
+                                    <h6 class="text-primary">Users</h6>
+                                </div>
+                            </div>
+                        </a>
+                    </div>
+                    <!-- Column -->
+                    <div class="col-md-6 col-lg-3 col-xlg-3">
+                        <a asp-area="admin" asp-controller="Departments" asp-action="Index" aria-expanded="false">
+                            <div class="card card-hover">
+                                <div class="p-2 rounded bg-light-warning text-center">
+                                    <h1 class="fw-light text-warning">@ViewBag.departmentsCounts</h1>
+                                    <h6 class="text-warning">Departments</h6>
+                                </div>
+                            </div>
+                        </a>
+                    </div>
+                    <!-- Column -->
+                    <div class="col-md-6 col-lg-3 col-xlg-3">
+                         <a asp-area="admin" asp-controller="States" asp-action="Index" aria-expanded="false">
+                            <div class="card card-hover">
+                                <div class="p-2 rounded bg-light-success text-center">
+                                    <h1 class="fw-light text-success">@ViewBag.statesCount</h1>
+                                    <h6 class="text-success">Ticket States</h6>
+                                </div>
+                            </div>
+                        </a>
+                    </div>
+                    <!-- Column -->
+                    <div class="col-md-6 col-lg-3 col-xlg-3">
+                         <a asp-area="admin" asp-controller="Branches" asp-action="Index" aria-expanded="false">
+                            <div class="card card-hover">
+                                <div class="p-2 rounded bg-light-danger text-center">
+                                    <h1 class="fw-light text-danger">@ViewBag.branchesCount</h1>
+                                    <h6 class="text-danger">Branches</h6>
+                                </div>
+                            </div>
+                        </a>
+                    </div>
+                    <!-- Column -->
+                    <div class="col-md-6 col-lg-3 col-xlg-3">
+                         <a asp-area="admin" asp-controller="Members" asp-action="Index" aria-expanded="false">
+                            <div class="card card-hover">
+                                <div class="p-2 rounded bg-light-danger text-center">
+                                    <h1 class="fw-light text-danger">@ViewBag.membersCount</h1>
+                                    <h6 class="text-danger">Members</h6>
+                                </div>
+                            </div>
+                        </a>
+                    </div>
+                    <!-- Column -->
+                    <!-- Column -->
+                    <div class="col-md-6 col-lg-3 col-xlg-3">
+                        <a asp-area="admin" asp-controller="FailedRegistrations" asp-action="Index" aria-expanded="false">
+                            <div class="card card-hover">
+                                <div class="p-2 rounded bg-light-danger text-center">
+                                    <h1 class="fw-light text-danger">@ViewBag.failedRegistrationsCount</h1>
+                                    <h6 class="text-danger">Failed Registrations</h6>
+                                    @if (ViewBag.failedRegistrationsCount > 0)
+                                    {
+                                        <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+                                            @ViewBag.failedRegistrationsCount
+                                            <span class="visually-hidden">unresolved registrations</span>
+                                        </span>
+                                    }
+                                </div>
+                            </div>
+                        </a>
+                    </div>
+                    <!-- Column -->
+                </div>
+
+            </div>
+        </div>
+    </div>
+</div>
