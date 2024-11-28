@@ -52,7 +52,7 @@ namespace UCS_CRM.Areas.Clerk.Controllers
         private readonly ILogger<TicketsController> _logger;
         private readonly IConfiguration _configuration;
         private readonly IHttpContextAccessor _httpContextAccessor;
-        private readonly ErrorLogService _errorLogService;
+        private readonly IErrorLogService _errorLogService;
         public TicketsController
         (ITicketRepository ticketRepository,
          IMapper mapper,
@@ -75,7 +75,7 @@ namespace UCS_CRM.Areas.Clerk.Controllers
          ILogger<TicketsController> logger,
          IConfiguration configuration,
          IHttpContextAccessor httpContextAccessor,
-         ErrorLogService errorLogService)
+         IErrorLogService errorLogService)
         {
             _ticketRepository = ticketRepository;
             _mapper = mapper;
