@@ -52,6 +52,7 @@ namespace UCS_CRM.Areas.Clerk.Controllers
         private readonly ILogger<TicketsController> _logger;
         private readonly IConfiguration _configuration;
         private readonly IHttpContextAccessor _httpContextAccessor;
+        private readonly ErrorLogService _errorLogService;
         public TicketsController
         (ITicketRepository ticketRepository,
          IMapper mapper,
@@ -73,7 +74,8 @@ namespace UCS_CRM.Areas.Clerk.Controllers
          ApplicationDbContext context,
          ILogger<TicketsController> logger,
          IConfiguration configuration,
-         IHttpContextAccessor httpContextAccessor)
+         IHttpContextAccessor httpContextAccessor,
+         ErrorLogService errorLogService)
         {
             _ticketRepository = ticketRepository;
             _mapper = mapper;
@@ -96,6 +98,7 @@ namespace UCS_CRM.Areas.Clerk.Controllers
             _logger = logger;
             _configuration = configuration;
             _httpContextAccessor = httpContextAccessor;
+            _errorLogService = errorLogService;
         }
 
         // GET: TicketsController
@@ -1476,6 +1479,7 @@ namespace UCS_CRM.Areas.Clerk.Controllers
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error fetching assignees for department {DepartmentId}", departmentId);
+                await _errorLogService.LogErrorAsync(ex);
                 return BadRequest("Failed to fetch assignees");
             }
         }
