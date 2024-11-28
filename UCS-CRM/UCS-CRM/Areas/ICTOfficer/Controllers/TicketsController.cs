@@ -1429,19 +1429,27 @@ namespace UCS_CRM.Areas.ictofficer.Controllers
             return Json(new { results = new List<object>(), pagination = new { more = false } });
         }
 
-        [HttpGet]
-        public async Task<IActionResult> FetchAssigneesByDepartment(int departmentId)
+         public async Task<IActionResult> FetchAssigneesByDepartment(int departmentId)
         {
             try 
             {
+                var currentUserEmail = User?.Identity?.Name;
+                if (string.IsNullOrEmpty(currentUserEmail))
+                {
+                    _logger.LogWarning("Current user email is null when fetching assignees");
+                    return BadRequest("User not authenticated");
+                }
+
                 var staff = await _userRepository.GetUsersByDepartment(departmentId);
                 
                 var assignees = staff
-                    .Where(u => u.Email.ToLower().Trim() != User.Identity.Name.ToLower().Trim())
+                    .Where(u => !string.IsNullOrEmpty(u.Email) && 
+                               !string.IsNullOrEmpty(u.FullName) &&
+                               !u.Email.Equals(currentUserEmail, StringComparison.OrdinalIgnoreCase))
                     .Select(user => new 
                     { 
                         value = user.Id.ToString(),
-                        text = user.FullName 
+                        text = user.FullName
                     })
                     .ToList();
 
@@ -1450,6 +1458,7 @@ namespace UCS_CRM.Areas.ictofficer.Controllers
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error fetching assignees for department {DepartmentId}", departmentId);
+                await _errorLogService.LogErrorAsync(ex);
                 return BadRequest("Failed to fetch assignees");
             }
         }
