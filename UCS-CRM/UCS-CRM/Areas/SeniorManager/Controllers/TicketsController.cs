@@ -882,6 +882,9 @@ namespace UCS_CRM.Areas.SeniorManager.Controllers
             var sortColumnAscDesc = form["order[0][dir]"].FirstOrDefault();
             var searchValue = form["search[value]"].FirstOrDefault();
 
+            var findUserDb = await this._userRepository.GetUserWithRole(User.Identity.Name);
+            bool isExecutive = findUserDb?.Department?.Name?.Trim().ToUpper() == "EXECUTIVE SUITE";
+
             var cursorParameters = new CursorParams 
             { 
                 SearchTerm = searchValue, 
@@ -891,18 +894,22 @@ namespace UCS_CRM.Areas.SeniorManager.Controllers
                 Take = pageSize 
             };
 
-            var isClosedStatus = status == Lambda.Closed;
-            var resultTotal = isClosedStatus 
-                ? await this._ticketRepository.CountTicketsByStatus(status) 
-                : await this._ticketRepository.TotalCount(type);
+            var resultTotal = isExecutive 
+                ? await this._ticketRepository.TotalCount(type)
+                : await this._ticketRepository.GetTicketsTotalFilteredAsync(cursorParameters, findUserDb.Department, type);
 
-            var result = isClosedStatus 
-                ? await this._ticketRepository.GetClosedTickets(cursorParameters) 
-                : await this._ticketRepository.GetTickets(cursorParameters, null, type);
+            var result = isExecutive
+                ? await this._ticketRepository.GetTickets(cursorParameters, null, type)
+                : await this._ticketRepository.GetTickets(cursorParameters, findUserDb.Department, type);
 
             var mappedResult = this._mapper.Map<List<ReadTicketDTO>>(result);
 
-            return Json(new { draw, recordsFiltered = resultTotal, recordsTotal = resultTotal, data = mappedResult });
+            return Json(new { 
+                draw, 
+                recordsFiltered = resultTotal, 
+                recordsTotal = resultTotal, 
+                data = mappedResult 
+            });
         }
         [HttpPost]
         public async Task<ActionResult> AddTicketComment(CreateTicketCommentDTO createTicketCommentDTO)

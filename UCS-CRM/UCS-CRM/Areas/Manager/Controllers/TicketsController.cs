@@ -643,19 +643,29 @@ namespace UCS_CRM.Areas.Manager.Controllers
 
             var findUserDb = await this._userRepository.GetUserWithRole(User.Identity.Name);
 
-            resultTotal = await this._ticketRepository.GetTicketsTotalFilteredAsync(CursorParameters, findUserDb.Department, type);
-            var result = await this._ticketRepository.GetTickets(CursorParameters, findUserDb.Department, type);
-
-            //map the results to a read DTO
+            // Check if user is in Executive Suite Department
+            bool isExecutive = findUserDb?.Department?.Name?.Trim().ToUpper() == "EXECUTIVE SUITE";
+            
+            resultTotal = await this._ticketRepository.GetTicketsTotalFilteredAsync(
+                CursorParameters, 
+                isExecutive ? null : findUserDb.Department, // Pass null department for executives
+                type
+            );
+            
+            var result = await this._ticketRepository.GetTickets(
+                CursorParameters, 
+                isExecutive ? null : findUserDb.Department, // Pass null department for executives
+                type
+            );
 
             var mappedResult = this._mapper.Map<List<ReadTicketDTO>>(result);
 
-            var cleanResult = new List<ReadTicketDTO>();
-
-
-            return Json(new { draw = draw, recordsFiltered = resultTotal, recordsTotal = resultTotal, data = mappedResult });
-
-
+            return Json(new { 
+                draw = draw, 
+                recordsFiltered = resultTotal, 
+                recordsTotal = resultTotal, 
+                data = mappedResult 
+            });
         }
 
         
