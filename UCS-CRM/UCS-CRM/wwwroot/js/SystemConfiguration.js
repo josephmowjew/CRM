@@ -157,50 +157,75 @@ function DeleteHoliday(id) {
 }
 
 function updateHoliday(id) {
-    var authenticationToken = $("#edit_holiday_modal input[name='__RequestVerificationToken']").val();
-    var name = $("#edit_holiday_modal input[name='Name']").val();
-    var startDate = $("#edit_holiday_modal input[name='StartDate']").val();
-    var endDate = $("#edit_holiday_modal input[name='EndDate']").val();
-    var description = $("#edit_holiday_modal textarea[name='Description']").val();
-    var isRecurring = $("#edit_holiday_modal input[name='IsRecurring']").is(':checked');
-
-    var userInput = {
-        __RequestVerificationToken: authenticationToken,
-        Id: id,
-        Name: name,
-        StartDate: startDate,
-        EndDate: endDate,
-        Description: description,
-        IsRecurring: isRecurring
-    };
+    event.preventDefault();
+    
+    var formData = new FormData();
+    formData.append('Id', id);
+    formData.append('Name', $("#edit_holiday_modal input[name='Name']").val());
+    formData.append('StartDate', $("#edit_holiday_modal input[name='StartDate']").val());
+    formData.append('EndDate', $("#edit_holiday_modal input[name='EndDate']").val());
+    formData.append('Description', $("#edit_holiday_modal textarea[name='Description']").val());
+    formData.append('IsRecurring', $("#edit_holiday_modal input[name='IsRecurring']").is(':checked'));
 
     $.ajax({
-        url: $("#edit_holiday_modal form").attr("action"),
+        url: '/Manager/SystemConfiguration/UpdateHoliday',
         type: 'POST',
-        data: userInput,
-        success: function (data) {
-            var parsedData = $.parseHTML(data);
-            var isInvalid = $(parsedData).find("input[name='DataInvalid']").val() == "true";
-
-            if (isInvalid) {
-                $("#edit_holiday_modal").html(data);
-                $("#edit_holiday_modal button[name='update_holiday_btn']").unbind().click(function () { 
-                    updateHoliday(id); 
-                });
-
-                var form = $("#edit_holiday_modal");
-                $(form).removeData("validator")
-                      .removeData("unobtrusiveValidation");
-                $.validator.unobtrusive.parse(form);
-            } else {
-                toastr.success(data.message || "Holiday updated successfully");
+        data: Object.fromEntries(formData),
+        headers: {
+            'RequestVerificationToken': $('input:hidden[name="__RequestVerificationToken"]').val()
+        },
+        success: function(data) {
+            if (data.status === "success") {
+                toastr.success(data.message);
                 $('#holidaysTable').DataTable().ajax.reload();
                 $("#edit_holiday_modal").modal("hide");
+            } else {
+                toastr.error(data.message || "Error updating holiday");
             }
         },
-        error: function (xhr, ajaxOptions, thrownError) {
-            console.error(thrownError + "\n" + xhr.statusText + "\n" + xhr.responseText);
+        error: function(xhr, status, error) {
+            console.error(error);
             toastr.error("Error updating holiday");
         }
     });
-} 
+}
+
+// For adding new holidays
+$(document).ready(function() {
+    // Add Holiday Form Submission
+    $('#addHolidayForm').on('submit', function(e) {
+        e.preventDefault();
+        
+        var formData = {
+            Name: $(this).find('input[name="Name"]').val(),
+            StartDate: $(this).find('input[name="StartDate"]').val(),
+            EndDate: $(this).find('input[name="EndDate"]').val(),
+            Description: $(this).find('textarea[name="Description"]').val(),
+            IsRecurring: $(this).find('input[name="IsRecurring"]').is(':checked')
+        };
+
+        $.ajax({
+            url: '/Manager/SystemConfiguration/AddHoliday',
+            type: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify(formData),
+            headers: {
+                'RequestVerificationToken': $('input:hidden[name="__RequestVerificationToken"]').val()
+            },
+            success: function(response) {
+                if (response.status === "success") {
+                    $('#add_holiday_modal').modal('hide');
+                    $('#holidaysTable').DataTable().ajax.reload();
+                    toastr.success(response.message || "Holiday added successfully");
+                    $('#addHolidayForm')[0].reset();
+                } else {
+                    toastr.error(response.message || "Error adding holiday");
+                }
+            },
+            error: function(xhr, status, error) {
+                console.error(error);
+                toastr.error("Error adding holiday");
+            }
+        });
+    });
+}); 
