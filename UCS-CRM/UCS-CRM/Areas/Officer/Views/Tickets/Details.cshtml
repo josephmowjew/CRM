@@ -92,22 +92,20 @@
                 </div>
             </div>
              <hr />
-                <div class="col-md-3 col-xs-6 ">
-                    @if(Model.State.Name.Trim().ToLower() != "closed" && @Model.AssignedToId == ViewBag.CurrentUserId ){
-                        
-                        <button class="btn btn-danger text-white" data-bs-toggle="modal" data-bs-target="#close_ticket_modal">Close Ticket</button>
-                        
-                    }
+                 @if(@Model.AssignedToId == ViewBag.CurrentUserId ){
 
-                     @if(Model.State.Name.Trim().ToLower() == "closed" && @Model.AssignedToId == ViewBag.CurrentUserId ){
-                        
-                        <button class="btn btn-success text-white" data-bs-toggle="modal" data-bs-target="#reopen_ticket_modal"><i class="mdi mdi-file-plus"></i> Open Ticket</button>
-                        
+                        <div class="col-md-3 col-xs-6 ">
+                        <div class="action-buttons">
+                            <button type="button" class="btn btn-danger text-white" id="closeTicketBtn" style="@(Model.State.Name == "Closed" ? "display: none;" : "")" data-bs-toggle="modal" data-bs-target="#close_ticket_modal">Close Ticket</button>
+                            <button type="button" class="btn btn-success text-white" id="reopenTicketBtn" style="@(Model.State.Name != "Closed" ? "display: none;" : "")" data-bs-toggle="modal" data-bs-target="#reopen_ticket_modal">Reopen Ticket</button>
+                        </div>
+                        <div>
+                            <img src="~/images/91.gif" id="spinner" />
+                            </div>
+                        </div>
+                   
                     }
-                    <div>
-                        <img src="~/images/91.gif" id="spinner" />
-                    </div>
-                </div>
+                  
 
         </div>
     </div>

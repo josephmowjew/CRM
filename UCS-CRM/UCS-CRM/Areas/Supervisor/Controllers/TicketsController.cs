@@ -897,70 +897,87 @@ namespace UCS_CRM.Areas.Supervisor.Controllers
 [HttpPost]
 public async Task<ActionResult> CloseTicket(CloseTicketDTO closeTicketDTO)
 {
-    closeTicketDTO.DataInvalid = "true";
-
-    if (ModelState.IsValid)
+    try 
     {
-        var ticket = await this._ticketRepository.GetTicket(closeTicketDTO.Id);
+        closeTicketDTO.DataInvalid = "true";
 
+        if (!ModelState.IsValid)
+        {
+            return Json(new { status = "error", message = "Invalid model state" });
+        }
+
+        var ticket = await _ticketRepository.GetTicket(closeTicketDTO.Id);
         if (ticket == null)
         {
-            return Json(new { status = "error", message = "Could not close ticket, try again or contact administrator if the error persists" });
+            return Json(new { status = "error", message = "Ticket not found" });
         }
-        else
+
+        var userClaims = (ClaimsIdentity)User.Identity;
+        var claimsIdentifier = userClaims.FindFirst(ClaimTypes.NameIdentifier);
+        var currentUserId = claimsIdentifier.Value;
+        string currentState = ticket.State.Name;
+
+        // Get the closed state
+        var closeState = _stateRepository.Exists(Lambda.Closed);
+        if (closeState == null)
         {
-            var userClaims = (ClaimsIdentity)User.Identity;
-            var claimsIdentifier = userClaims.FindFirst(ClaimTypes.NameIdentifier);
-            var currentUserId = claimsIdentifier.Value;
+            _logger.LogError("Closed state not found in the system");
+            return Json(new { status = "error", message = "System configuration error: Closed state not found" });
+        }
 
-            string currentState = ticket.State.Name;
+        // Update ticket state and metadata
+        ticket.StateId = closeState.Id;
+        ticket.ClosedDate = DateTime.Now;
+       
 
-            // Check if the current user is assigned to the ticket or is the creator
-            if (ticket.AssignedToId == currentUserId || ticket.CreatedById == currentUserId)
+        // Force a refresh of the ticket's state in the context
+        _context.Entry(ticket).State = EntityState.Modified;
+        _context.Entry(ticket).Property(t => t.StateId).IsModified = true;
+        _context.Entry(ticket).Property(t => t.ClosedDate).IsModified = true;
+        
+
+        // Create state tracker entry
+        var ticketStateTracker = new TicketStateTracker
+        { 
+            CreatedById = currentUserId, 
+            TicketId = ticket.Id, 
+            NewState = closeState.Name, 
+            PreviousState = currentState, 
+            Reason = closeTicketDTO.Reason,
+            CreatedDate = DateTime.Now
+        };
+
+        _ticketStateTrackerRepository.Add(ticketStateTracker);
+
+        // Save all changes in a single transaction
+        using (var transaction = await _context.Database.BeginTransactionAsync())
+        {
+            try
             {
-                var closeState = this._stateRepository.Exists(Lambda.Closed);
-
-                ticket.StateId = closeState.Id;
-                ticket.ClosedDate = DateTime.Now;
-
-                // Detach the existing entry if it is not in the Modified state
-                var existingEntry = _context.ChangeTracker.Entries<Ticket>().FirstOrDefault(e => e.Entity.Id == ticket.Id);
-                if (existingEntry != null && existingEntry.State != EntityState.Modified)
-                {
-                    existingEntry.State = EntityState.Detached;
-                }
-
-                // Attach the ticket to the context and set its state to Modified
-                this._context.Entry(ticket).State = EntityState.Modified;
-
-                await this._unitOfWork.SaveToDataStore();
-
-                UCS_CRM.Core.Models.TicketStateTracker ticketStateTracker = new TicketStateTracker() 
-                { 
-                    CreatedById = currentUserId, 
-                    TicketId = ticket.Id, 
-                    NewState = ticket.State.Name, 
-                    PreviousState = currentState, 
-                    Reason = closeTicketDTO.Reason 
-                };
-
-                this._ticketStateTrackerRepository.Add(ticketStateTracker);
-
-                await this._unitOfWork.SaveToDataStore();
-
-                // Send alert emails
-                await this._ticketRepository.SendTicketClosureNotifications(ticket, closeTicketDTO.Reason);
-
-                return Json(new { status = "success", message = $"Ticket {ticket.TicketNumber} has been closed successfully" });
+                await _unitOfWork.SaveToDataStore();
+                await _ticketRepository.SendTicketClosureNotifications(ticket, closeTicketDTO.Reason);
+                await transaction.CommitAsync();
             }
-            else
+            catch (Exception ex)
             {
-                return Json(new { status = "error", message = $"Could not close ticket as you are not currently assigned to it or the creator" });
+                await transaction.RollbackAsync();
+                _logger.LogError(ex, "Error closing ticket {TicketId}", ticket.Id);
+                throw;
             }
         }
-    }
 
-    return Json(new { status = "error", message = "Could not close ticket" });
+        return Json(new { 
+            status = "success", 
+            message = $"Ticket {ticket.TicketNumber} has been closed successfully",
+            ticketState = closeState.Name
+        });
+    }
+    catch (Exception ex)
+    {
+        _logger.LogError(ex, "Error in CloseTicket action");
+        await _errorLogService.LogErrorAsync(ex);
+        return Json(new { status = "error", message = "An error occurred while closing the ticket" });
+    }
 }
         public async Task<ActionResult> Details(int id)
         {
@@ -1680,6 +1697,7 @@ public async Task<ActionResult> CloseTicket(CloseTicketDTO closeTicketDTO)
 
     }
 }
+
 
 
 
