@@ -204,7 +204,7 @@ namespace UCS_CRM.Areas.Member.Controllers
                     mappedTicket = this._mapper.Map<Ticket>(createTicketDTO);
                     
                     // Set effective creation date considering holidays
-                    mappedTicket.CreatedDate = await DateTimeHelper.GetNextWorkingDay(_context, DateTime.UtcNow);
+                    mappedTicket.CreatedDate = await DateTimeHelper.GetNextWorkingDay(_context, DateTime.Now);
                     mappedTicket.CreatedById = claimsIdentitifier.Value;
 
                     // Add automatic out-of-hours response if needed

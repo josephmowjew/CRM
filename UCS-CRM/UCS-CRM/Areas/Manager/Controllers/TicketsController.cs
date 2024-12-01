@@ -1048,7 +1048,7 @@ namespace UCS_CRM.Areas.Manager.Controllers
                     var claimsIdentitifier = userClaims.FindFirst(ClaimTypes.NameIdentifier);
                     
                     // Set effective creation date considering holidays
-                    mappedTicket.CreatedDate = await DateTimeHelper.GetNextWorkingDay(_context, DateTime.UtcNow);
+                    mappedTicket.CreatedDate = await DateTimeHelper.GetNextWorkingDay(_context, DateTime.Now);
                     mappedTicket.CreatedById = claimsIdentitifier.Value;
 
                     // Add automatic out-of-hours response if needed

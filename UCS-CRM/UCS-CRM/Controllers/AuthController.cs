@@ -273,7 +273,7 @@ namespace UCS_CRM.Controllers
                     new AuthenticationProperties 
                     { 
                         IsPersistent = false,
-                        ExpiresUtc = DateTime.Now.AddMinutes(30) // Set an expiration time as needed
+                        ExpiresUtc = DateTime.Now.AddHours(2).AddMinutes(30) // Set expiration time in GMT+2
                     }
                 );
 
