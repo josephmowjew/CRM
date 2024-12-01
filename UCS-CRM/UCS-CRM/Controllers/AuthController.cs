@@ -481,7 +481,7 @@ namespace UCS_CRM.Controllers
                         NationalId = clientRegisterViewModel.NationalId,
                         Email = clientRegisterViewModel.Email,
                         //PhoneNumber = clientRegisterViewModel.PhoneNumber,
-                        AttemptedAt = DateTime.UtcNow
+                        AttemptedAt = DateTime.Now
                     };
                     
                     await _failedRegistrationRepository.AddAsync(failedRegistration);

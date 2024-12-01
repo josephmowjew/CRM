@@ -921,7 +921,7 @@ public async Task<ActionResult> CloseTicket(CloseTicketDTO closeTicketDTO)
                 var closeState = this._stateRepository.Exists(Lambda.Closed);
 
                 ticket.StateId = closeState.Id;
-                ticket.ClosedDate = DateTime.UtcNow;
+                ticket.ClosedDate = DateTime.Now;
 
                 // Detach the existing entry if it is not in the Modified state
                 var existingEntry = _context.ChangeTracker.Entries<Ticket>().FirstOrDefault(e => e.Entity.Id == ticket.Id);
