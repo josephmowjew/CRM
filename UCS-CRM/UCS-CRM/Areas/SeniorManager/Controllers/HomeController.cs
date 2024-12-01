@@ -64,7 +64,7 @@ namespace UCS_CRM.Areas.SeniorManager.Controllers
             var findUserDb = await this._userRepository.GetUserWithRole(User.Identity.Name);
 
             // Check if user is in Executive Suite Department
-            bool isExecutive = findUserDb?.Department?.Name?.Trim().ToUpper() == "EXECUTIVE SUITE DEPARTMENT";
+            bool isExecutive = findUserDb?.Department?.Name?.Trim().ToUpper() == "EXECUTIVE SUITE";
 
             CursorParams CursorParameters = new CursorParams() { Take = 10 };
 
