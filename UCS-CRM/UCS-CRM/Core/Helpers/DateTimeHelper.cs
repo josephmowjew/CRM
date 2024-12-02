@@ -115,9 +115,8 @@ public static class DateTimeHelper
             };
         }
 
-        // Adjust to local time if stored in UTC
-        var localTime = time.Kind == DateTimeKind.Utc ? time.ToLocalTime() : time;
-        
+        // Convert to GMT+2 if UTC
+        var localTime = time.Kind == DateTimeKind.Utc ? time.AddHours(2) : time;
         // Check if it's a weekend
         if (localTime.DayOfWeek == DayOfWeek.Saturday || localTime.DayOfWeek == DayOfWeek.Sunday)
             return false;

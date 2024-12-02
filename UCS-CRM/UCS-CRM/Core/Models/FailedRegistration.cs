@@ -9,7 +9,7 @@ public class FailedRegistration: Meta
         public string NationalId { get; set; }
         public string Email { get; set; }
         public string? PhoneNumber { get; set; }
-        public DateTime AttemptedAt { get; set; } = DateTime.UtcNow;
+        public DateTime AttemptedAt { get; set; } = DateTime.Now;
         public bool IsResolved { get; set; } = false;
         public DateTime? ResolvedAt { get; set; }
         public string? ResolvedBy { get; set; }

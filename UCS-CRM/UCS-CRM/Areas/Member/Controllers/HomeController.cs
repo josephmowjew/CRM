@@ -240,7 +240,7 @@ namespace UCS_CRM.Areas.Member.Controllers
             
             string userFriendlyMessage = "An SSL certificate validation error occurred when connecting to the MHub API. This likely indicates an issue with the API server's SSL certificate.";
             
-            string timeOfOccurrence = $"Time of occurrence: {DateTime.UtcNow:yyyy-MM-dd HH:mm:ss UTC}";
+            string timeOfOccurrence = $"Time of occurrence: {DateTime.Now:yyyy-MM-dd HH:mm:ss GMT+2}";
             
             if (ex is HttpRequestException httpEx && httpEx.InnerException is AuthenticationException authEx)
             {

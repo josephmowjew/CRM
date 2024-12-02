@@ -338,7 +338,7 @@ namespace UCS_CRM.Areas.SeniorManager.Controllers
                     var claimsIdentitifier = userClaims.FindFirst(ClaimTypes.NameIdentifier);
                     
                     // Set effective creation date considering holidays
-                    mappedTicket.CreatedDate = await DateTimeHelper.GetNextWorkingDay(_context, DateTime.UtcNow);
+                    mappedTicket.CreatedDate = await DateTimeHelper.GetNextWorkingDay(_context, DateTime.Now);
                     mappedTicket.CreatedById = claimsIdentitifier.Value;
 
                     // Add automatic out-of-hours response if needed
@@ -600,7 +600,7 @@ namespace UCS_CRM.Areas.SeniorManager.Controllers
                         var closeState = this._stateRepository.Exists(Lambda.Closed);
 
                         ticket.StateId = closeState.Id;
-                        ticket.ClosedDate = DateTime.UtcNow;
+                        ticket.ClosedDate = DateTime.Now;
 
                         // Detach the existing entry if it is not in the Modified state
                         var existingEntry = _context.ChangeTracker.Entries<Ticket>().FirstOrDefault(e => e.Entity.Id == ticket.Id);
@@ -882,6 +882,9 @@ namespace UCS_CRM.Areas.SeniorManager.Controllers
             var sortColumnAscDesc = form["order[0][dir]"].FirstOrDefault();
             var searchValue = form["search[value]"].FirstOrDefault();
 
+            var findUserDb = await this._userRepository.GetUserWithRole(User.Identity.Name);
+            bool isExecutive = findUserDb?.Department?.Name?.Trim().ToUpper() == "EXECUTIVE SUITE";
+
             var cursorParameters = new CursorParams 
             { 
                 SearchTerm = searchValue, 
@@ -891,18 +894,22 @@ namespace UCS_CRM.Areas.SeniorManager.Controllers
                 Take = pageSize 
             };
 
-            var isClosedStatus = status == Lambda.Closed;
-            var resultTotal = isClosedStatus 
-                ? await this._ticketRepository.CountTicketsByStatus(status) 
-                : await this._ticketRepository.TotalCount(type);
+            var resultTotal = isExecutive 
+                ? await this._ticketRepository.TotalCount(type)
+                : await this._ticketRepository.GetTicketsTotalFilteredAsync(cursorParameters, findUserDb.Department, type);
 
-            var result = isClosedStatus 
-                ? await this._ticketRepository.GetClosedTickets(cursorParameters) 
-                : await this._ticketRepository.GetTickets(cursorParameters, null, type);
+            var result = isExecutive
+                ? await this._ticketRepository.GetTickets(cursorParameters, null, type)
+                : await this._ticketRepository.GetTickets(cursorParameters, findUserDb.Department, type);
 
             var mappedResult = this._mapper.Map<List<ReadTicketDTO>>(result);
 
-            return Json(new { draw, recordsFiltered = resultTotal, recordsTotal = resultTotal, data = mappedResult });
+            return Json(new { 
+                draw, 
+                recordsFiltered = resultTotal, 
+                recordsTotal = resultTotal, 
+                data = mappedResult 
+            });
         }
         [HttpPost]
         public async Task<ActionResult> AddTicketComment(CreateTicketCommentDTO createTicketCommentDTO)

@@ -65,14 +65,16 @@ namespace UCS_CRM.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> AddHoliday(Holiday holiday)
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> AddHoliday([FromBody] Holiday holiday)
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
+            holiday.CreatedDate = DateTime.Now;
             _context.Holidays.Add(holiday);
             await _context.SaveChangesAsync();
-            return RedirectToAction(nameof(Index));
+            return Json(new { status = "success", message = "Holiday added successfully" });
         }
 
         [HttpPost]

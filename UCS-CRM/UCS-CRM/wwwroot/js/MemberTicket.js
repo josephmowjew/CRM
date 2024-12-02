@@ -1,4 +1,4 @@
-﻿$(function () {
+$(function () {
     hideSpinner();
     //hook up a click event to the login button
 
@@ -595,6 +595,7 @@ function closeTicketfn(id) {
 
                 dataTable.ajax.reload();
 
+                toggleTicketButtons(true);
             }
 
 
@@ -681,6 +682,7 @@ function reopenTicketfn(id) {
 
                 dataTable.ajax.reload();
 
+                toggleTicketButtons(false);
             }
 
 
@@ -693,6 +695,20 @@ function reopenTicketfn(id) {
 
     });
 }
+
+function toggleTicketButtons(isClosed) {
+    const closeBtn = $("#closeTicketBtn");
+    const reopenBtn = $("#reopenTicketBtn");
+    
+    if (isClosed) {
+        closeBtn.hide();
+        reopenBtn.show();
+    } else {
+        closeBtn.show();
+        reopenBtn.hide();
+    }
+}
+
 // Function to start the spinner
 function showSpinner() {
     document.getElementById('spinner').style.display = 'block';
@@ -702,4 +718,3 @@ function showSpinner() {
 function hideSpinner() {
     document.getElementById('spinner').style.display = 'none';
 }
-

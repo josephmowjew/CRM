@@ -29,7 +29,7 @@ namespace UCS_CRM.Core.Services
             {
                 UserFriendlyMessage = userFriendlyErrorMessage,
                 DetailedMessage = detailedErrorMessage,
-                DateOccurred = DateTime.UtcNow
+                DateOccurred = DateTime.Now
             };
 
             await _errorLogRepository.AddAsync(errorDetails);

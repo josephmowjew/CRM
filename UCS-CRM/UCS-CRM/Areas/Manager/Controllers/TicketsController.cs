@@ -350,7 +350,7 @@ namespace UCS_CRM.Areas.Manager.Controllers
                         var closeState = this._stateRepository.Exists(Lambda.Closed);
 
                         ticket.StateId = closeState.Id;
-                        ticket.ClosedDate = DateTime.UtcNow;
+                        ticket.ClosedDate = DateTime.Now;
 
                         // Detach the existing entry if it is not in the Modified state
                         var existingEntry = _context.ChangeTracker.Entries<Ticket>().FirstOrDefault(e => e.Entity.Id == ticket.Id);
@@ -643,19 +643,29 @@ namespace UCS_CRM.Areas.Manager.Controllers
 
             var findUserDb = await this._userRepository.GetUserWithRole(User.Identity.Name);
 
-            resultTotal = await this._ticketRepository.GetTicketsTotalFilteredAsync(CursorParameters, findUserDb.Department, type);
-            var result = await this._ticketRepository.GetTickets(CursorParameters, findUserDb.Department, type);
-
-            //map the results to a read DTO
+            // Check if user is in Executive Suite Department
+            bool isExecutive = findUserDb?.Department?.Name?.Trim().ToUpper() == "EXECUTIVE SUITE";
+            
+            resultTotal = await this._ticketRepository.GetTicketsTotalFilteredAsync(
+                CursorParameters, 
+                isExecutive ? null : findUserDb.Department, // Pass null department for executives
+                type
+            );
+            
+            var result = await this._ticketRepository.GetTickets(
+                CursorParameters, 
+                isExecutive ? null : findUserDb.Department, // Pass null department for executives
+                type
+            );
 
             var mappedResult = this._mapper.Map<List<ReadTicketDTO>>(result);
 
-            var cleanResult = new List<ReadTicketDTO>();
-
-
-            return Json(new { draw = draw, recordsFiltered = resultTotal, recordsTotal = resultTotal, data = mappedResult });
-
-
+            return Json(new { 
+                draw = draw, 
+                recordsFiltered = resultTotal, 
+                recordsTotal = resultTotal, 
+                data = mappedResult 
+            });
         }
 
         
@@ -1048,7 +1058,7 @@ namespace UCS_CRM.Areas.Manager.Controllers
                     var claimsIdentitifier = userClaims.FindFirst(ClaimTypes.NameIdentifier);
                     
                     // Set effective creation date considering holidays
-                    mappedTicket.CreatedDate = await DateTimeHelper.GetNextWorkingDay(_context, DateTime.UtcNow);
+                    mappedTicket.CreatedDate = await DateTimeHelper.GetNextWorkingDay(_context, DateTime.Now);
                     mappedTicket.CreatedById = claimsIdentitifier.Value;
 
                     // Add automatic out-of-hours response if needed
