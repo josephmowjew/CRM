@@ -1,0 +1,164 @@
+@model UCS_CRM.Core.Models.CustomTicketReportViewModel
+
+<div class="card">
+    <div class="card-header">
+        <h5 class="card-title mb-0">Custom Report Results</h5>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-bordered" id="customReportTable">
+                <thead>
+                    <tr>
+                        @if (Model.Configuration.ShowTicketNumber)
+                        {
+                            <th>Ticket Number</th>
+                        }
+                        @if (Model.Configuration.ShowTitle)
+                        {
+                            <th>Title</th>
+                        }
+                        @if (Model.Configuration.ShowDescription)
+                        {
+                            <th>Description</th>
+                        }
+                        @if (Model.Configuration.ShowMemberName)
+                        {
+                            <th>Member Name</th>
+                        }
+                        @if (Model.Configuration.ShowMemberEmployeeNumber)
+                        {
+                            <th>Employee Number</th>
+                        }
+                        @if (Model.Configuration.ShowAssignedTo)
+                        {
+                            <th>Assigned To</th>
+                        }
+                        @if (Model.Configuration.ShowPriority)
+                        {
+                            <th>Priority</th>
+                        }
+                        @if (Model.Configuration.ShowCategory)
+                        {
+                            <th>Category</th>
+                        }
+                        @if (Model.Configuration.ShowState)
+                        {
+                            <th>State</th>
+                        }
+                        @if (Model.Configuration.ShowCreatedDate)
+                        {
+                            <th>Created Date</th>
+                        }
+                        @if (Model.Configuration.ShowClosedDate)
+                        {
+                            <th>Closed Date</th>
+                        }
+                        @if (Model.Configuration.ShowDepartment)
+                        {
+                            <th>Department</th>
+                        }
+                        @if (Model.Configuration.ShowInitiator)
+                        {
+                            <th>Initiator</th>
+                        }
+                        @if (Model.Configuration.ShowComments)
+                        {
+                            <th>Latest Comment</th>
+                        }
+                        @if (Model.Configuration.ShowEscalations)
+                        {
+                            <th>Escalations</th>
+                        }
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var ticket in Model.Model)
+                    {
+                        <tr>
+                            @if (Model.Configuration.ShowTicketNumber)
+                            {
+                                <td>@ticket.TicketNumber</td>
+                            }
+                            @if (Model.Configuration.ShowTitle)
+                            {
+                                <td>@ticket.Title</td>
+                            }
+                            @if (Model.Configuration.ShowDescription)
+                            {
+                                <td>@(string.IsNullOrEmpty(ticket.Description) ? "No description provided" : ticket.Description)</td>
+                            }
+                            @if (Model.Configuration.ShowMemberName)
+                            {
+                                <td>@($"{ticket.Member?.FirstName} {ticket.Member?.LastName}")</td>
+                            }
+                            @if (Model.Configuration.ShowMemberEmployeeNumber)
+                            {
+                                <td>@ticket.Member?.EmployeeNumber</td>
+                            }
+                            @if (Model.Configuration.ShowAssignedTo)
+                            {
+                                <td>@ticket.AssignedTo?.FullName</td>
+                            }
+                            @if (Model.Configuration.ShowPriority)
+                            {
+                                <td>@ticket.TicketPriority?.Name</td>
+                            }
+                            @if (Model.Configuration.ShowCategory)
+                            {
+                                <td>@ticket.TicketCategory?.Name</td>
+                            }
+                            @if (Model.Configuration.ShowState)
+                            {
+                                <td>@ticket.State?.Name</td>
+                            }
+                            @if (Model.Configuration.ShowCreatedDate)
+                            {
+                                <td>@ticket.CreatedDate.ToString("MMM dd, yyyy HH:mm")</td>
+                            }
+                            @if (Model.Configuration.ShowClosedDate)
+                            {
+                                <td>@(ticket.ClosedDate?.ToString("MMM dd, yyyy HH:mm") ?? "Not closed")</td>
+                            }
+                            @if (Model.Configuration.ShowDepartment)
+                            {
+                                <td>@ticket.Department?.Name</td>
+                            }
+                            @if (Model.Configuration.ShowInitiator)
+                            {
+                                <td>
+                                    @if (ticket.InitiatorUser != null)
+                                    {
+                                        @($"{ticket.InitiatorUser.FirstName} {ticket.InitiatorUser.LastName}")
+                                    }
+                                    else if (ticket.InitiatorMember != null)
+                                    {
+                                        @($"{ticket.InitiatorMember.FirstName} {ticket.InitiatorMember.LastName}")
+                                    }
+                                    else
+                                    {
+                                        @("No initiator found")
+                                    }
+                                </td>
+                            }
+                            @if (Model.Configuration.ShowComments)
+                            {
+                                <td>
+                                    @{
+                                        var latestComment = ((IEnumerable<dynamic>)ticket.StateTrackers)
+                                            .OrderByDescending((Func<dynamic, DateTime>)(st => st.CreatedDate))
+                                            .FirstOrDefault();
+                                        @(latestComment?.Reason ?? "No comment provided")
+                                    }
+                                </td>
+                            }
+                            @if (Model.Configuration.ShowEscalations)
+                            {
+                                <td>@ticket.TicketEscalations?.Count</td>
+                            }
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div> 

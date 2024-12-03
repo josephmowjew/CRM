@@ -14,6 +14,7 @@ using UCS_CRM.Core.Models;
 using UCS_CRM.Core.DTOs.Ticket;
 using UCS_CRM.Core.Helpers;
 using UCS_CRM.ViewModel;
+using Microsoft.EntityFrameworkCore;
 
 namespace UCS_CRM.Areas.Manager.Controllers
 {
@@ -373,6 +374,37 @@ namespace UCS_CRM.Areas.Manager.Controllers
             public string Title { get; set; }
             public string Description { get; set; }
             // Add other properties as needed for your report
+        }
+
+        public async Task<IActionResult> CustomReport()
+        {
+            await populateViewBags();
+            return View(new CustomTicketReport());
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> GenerateCustomReport([FromForm] CustomTicketReport model)
+        {
+            CursorParams cursorParams = new CursorParams { Take = int.MaxValue };
+            var tickets = await _ticketRepository.GetTicketReports(cursorParams, model.StartDate, model.EndDate, model.Branch ?? "", 
+                model.StateId ?? 0, model.CategoryId ?? 0);
+
+            if (model.PriorityId.HasValue)
+                tickets = tickets.Where(t => t.TicketPriorityId == model.PriorityId).ToList();
+            
+            if (model.DepartmentId.HasValue)
+                tickets = tickets.Where(t => t.DepartmentId == model.DepartmentId).ToList();
+            
+            if (!string.IsNullOrEmpty(model.AssignedToId))
+                tickets = tickets.Where(t => t.AssignedToId == model.AssignedToId).ToList();
+
+            var viewModel = new CustomTicketReportViewModel
+            {
+                Model = tickets,
+                Configuration = model
+            };
+
+            return PartialView("_CustomReportResults", viewModel);
         }
     }
 }
