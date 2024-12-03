@@ -1070,6 +1070,7 @@ namespace UCS_CRM.Persistence.SQLRepositories
                         Id = t.Id,
                         TicketNumber = t.TicketNumber,
                         Title = t.Title,
+                        Description = string.IsNullOrEmpty(t.Description) ? "No description provided" : t.Description,
                         Member = t.Member,
                         AssignedTo = t.AssignedTo,
                         TicketAttachments = t.TicketAttachments,
@@ -1079,8 +1080,13 @@ namespace UCS_CRM.Persistence.SQLRepositories
                         TicketEscalations = t.TicketEscalations,
                         InitiatorUser = t.InitiatorUser,
                         InitiatorMember = t.InitiatorMember,
-                        // Select the latest StateTracker
-                        StateTrackers = new List<TicketStateTracker> { t.StateTrackers.OrderByDescending(st => st.CreatedDate).FirstOrDefault() }
+                        StateTrackers = new List<TicketStateTracker> { 
+                            new TicketStateTracker { 
+                                Reason = t.StateTrackers.OrderByDescending(st => st.CreatedDate)
+                                    .Select(st => string.IsNullOrEmpty(st.Reason) ? "No comment provided" : st.Reason)
+                                    .FirstOrDefault() ?? "No comment provided"
+                            } 
+                        }
                     })
                     .ToListAsync();
                     }

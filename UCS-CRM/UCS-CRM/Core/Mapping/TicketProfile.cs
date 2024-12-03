@@ -22,8 +22,12 @@ namespace UCS_CRM.Core.Mapping
                     src.InitiatorUserId ?? src.InitiatorMemberId.ToString()))
                 .ForMember(dest => dest.InitiatorName, opt => opt.MapFrom(src => 
                     src.InitiatorUserId != null 
-                        ? System.Globalization.CultureInfo.CurrentCulture.TextInfo.ToTitleCase($"{src.InitiatorUser.FirstName} {src.InitiatorUser.LastName}".ToLower())
-                        : System.Globalization.CultureInfo.CurrentCulture.TextInfo.ToTitleCase($"{src.InitiatorMember.FirstName} {src.InitiatorMember.LastName}".ToLower())))
+                        ? (src.InitiatorUser != null 
+                            ? System.Globalization.CultureInfo.CurrentCulture.TextInfo.ToTitleCase($"{src.InitiatorUser.FirstName} {src.InitiatorUser.LastName}".ToLower())
+                            : "No initiator found")
+                        : (src.InitiatorMember != null 
+                            ? System.Globalization.CultureInfo.CurrentCulture.TextInfo.ToTitleCase($"{src.InitiatorMember.FirstName} {src.InitiatorMember.LastName}".ToLower())
+                            : "No initiator found")))
                 .ForMember(dest => dest.InitiatorDepartmentName, opt => opt.MapFrom(src => 
                     src.InitiatorUserId != null 
                         ? src.InitiatorUser.Department.Name
