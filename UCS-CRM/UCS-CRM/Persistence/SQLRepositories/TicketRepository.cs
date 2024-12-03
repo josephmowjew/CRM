@@ -1080,6 +1080,7 @@ namespace UCS_CRM.Persistence.SQLRepositories
                         TicketEscalations = t.TicketEscalations,
                         InitiatorUser = t.InitiatorUser,
                         InitiatorMember = t.InitiatorMember,
+                        CreatedDate = t.CreatedDate,
                         StateTrackers = new List<TicketStateTracker> { 
                             new TicketStateTracker { 
                                 Reason = t.StateTrackers.OrderByDescending(st => st.CreatedDate)

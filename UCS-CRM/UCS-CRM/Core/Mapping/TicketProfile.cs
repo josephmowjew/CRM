@@ -31,7 +31,15 @@ namespace UCS_CRM.Core.Mapping
                 .ForMember(dest => dest.InitiatorDepartmentName, opt => opt.MapFrom(src => 
                     src.InitiatorUserId != null 
                         ? src.InitiatorUser.Department.Name
-                        : "Member")); // Assuming members don't have departments, otherwise adjust this
+                        : "Member"))
+                .ForMember(dest => dest.Period, opt => opt.MapFrom(src => 
+                    (DateTime.UtcNow - src.CreatedDate).TotalDays >= 1 
+                        ? src.CreatedDate.ToString("MMM dd, yyyy HH:mm")
+                        : (DateTime.UtcNow - src.CreatedDate).TotalHours >= 1 
+                            ? $"{Math.Floor((DateTime.UtcNow - src.CreatedDate).TotalHours)} hours ago"
+                            : (DateTime.UtcNow - src.CreatedDate).TotalMinutes >= 1
+                                ? $"{Math.Floor((DateTime.UtcNow - src.CreatedDate).TotalMinutes)} minutes ago"
+                                : $"{Math.Floor((DateTime.UtcNow - src.CreatedDate).TotalSeconds)} seconds ago"));
 
             CreateMap<EditTicketDTO, Ticket>();
             CreateMap<EditManagerTicketDTO, Ticket>(); 
