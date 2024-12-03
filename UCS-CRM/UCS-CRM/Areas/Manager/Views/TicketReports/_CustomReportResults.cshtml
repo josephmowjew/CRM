@@ -161,4 +161,28 @@
             </table>
         </div>
     </div>
-</div> 
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function() {
+            $('#customReportTable').DataTable({
+                dom: 'Bfrtip',
+                buttons: [
+                    {
+                        extend: "excel",
+                        className: "btn btn-primary btn-sm"
+                    },
+                    {
+                        extend: "pdf",
+                        className: "btn btn-primary btn-sm"
+                    },
+                    {
+                        extend: "csv",
+                        className: "btn btn-primary btn-sm"
+                    }
+                ]
+            });
+        });
+    </script>
+} 

@@ -148,6 +148,13 @@
 </div>
 
 @section Scripts {
+    <script src="~/css/datatable/js/dataTables.buttons.min.js"></script>
+    <script src="~/css/datatable/js/buttons.html5.min.js"></script>
+    <script src="~/css/datatable/js/buttons.print.min.js"></script>
+    <script src="~/css/datatable/js/jszip.min.js"></script>
+    <script src="~/css/datatable/js/pdfmake.min.js"></script>
+    <script src="~/css/datatable/js/vfs_fonts.js"></script>
+    
     <script>
         function selectAllColumns() {
             $('input[type="checkbox"]').prop('checked', true);
@@ -173,7 +180,21 @@
                         $('#customReportTable').DataTable({
                             dom: 'Bfrtip',
                             buttons: [
-                                'copy', 'csv', 'excel', 'pdf', 'print'
+                                {
+                                    extend: 'excel',
+                                    text: '<i class="fas fa-file-excel me-1"></i> Excel',
+                                    className: 'btn btn-success btn-sm me-2'
+                                },
+                                {
+                                    extend: 'pdf',
+                                    text: '<i class="fas fa-file-pdf me-1"></i> PDF',
+                                    className: 'btn btn-danger btn-sm me-2'
+                                },
+                                {
+                                    extend: 'csv',
+                                    text: '<i class="fas fa-file-csv me-1"></i> CSV',
+                                    className: 'btn btn-info btn-sm'
+                                }
                             ]
                         });
                     },
