@@ -1,6 +1,18 @@
 ﻿@model UCS_CRM.Core.DTOs.Report.TicketReportDTO
 
 <div class="row">
+    <div class="col-lg-12 mb-4">
+        <div class="card">
+            <div class="card-body">
+                <h4 class="card-title">Custom Report Builder</h4>
+                <p class="text-muted">Build a customized report with specific columns and filters</p>
+                <a href="@Url.Action("CustomReport", "TicketReports", new { area = "SeniorManager" })" class="btn btn-primary">
+                    <i class="fas fa-table"></i> Create Custom Report
+                </a>
+            </div>
+        </div>
+    </div>
+
     <div class="col-lg-6">
         <div class="card">
             <div class="card-body">
@@ -100,11 +112,7 @@
                             <select asp-for="CategoryId" asp-items="@ViewBag.categories" class="form-control"></select>
                             <span asp-validation-for="CategoryId" class="text-danger"></span>
                         </div>
-                        <div class="form-group">
-                            <label asp-for="Branch"></label>
-                            <select asp-for="Branch" asp-items="@ViewBag.branches" class="form-control"></select>
-                            <span asp-validation-for="Branch" class="text-danger"></span>
-                        </div>
+                       
 
                         <div class="form-group">
                             <label asp-for="StartDate"></label>
