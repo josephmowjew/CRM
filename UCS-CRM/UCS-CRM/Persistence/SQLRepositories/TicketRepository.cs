@@ -937,6 +937,17 @@ namespace UCS_CRM.Persistence.SQLRepositories
             List<Ticket?> finalRecords = new List<Ticket?>();
 
                 IQueryable<Ticket> query = this._context.Tickets
+                    .Include(t => t.Department)
+                    .Include(t => t.Member)
+                    .Include(t => t.AssignedTo)
+                    .Include(t => t.TicketPriority)
+                    .Include(t => t.TicketCategory)
+                    .Include(t => t.State)
+                    .Include(t => t.InitiatorUser)
+                    .Include(t => t.InitiatorMember)
+                    .Include(t => t.StateTrackers)
+                    .Include(t => t.TicketEscalations)
+                    .OrderByDescending(t => t.CreatedDate)
                     .Where(t => t.Status != Lambda.Deleted);
 
                 if (categoryId > 0)
@@ -1073,6 +1084,8 @@ namespace UCS_CRM.Persistence.SQLRepositories
                         Description = string.IsNullOrEmpty(t.Description) ? "No description provided" : t.Description,
                         Member = t.Member,
                         AssignedTo = t.AssignedTo,
+                        Department = t.Department,
+                        DepartmentId = t.DepartmentId,
                         TicketAttachments = t.TicketAttachments,
                         State = t.State,
                         TicketCategory = t.TicketCategory,
