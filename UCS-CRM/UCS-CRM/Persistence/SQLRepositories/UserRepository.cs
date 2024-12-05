@@ -51,7 +51,10 @@ namespace UCS_CRM.Persistence.SQLRepositories
 
         public async Task<ApplicationUser?> FindByEmailsync(string email)
         {
-            return await this._context.Users.Include(u => u.Branch).Include(u => u.Department).FirstOrDefaultAsync(u => u.Email.ToLower().Trim() == email.ToLower().Trim());
+            return await this._context.Users
+                .Include(u => u.Branch)
+                .Include(u => u.Department)
+                .FirstOrDefaultAsync(u => u.Email.ToLower().Trim() == email.ToLower().Trim() && u.Status != Lambda.Deleted);
         }
 
         public async Task<ApplicationUser?> FindByIdAsync(string id)
