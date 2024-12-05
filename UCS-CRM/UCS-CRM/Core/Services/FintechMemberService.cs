@@ -24,6 +24,8 @@ namespace UCS_CRM.Core.Services
         private readonly IErrorLogService _errorService;
         public IConfiguration _configuration { get; }
         private readonly SemaphoreSlim _dbContextSemaphore = new SemaphoreSlim(1, 1); // Add this as class field
+        private static readonly SemaphoreSlim _syncSemaphore = new SemaphoreSlim(1, 1);
+        private static readonly ConcurrentDictionary<string, bool> _activeRanges = new ConcurrentDictionary<string, bool>();
 
         public FintechMemberService(HttpClient httpClient, 
                                     IConfiguration configuration,
@@ -240,7 +242,50 @@ namespace UCS_CRM.Core.Services
         }
 
         [DisableConcurrentExecution(timeoutInSeconds: 6000)]
-        public async Task<List<long>> SyncMissingFintechMembers(CancellationToken cancellationToken = default)
+        public async Task<List<long>> SyncMissingFintechMembers(
+            long? startFidxno = null,
+            long? endFidxno = null,
+            CancellationToken cancellationToken = default)
+        {
+            var rangeKey = $"sync-range-{startFidxno}-{endFidxno}";
+            
+            // Try to mark this range as active
+            if (!_activeRanges.TryAdd(rangeKey, true))
+            {
+                await LogMessageAsync($"Sync already in progress for range {startFidxno}-{endFidxno}. Skipping.");
+                return new List<long>();
+            }
+
+            try
+            {
+                // Acquire semaphore with timeout
+                if (!await _syncSemaphore.WaitAsync(TimeSpan.FromSeconds(30), cancellationToken))
+                {
+                    await LogMessageAsync($"Timeout waiting for sync lock. Range: {startFidxno}-{endFidxno}");
+                    return new List<long>();
+                }
+
+                try
+                {
+                    // Existing method implementation...
+                    return await ExecuteSyncLogic(startFidxno, endFidxno, cancellationToken);
+                }
+                finally
+                {
+                    _syncSemaphore.Release();
+                }
+            }
+            finally
+            {
+                _activeRanges.TryRemove(rangeKey, out _);
+            }
+        }
+
+        // Move the main logic to a separate method
+        private async Task<List<long>> ExecuteSyncLogic(
+            long? startFidxno,
+            long? endFidxno,
+            CancellationToken cancellationToken)
         {
             const int INITIAL_BATCH_SIZE = 500;
             const int MIN_BATCH_SIZE = 1;
@@ -258,7 +303,7 @@ namespace UCS_CRM.Core.Services
             var circuitBreaker = new CircuitBreaker(failureThreshold: 5, recoveryTime: TimeSpan.FromMinutes(1));
             var semaphore = new SemaphoreSlim(PARALLEL_CHUNKS);
             
-            long fidxno = 0;
+            long fidxno = startFidxno ?? 0;
             int batchSize = INITIAL_BATCH_SIZE;
             int totalProcessed = 0;
             int batchNumber = 0;
@@ -269,6 +314,24 @@ namespace UCS_CRM.Core.Services
             {
                 while (!cancellationToken.IsCancellationRequested && hasMoreRecords)
                 {
+                    // Add check for endFidxno
+                    if (endFidxno.HasValue && fidxno >= endFidxno.Value)
+                    {
+                        await LogMessageAsync($"Reached end Fidxno {endFidxno.Value}. Stopping sync.").ConfigureAwait(false);
+                        break;
+                    }
+
+                    // Adjust batch size if we're approaching endFidxno
+                    if (endFidxno.HasValue)
+                    {
+                        long remainingRecords = endFidxno.Value - fidxno;
+                        if (remainingRecords < batchSize)
+                        {
+                            batchSize = (int)remainingRecords;
+                            if (batchSize <= 0) break;
+                        }
+                    }
+
                     batchNumber++;
                     
                     if (IsHighMemoryPressure(MEMORY_THRESHOLD))
