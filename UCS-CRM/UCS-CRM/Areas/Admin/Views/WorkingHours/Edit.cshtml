@@ -1,0 +1,140 @@
+@model UCS_CRM.Core.Models.WorkingHours
+@inject UCS_CRM.Core.Services.IDateTimeService DateTimeService
+
+@{
+    ViewData["Title"] = "Edit Working Hours";
+    Layout = "~/Areas/Manager/Views/shared/_Layout.cshtml";
+}
+
+<div class="card">
+    <div class="card-header">
+        <div class="d-flex justify-content-between align-items-center">
+            <h4 class="text-uppercase mb-0">Edit Working Hours - @Model.DayOfWeek.ToString()</h4>
+            <a asp-action="Index" class="btn btn-secondary">
+                <i class="mdi mdi-arrow-left"></i> Back to List
+            </a>
+        </div>
+    </div>
+    <div class="card-body">
+        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+        <form asp-action="Edit" method="post">
+            @Html.AntiForgeryToken()
+            <input type="hidden" asp-for="Id" />
+            <input type="hidden" asp-for="DayOfWeek" />
+            
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="form-group mb-3">
+                        <label asp-for="DayOfWeek" class="control-label"></label>
+                        <input type="text" class="form-control" value="@Model.DayOfWeek.ToString()" disabled />
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="form-group mb-3">
+                        <label asp-for="IsWorkingDay" class="control-label"></label>
+                        <div class="form-check">
+                            <input asp-for="IsWorkingDay" class="form-check-input" />
+                            <label class="form-check-label" asp-for="IsWorkingDay"></label>
+                        </div>
+                        <span asp-validation-for="IsWorkingDay" class="text-danger"></span>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="form-group mb-3">
+                        <label asp-for="StartTime" class="control-label"></label>
+                        <input asp-for="StartTime" class="form-control" type="time" />
+                        <span asp-validation-for="StartTime" class="text-danger"></span>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="form-group mb-3">
+                        <label asp-for="EndTime" class="control-label"></label>
+                        <input asp-for="EndTime" class="form-control" type="time" />
+                        <span asp-validation-for="EndTime" class="text-danger"></span>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="form-group mb-3">
+                        <label asp-for="BreakStartTime" class="control-label"></label>
+                        <input asp-for="BreakStartTime" class="form-control" type="time" />
+                        <span asp-validation-for="BreakStartTime" class="text-danger"></span>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="form-group mb-3">
+                        <label asp-for="BreakEndTime" class="control-label"></label>
+                        <input asp-for="BreakEndTime" class="form-control" type="time" />
+                        <span asp-validation-for="BreakEndTime" class="text-danger"></span>
+                    </div>
+                </div>
+            </div>
+            <div class="form-group">
+                <button type="submit" class="btn btn-primary">
+                    <i class="mdi mdi-content-save"></i> Save Changes
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    <script>
+        $(document).ready(function() {
+            // Add client-side validation for time ranges
+            $('form').submit(function(e) {
+                var startTime = $('#StartTime').val();
+                var endTime = $('#EndTime').val();
+                var breakStartTime = $('#BreakStartTime').val();
+                var breakEndTime = $('#BreakEndTime').val();
+                
+                if (startTime && endTime) {
+                    if (startTime >= endTime) {
+                        alert('End time must be later than start time');
+                        e.preventDefault();
+                        return;
+                    }
+                }
+                
+                if (breakStartTime && breakEndTime) {
+                    if (breakStartTime >= breakEndTime) {
+                        alert('Break end time must be later than break start time');
+                        e.preventDefault();
+                        return;
+                    }
+                    
+                    if (breakStartTime < startTime || breakEndTime > endTime) {
+                        alert('Break time must be within working hours');
+                        e.preventDefault();
+                        return;
+                    }
+                }
+            });
+
+            // Format time inputs according to system configuration
+            function formatTimeInput(input) {
+                var time = $(input).val();
+                if (time) {
+                    var date = new Date();
+                    var parts = time.split(':');
+                    date.setHours(parts[0]);
+                    date.setMinutes(parts[1]);
+                    // Use the DateTimeService format through a data attribute set in the view
+                    $(input).val(date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false }));
+                }
+            }
+
+            $('input[type="time"]').each(function() {
+                formatTimeInput(this);
+            });
+
+            $('input[type="time"]').on('change', function() {
+                formatTimeInput(this);
+            });
+        });
+    </script>
+} 
