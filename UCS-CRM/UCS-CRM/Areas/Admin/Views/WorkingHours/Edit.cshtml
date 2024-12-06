@@ -83,6 +83,7 @@
 
 @section Scripts {
     @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>
         $(document).ready(function() {
             // Add client-side validation for time ranges
@@ -94,46 +95,40 @@
                 
                 if (startTime && endTime) {
                     if (startTime >= endTime) {
-                        alert('End time must be later than start time');
                         e.preventDefault();
+                        Swal.fire({
+                            title: 'Invalid Time Range',
+                            text: 'End time must be later than start time',
+                            icon: 'error',
+                            confirmButtonColor: '#d33'
+                        });
                         return;
                     }
                 }
                 
                 if (breakStartTime && breakEndTime) {
                     if (breakStartTime >= breakEndTime) {
-                        alert('Break end time must be later than break start time');
                         e.preventDefault();
+                        Swal.fire({
+                            title: 'Invalid Break Time',
+                            text: 'Break end time must be later than break start time',
+                            icon: 'error',
+                            confirmButtonColor: '#d33'
+                        });
                         return;
                     }
                     
                     if (breakStartTime < startTime || breakEndTime > endTime) {
-                        alert('Break time must be within working hours');
                         e.preventDefault();
+                        Swal.fire({
+                            title: 'Invalid Break Time',
+                            text: 'Break time must be within working hours',
+                            icon: 'error',
+                            confirmButtonColor: '#d33'
+                        });
                         return;
                     }
                 }
-            });
-
-            // Format time inputs according to system configuration
-            function formatTimeInput(input) {
-                var time = $(input).val();
-                if (time) {
-                    var date = new Date();
-                    var parts = time.split(':');
-                    date.setHours(parts[0]);
-                    date.setMinutes(parts[1]);
-                    // Use the DateTimeService format through a data attribute set in the view
-                    $(input).val(date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false }));
-                }
-            }
-
-            $('input[type="time"]').each(function() {
-                formatTimeInput(this);
-            });
-
-            $('input[type="time"]').on('change', function() {
-                formatTimeInput(this);
             });
         });
     </script>
