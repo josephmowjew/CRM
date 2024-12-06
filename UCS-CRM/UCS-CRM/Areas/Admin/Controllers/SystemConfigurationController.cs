@@ -40,28 +40,74 @@ namespace UCS_CRM.Areas.Admin.Controllers
         }
 
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> UpdateDateConfiguration(SystemDateConfiguration config)
         {
-            if (!ModelState.IsValid)
-                return BadRequest(ModelState);
-
-            var existing = await _context.SystemDateConfigurations.FirstOrDefaultAsync();
-            if (existing == null)
+            try
             {
-                _context.SystemDateConfigurations.Add(config);
-            }
-            else
-            {
-                existing.TimeZone = config.TimeZone;
-                existing.DateFormat = config.DateFormat;
-                existing.FirstDayOfWeek = config.FirstDayOfWeek;
-                existing.UseSystemTime = config.UseSystemTime;
-                existing.CustomDateTime = config.CustomDateTime;
-                existing.UpdatedDate = DateTime.Now;
-            }
+                _logger.LogInformation($"Received config - TimeZone: {config.TimeZone}, DateFormat: {config.DateFormat}, FirstDayOfWeek: {config.FirstDayOfWeek}");
 
-            await _context.SaveChangesAsync();
-            return RedirectToAction(nameof(Index));
+                if (!ModelState.IsValid)
+                {
+                    _logger.LogWarning("Model state is invalid");
+                    foreach (var modelStateEntry in ModelState.Values)
+                    {
+                        foreach (var error in modelStateEntry.Errors)
+                        {
+                            _logger.LogWarning($"Validation error: {error.ErrorMessage}");
+                        }
+                    }
+
+                    var holidays = await _context.Holidays
+                        .Where(h => h.DeletedDate == null)
+                        .OrderBy(h => h.StartDate)
+                        .ToListAsync();
+
+                    return View("Index", new SystemConfigurationViewModel 
+                    { 
+                        DateConfiguration = config,
+                        Holidays = holidays
+                    });
+                }
+
+                var existing = await _context.SystemDateConfigurations.FirstOrDefaultAsync();
+                if (existing == null)
+                {
+                    _logger.LogInformation("Creating new configuration");
+                    config.CreatedDate = DateTime.Now;
+                    _context.SystemDateConfigurations.Add(config);
+                }
+                else
+                {
+                    _logger.LogInformation("Updating existing configuration");
+                    existing.TimeZone = config.TimeZone;
+                    existing.DateFormat = config.DateFormat;
+                    existing.FirstDayOfWeek = config.FirstDayOfWeek;
+                    existing.UseSystemTime = config.UseSystemTime;
+                    existing.CustomDateTime = config.CustomDateTime;
+                    existing.UpdatedDate = DateTime.Now;
+                }
+
+                await _context.SaveChangesAsync();
+                TempData["SuccessMessage"] = "System configuration updated successfully.";
+                return RedirectToAction(nameof(Index));
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"Error updating system configuration: {ex}");
+                ModelState.AddModelError("", "An error occurred while saving the configuration. Please try again.");
+                
+                var holidays = await _context.Holidays
+                    .Where(h => h.DeletedDate == null)
+                    .OrderBy(h => h.StartDate)
+                    .ToListAsync();
+
+                return View("Index", new SystemConfigurationViewModel 
+                { 
+                    DateConfiguration = config,
+                    Holidays = holidays
+                });
+            }
         }
 
         [HttpPost]

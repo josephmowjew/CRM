@@ -27,38 +27,52 @@
                         <h5>System Date Configuration</h5>
                     </div>
                     <div class="card-body">
+                        @if (TempData["SuccessMessage"] != null)
+                        {
+                            <div class="alert alert-success alert-dismissible fade show" role="alert">
+                                @TempData["SuccessMessage"]
+                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                            </div>
+                        }
+                        <div asp-validation-summary="All" class="text-danger"></div>
                         <form asp-action="UpdateDateConfiguration" method="post">
+                            @Html.AntiForgeryToken()
                             <div class="form-group">
                                 <label asp-for="DateConfiguration.TimeZone">Time Zone</label>
-                                <select asp-for="DateConfiguration.TimeZone" class="form-control">
+                                <select name="TimeZone" class="form-control" required>
+                                    <option value="">Select Time Zone</option>
                                     @foreach (var timezone in TimeZoneInfo.GetSystemTimeZones())
                                     {
-                                        <option value="@timezone.Id">@timezone.DisplayName</option>
+                                        <option value="@timezone.Id" selected="@(Model?.DateConfiguration?.TimeZone == timezone.Id)">@timezone.DisplayName</option>
                                     }
                                 </select>
+                                <span asp-validation-for="DateConfiguration.TimeZone" class="text-danger"></span>
                             </div>
                             <div class="form-group">
                                 <label asp-for="DateConfiguration.DateFormat">Date Format</label>
-                                <select asp-for="DateConfiguration.DateFormat" class="form-control">
-                                    <option value="MM/dd/yyyy">MM/dd/yyyy</option>
-                                    <option value="dd/MM/yyyy">dd/MM/yyyy</option>
-                                    <option value="yyyy-MM-dd">yyyy-MM-dd</option>
+                                <select name="DateFormat" class="form-control" required>
+                                    <option value="">Select Date Format</option>
+                                    <option value="MM/dd/yyyy" selected="@(Model?.DateConfiguration?.DateFormat == "MM/dd/yyyy")">MM/dd/yyyy</option>
+                                    <option value="dd/MM/yyyy" selected="@(Model?.DateConfiguration?.DateFormat == "dd/MM/yyyy")">dd/MM/yyyy</option>
+                                    <option value="yyyy-MM-dd" selected="@(Model?.DateConfiguration?.DateFormat == "yyyy-MM-dd")">yyyy-MM-dd</option>
                                 </select>
+                                <span asp-validation-for="DateConfiguration.DateFormat" class="text-danger"></span>
                             </div>
                             <div class="form-group">
                                 <label asp-for="DateConfiguration.FirstDayOfWeek">First Day of Week</label>
-                                <select asp-for="DateConfiguration.FirstDayOfWeek" class="form-control">
-                                    <option value="0">Sunday</option>
-                                    <option value="1">Monday</option>
+                                <select name="FirstDayOfWeek" class="form-control">
+                                    <option value="0" selected="@(Model?.DateConfiguration?.FirstDayOfWeek == DayOfWeek.Sunday)">Sunday</option>
+                                    <option value="1" selected="@(Model?.DateConfiguration?.FirstDayOfWeek == DayOfWeek.Monday)">Monday</option>
                                 </select>
                             </div>
                             <div class="form-check mb-3">
-                                <input asp-for="DateConfiguration.UseSystemTime" class="form-check-input" type="checkbox" />
-                                <label asp-for="DateConfiguration.UseSystemTime" class="form-check-label">Use System Time</label>
+                                <input type="checkbox" name="UseSystemTime" class="form-check-input" value="true" checked="@(Model?.DateConfiguration?.UseSystemTime ?? true)" />
+                                <input type="hidden" name="UseSystemTime" value="false" />
+                                <label class="form-check-label">Use System Time</label>
                             </div>
                             <div class="form-group" id="customDateTimeDiv">
-                                <label asp-for="DateConfiguration.CustomDateTime">Custom Date/Time</label>
-                                <input asp-for="DateConfiguration.CustomDateTime" class="form-control" type="datetime-local" />
+                                <label>Custom Date/Time</label>
+                                <input type="datetime-local" name="CustomDateTime" class="form-control" value="@(Model?.DateConfiguration?.CustomDateTime?.ToString("yyyy-MM-ddTHH:mm"))" />
                             </div>
                             <button type="submit" class="btn btn-primary">Save Configuration</button>
                         </form>
@@ -144,7 +158,7 @@
                 <h5 class="modal-title" id="editHolidayLabel">Edit Holiday</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <form id="editHolidayForm">
+            <form asp-action="UpdateHoliday" method="post">
                 @Html.AntiForgeryToken()
                 <input type="hidden" name="Id" />
                 <div class="modal-body">

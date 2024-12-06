@@ -105,6 +105,7 @@ builder.Services.AddSingleton<HangfireJobEnqueuer>();
 builder.Services.AddSingleton<IErrorLogServiceFactory, ErrorLogServiceFactory>();
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddHttpClient(); 
+builder.Services.AddScoped<IDateTimeService, DateTimeService>();
 
 var app = builder.Build();
 
