@@ -1062,26 +1062,26 @@ namespace UCS_CRM.Areas.Manager.Controllers
                     mappedTicket.CreatedById = claimsIdentitifier.Value;
 
                     // Add automatic out-of-hours response if needed
-                    bool isWithinBusinessHours = await DateTimeHelper.IsWithinBusinessHours(_context, DateTime.Now);
-                    if (!isWithinBusinessHours)
-                    {
-                        var workingHours = await _context.WorkingHours.FirstOrDefaultAsync(w => !w.DeletedDate.HasValue);
-                        var startTime = workingHours?.StartTime ?? new TimeSpan(8, 0, 0);
-                        var endTime = workingHours?.EndTime ?? new TimeSpan(17, 0, 0);
+                    // bool isWithinBusinessHours = await DateTimeHelper.IsWithinBusinessHours(_context, DateTime.Now);
+                    // if (!isWithinBusinessHours)
+                    // {
+                    //     var workingHours = await _context.WorkingHours.FirstOrDefaultAsync(w => !w.DeletedDate.HasValue);
+                    //     var startTime = workingHours?.StartTime ?? new TimeSpan(8, 0, 0);
+                    //     var endTime = workingHours?.EndTime ?? new TimeSpan(17, 0, 0);
                         
-                        var outOfHoursComment = new TicketComment
-                        {
-                            Comment = $@"This ticket was received outside of our business hours. 
-                                        It will be processed on {mappedTicket.CreatedDate:dddd, MMMM dd, yyyy} at {startTime:hh\\:mm tt}.
-                                        Our business hours are Monday to Friday, {startTime:hh\\:mm tt} to {endTime:hh\\:mm tt} EAT, 
-                                        excluding public holidays and lunch break.",
-                            TicketId = mappedTicket.Id,
-                            CreatedById = claimsIdentitifier.Value,
-                            CreatedDate = DateTime.Now
-                        };
+                    //     var outOfHoursComment = new TicketComment
+                    //     {
+                    //         Comment = $@"This ticket was received outside of our business hours. 
+                    //                     It will be processed on {mappedTicket.CreatedDate:dddd, MMMM dd, yyyy} at {startTime:hh\\:mm tt}.
+                    //                     Our business hours are Monday to Friday, {startTime:hh\\:mm tt} to {endTime:hh\\:mm tt} EAT, 
+                    //                     excluding public holidays and lunch break.",
+                    //         TicketId = mappedTicket.Id,
+                    //         CreatedById = claimsIdentitifier.Value,
+                    //         CreatedDate = DateTime.Now
+                    //     };
                         
-                        _ticketCommentRepository.Add(outOfHoursComment);
-                    }
+                    //     _ticketCommentRepository.Add(outOfHoursComment);
+                    // }
 
                     // Get the last ticket and generate number
                     Ticket lastTicket = await this._ticketRepository.LastTicket();
