@@ -5,7 +5,7 @@
         <nav class="sidebar-nav">
             <ul id="sidebarnav">
                 <!-- User Profile-->
-          
+                         
                 <li class="sidebar-item">
                     <a class="sidebar-link waves-effect waves-dark sidebar-link"
                        asp-area="ictofficer" asp-controller="home" asp-action="Index" aria-expanded="false">
@@ -14,69 +14,11 @@
                 </li>
                 <li class="sidebar-item">
                     <a class="sidebar-link waves-effect waves-dark sidebar-link"
-                       asp-area="ictofficer" asp-controller="users" asp-action="Index" aria-expanded="false">
-                        <i class="mdi me-2 mdi-account-check"></i><span class="hide-menu">Users</span>
-                    </a>
-                </li>
-
-                <li class="sidebar-item">
-                    <a class="sidebar-link waves-effect waves-dark sidebar-link"
-                       asp-area="ictofficer" asp-controller="users" asp-action="PendingUsers" aria-expanded="false">
-                        <i class="mdi me-2 mdi-account-multiple-plus"></i>
-                        <span class="hide-menu">Pending Users</span>
-                        @{
-                            var pendingCount = ViewBag.PendingUsersCount ?? 0;
-                            if (pendingCount > 0)
-                            {
-                                <span class="badge rounded-pill bg-info ms-auto">@pendingCount</span>
-                            }
-                        }
-                    </a>
-                </li>
-
-                <li class="sidebar-item">
-                    <a class="sidebar-link waves-effect waves-dark sidebar-link"
-                       asp-area="ictofficer" asp-controller="roles" asp-action="Index" aria-expanded="false">
-                        <i class="mdi me-2 mdi-account-network"></i><span class="hide-menu">Roles</span>
-                    </a>
-                </li>
-                <li class="sidebar-item">
-                    <a class="sidebar-link waves-effect waves-dark sidebar-link"
-                      asp-area="ictofficer" asp-controller="members" asp-action="Index" aria-expanded="false">
+                       asp-area="ictofficer" asp-controller="member" asp-action="Index" aria-expanded="false">
                         <i class="mdi me-2 mdi-account-multiple"></i><span class="hide-menu">Members</span>
                     </a>
                 </li>
-                 @* <li class="sidebar-item">
-                    <a class="sidebar-link waves-effect waves-dark sidebar-link"
-                      asp-area="Admin" asp-controller="AccountTypes" asp-action="Index" aria-expanded="false">
-                        <i class="mdi me-2 mdi-account-multiple"></i><span class="hide-menu">Account Types</span>
-                    </a>
-                </li> *@
-                 <li class="sidebar-item">
-                    <a class="sidebar-link waves-effect waves-dark sidebar-link"
-                      asp-area="ictofficer" asp-controller="Departments" asp-action="Index" aria-expanded="false">
-                        <i class="mdi me-2 mdi-folder"></i><span class="hide-menu">Departments</span>
-                    </a>
-                </li>
-                 <li class="sidebar-item">
-                    <a class="sidebar-link waves-effect waves-dark sidebar-link"
-                      asp-area="ictofficer" asp-controller="Branches" asp-action="Index" aria-expanded="false">
-                        <i class="mdi me-2 mdi-lan"></i><span class="hide-menu">Branches</span>
-                    </a>
-                </li>
-              
-               @* <li class="sidebar-item">
-                    <a class="sidebar-link waves-effect waves-dark sidebar-link"
-                       href="icon-material.html" aria-expanded="false">
-                        <i class="mdi me-2 mdi-emoticon"></i><span class="hide-menu">Financial Status</span>
-                    </a>
-                </li>*@
-@*                <li class="sidebar-item">
-                    <a class="sidebar-link waves-effect waves-dark sidebar-link"
-                       href="map-google.html" aria-expanded="false">
-                        <i class="mdi me-2 mdi-earth"></i><span class="hide-menu">Loan</span>
-                    </a>
-                </li>*@
+
 
                 <li class="sidebar-item">
                     <a class="sidebar-link waves-effect waves-dark sidebar-link"
@@ -86,60 +28,16 @@
                 </li>
                 <li class="sidebar-item">
                     <a class="sidebar-link waves-effect waves-dark sidebar-link"
-                       asp-area="ictofficer" asp-controller="TicketCategories" asp-action="Index" aria-expanded="false">
-                        <i class="mdi mdi-note"></i><span class="hide-menu">Ticket Categories</span>
-                    </a>
-                </li>
-                                
-                <li class="sidebar-item">
-                    <a class="sidebar-link waves-effect waves-dark sidebar-link"
-                       asp-area="ictofficer" asp-controller="TicketPriorities" asp-action="Index" aria-expanded="false">
-                        <i class="mdi mdi-note-outline"></i><span class="hide-menu">Ticket Priorities</span>
+                       asp-area="ictofficer" asp-controller="TicketEscalations" asp-action="Index" aria-expanded="false">
+                        <i class="mdi mdi-file-tree"></i><span class="hide-menu">Tickets Escalated</span>
                     </a>
                 </li>
                 <li class="sidebar-item">
                     <a class="sidebar-link waves-effect waves-dark sidebar-link"
-                       asp-area="ictofficer" asp-controller="States" asp-action="Index" aria-expanded="false">
-                        <i class="mdi mdi-file-cloud"></i><span class="hide-menu">Ticket States</span>
+                       asp-area="ictofficer" asp-controller="Profile" asp-action="Index" aria-expanded="false">
+                        <i class="mdi mdi-account-circle"></i><span class="hide-menu">Profile</span>
                     </a>
                 </li>
-                <li class="sidebar-item">
-                    <a class="sidebar-link waves-effect waves-dark sidebar-link"
-                       asp-area="ictofficer" asp-controller="EmailAddresses" asp-action="Index" aria-expanded="false">
-                        <i class="mdi mdi-file-cloud"></i><span class="hide-menu">Email Addresses</span>
-                    </a>
-                </li>
-
-                <li class="sidebar-item">
-                    <a class="sidebar-link waves-effect waves-dark sidebar-link"
-                       asp-area="ictofficer" asp-controller="Feedbacks" asp-action="Index" aria-expanded="false">
-                        <i class="mdi me-2 mdi-lightbulb-on"></i><span class="hide-menu">Feedback</span>
-                    </a>
-                </li>
-                 <li class="sidebar-item">
-                    <a class="sidebar-link waves-effect waves-dark sidebar-link"
-                       asp-area="ictofficer" asp-controller="SystemConfiguration" asp-action="Index" aria-expanded="false">
-                        <i class="mdi me-2 mdi-calendar-clock"></i><span class="hide-menu">System Configuration</span>
-                    </a>
-                </li>
-               @* <li class="sidebar-item">
-                    <a class="sidebar-link waves-effect waves-dark sidebar-link"
-                       href="pages-error-404.html" aria-expanded="false">
-                        <i class="mdi me-2 mdi-help-circle"></i><span class="hide-menu">Tickets</span>
-                    </a>
-                </li>*@
-             @*   <li class="sidebar-item">
-                    <a class="sidebar-link waves-effect waves-dark sidebar-link"
-                       href="pages-error-404.html" aria-expanded="false">
-                        <i class="mdi mdi-chart-pie"></i><span class="hide-menu">Reports</span>
-                    </a>
-                </li>*@
-               @* <li class="text-center p-20 upgrade-btn">
-                    <a href=""
-                       class="btn btn-warning text-white mt-4" target="_blank">
-                       Button
-                    </a>
-                </li>*@
             </ul>
 
         </nav>
@@ -153,8 +51,8 @@
                 <a href="" class="link" data-toggle="tooltip" title="" data-original-title="Settings">
                     <i class="ti-settings"></i>
                 </a>
-            </div>*@
-            @*<div class="col-4 link-wrap">
+            </div>
+            <div class="col-4 link-wrap">
                 <!-- item-->
                 <a href="" class="link" data-toggle="tooltip" title="" data-original-title="Email">
                     <i class="mdi mdi-gmail"></i>

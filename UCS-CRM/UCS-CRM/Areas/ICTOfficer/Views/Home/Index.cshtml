@@ -1,7 +1,6 @@
-﻿@*
-    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
-*@
-@{
+﻿@{
+    ViewData["Title"] = "Tickets";
+    Layout = "~/Areas/officer/Views/shared/_Layout.cshtml";
 }
 
 <div class="row">
@@ -12,63 +11,75 @@
                 <div class="row mt-4">
                     <!-- Column -->
                     <div class="col-md-6 col-lg-3 col-xlg-3">
-                        <a asp-area="admin" asp-controller="Users" asp-action="Index" aria-expanded="false">
+                        <a asp-area="ictofficer" asp-controller="Tickets" asp-action="Index" asp-route-type="" aria-expanded="false">
                             <div class="card card-hover">
                                 <div class="p-2 rounded bg-light-primary text-center">
-                                    <h1 class="fw-light text-primary">@ViewBag.usersCount</h1>
-                                    <h6 class="text-primary">Users</h6>
+                                    <h1 class="fw-light text-primary">@ViewBag.allTicketsCount</h1>
+                                    <h6 class="text-primary">Total Tickets</h6>
                                 </div>
                             </div>
                         </a>
                     </div>
                     <!-- Column -->
                     <div class="col-md-6 col-lg-3 col-xlg-3">
-                        <a asp-area="admin" asp-controller="Departments" asp-action="Index" aria-expanded="false">
+                        <a asp-area="ictofficer" asp-controller="Tickets" asp-action="Index" asp-route-type="new" aria-expanded="false">
                             <div class="card card-hover">
-                                <div class="p-2 rounded bg-light-warning text-center">
-                                    <h1 class="fw-light text-warning">@ViewBag.departmentsCounts</h1>
-                                    <h6 class="text-warning">Departments</h6>
+                                <div class="p-2 rounded bg-light-primary text-center">
+                                    <h1 class="fw-light text-secondary">@ViewBag.newTicketsCount</h1>
+                                    <h6 class="text-primary">New Tickets</h6>
                                 </div>
                             </div>
                         </a>
                     </div>
                     <!-- Column -->
                     <div class="col-md-6 col-lg-3 col-xlg-3">
-                         <a asp-area="admin" asp-controller="States" asp-action="Index" aria-expanded="false">
+                        <a asp-area="ictofficer" asp-controller="Tickets" asp-action="Index" asp-route-type="Resolved" aria-expanded="false">
                             <div class="card card-hover">
                                 <div class="p-2 rounded bg-light-success text-center">
-                                    <h1 class="fw-light text-success">@ViewBag.statesCount</h1>
-                                    <h6 class="text-success">Ticket States</h6>
+                                    <h1 class="fw-light text-success">@ViewBag.resolvedTicketsCount</h1>
+                                    <h6 class="text-success">Resolved</h6>
                                 </div>
                             </div>
                         </a>
                     </div>
                     <!-- Column -->
                     <div class="col-md-6 col-lg-3 col-xlg-3">
-                         <a asp-area="admin" asp-controller="Branches" asp-action="Index" aria-expanded="false">
+                        <a asp-area="ictofficer" asp-controller="Tickets" asp-action="Index" asp-route-type="Re-opened" aria-expanded="false">
+                            <div class="card card-hover">
+                                <div class="p-2 rounded bg-light-warning text-center">
+                                    <h1 class="fw-light text-warning">@ViewBag.reopenedTicketsCount</h1>
+                                    <h6 class="text-warning">Re-opened</h6>
+                                </div>
+                            </div>
+                        </a>
+                    </div>
+                    <!-- Column -->
+                    <div class="col-md-6 col-lg-3 col-xlg-3">
+                        <a asp-area="ictofficer" asp-controller="Tickets" asp-action="Index" asp-route-type="Closed" aria-expanded="false">
                             <div class="card card-hover">
                                 <div class="p-2 rounded bg-light-danger text-center">
-                                    <h1 class="fw-light text-danger">@ViewBag.branchesCount</h1>
-                                    <h6 class="text-danger">Branches</h6>
+                                    <h1 class="fw-light text-danger">@ViewBag.closedTicketsCount</h1>
+                                    <h6 class="text-danger">Closed</h6>
                                 </div>
                             </div>
                         </a>
+
                     </div>
                     <!-- Column -->
                     <div class="col-md-6 col-lg-3 col-xlg-3">
-                         <a asp-area="admin" asp-controller="Members" asp-action="Index" aria-expanded="false">
+                        <a asp-area="ictofficer" asp-controller="Tickets" asp-action="Index" asp-route-type="Archived" aria-expanded="false">
                             <div class="card card-hover">
-                                <div class="p-2 rounded bg-light-danger text-center">
-                                    <h1 class="fw-light text-danger">@ViewBag.membersCount</h1>
-                                    <h6 class="text-danger">Members</h6>
+                                <div class="p-2 rounded bg-light-info text-center">
+                                    <h1 class="fw-light text-info">@ViewBag.archivedTicketsCount</h1>
+                                    <h6 class="text-info">Archived</h6>
                                 </div>
                             </div>
                         </a>
+
                     </div>
                     <!-- Column -->
-                    <!-- Column -->
                     <div class="col-md-6 col-lg-3 col-xlg-3">
-                        <a asp-area="admin" asp-controller="FailedRegistrations" asp-action="Index" aria-expanded="false">
+                        <a asp-area="ictofficer" asp-controller="FailedRegistrations" asp-action="Index" aria-expanded="false">
                             <div class="card card-hover">
                                 <div class="p-2 rounded bg-light-danger text-center">
                                     <h1 class="fw-light text-danger">@ViewBag.failedRegistrationsCount</h1>

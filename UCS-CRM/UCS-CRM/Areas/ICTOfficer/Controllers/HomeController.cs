@@ -1,47 +1,38 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
+using UCS_CRM.Core.Helpers;
 using UCS_CRM.Persistence.Interfaces;
 
-namespace UCS_CRM.Areas.ictofficer.Controllers
+namespace UCS_CRM.Areas.ICTOfficer.Controllers
 {
-    [Area("ictofficer")]
+    [Area("ICTOfficer")]
     [Authorize]
+
     public class HomeController : Controller
     {
         private readonly ITicketRepository _ticketRepository;
         private readonly IUserRepository _userRepository;
-        private readonly IDepartmentRepository _departmentRepository;
-        private readonly IStateRepository _stateRepository;
-        private readonly IBranchRepository _branchRepository;
-        private readonly IMemberRepository _memberRepository;
         private readonly IFailedRegistrationRepository _failedRegistrationRepository;
-        
 
-        public HomeController(ITicketRepository ticketRepository,
-                              IUserRepository userRepository,
-                              IDepartmentRepository departmentRepository,
-                              IStateRepository stateRepository,
-                              IBranchRepository branchRepository,
-                              IMemberRepository memberRepository,
-                              IFailedRegistrationRepository failedRegistrationRepository)
+        public HomeController(
+            ITicketRepository ticketRepository, 
+            IUserRepository userRepository,
+            IFailedRegistrationRepository failedRegistrationRepository)
         {
-            this._ticketRepository = ticketRepository;
-            this._userRepository = userRepository;
-            this._departmentRepository = departmentRepository;
-            this._stateRepository = stateRepository;
-            this._branchRepository = branchRepository;
-            this._memberRepository = memberRepository;
-            this._failedRegistrationRepository = failedRegistrationRepository;
+            _ticketRepository = ticketRepository;
+            _userRepository = userRepository;
+            _failedRegistrationRepository = failedRegistrationRepository;
         }
 
         public async Task<IActionResult> Index()
         {
-            ViewBag.departmentsCounts = await this.CountDepartmentsAvailable();
-            ViewBag.statesCount = await this.CountStatesAvailable();
-            ViewBag.branchesCount = await this.CountBranchesAvailable();
-            ViewBag.usersCount = await this.CountUsersAvailable();
-            ViewBag.membersCount = await this.CountMembersAvailable();
+            ViewBag.allTicketsCount = await this.CountTicketsByStatus("");
+            ViewBag.closedTicketsCount = await this.CountTicketsByStatus("Closed");
+            ViewBag.archivedTicketsCount = await this.CountTicketsByStatus("Archived");
+            ViewBag.newTicketsCount = await this.CountTicketsByStatus("New");
+            ViewBag.resolvedTicketsCount = await this.CountTicketsByStatus("Resolved");
+            ViewBag.reopenedTicketsCount = await this.CountTicketsByStatus("Re-opened");
             ViewBag.failedRegistrationsCount = await _failedRegistrationRepository.GetUnresolvedCountAsync();
             return View();
         }
@@ -56,14 +47,14 @@ namespace UCS_CRM.Areas.ictofficer.Controllers
 
 
 
-            int myTickets = await this._ticketRepository.TotalCount();
+            int myTickets = await this._ticketRepository.TotalCountByAssignedTo(claimsIdentitifier.Value);
 
             if (myTickets > 0)
             {
                 count = myTickets;
             }
 
-
+            
 
             return count;
 
@@ -76,62 +67,22 @@ namespace UCS_CRM.Areas.ictofficer.Controllers
 
             var claimsIdentitifier = userClaims.FindFirst(ClaimTypes.NameIdentifier);
 
-            int myTickets = await this._ticketRepository.CountTicketsByStatus(status);
+            var findUserDb = await this._userRepository.GetUserWithRole(User.Identity.Name);
+
+            CursorParams CursorParameters = new CursorParams() { Take = 10 };
+
+
+            int myTickets = await this._ticketRepository.GetAssignedToTicketsCountAsync(CursorParameters, findUserDb.Id, status);
 
             if (myTickets > 0)
             {
                 count = myTickets;
             }
 
-
-
-            return count;
-
-        }
-
-        private async Task<int> CountUsersAvailable()
-        {
-            int count = 0;
-
-            count = await this._userRepository.TotalCount();
+            
 
             return count;
-        }
 
-        private async Task<int> CountDepartmentsAvailable()
-        {
-            int count = 0;
-
-            count = await this._departmentRepository.TotalCount();
-
-            return count;
-        }
-
-        private async Task<int> CountBranchesAvailable()
-        {
-            int count = 0;
-
-            count = await this._branchRepository.TotalCount();
-
-            return count;
-        }
-
-        private async Task<int> CountStatesAvailable()
-        {
-            int count = 0;
-
-            count = await this._stateRepository.TotalActiveCount();
-
-            return count;
-        }
-
-        private async Task<int> CountMembersAvailable()
-        {
-            int count = 0;
-
-            count = await this._memberRepository.TotalCount();
-
-            return count;
         }
     }
 }

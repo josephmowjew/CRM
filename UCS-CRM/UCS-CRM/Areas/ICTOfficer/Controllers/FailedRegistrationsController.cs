@@ -5,9 +5,9 @@ using UCS_CRM.Core.Helpers;
 using UCS_CRM.Core.Models;
 using UCS_CRM.Persistence.Interfaces;
 
-namespace UCS_CRM.Areas.ictofficer.Controllers
+namespace UCS_CRM.Areas.ICTOfficer.Controllers
 {
-    [Area("ictofficer")]
+    [Area("ICTOfficer")]
     [Authorize]
     public class FailedRegistrationsController : Controller
     {

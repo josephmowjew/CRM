@@ -4,48 +4,187 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using System.Security.Claims;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Converters;
+using Newtonsoft.Json.Linq;
+using System.Globalization;
+using System.Text;
+using System.Text.Json;
 using UCS_CRM.Areas.Admin.ViewModels;
+using UCS_CRM.Core.DTOs.Login;
 using UCS_CRM.Core.DTOs.Member;
+using UCS_CRM.Core.DTOs.MemberAccount;
+using UCS_CRM.Core.DTOs.Ticket;
 using UCS_CRM.Core.Helpers;
 using UCS_CRM.Core.Models;
 using UCS_CRM.Core.Services;
-using UCS_CRM.Core.ViewModels;
 using UCS_CRM.Persistence.Interfaces;
 
-namespace UCS_CRM.Areas.ictofficer.Controllers
+namespace UCS_CRM.Areas.ICTOfficer.Controllers
 {
-    [Area("ictofficer")]
+    [Area("ICTOfficer")]
     [Authorize]
-    public class MembersController : Controller
+    public class MemberController : Controller
     {
         private readonly IMemberRepository _memberRepository;
-        private readonly IUserRepository _userRepository;
         private readonly IMapper _mapper;
         private readonly IUnitOfWork _unitOfWork;
         private readonly IEmailService _emailService;
+        private readonly HttpClient _httpClient;
         private readonly HangfireJobEnqueuer _jobEnqueuer;
-        public MembersController(IMemberRepository memberRepository, IMapper mapper, IUnitOfWork unitOfWork, IEmailService emailService, IUserRepository userRepository, HangfireJobEnqueuer jobEnqueuer)
+        public IConfiguration _configuration { get; }
+        public MemberController(IMemberRepository memberRepository, IMapper mapper, IUnitOfWork unitOfWork, IEmailService emailService, HttpClient httpClient, IConfiguration configuration, HangfireJobEnqueuer jobEnqueuer)
         {
             _memberRepository = memberRepository;
             _emailService = emailService;
             _mapper = mapper;
             _unitOfWork = unitOfWork;
-            _userRepository = userRepository;
-            _jobEnqueuer = jobEnqueuer;
+            _httpClient = httpClient;
+            _configuration = configuration;
+            
         }
 
         // GET: MemberController
         public ActionResult Index()
         {
-            UserViewModel newUser = new UserViewModel();
-            ViewBag.genderList = newUser.GenderList;
             return View();
         }
 
-      
 
-       
+
+        // GET: MemberController/Details/5
+        public async Task<ActionResult> oDetails(int id)
+        {
+
+          
+
+            var MemberDB = await this._memberRepository.GetMemberAsync(id);
+
+            if (MemberDB == null)
+            {
+                return RedirectToAction("Index");
+            }           
+
+            var mappedMember = this._mapper.Map<ReadMemberDTO>(MemberDB);
+
+            return View(mappedMember);
+        }
+
+        public async Task<ActionResult> Details(int id)
+        {
+
+            //authenticate API
+            string token = await ApiAuthenticate();
+
+            if (string.IsNullOrEmpty(token))
+            {
+                return RedirectToAction("Index"); 
+            }
+
+
+            var member = await _memberRepository.GetMemberAsync(id);
+
+            if (member == null)
+            {
+                return RedirectToAction("Index");
+            }
+
+            _httpClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
+
+            var baseAccountResponse = await _httpClient.GetAsync(_configuration["APIURL:link"] + $"BaseAccountAndRelatedAccounts?account_number={member.AccountNumber}");
+
+            if (!baseAccountResponse.IsSuccessStatusCode)
+            {
+                return RedirectToAction("Index");
+            }
+
+            var json = await baseAccountResponse.Content.ReadAsStringAsync();
+
+            var document = JsonDocument.Parse(json);
+
+            if (document.RootElement.TryGetProperty("data", out JsonElement data))
+            {
+                if (data.ValueKind == JsonValueKind.Object)
+                {
+                    if (data.GetRawText() == "{}")
+                    {
+                        TempData["response"] = "Account number does not match any identification details";
+                        return RedirectToAction("Index");
+                    }
+
+                }
+            }
+
+
+
+            var status = document.RootElement.GetProperty("status").GetInt32();
+
+            string message = document.RootElement.GetProperty("message").GetString();
+
+            if (status == 404)
+            {
+                 Json(new { error = "error", message = "failed to create the user account from the member" });
+                return RedirectToAction("Index");
+            }
+
+            if(message.Equals("Account Number Does Not Macth any Identification Details", StringComparison.OrdinalIgnoreCase))
+            {
+                Json(new { error = "error", message = "This user has no base account number" });
+                TempData["errorResponse"] = "This user has no base account number";
+                return RedirectToAction("Index");
+            }
+
+
+          
+
+            var baseAccountElement = document.RootElement.GetProperty("data").GetProperty("base_account");
+
+            decimal balance;
+            if (decimal.TryParse(baseAccountElement.GetProperty("balance").GetString(), out balance))
+            {
+                balance = balance;
+            }
+
+            var baseAccount = new ReadMemberDTO()
+            {
+               // MemberId = int.Parse(baseAccountElement.GetProperty("account_number").GetString()),
+                AccountNumber = baseAccountElement.GetProperty("account_number").GetString(),
+                AccountName = baseAccountElement.GetProperty("account_name").GetString(),
+                Balance = balance,
+                FirstName = member.FirstName,
+                LastName = member.LastName,
+                Address = member.Address,
+                NationalId = member.NationalId
+            };
+
+             //var relatedAccounts = baseAccountElement.GetProperty("related_accounts");
+            var relatedAccounts = document.RootElement.GetProperty("data").GetProperty("related_accounts");
+
+            if (relatedAccounts.ValueKind == JsonValueKind.Array)
+            {
+                foreach (var relatedAccount in relatedAccounts.EnumerateArray())
+                {                   
+                    if (decimal.TryParse(relatedAccount.GetProperty("balance").GetString(), out balance))
+                    {
+                        balance = balance;
+                    }
+
+                    baseAccount.MemberAccounts.Add(new MemberAccount()
+                    {
+                       // MemberId = int.Parse(relatedAccount.GetProperty("member_id").GetString()),
+                        AccountNumber = relatedAccount.GetProperty("account_number").GetString(),
+                        AccountName = relatedAccount.GetProperty("account_name").GetString(),
+                        Balance = balance
+                    });
+                }
+            }
+
+            var mappedMember = _mapper.Map<ReadMemberDTO>(baseAccount);
+
+           
+            return View(mappedMember);
+        }
+
 
         // POST: MemberController/Edit/5
         [HttpPost]
@@ -57,28 +196,9 @@ namespace UCS_CRM.Areas.ictofficer.Controllers
 
                 UCS_CRM.Core.Models.Member? databaseMemberRecord = await this._memberRepository.GetMemberAsync(model.Id);
 
-                //check if the member record has an account status of normal
-                if(databaseMemberRecord?.AccountStatus == null || !databaseMemberRecord.AccountStatus.ToLower().Contains("normal"))
-                {
-                    return Json(new { error = "error", message = "member account status does not contain normal" });
-                }
-
-                int pin = _memberRepository.RandomNumber();
-
                 if (databaseMemberRecord != null)
                 {
-
-                    var userClaims = (ClaimsIdentity)User.Identity;
-
-                    var claimsIdentitifier = userClaims.FindFirst(ClaimTypes.NameIdentifier);
-
-                    //update the gender
-                    databaseMemberRecord.Gender = model.Gender;
-
-
-                    ApplicationUser? user =  await this._memberRepository.CreateUserAccount(databaseMemberRecord, model.Email, "",claimsIdentitifier.Value);
-
-                    user.Pin = pin;
+                    ApplicationUser? user =  await this._memberRepository.CreateUserAccount(databaseMemberRecord, model.Email);
 
                     if (user == null)
                     {
@@ -92,226 +212,21 @@ namespace UCS_CRM.Areas.ictofficer.Controllers
 
                     //send emails
 
-                    string UserNameBody = $@"
-                    <html>
-                    <head>
-                        <style>
-                            @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Montserrat:wght@300;400;700&display=swap');
-                            body {{ font-family: 'Montserrat', sans-serif; line-height: 1.8; color: #333; background-color: #f4f4f4; }}
-                            .container {{ max-width: 600px; margin: 20px auto; padding: 30px; background-color: #ffffff; border-radius: 8px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); }}
-                            .logo {{ text-align: center; margin-bottom: 20px; }}
-                            .logo img {{ max-width: 150px; }}
-                            h2 {{ color: #0056b3; text-align: center; font-weight: 700; font-family: 'Playfair Display', serif; }}
-                            .account-info {{ background-color: #f0f7ff; border-left: 4px solid #0056b3; padding: 15px; margin: 20px 0; }}
-                            .account-info p {{ margin: 5px 0; }}
-                            .footer {{ margin-top: 30px; text-align: center; font-style: italic; color: #666; }}
-                        </style>
-                    </head>
-                    <body>
-                        <div class='container'>
-                            <div class='logo'>
-                                <img src='https://crm.ucssacco.com/images/LOGO(1).png' alt='UCS SACCO Logo'>
-                            </div>
-                            <h2>Account Created</h2>
-                            <div class='account-info'>
-                                <p>An account has been created for you on UCS SACCO.</p>
-                                <p>Your email address is: <strong>{user.Email}</strong></p>
-                            </div>
-                            <p class='footer'>Thank you for choosing UCS SACCO.</p>
-                        </div>
-                    </body>
-                    </html>";
-                    string PasswordBody = $@"
-                    <html>
-                    <head>
-                        <style>
-                            @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Montserrat:wght@300;400;700&display=swap');
-                            body {{ font-family: 'Montserrat', sans-serif; line-height: 1.8; color: #333; background-color: #f4f4f4; }}
-                            .container {{ max-width: 600px; margin: 20px auto; padding: 30px; background-color: #ffffff; border-radius: 8px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); }}
-                            .logo {{ text-align: center; margin-bottom: 20px; }}
-                            .logo img {{ max-width: 150px; }}
-                            h2 {{ color: #0056b3; text-align: center; font-weight: 700; font-family: 'Playfair Display', serif; }}
-                            .password-info {{ background-color: #f0f7ff; border-left: 4px solid #0056b3; padding: 15px; margin: 20px 0; }}
-                            .password-info p {{ margin: 5px 0; }}
-                            .cta-button {{ display: inline-block; background-color: #0056b3; color: #ffffff; padding: 12px 24px; text-decoration: none; border-radius: 5px; font-weight: bold; margin-top: 20px; }}
-                            .cta-button:hover {{ background-color: #003d82; }}
-                            .footer {{ margin-top: 30px; text-align: center; font-style: italic; color: #666; }}
-                        </style>
-                    </head>
-                    <body>
-                        <div class='container'>
-                            <div class='logo'>
-                                <img src='https://crm.ucssacco.com/images/LOGO(1).png' alt='UCS SACCO Logo'>
-                            </div>
-                            <h2>Account Created</h2>
-                            <div class='password-info'>
-                                <p>An account has been created for you on UCS SACCO App.</p>
-                                <p>Your temporary password is: <strong>P@$$w0rd</strong></p>
-                                <p>Please change this password upon your first login.</p>
-                            </div>
-                            <p>
-                                <a href='https://crm.ucssacco.com' class='cta-button' style='color: #ffffff;'>Access UCS CRM</a>
-                            </p>
-                            <p class='footer'>Thank you for choosing UCS SACCO.</p>
-                        </div>
-                    </body>
-                    </html>";
-                    //send pin to email
+                    string UserNameBody = "An account has been created on UCS SACCO. Your email is " + "<b>" + user.Email + " <br /> ";
+                    string PasswordBody = "An account has been created on UCS SACCO App. Your password is " + "<b> P@$$w0rd <br />";
 
-                    string AccountActivationBody = $@"
-                    <html>
-                    <head>
-                        <style>
-                            @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Montserrat:wght@300;400;700&display=swap');
-                            body {{ font-family: 'Montserrat', sans-serif; line-height: 1.8; color: #333; background-color: #f4f4f4; }}
-                            .container {{ max-width: 600px; margin: 20px auto; padding: 30px; background-color: #ffffff; border-radius: 8px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); }}
-                            .logo {{ text-align: center; margin-bottom: 20px; }}
-                            .logo img {{ max-width: 150px; }}
-                            h2 {{ color: #0056b3; text-align: center; font-weight: 700; font-family: 'Playfair Display', serif; }}
-                            .otp-info {{ background-color: #f0f7ff; border-left: 4px solid #0056b3; padding: 15px; margin: 20px 0; }}
-                            .otp-info p {{ margin: 5px 0; }}
-                            .cta-button {{ display: inline-block; background-color: #0056b3; color: #ffffff; padding: 12px 24px; text-decoration: none; border-radius: 5px; font-weight: bold; margin-top: 20px; }}
-                            .cta-button:hover {{ background-color: #003d82; }}
-                            .footer {{ margin-top: 30px; text-align: center; font-style: italic; color: #666; }}
-                        </style>
-                    </head>
-                    <body>
-                        <div class='container'>
-                            <div class='logo'>
-                                <img src='https://crm.ucssacco.com/images/LOGO(1).png' alt='UCS SACCO Logo'>
-                            </div>
-                            <h2>Account Activation</h2>
-                            <div class='otp-info'>
-                                <p>Here is the One Time Pin (OTP) for your account on UCS:</p>
-                                <p><strong>{user.Pin}</strong></p>
-                            </div>
-                            <p>
-                                <a href='https://crm.ucssacco.com' class='cta-button' style='color: #ffffff;'>Access UCS CRM</a>
-                            </p>
-                            <p class='footer'>Thank you for choosing UCS SACCO.</p>
-                        </div>
-                    </body>
-                    </html>";
 
+                   
                     //check if this is a new user or not (old users will have a deleted date field set to an actual date)
-                    if (user.DeletedDate != null)
+                    if(user.DeletedDate != null)
                     {
-                        this._jobEnqueuer.EnqueueEmailJob(user.Email, "Account Reactivation", $@"
-                        <html>
-                        <head>
-                            <style>
-                                @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Montserrat:wght@300;400;700&display=swap');
-                                body {{ font-family: 'Montserrat', sans-serif; line-height: 1.8; color: #333; background-color: #f4f4f4; }}
-                                .container {{ max-width: 600px; margin: 20px auto; padding: 30px; background-color: #ffffff; border-radius: 8px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); }}
-                                .logo {{ text-align: center; margin-bottom: 20px; }}
-                                .logo img {{ max-width: 150px; }}
-                                h2 {{ color: #0056b3; text-align: center; font-weight: 700; font-family: 'Playfair Display', serif; }}
-                                .info {{ background-color: #f0f7ff; border-left: 4px solid #0056b3; padding: 15px; margin: 20px 0; }}
-                                .cta-button {{ display: inline-block; background-color: #0056b3; color: #ffffff; padding: 12px 24px; text-decoration: none; border-radius: 5px; font-weight: bold; margin-top: 20px; }}
-                                .cta-button:hover {{ background-color: #003d82; }}
-                                .footer {{ margin-top: 30px; text-align: center; font-style: italic; color: #666; }}
-                            </style>
-                        </head>
-                        <body>
-                            <div class='container'>
-                                <div class='logo'>
-                                    <img src='https://crm.ucssacco.com/images/LOGO(1).png' alt='UCS SACCO Logo'>
-                                </div>
-                                <h2>Account Reactivation</h2>
-                                <div class='info'>
-                                    <p>Good day,</p>
-                                    <p>We are pleased to inform you that your account has been reactivated on the UCS SACCO.</p>
-                                    <p>You may proceed to login using your previous credentials.</p>
-                                </div>
-                                <p>
-                                    <a href='https://crm.ucssacco.com' class='cta-button' style='color: #ffffff;'>Access UCS CRM</a>
-                                </p>
-                                <p class='footer'>Thank you for choosing UCS SACCO.</p>
-                            </div>
-                        </body>
-                        </html>");
-
+                        EmailHelper.SendEmail(this._jobEnqueuer, user.Email, "Account Status", $"Good day, We are pleased to inform you that your account has been reactivated on the UCS SACCO. You may proceed to login using your previous credentials. ", user.SecondaryEmail);
                     }
                     else
                     {
-                        this._jobEnqueuer.EnqueueEmailJob(user.Email, "Login Details", UserNameBody);
-                        this._jobEnqueuer.EnqueueEmailJob(user.Email, "Login Details", PasswordBody);
-                        this._jobEnqueuer.EnqueueEmailJob(user.Email, "Account Activation", AccountActivationBody);
-                        this._jobEnqueuer.EnqueueEmailJob(user.Email, "Account Password", $@"
-                    <html>
-                    <head>
-                        <style>
-                            @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Montserrat:wght@300;400;700&display=swap');
-                            body {{ font-family: 'Montserrat', sans-serif; line-height: 1.8; color: #333; background-color: #f4f4f4; }}
-                            .container {{ max-width: 600px; margin: 20px auto; padding: 30px; background-color: #ffffff; border-radius: 8px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); }}
-                            .logo {{ text-align: center; margin-bottom: 20px; }}
-                            .logo img {{ max-width: 150px; }}
-                            h2 {{ color: #0056b3; text-align: center; font-weight: 700; font-family: 'Playfair Display', serif; }}
-                            .account-info {{ background-color: #f0f7ff; border-left: 4px solid #0056b3; padding: 15px; margin: 20px 0; }}
-                            .account-info p {{ margin: 5px 0; }}
-                            .cta-button {{ display: inline-block; background-color: #0056b3; color: #ffffff; padding: 12px 24px; text-decoration: none; border-radius: 5px; font-weight: bold; margin-top: 20px; }}
-                            .cta-button:hover {{ background-color: #003d82; }}
-                            .footer {{ margin-top: 30px; text-align: center; font-style: italic; color: #666; }}
-                        </style>
-                    </head>
-                    <body>
-                        <div class='container'>
-                            <div class='logo'>
-                                <img src='https://crm.ucssacco.com/images/LOGO(1).png' alt='UCS SACCO Logo'>
-                            </div>
-                            <h2>Account Password</h2>
-                            <div class='account-info'>
-                                <p>An account has been created for you on UCS SACCO App.</p>
-                                <p><strong>Your temporary password:</strong> P@$$w0rd</p>
-                                <p>Please change this password upon your first login.</p>
-                            </div>
-                            <p>
-                                <a href='https://crm.ucssacco.com' class='cta-button' style='color: #ffffff;'>Login to Your Account</a>
-                            </p>
-                            <p class='footer'>Thank you for choosing UCS SACCO.</p>
-                        </div>
-                    </body>
-                    </html>");
-
-                    // string gravatorEmailBody = $@"
-                    //     <html>
-                    //     <head>
-                    //         <style>
-                    //             @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Montserrat:wght@300;400;700&display=swap');
-                    //             body {{ font-family: 'Montserrat', sans-serif; line-height: 1.8; color: #333; background-color: #f4f4f4; }}
-                    //             .container {{ max-width: 600px; margin: 20px auto; padding: 30px; background-color: #ffffff; border-radius: 8px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); }}
-                    //             .logo {{ text-align: center; margin-bottom: 20px; }}
-                    //             .logo img {{ max-width: 150px; }}
-                    //             h2 {{ color: #0056b3; text-align: center; font-weight: 700; font-family: 'Playfair Display', serif; }}
-                    //             .account-info {{ background-color: #f0f7ff; border-left: 4px solid #0056b3; padding: 15px; margin: 20px 0; }}
-                    //             .account-info p {{ margin: 5px 0; }}
-                    //             .cta-button {{ display: inline-block; background-color: #0056b3; color: #ffffff; padding: 12px 24px; text-decoration: none; border-radius: 5px; font-weight: bold; margin-top: 20px; }}
-                    //             .cta-button:hover {{ background-color: #003d82; }}
-                    //             .footer {{ margin-top: 30px; text-align: center; font-style: italic; color: #666; }}
-                    //         </style>
-                    //     </head>
-                    //     <body>
-                    //         <div class='container'>
-                    //             <div class='logo'>
-                    //                 <img src='https://crm.ucssacco.com/images/LOGO(1).png' alt='UCS SACCO Logo'>
-                    //             </div>
-                    //             <h2>Set Up Your Profile Picture</h2>
-                    //             <div class='account-info'>
-                    //                 <p>Good day,</p>
-                    //                 <p>To enhance your profile in the UCS SACCO application, we recommend setting up a profile picture using Gravatar.</p>
-                    //                 <p>Gravatar allows you to associate an avatar with your email address, which will be displayed on your profile in our application.</p>
-                    //             </div>
-                    //             <p>
-                    //                 <a href='https://en.gravatar.com/' class='cta-button' style='color: #ffffff;'>Register with Gravatar</a>
-                    //             </p>
-                    //             <p class='footer'>Thank you for being a part of UCS SACCO.</p>
-                    //         </div>
-                    //     </body>
-                    //     </html>";
-                    //     this._jobEnqueuer.EnqueueEmailJob(user.Email, "Set Up Your Profile Picture", gravatorEmailBody);
-
-                      
-
+                        EmailHelper.SendEmail(this._jobEnqueuer, user.Email, "Login Details", UserNameBody, user.SecondaryEmail);
+                        EmailHelper.SendEmail(this._jobEnqueuer, user.Email, "Login Details", PasswordBody, user.SecondaryEmail);
+                        EmailHelper.SendEmail(this._jobEnqueuer, user.Email, "Account Details", $"Good day, for those who have not yet registered with Gravator, please do so so that you may upload an avatar of yourself that can be associated with your email address and displayed on your profile in the Mental Lab application.\r\nPlease visit XXXXXXXXXXXXXXXXXXXXXXXX to register with Gravatar. ", user.SecondaryEmail);                       
                     }
 
 
@@ -388,10 +303,10 @@ namespace UCS_CRM.Areas.ictofficer.Controllers
             int skip = start != null ? Convert.ToInt32(start) : 0;
             int resultTotal = 0;
 
-            //create a cursor params based on the data coming from the datatable
+            //create a cursor params based on the data coming from the data-table
             CursorParams CursorParameters = new CursorParams() { SearchTerm = searchValue, Skip = skip, SortColum = sortColumn, SortDirection = sortColumnAscDesc, Take = pageSize };
 
-            resultTotal = await this._memberRepository.TotalCount();
+            resultTotal = await this._memberRepository.TotalFilteredMembersCount(CursorParameters);
             var result = await this._memberRepository.GetMembers(CursorParameters);
 
             //map the results to a read DTO
@@ -416,6 +331,44 @@ namespace UCS_CRM.Areas.ictofficer.Controllers
 
         }
 
+        public async Task<string> ApiAuthenticate()
+        {
 
+            // APIToken token = new APIToken();
+
+            var username = _configuration["APICredentials:Username"];
+            var password = _configuration["APICredentials:Password"];
+
+            APILogin apiLogin = new APILogin()
+            {
+                Username = username,
+                Password = password,
+            };
+
+
+
+            var jsonContent = JsonConvert.SerializeObject(apiLogin);
+            var stringContent = new StringContent(jsonContent, Encoding.UTF8, "application/json");
+
+            // Send POST request        
+            var tokenResponse = await _httpClient.PostAsync(_configuration["APIURL:link"] + $"Token", stringContent);
+
+            var json = await tokenResponse.Content.ReadAsStringAsync();
+            var document = JsonDocument.Parse(json);
+
+            var status = document.RootElement.GetProperty("status").GetInt32();
+
+            if (status == 404)
+            {
+
+                //
+                Console.WriteLine("Failed to login");
+                return "Failed to login";
+            }
+
+            var token = document.RootElement.GetProperty("token").GetString();
+
+            return token;
+        }
     }
 }

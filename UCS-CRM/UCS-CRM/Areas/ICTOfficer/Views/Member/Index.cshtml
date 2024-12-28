@@ -1,68 +1,91 @@
-﻿
-@using Microsoft.Extensions.Configuration
+﻿@using Microsoft.Extensions.Configuration
 @inject IConfiguration Configuration
 @{
     var host = Configuration.GetSection("HostingSettings")["Host"];
     var path = Configuration.GetSection("HostingSettings")["path"];
     var protocol = Configuration.GetSection("HostingSettings")["Protocol"];
+    string message = TempData["response"] as string;
+
 }
 @{
-    ViewData["Title"] = "Index";
-    Layout = "~/Areas/Admin/Views/shared/_Layout.cshtml";
+    ViewData["Title"] = "Members";
+    Layout = "~/Areas/ICTOfficer/Views/shared/_Layout.cshtml";
+    string errorMessage = TempData["errorResponse"] as string;
 }
 
 
-
-<div class="modal fade" id="set_email_modal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
-    <partial name="_SetEmailPartial" />
-</div>
 
 <div class="card">
     <div class="card-header">
         <h4 class="text-center text-uppercase">Members Available In The System</h4>
-        <div>
-            <img src="~/images/91.gif" id="spinner" />
-        </div>
+        @if (!string.IsNullOrEmpty(errorMessage))
+        {
+            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                @errorMessage
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+            <div>
+            </div>
+        }
     </div>
     <div class="card-body">
+        <div>
+            @{
+                if (!string.IsNullOrEmpty(message))
+                {
+                    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                        @message
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+
+                    // Reset the message
+                    message = string.Empty;
+                }
+            }
+
+
+        </div>
         <div class="table-responsive">
             <table class="table table-bordered " id="my_table">
-            <thead>
-                <tr>
-                    <th>
-                        Account Number
-                    </th>
-                    <th>
-                        National Id
-                    </th>
-                    <th>
-                        First Name
-                    </th>
-                    <th>
-                        Surname
-                    </th>
-                    <th>
-                        Gender
-                    </th>
+                <thead>
+                    <tr>
+                        <th>
+                            Account Number
+                        </th>
+                        <th>
+                            National Id
+                        </th>
+                        <th>
+                            First Name
+                        </th>
+                        <th>
+                            Surname
+                        </th>
+                        <th>
+                            Gender
+                        </th>
 
-                    <th>
-                        Phone Number
-                    </th>
+                        <th>
+                            Phone Number
+                        </th>
+                        <th>
+                            Account Status
+                        </th>
+                        <th>
+                            Employee Number
+                        </th>
+                        
+                        <th>
+                            Action
+                        </th>
 
-                    <th>
-                        Account Status
-                    </th>
-                    <th>
-                        Employee Number
-                    </th>
-                    <th>
-                        Action
-                    </th>
-                </tr>
-            </thead>
-            <tbody>
-            </tbody>
-        </table>
+
+
+                    </tr>
+                </thead>
+                <tbody>
+                </tbody>
+            </table>
         </div>
     </div>
 </div>
@@ -74,9 +97,7 @@
         var datatable;
     </script>
 
-        <script src="~/js/Member.js"></script>
-                    
-        <script>
+    <script>
         $(document).ready(function () {
             datatable = $('#my_table').DataTable({
 
@@ -85,7 +106,7 @@
                 "serverSide": true,
                 "order": [[0, "desc"]],
                 ajax: {
-                    url: 'members/GetMembers',
+                    url: 'member/GetMembers',
                     type: 'post',
                     datatype: 'Json'
 
@@ -137,13 +158,13 @@
                         "orderable": false,
                     },
 
-                     {
+                    {
                         data: "accountStatus",
                         name: "accountStatus",
                         className: "text-left",
                         "orderable": false,
                     },
-                    {
+                     {
                         data: "employeeNumber",
                         name: "employeeNumber",
                         className: "text-left",
@@ -156,21 +177,23 @@
                         className: "text-left",
                         "orderable": false,
                     }, *@
-                     {
-                        data: { state: "user.id"},
-                        mRender: function (data, type, full) 
-                        {
-                            return data.user != null && data.user.status != 'Deleted' ?  "<a href='#' onclick=removeUserAccount('" + data.id + "') type='button' class='mdi mdi-account-remove' title='Remove User Account' ></a>" : "<a href='#' onclick=set_email_modal('" + data.id + "') type='button' class='feather icon-user-plus' title='Create User Account' ></a>";
-                        }, 
-                        "name": "user.name",
-                        className: "text-left"
+                    {
+                        data: "id",
+                        name: "id",
+                        "orderable": false,
+                        render: function (data) {
+                            return "<a title='show more' href='member/details/" + data + "' class='mdi mdi-eye'></a> "
+                        }
                     },
+
                 ],
                 responsive: true,
                 "autoWidth": false,
             });
         });
     </script>
+
+
     @{
         await Html.RenderPartialAsync("_ValidationScriptsPartial");
     }
