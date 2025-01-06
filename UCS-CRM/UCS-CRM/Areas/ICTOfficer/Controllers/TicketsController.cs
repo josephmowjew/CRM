@@ -1046,7 +1046,7 @@ namespace UCS_CRM.Areas.ICTOfficer.Controllers
 
 
         [HttpGet]
-        [Route("officer/tickets/PickTicket/{id}")]
+        [Route("ICTOfficer/tickets/PickTicket/{id}")]
         public async Task<ActionResult> PickTicket(int id)
         {
             //check if the ticket exists
@@ -1471,7 +1471,7 @@ namespace UCS_CRM.Areas.ICTOfficer.Controllers
         }
 
         [HttpGet]
-        [Area("Officer")]
+        [Area("ICTOfficer")]
         public async Task<IActionResult> FetchAssigneesByDepartment(int departmentId)
         {
             try 
