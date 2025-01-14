@@ -1,14 +1,52 @@
 using Microsoft.EntityFrameworkCore;
 using UCS_CRM.Data;
 using UCS_CRM.Core.Models;
+using System;
 
 namespace UCS_CRM.Core.Helpers;
 
 public static class DateTimeHelper
 {
+    private static readonly TimeZoneInfo MalawiTimeZone = GetMalawiTimeZone();
+
+    private static TimeZoneInfo GetMalawiTimeZone()
+    {
+        try
+        {
+            // Try IANA timezone first (Linux/macOS)
+            return TimeZoneInfo.FindSystemTimeZoneById("Africa/Blantyre");
+        }
+        catch (TimeZoneNotFoundException)
+        {
+            try
+            {
+                // Fallback to Windows timezone
+                return TimeZoneInfo.FindSystemTimeZoneById("South African Standard Time");
+            }
+            catch (TimeZoneNotFoundException)
+            {
+                // If all else fails, create a custom timezone for GMT+2
+                return TimeZoneInfo.CreateCustomTimeZone(
+                    "Malawi Time",
+                    new TimeSpan(2, 0, 0),
+                    "Malawi Time",
+                    "Malawi Standard Time");
+            }
+        }
+    }
+
+    private static DateTime AdjustToMalawiTime(DateTime date)
+    {
+        if (date.Kind == DateTimeKind.Utc)
+        {
+            return TimeZoneInfo.ConvertTimeFromUtc(date, MalawiTimeZone);
+        }
+        return date;
+    }
+
     public static async Task<DateTime> GetNextWorkingDay(ApplicationDbContext context, DateTime date)
     {
-        var nextDay = date;
+        var nextDay = AdjustToMalawiTime(date);
         var workingHours = await context.WorkingHours.FirstOrDefaultAsync(w => !w.DeletedDate.HasValue);
         
         if (workingHours == null)
@@ -76,11 +114,14 @@ public static class DateTimeHelper
 
     public static async Task<TimeSpan> CalculateWorkingHours(ApplicationDbContext context, DateTime startDate, DateTime endDate)
     {
+        var adjustedStartDate = AdjustToMalawiTime(startDate);
+        var adjustedEndDate = AdjustToMalawiTime(endDate);
+        
         var workingHours = await context.WorkingHours.FirstOrDefaultAsync(w => !w.DeletedDate.HasValue);
         var totalWorkingTime = TimeSpan.Zero;
-        var currentDate = startDate;
+        var currentDate = adjustedStartDate;
 
-        while (currentDate <= endDate)
+        while (currentDate <= adjustedEndDate)
         {
             if (currentDate.DayOfWeek != DayOfWeek.Saturday && 
                 currentDate.DayOfWeek != DayOfWeek.Sunday)
@@ -115,8 +156,8 @@ public static class DateTimeHelper
             };
         }
 
-        // Convert to GMT+2 if UTC
-        var localTime = time.Kind == DateTimeKind.Utc ? time.AddHours(2) : time;
+        var localTime = AdjustToMalawiTime(time);
+        
         // Check if it's a weekend
         if (localTime.DayOfWeek == DayOfWeek.Saturday || localTime.DayOfWeek == DayOfWeek.Sunday)
             return false;

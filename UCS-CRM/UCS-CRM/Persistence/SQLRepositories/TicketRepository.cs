@@ -347,7 +347,8 @@ namespace UCS_CRM.Persistence.SQLRepositories
                     creationTime.AddHours(ticketPriorityMaxReponseTimeInHours)
                 );
 
-                if (DateTime.UtcNow > escalationTime)
+                //update the time to use GMT+2 for the dateTime
+                if (DateTimeHelper.AdjustToMalawiTime(DateTime.UtcNow) > escalationTime)
                 {
                     await this.EscalateTicket(ticket, null, "Previous assignee did not respond in time");
                 }
@@ -403,7 +404,7 @@ namespace UCS_CRM.Persistence.SQLRepositories
                         {
                             UserFriendlyMessage = "An error occurred while sending ticket reminder.",
                             DetailedMessage = ex.ToString(),
-                            DateOccurred = DateTime.UtcNow,
+                            DateOccurred = DateTimeHelper.AdjustToMalawiTime(DateTime.UtcNow),
                             CreatedById = ticket.AssignedTo.Id
                         };
                         
