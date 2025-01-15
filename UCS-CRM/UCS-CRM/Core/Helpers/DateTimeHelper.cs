@@ -35,7 +35,7 @@ public static class DateTimeHelper
         }
     }
 
-    private static DateTime AdjustToMalawiTime(DateTime date)
+    public static DateTime AdjustToMalawiTime(DateTime date)
     {
         if (date.Kind == DateTimeKind.Utc)
         {
