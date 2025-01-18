@@ -33,7 +33,7 @@ namespace UCS_CRM.Persistence.SQLRepositories
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly HangfireJobEnqueuer _jobEnqueuer;
 
-       
+
 
 
         public TicketRepository(
@@ -48,7 +48,7 @@ namespace UCS_CRM.Persistence.SQLRepositories
             HangfireJobEnqueuer jobEnqueuer)
         {
             _context = context;
-            
+
             _emailRepository = emailRepository;
             _userRepository = userRepository;
             _departmentRepository = departmentRepository;
@@ -62,7 +62,7 @@ namespace UCS_CRM.Persistence.SQLRepositories
 
         public void Add(Ticket ticket)
         {
-          
+
             this._context.Tickets.Add(ticket);
         }
 
@@ -70,9 +70,9 @@ namespace UCS_CRM.Persistence.SQLRepositories
         {
             //check if the ticket already exist
 
-            return this._context.Tickets.Where(t => t.TicketCategoryId == ticket.TicketCategoryId & t.State== ticket.State).FirstOrDefault();
+            return this._context.Tickets.Where(t => t.TicketCategoryId == ticket.TicketCategoryId & t.State == ticket.State).FirstOrDefault();
 
-           
+
         }
 
         public async Task EscalateTicket(Ticket ticket, string UserId, string escalationReason)
@@ -162,7 +162,7 @@ namespace UCS_CRM.Persistence.SQLRepositories
 
                                 //check if the ticket is already in the the branch networks and satellites department
 
-                                if(currentAssignedUserDepartment.Name.Equals("Branches",StringComparison.OrdinalIgnoreCase))
+                                if (currentAssignedUserDepartment.Name.Equals("Branches", StringComparison.OrdinalIgnoreCase))
                                 {
                                     ticket.AssignedToId = await this.AssignTicketToDepartment("Customer Service and Member Engagement");
 
@@ -177,7 +177,7 @@ namespace UCS_CRM.Persistence.SQLRepositories
                                         }
                                         ticketAssignedToNewUser = true;
 
-                                       
+
                                     }
                                 }
 
@@ -231,7 +231,7 @@ namespace UCS_CRM.Persistence.SQLRepositories
                 {
                     //do something is the ticket is not assigned to anyone
 
-                     await this.SendUnassignedTicketEmail(ticket);
+                    await this.SendUnassignedTicketEmail(ticket);
                 }
 
             }
@@ -239,7 +239,9 @@ namespace UCS_CRM.Persistence.SQLRepositories
             if (ticketAssignedToNewUser != true)
             {
 
-                //return "Could not find a user to escalate the ticket to";
+                //send an email to the department's email address and put in copy the current assigned to user
+                await this.SendTicketUnhandledEmailToDepartment(ticket.AssignedTo.Department, "Unhandled Ticket with Auto-Escalation Limit Reached", ticket);
+
             }
             else
             {
@@ -255,7 +257,7 @@ namespace UCS_CRM.Persistence.SQLRepositories
 
                 mappedTicketEscalation.EscalatedTo = newOfficialTicketHandler;
 
-                
+
 
 
                 //save to the database
@@ -268,7 +270,7 @@ namespace UCS_CRM.Persistence.SQLRepositories
                     {
                         //get the system user
 
-                         ApplicationUser? systemUser = (await this._userRepository.GetUsersInRole("system")).FirstOrDefault();
+                        ApplicationUser? systemUser = (await this._userRepository.GetUsersInRole("system")).FirstOrDefault();
 
                         if (systemUser != null)
                         {
@@ -304,12 +306,12 @@ namespace UCS_CRM.Persistence.SQLRepositories
 
                     //send emails to previous assignee and the new assignee
 
-                     await this.SendTicketEscalationEmail(ticket, mappedTicketEscalation, currentAssignedUserEmail);
+                    await this.SendTicketEscalationEmail(ticket, mappedTicketEscalation, currentAssignedUserEmail);
 
 
                     //return "ticket escalated";
                 }
-              
+
                 catch (Exception ex)
                 {
 
@@ -340,10 +342,10 @@ namespace UCS_CRM.Persistence.SQLRepositories
                 bool hasEscalations = ticket.TicketEscalations.Any();
                 var creationTime = hasEscalations ? ticket.TicketEscalations.Last().CreatedDate : ticket.CreatedDate;
                 var ticketPriorityMaxReponseTimeInHours = ticket.TicketPriority.MaximumResponseTimeHours;
-                
+
                 // Calculate next working day after response time
                 var escalationTime = await DateTimeHelper.GetNextWorkingDay(
-                    _context, 
+                    _context,
                     creationTime.AddHours(ticketPriorityMaxReponseTimeInHours)
                 );
 
@@ -394,7 +396,7 @@ namespace UCS_CRM.Persistence.SQLRepositories
                         </html>";
 
                         EmailHelper.SendEmail(_jobEnqueuer, ticket.AssignedTo.Email, title, body, ticket.AssignedTo?.SecondaryEmail);
-                        
+
                         //send to department
                         this._jobEnqueuer.EnqueueEmailJob(ticket.AssignedTo.Department.Name, title, body);
                     }
@@ -407,7 +409,7 @@ namespace UCS_CRM.Persistence.SQLRepositories
                             DateOccurred = DateTimeHelper.AdjustToMalawiTime(DateTime.UtcNow),
                             CreatedById = ticket.AssignedTo.Id
                         };
-                        
+
                         _context.ErrorLogs.Add(errorLog);
                         // Assuming you have a method to save the error log
                         await _unitOfWork.SaveToDataStore();
@@ -415,7 +417,7 @@ namespace UCS_CRM.Persistence.SQLRepositories
                 }
             }
 
-          
+
         }
 
         private async Task<string> AssignTicketToDepartment(string departmentName)
@@ -462,11 +464,12 @@ namespace UCS_CRM.Persistence.SQLRepositories
 
                         assignedToId = newTicketHandler.Id;
 
-                        if(!string.IsNullOrEmpty(assignedToId))
+                        if (!string.IsNullOrEmpty(assignedToId))
                         {
 
                             return assignedToId;
-                        };
+                        }
+                        ;
                     }
 
                 }
@@ -494,7 +497,7 @@ namespace UCS_CRM.Persistence.SQLRepositories
                 .AsNoTracking()
                 .FirstOrDefaultAsync(t => t.Id == id);
 
-           
+
 
             return ticket;
 
@@ -518,7 +521,7 @@ namespace UCS_CRM.Persistence.SQLRepositories
                 .ThenInclude(t => t!.Department)
                 .FirstOrDefaultAsync(t => t.Id == id);
 
-           
+
 
             return ticket;
 
@@ -540,7 +543,7 @@ namespace UCS_CRM.Persistence.SQLRepositories
                 {
                     string title = "Ticket Closure Alert";
                     var bodyBuilder = new StringBuilder();
-                    
+
                     if (!string.IsNullOrEmpty(memberEmailAddress))
                     {
                         bodyBuilder.Append($@"
@@ -578,10 +581,10 @@ namespace UCS_CRM.Persistence.SQLRepositories
                             </div>
                         </body>
                         </html>");
-                        
+
                         EmailHelper.SendEmail(_jobEnqueuer, ticket.AssignedTo.Email, title, bodyBuilder.ToString(), ticket.AssignedTo?.SecondaryEmail);
                     }
-                    
+
                     if (!string.IsNullOrEmpty(ticketCreatorAddress) && memberEmailAddress != ticketCreatorAddress)
                     {
                         bodyBuilder.Clear()
@@ -621,7 +624,7 @@ namespace UCS_CRM.Persistence.SQLRepositories
                         </html>");
                         EmailHelper.SendEmail(_jobEnqueuer, ticketCreatorAddress, title, bodyBuilder.ToString(), ticket.AssignedTo?.SecondaryEmail);
                     }
-    
+
                     if (!string.IsNullOrEmpty(ticketInitiatorAddress) && ticketInitiatorAddress != ticketCreatorAddress && ticketInitiatorAddress != memberEmailAddress)
                     {
                         bodyBuilder.Clear()
@@ -811,7 +814,7 @@ namespace UCS_CRM.Persistence.SQLRepositories
             }
         }
 
-         private IQueryable<Ticket> GetBaseQuery(CursorParams @params, Department department = null, string ticketStatus = "")
+        private IQueryable<Ticket> GetBaseQuery(CursorParams @params, Department department = null, string ticketStatus = "")
         {
             var query = _context.Tickets.Where(t => t.Status != Lambda.Deleted);
 
@@ -842,92 +845,92 @@ namespace UCS_CRM.Persistence.SQLRepositories
             return query;
         }
 
-       public async Task<List<Ticket>> GetTickets(CursorParams @params, Department department = null, string ticketStatus = "")
-      {
-        if (@params.Take <= 0)
+        public async Task<List<Ticket>> GetTickets(CursorParams @params, Department department = null, string ticketStatus = "")
         {
-            return new List<Ticket>();
-        }
-
-        var query = GetBaseQuery(@params, department, ticketStatus);
-
-        // Apply sorting
-        if (!string.IsNullOrEmpty(@params.SortColum) && !string.IsNullOrEmpty(@params.SortDirection))
-        {
-            query = query.ApplySorting(@params.SortColum, @params.SortDirection);
-        }
-        else
-        {
-            query = query.OrderBy(t => t.CreatedDate);
-        }
-
-        // Include necessary related entities
-        query = query
-            .Include(t => t.TicketEscalations)
-            .Include(t => t.Member)
-            .Include(t => t.TicketPriority)
-            .Include(t => t.TicketCategory)
-            .Include(t => t.State)
-            .Include(t => t.InitiatorUser)
-            .Include(t => t.InitiatorUser!.Department)
-            .Include(t => t.InitiatorMember)
-            .Include(t => t.AssignedTo);
-
-        query = query.OrderByDescending(t => t.CreatedDate); // Changed to OrderByDescending
-
-        // Apply pagination and select fields
-        var result = await query
-            .Skip(@params.Skip)
-            .Take(@params.Take)
-            .Select(t => new Ticket
+            if (@params.Take <= 0)
             {
-                Id = t.Id,
-                TicketNumber = t.TicketNumber,
-                Title = t.Title,
-                Member = new UCS_CRM.Core.Models.Member 
-                { 
-                    AccountNumber = t.Member.AccountNumber,
-                    Branch = t.Member.Branch,
-                },
-                TicketPriority = t.TicketPriority,
-                TicketCategory = t.TicketCategory,
-                State = t.State,
-                CreatedDate = t.CreatedDate,
-                AssignedTo = t.AssignedTo != null ? new ApplicationUser { FullName = t.AssignedTo.FullName } : null,
-                TicketEscalations = t.TicketEscalations.Select(te => new TicketEscalation { Id = te.Id, Status = te.Status }).ToList(),
-                InitiatorMemberId = t.InitiatorMemberId,
-                InitiatorUserId = t.InitiatorUserId,
-                InitiatorUser = t.InitiatorUser != null ? new ApplicationUser 
-                { 
-                    Id = t.InitiatorUser.Id, 
-                    FullName = t.InitiatorUser.FullName,
-                    FirstName = t.InitiatorUser.FirstName,
-                    LastName = t.InitiatorUser.LastName,
-                    Department = t.InitiatorUser.Department != null ? new Department { Name = t.InitiatorUser.Department.Name } : null
-                } : null,
-                InitiatorMember = t.InitiatorMember != null ? new UCS_CRM.Core.Models.Member 
-                { 
-                    Id = t.InitiatorMember.Id, 
-                    AccountNumber = t.InitiatorMember.AccountNumber,
-                    FirstName = t.InitiatorMember.FirstName,
-                    LastName = t.InitiatorMember.LastName
-                } : null
-            })
-            .ToListAsync();
+                return new List<Ticket>();
+            }
 
-        return result;
-    }
+            var query = GetBaseQuery(@params, department, ticketStatus);
 
-    public async Task<int> GetTicketsTotalFilteredAsync(CursorParams @params, Department department = null, string ticketStatus = "")
-    {
-        if (@params.Take <= 0)
-        {
-            return 0;
+            // Apply sorting
+            if (!string.IsNullOrEmpty(@params.SortColum) && !string.IsNullOrEmpty(@params.SortDirection))
+            {
+                query = query.ApplySorting(@params.SortColum, @params.SortDirection);
+            }
+            else
+            {
+                query = query.OrderBy(t => t.CreatedDate);
+            }
+
+            // Include necessary related entities
+            query = query
+                .Include(t => t.TicketEscalations)
+                .Include(t => t.Member)
+                .Include(t => t.TicketPriority)
+                .Include(t => t.TicketCategory)
+                .Include(t => t.State)
+                .Include(t => t.InitiatorUser)
+                .Include(t => t.InitiatorUser!.Department)
+                .Include(t => t.InitiatorMember)
+                .Include(t => t.AssignedTo);
+
+            query = query.OrderByDescending(t => t.CreatedDate); // Changed to OrderByDescending
+
+            // Apply pagination and select fields
+            var result = await query
+                .Skip(@params.Skip)
+                .Take(@params.Take)
+                .Select(t => new Ticket
+                {
+                    Id = t.Id,
+                    TicketNumber = t.TicketNumber,
+                    Title = t.Title,
+                    Member = new UCS_CRM.Core.Models.Member
+                    {
+                        AccountNumber = t.Member.AccountNumber,
+                        Branch = t.Member.Branch,
+                    },
+                    TicketPriority = t.TicketPriority,
+                    TicketCategory = t.TicketCategory,
+                    State = t.State,
+                    CreatedDate = t.CreatedDate,
+                    AssignedTo = t.AssignedTo != null ? new ApplicationUser { FullName = t.AssignedTo.FullName } : null,
+                    TicketEscalations = t.TicketEscalations.Select(te => new TicketEscalation { Id = te.Id, Status = te.Status }).ToList(),
+                    InitiatorMemberId = t.InitiatorMemberId,
+                    InitiatorUserId = t.InitiatorUserId,
+                    InitiatorUser = t.InitiatorUser != null ? new ApplicationUser
+                    {
+                        Id = t.InitiatorUser.Id,
+                        FullName = t.InitiatorUser.FullName,
+                        FirstName = t.InitiatorUser.FirstName,
+                        LastName = t.InitiatorUser.LastName,
+                        Department = t.InitiatorUser.Department != null ? new Department { Name = t.InitiatorUser.Department.Name } : null
+                    } : null,
+                    InitiatorMember = t.InitiatorMember != null ? new UCS_CRM.Core.Models.Member
+                    {
+                        Id = t.InitiatorMember.Id,
+                        AccountNumber = t.InitiatorMember.AccountNumber,
+                        FirstName = t.InitiatorMember.FirstName,
+                        LastName = t.InitiatorMember.LastName
+                    } : null
+                })
+                .ToListAsync();
+
+            return result;
         }
 
-        var query = GetBaseQuery(@params, department, ticketStatus);
-        return await query.CountAsync();
-    }
+        public async Task<int> GetTicketsTotalFilteredAsync(CursorParams @params, Department department = null, string ticketStatus = "")
+        {
+            if (@params.Take <= 0)
+            {
+                return 0;
+            }
+
+            var query = GetBaseQuery(@params, department, ticketStatus);
+            return await query.CountAsync();
+        }
         public async Task<List<Ticket>> GetMemberEngagementOfficerReport(DateTime? startDate, DateTime? endDate, string branch = "", int stateId = 0, int categoryId = 0, int departmentId = 0)
         {
             List<Ticket> MemberTicketList = new();
@@ -937,67 +940,67 @@ namespace UCS_CRM.Persistence.SQLRepositories
 
             List<Ticket?> finalRecords = new List<Ticket?>();
 
-                IQueryable<Ticket> query = this._context.Tickets
-                    .Include(t => t.Department)
-                    .Include(t => t.Member)
-                    .Include(t => t.AssignedTo)
-                    .Include(t => t.TicketPriority)
-                    .Include(t => t.TicketCategory)
-                    .Include(t => t.State)
-                    .Include(t => t.InitiatorUser)
-                    .Include(t => t.InitiatorMember)
-                    .Include(t => t.StateTrackers)
-                    .Include(t => t.TicketEscalations)
-                    .OrderByDescending(t => t.CreatedDate)
-                    .Where(t => t.Status != Lambda.Deleted);
+            IQueryable<Ticket> query = this._context.Tickets
+                .Include(t => t.Department)
+                .Include(t => t.Member)
+                .Include(t => t.AssignedTo)
+                .Include(t => t.TicketPriority)
+                .Include(t => t.TicketCategory)
+                .Include(t => t.State)
+                .Include(t => t.InitiatorUser)
+                .Include(t => t.InitiatorMember)
+                .Include(t => t.StateTrackers)
+                .Include(t => t.TicketEscalations)
+                .OrderByDescending(t => t.CreatedDate)
+                .Where(t => t.Status != Lambda.Deleted);
 
-                if (categoryId > 0)
-                {
-                    query = query.Where(t => t.TicketCategoryId == categoryId);
-                }
+            if (categoryId > 0)
+            {
+                query = query.Where(t => t.TicketCategoryId == categoryId);
+            }
 
-                if (stateId > 0)
-                {
-                    query = query.Where(t => t.StateId == stateId);
-                }
+            if (stateId > 0)
+            {
+                query = query.Where(t => t.StateId == stateId);
+            }
 
-                if (startDate != null)
-                {
-                    query = query.Where(t => t.CreatedDate >= startDate);
-                }
+            if (startDate != null)
+            {
+                query = query.Where(t => t.CreatedDate >= startDate);
+            }
 
-                if (endDate != null)
-                {
-                    query = query.Where(t => t.CreatedDate <= endDate);
-                }
+            if (endDate != null)
+            {
+                query = query.Where(t => t.CreatedDate <= endDate);
+            }
 
-                if (departmentId > 0)
-                {
-                    query = query.Where(t => t.AssignedTo.DepartmentId == departmentId);
-                }
+            if (departmentId > 0)
+            {
+                query = query.Where(t => t.AssignedTo.DepartmentId == departmentId);
+            }
 
 
 
             if (!string.IsNullOrEmpty(branch))
-                {
-                    query = query.Where(t => t.Member.Branch == branch);
-                }
+            {
+                query = query.Where(t => t.Member.Branch == branch);
+            }
 
-                query = query.OrderByDescending(t => t.CreatedDate); // Changed to OrderByDescending
+            query = query.OrderByDescending(t => t.CreatedDate); // Changed to OrderByDescending
 
-               
 
-                finalRecords = await query
-                    .Include(t => t.AssignedTo)
-                    .Include(t => t.State)
-                    .Include(t => t.TicketCategory)
-                    .Include(t => t.TicketPriority)
-                    .Include(t => t.InitiatorUser)
-                    .ThenInclude(t => t!.Department)
-                    .Include(t => t.InitiatorMember)
-                    .ToListAsync();
 
-            
+            finalRecords = await query
+                .Include(t => t.AssignedTo)
+                .Include(t => t.State)
+                .Include(t => t.TicketCategory)
+                .Include(t => t.TicketPriority)
+                .Include(t => t.InitiatorUser)
+                .ThenInclude(t => t!.Department)
+                .Include(t => t.InitiatorMember)
+                .ToListAsync();
+
+
 
             finalRecords.ForEach(finalRecord =>
             {
@@ -1033,7 +1036,7 @@ namespace UCS_CRM.Persistence.SQLRepositories
                     query = query.Where(t => t.StateId == stateId);
                 }
 
-                if (startDate !=null)
+                if (startDate != null)
                 {
                     query = query.Where(t => t.CreatedDate >= startDate);
                 }
@@ -1072,7 +1075,7 @@ namespace UCS_CRM.Persistence.SQLRepositories
                     query = query.Skip(cursorParams.Skip);
                 }
 
-               // Remove the invalid Include and use projection to get the latest StateTracker
+                // Remove the invalid Include and use projection to get the latest StateTracker
                 finalRecords = await query
                     .OrderByDescending(t => t.CreatedDate)
                     .Skip(cursorParams.Skip)
@@ -1095,23 +1098,23 @@ namespace UCS_CRM.Persistence.SQLRepositories
                         InitiatorUser = t.InitiatorUser,
                         InitiatorMember = t.InitiatorMember,
                         CreatedDate = t.CreatedDate,
-                        StateTrackers = new List<TicketStateTracker> { 
-                            new TicketStateTracker { 
+                        StateTrackers = new List<TicketStateTracker> {
+                            new TicketStateTracker {
                                 Reason = t.StateTrackers.OrderByDescending(st => st.CreatedDate)
                                     .Select(st => string.IsNullOrEmpty(st.Reason) ? "No comment provided" : st.Reason)
                                     .FirstOrDefault() ?? "No comment provided"
-                            } 
+                            }
                         }
                     })
                     .ToListAsync();
-                    }
+            }
 
             return finalRecords;
         }
 
         public async Task<int> GetTicketReportsCount(CursorParams cursorParams, DateTime? startDate, DateTime? endDate, string branch = "", int stateId = 0, int categoryId = 0)
         {
-           int finalRecords = 0;
+            int finalRecords = 0;
 
             if (cursorParams.Take > 0)
             {
@@ -1163,7 +1166,7 @@ namespace UCS_CRM.Persistence.SQLRepositories
                     query = query.OrderBy(cursorParams.SortColum + " " + cursorParams.SortDirection);
                 }
 
-               
+
                 finalRecords = await query.CountAsync();
             }
 
@@ -1186,7 +1189,7 @@ namespace UCS_CRM.Persistence.SQLRepositories
                     query = query.Where(t => t.TicketCategoryId == categoryId);
                 }
 
-               
+
                 if (startDate != null)
                 {
                     query = query.Where(t => t.CreatedDate >= startDate);
@@ -1297,8 +1300,8 @@ namespace UCS_CRM.Persistence.SQLRepositories
 
 
                 finalRecords = await query.CountAsync();
-                    
-                   
+
+
             }
 
             return finalRecords;
@@ -1306,7 +1309,7 @@ namespace UCS_CRM.Persistence.SQLRepositories
         public async Task<List<Ticket?>> GetClosedTickets(CursorParams @params)
         {
             //check if the count has a value in it above zero before proceeding
-            
+
             if (@params.Take > 0)
             {
                 //check if there is a search parameter
@@ -1328,7 +1331,7 @@ namespace UCS_CRM.Persistence.SQLRepositories
                                    .Where(t => t.Status != Lambda.Deleted)
                                     .Where(t => t.ClosedDate != null || t.State.Name == Lambda.Closed)
                                       .Skip(@params.Skip)
-                                   .Take(@params.Take)                                 
+                                   .Take(@params.Take)
                                    .ToListAsync()
                                    select tblOb);
 
@@ -1369,7 +1372,7 @@ namespace UCS_CRM.Persistence.SQLRepositories
                                            t.TicketCategory.Name.ToLower().Trim().Contains(@params.SearchTerm.ToLower()))
                                     .Skip(@params.Skip)
                                    .Take(@params.Take)
-                             
+
                                    .ToListAsync()
                                    select tblOb);
 
@@ -1432,7 +1435,7 @@ namespace UCS_CRM.Persistence.SQLRepositories
                 }
                 else
                 {
-                    var query =  this._context.Tickets
+                    var query = this._context.Tickets
                                                    .Where(t => t.Status != Lambda.Deleted && t.MemberId == memberId)
                                                    .Include(t => t.AssignedTo)
                                                    .Include(t => t.TicketAttachments)
@@ -1472,63 +1475,63 @@ namespace UCS_CRM.Persistence.SQLRepositories
             }
         }
 
-    public async Task<List<Ticket?>> GetAssignedToTickets(CursorParams @params, string assignedToId, string status = "")
-    {
-        if (@params.Take <= 0)
+        public async Task<List<Ticket?>> GetAssignedToTickets(CursorParams @params, string assignedToId, string status = "")
         {
-            return null;
+            if (@params.Take <= 0)
+            {
+                return null;
+            }
+
+            var query = this._context.Tickets
+                .Where(t => t.Status != Lambda.Deleted &&
+                            (t.AssignedToId == assignedToId ||
+                            t.CreatedById == assignedToId ||
+                            (t.AssignedToId == null && t.InitiatorMember != null)))
+                .OrderByDescending(t => t.CreatedDate)
+                .Include(t => t.Member)
+                .Include(t => t.AssignedTo)
+                .Include(t => t.TicketAttachments)
+                .Include(t => t.State)
+                .Include(t => t.TicketCategory)
+                .Include(t => t.TicketPriority)
+                .Include(t => t.InitiatorUser)
+                .Include(t => t.InitiatorUser!.Department)
+                .Include(t => t.InitiatorMember)
+                .AsQueryable();
+
+            if (!string.IsNullOrEmpty(status))
+            {
+                query = query.Where(t => t.State.Name.Trim().ToLower() == status.Trim().ToLower());
+            }
+
+            if (!string.IsNullOrEmpty(@params.SearchTerm))
+            {
+                var searchTerm = @params.SearchTerm.ToLower().Trim();
+                query = query.Where(t =>
+                    t.Title.ToLower().Contains(searchTerm) ||
+                    t.Description.ToLower().Contains(searchTerm) ||
+                    t.State.Name.ToLower().Contains(searchTerm) ||
+                    t.Member.FirstName.ToLower().Contains(searchTerm) ||
+                    t.Member.LastName.ToLower().Contains(searchTerm) ||
+                    t.TicketCategory.Name.ToLower().Contains(searchTerm));
+            }
+
+            if (!string.IsNullOrEmpty(@params.SortColum) && !string.IsNullOrEmpty(@params.SortDirection))
+            {
+                query = query.OrderBy(@params.SortColum + " " + @params.SortDirection);
+            }
+
+            return await query
+                .Skip(@params.Skip)
+                .Take(@params.Take)
+                .ToListAsync();
         }
-
-        var query = this._context.Tickets
-            .Where(t => t.Status != Lambda.Deleted &&
-                        (t.AssignedToId == assignedToId || 
-                        t.CreatedById == assignedToId || 
-                        (t.AssignedToId == null && t.InitiatorMember != null)))
-            .OrderByDescending(t => t.CreatedDate)
-            .Include(t => t.Member)
-            .Include(t => t.AssignedTo)
-            .Include(t => t.TicketAttachments)
-            .Include(t => t.State)
-            .Include(t => t.TicketCategory)
-            .Include(t => t.TicketPriority)
-            .Include(t => t.InitiatorUser)
-            .Include(t => t.InitiatorUser!.Department)
-            .Include(t => t.InitiatorMember)
-            .AsQueryable();
-
-        if (!string.IsNullOrEmpty(status))
-        {
-            query = query.Where(t => t.State.Name.Trim().ToLower() == status.Trim().ToLower());
-        }
-
-        if (!string.IsNullOrEmpty(@params.SearchTerm))
-        {
-            var searchTerm = @params.SearchTerm.ToLower().Trim();
-            query = query.Where(t =>
-                t.Title.ToLower().Contains(searchTerm) ||
-                t.Description.ToLower().Contains(searchTerm) ||
-                t.State.Name.ToLower().Contains(searchTerm) ||
-                t.Member.FirstName.ToLower().Contains(searchTerm) ||
-                t.Member.LastName.ToLower().Contains(searchTerm) ||
-                t.TicketCategory.Name.ToLower().Contains(searchTerm));
-        }
-
-        if (!string.IsNullOrEmpty(@params.SortColum) && !string.IsNullOrEmpty(@params.SortDirection))
-        {
-            query = query.OrderBy(@params.SortColum + " " + @params.SortDirection);
-        }
-
-        return await query
-            .Skip(@params.Skip)
-            .Take(@params.Take)
-            .ToListAsync();
-    }
         public async Task<int> GetAssignedToTicketsCountAsync(CursorParams @params, string assignedToId, string status = "")
         {
             var query = this._context.Tickets
                 .Where(t => t.Status != Lambda.Deleted &&
-                            (t.AssignedToId == assignedToId || 
-                            t.CreatedById == assignedToId || 
+                            (t.AssignedToId == assignedToId ||
+                            t.CreatedById == assignedToId ||
                             (t.AssignedToId == null && t.InitiatorMember != null)));
 
             if (!string.IsNullOrEmpty(status))
@@ -1565,7 +1568,7 @@ namespace UCS_CRM.Persistence.SQLRepositories
         {
             var tickets = this._context.Tickets.Where((t => t.Status != Lambda.Deleted));
 
-            if(!string.IsNullOrEmpty(stateName))
+            if (!string.IsNullOrEmpty(stateName))
             {
                 tickets = tickets.Where(t => t.State.Name.Trim().ToLower() == stateName.Trim().ToLower());
             }
@@ -1582,7 +1585,8 @@ namespace UCS_CRM.Persistence.SQLRepositories
             {
                 return await this._context.Tickets.Include(t => t.State).CountAsync(t => t.Status != Lambda.Deleted & (t.State.Name.Trim().ToLower() == state.Trim().ToLower() || t.ClosedDate != null));
             }
-            else {
+            else
+            {
 
             }
             return await this._context.Tickets.Include(t => t.State).CountAsync(t => t.Status != Lambda.Deleted & t.State.Name.Trim().ToLower() == state.Trim().ToLower());
@@ -1601,9 +1605,9 @@ namespace UCS_CRM.Persistence.SQLRepositories
         {
             //List<Ticket> tickets = new();
 
-            var tickets =  this._context.Tickets.Where(t => t.Status != Lambda.Deleted && t.MemberId == memberId);
+            var tickets = this._context.Tickets.Where(t => t.Status != Lambda.Deleted && t.MemberId == memberId);
 
-            if(!string.IsNullOrEmpty(stateName))
+            if (!string.IsNullOrEmpty(stateName))
             {
                 tickets = tickets.Where(t => t.State.Name.Trim().ToLower() == stateName.Trim().ToLower());
             }
@@ -1617,8 +1621,8 @@ namespace UCS_CRM.Persistence.SQLRepositories
         public async Task<int> CountTicketsByStatusMember(string state, int memberId)
         {
 
-                return await this._context.Tickets.Include(t => t.State).CountAsync(t => t.Status != Lambda.Deleted & t.State.Name.Trim().ToLower() == state.Trim().ToLower() && t.MemberId == memberId);
-          
+            return await this._context.Tickets.Include(t => t.State).CountAsync(t => t.Status != Lambda.Deleted & t.State.Name.Trim().ToLower() == state.Trim().ToLower() && t.MemberId == memberId);
+
         }
         public async Task<int> CountTicketsByStatusAssignedTo(string state, string assignedToId)
         {
@@ -1633,7 +1637,7 @@ namespace UCS_CRM.Persistence.SQLRepositories
             var tickets = new List<Ticket>();
 
             tickets = await _context.Tickets.Include(t => t.AssignedTo).Where(i => i.AssignedToId == null || i.State.Name == Lambda.NewTicket && i.Status != Lambda.Deleted).ToListAsync();
-            
+
             // sending emails for all the issues that have not been assigned yet or they are on waiting for support
             string status = "";
             try
@@ -1643,8 +1647,10 @@ namespace UCS_CRM.Persistence.SQLRepositories
 
                     var assignedTo = await _context.EmailAddresses.FirstOrDefaultAsync(o => o.Owner == Lambda.CustomerServiceMemberEngagementManager);
 
-                    if (assignedTo != null) {
-                        try {
+                    if (assignedTo != null)
+                    {
+                        try
+                        {
                             // sending the email 
                             string title = "Un Assigned Tickets";
                             var body = $@"
@@ -1680,8 +1686,8 @@ namespace UCS_CRM.Persistence.SQLRepositories
                                 </div>
                             </body>
                             </html>";
-                           
-                            
+
+
                             EmailHelper.SendEmail(this._jobEnqueuer, assignedTo.Email, title, body, ticket.AssignedTo?.SecondaryEmail);
                         }
                         catch (Exception ex)
@@ -1699,7 +1705,7 @@ namespace UCS_CRM.Persistence.SQLRepositories
                     }
                 }
 
-                
+
                 status = "Email sent";
             }
             catch (Exception)
@@ -1754,7 +1760,7 @@ namespace UCS_CRM.Persistence.SQLRepositories
             {
                 if (emailAddress != null)
                 {
-                  
+
 
                     EmailHelper.SendEmail(this._jobEnqueuer, emailAddress.Email, title, emailBody, ticket.AssignedTo?.SecondaryEmail);
                 }
@@ -1782,7 +1788,7 @@ namespace UCS_CRM.Persistence.SQLRepositories
             // Send an email to the previous assignee
             string title = "Ticket Escalation";
             string body = $"Your ticket {ticket.TicketNumber} has been escalated to {ticketEscalation.EscalatedTo.Email}";
-            
+
             this._jobEnqueuer.EnqueueEmailJob(previousAssigneeEmail, title, body);
 
 
@@ -1822,18 +1828,18 @@ namespace UCS_CRM.Persistence.SQLRepositories
                 </html>";
 
             EmailHelper.SendEmail(this._jobEnqueuer, ticketEscalation.EscalatedTo.Email, title, body, ticketEscalation.EscalatedTo.SecondaryEmail);
-           
-                             
-            //send email to the department
-             this._jobEnqueuer.EnqueueEmailJob(ticket.AssignedTo.Department.Email, title, body);
-           
 
-      
+
+            //send email to the department
+            this._jobEnqueuer.EnqueueEmailJob(ticket.AssignedTo.Department.Email, title, body);
+
+
+
 
             //return "messages sent";
         }
 
-        public async Task SendTicketDeEscalationEmail(Ticket ticket,  string previousAssigneeEmail)
+        public async Task SendTicketDeEscalationEmail(Ticket ticket, string previousAssigneeEmail)
         {
             // Send an email to the previous assignee
             string title = "Ticket De-Escalation";
@@ -1873,9 +1879,9 @@ namespace UCS_CRM.Persistence.SQLRepositories
                 </html>";
 
             this._jobEnqueuer.EnqueueEmailJob(previousAssigneeEmail, title, body);
-            
-           
-           
+
+
+
             body = $@"
                 <html>
                 <head>
@@ -1914,19 +1920,19 @@ namespace UCS_CRM.Persistence.SQLRepositories
             this._jobEnqueuer.EnqueueEmailJob(previousAssigneeEmail, title, body);
 
 
-            
+
             //send email to the department
-             this._jobEnqueuer.EnqueueEmailJob(ticket.AssignedTo.Department.Email, title, body);
-            
+            this._jobEnqueuer.EnqueueEmailJob(ticket.AssignedTo.Department.Email, title, body);
+
 
 
             //return "messages sent";
-             
-          
 
-           
 
-          
+
+
+
+
         }
 
         public async Task SendTicketReassignmentEmail(string previousEmail, string newEmail, Ticket ticket)
@@ -1973,7 +1979,7 @@ namespace UCS_CRM.Persistence.SQLRepositories
             if (!string.IsNullOrEmpty(previousEmail))
             {
                 this._jobEnqueuer.EnqueueEmailJob(previousEmail, title, body);
-               
+
 
             }
 
@@ -2022,15 +2028,15 @@ namespace UCS_CRM.Persistence.SQLRepositories
                 this._jobEnqueuer.EnqueueEmailJob(newEmail, title, body);
             }
 
-           
 
-           
+
+
             //check if department is not null
-            if (ticket.AssignedTo.Department!= null)
+            if (ticket.AssignedTo.Department != null)
             {
                 //send email to the department
                 this._jobEnqueuer.EnqueueEmailJob(ticket.AssignedTo.Department.Email, title, body);
-            
+
             }
 
 
@@ -2039,12 +2045,12 @@ namespace UCS_CRM.Persistence.SQLRepositories
 
         public void SendTicketPickedEmail(string pickerEmail, Ticket ticket)
         {
-            if(ticket == null)
+            if (ticket == null)
             {
                 return;
             }
 
-            if(string.IsNullOrEmpty(pickerEmail))
+            if (string.IsNullOrEmpty(pickerEmail))
             {
                 return;
             }
@@ -2204,7 +2210,7 @@ namespace UCS_CRM.Persistence.SQLRepositories
                             </div>
                         </body>
                         </html>";
-                        EmailHelper.SendEmail(this._jobEnqueuer, emailAddress.Email, title, body, emailAddress.SecondaryEmail);                        
+                        EmailHelper.SendEmail(this._jobEnqueuer, emailAddress.Email, title, body, emailAddress.SecondaryEmail);
                     }
                 }
 
@@ -2220,7 +2226,7 @@ namespace UCS_CRM.Persistence.SQLRepositories
             //return status;
         }
 
-       public async Task<object> GetTicketInitiator(int ticketId)
+        public async Task<object> GetTicketInitiator(int ticketId)
         {
             var ticket = await _context.Tickets
                 .Include(t => t.InitiatorUser)
@@ -2240,12 +2246,12 @@ namespace UCS_CRM.Persistence.SQLRepositories
             if (!string.IsNullOrEmpty(emailAddress))
             {
                 this._jobEnqueuer.EnqueueEmailJob(emailAddress, title, body);
-            
-    
 
-               return "message sent";
 
-                
+
+                return "message sent";
+
+
             }
 
 
@@ -2253,7 +2259,71 @@ namespace UCS_CRM.Persistence.SQLRepositories
             return string.Empty;
         }
 
-       
+        public async Task SendTicketUnhandledEmailToDepartment(Department department, string emailSubject, Ticket ticket)
+        {
+            try
+            {
+                // Send an email to the department for unhandled tickets
+                string title = emailSubject;
+                string body = $@"
+                        <html>
+                        <head>
+                            <style>
+                                @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Montserrat:wght@300;400;700&display=swap');
+                                body {{ font-family: 'Montserrat', sans-serif; line-height: 1.8; color: #333; background-color: #f4f4f4; }}
+                                .container {{ max-width: 600px; margin: 20px auto; padding: 30px; background-color: #ffffff; border-radius: 8px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); }}
+                                .logo {{ text-align: center; margin-bottom: 20px; }}
+                                .logo img {{ max-width: 150px; }}
+                                h2 {{ color: #0056b3; text-align: center; font-weight: 700; font-family: 'Playfair Display', serif; }}
+                                .ticket-info {{ background-color: #f0f7ff; border-left: 4px solid #0056b3; padding: 15px; margin: 20px 0; }}
+                                .ticket-info p {{ margin: 5px 0; }}
+                                .cta-button {{ display: inline-block; background-color: #0056b3; color: #ffffff; padding: 12px 24px; text-decoration: none; border-radius: 5px; font-weight: bold; margin-top: 20px; }}
+                                .cta-button:hover {{ background-color: #003d82; }}
+                                .footer {{ margin-top: 30px; text-align: center; font-style: italic; color: #666; }}
+                            </style>
+                        </head>
+                        <body>
+                            <div class='container'>
+                                <div class='logo'>
+                                    <img src='https://crm.ucssacco.com/images/LOGO(1).png' alt='UCS SACCO Logo'>
+                                </div>
+                                <h2>Ticket Reminder</h2>
+                                <div class='ticket-info'>
+                                    <p>Dear {department.Name} Department,</p>
+                                    <p>Auto-escalation failed for ticket number <strong>{ticket.TicketNumber}</strong> assigned to <strong>{ticket.AssignedTo.Email}</strong> which is still pending a response.</p>
+                                    <p>Please take action on this ticket as soon as possible.</p>
+                                </div>
+                                <p>
+                                    <a href='https://crm.ucssacco.com' class='cta-button' style='color: #ffffff;'>View Ticket</a>
+                                </p>
+                                <p class='footer'>Thank you for your prompt attention to this matter.</p>
+                            </div>
+                        </body>
+                        </html>";
+                EmailHelper.SendEmail(_jobEnqueuer, department.Email, title, body, ticket.AssignedTo?.Email);
+
+                //send to department
+                //this._jobEnqueuer.EnqueueEmailJob(ticket.AssignedTo.Department.Name, title, body);
+            }
+            catch (Exception ex)
+            {
+                {
+                    var errorLog = new ErrorLog
+                    {
+                        UserFriendlyMessage = "An error occurred while sending .",
+                        DetailedMessage = ex.ToString(),
+                        DateOccurred = DateTimeHelper.AdjustToMalawiTime(DateTime.UtcNow),
+                        CreatedById = ticket.AssignedTo.Id
+                    };
+
+                    _context.ErrorLogs.Add(errorLog);
+                    // Assuming you have a method to save the error log
+                    await _unitOfWork.SaveToDataStore();
+                }
+            }
+        }
+
+
     }
 }
 
