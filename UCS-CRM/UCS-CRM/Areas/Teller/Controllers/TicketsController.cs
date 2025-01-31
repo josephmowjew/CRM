@@ -33,6 +33,7 @@ namespace UCS_CRM.Areas.Teller.Controllers
     {
         private readonly IUserRepository _userRepository;
         private readonly ITicketRepository _ticketRepository;
+
         private readonly ITicketEscalationRepository _ticketEscalationRepository;
         private readonly ITicketCommentRepository _ticketCommentRepository;
         private readonly ITicketCategoryRepository _ticketCategoryRepository;
@@ -43,6 +44,7 @@ namespace UCS_CRM.Areas.Teller.Controllers
         private readonly IMapper _mapper;
         private readonly IUnitOfWork _unitOfWork;
         private readonly IEmailService _emailService;
+        private readonly IErrorLogService _errorLogService;
         private IWebHostEnvironment _env;
         private readonly IEmailAddressRepository _addressRepository;
         private readonly ITicketStateTrackerRepository _ticketStateTrackerRepository;
@@ -54,13 +56,14 @@ namespace UCS_CRM.Areas.Teller.Controllers
         private readonly IHttpContextAccessor _httpContextAccessor;
         public TicketsController(
             ITicketRepository ticketRepository, IMapper mapper,
-            IUnitOfWork unitOfWork, IEmailService emailService, 
+            IUnitOfWork unitOfWork, IEmailService emailService,
             IEmailAddressRepository addressRepository,
             ITicketCategoryRepository ticketCategoryRepository,
-            IStateRepository stateRepository, 
+            IStateRepository stateRepository,
             ITicketPriorityRepository priorityRepository,
             IWebHostEnvironment env,
-            ITicketCommentRepository ticketCommentRepository, 
+            IErrorLogService errorLogService,
+            ITicketCommentRepository ticketCommentRepository,
             IUserRepository userRepository,
             IMemberRepository memberRepository,
             ITicketEscalationRepository ticketEscalationRepository,
@@ -91,6 +94,7 @@ namespace UCS_CRM.Areas.Teller.Controllers
             _userManager = userManager;
             _jobEnqueuer = jobEnqueuer;
             _context = context;
+            _errorLogService = errorLogService;
             _configuration = configuration;
             _logger = logger;
             _httpContextAccessor = httpContextAccessor;
@@ -108,7 +112,7 @@ namespace UCS_CRM.Areas.Teller.Controllers
 
             //find the role of the currently logged in user
 
-            if(findUserDb != null)
+            if (findUserDb != null)
             {
                 ViewBag.role = _userManager.GetRolesAsync(findUserDb).Result.FirstOrDefault();
             }
@@ -151,7 +155,7 @@ namespace UCS_CRM.Areas.Teller.Controllers
                 }
 
 
-              
+
 
                 var mappedTicket = this._mapper.Map<Ticket>(createTicketDTO);
 
@@ -189,7 +193,7 @@ namespace UCS_CRM.Areas.Teller.Controllers
                     //     var workingHours = await _context.WorkingHours.FirstOrDefaultAsync(w => !w.DeletedDate.HasValue);
                     //     var startTime = workingHours?.StartTime ?? new TimeSpan(8, 0, 0);
                     //     var endTime = workingHours?.EndTime ?? new TimeSpan(17, 0, 0);
-                        
+
                     //     var outOfHoursComment = new TicketComment
                     //     {
                     //         Comment = $@"This ticket was received outside of our business hours. 
@@ -200,12 +204,12 @@ namespace UCS_CRM.Areas.Teller.Controllers
                     //         CreatedById = claimsIdentitifier.Value,
                     //         CreatedDate = DateTime.Now
                     //     };
-                        
+
                     //     _ticketCommentRepository.Add(outOfHoursComment);
 
                     //     // Send out-of-hours notification email
                     //     var notificationRecipient = await this._memberRepository.GetMemberAsync(createTicketDTO.MemberId);
-                        
+
                     //     if (notificationRecipient != null && !string.IsNullOrEmpty(notificationRecipient.Email))
                     //     {
                     //         string outOfHoursEmailBody = $@"
@@ -270,9 +274,9 @@ namespace UCS_CRM.Areas.Teller.Controllers
 
                     string ticketNumber = Lambda.IssuePrefix + (lastTicketId + 1);
 
-                      var userId = !string.IsNullOrEmpty(createTicketDTO.AssignedToId) 
-                        ? createTicketDTO.AssignedToId 
-                        : claimsIdentitifier.Value;
+                    var userId = !string.IsNullOrEmpty(createTicketDTO.AssignedToId)
+                      ? createTicketDTO.AssignedToId
+                      : claimsIdentitifier.Value;
 
                     mappedTicket.AssignedToId = userId;
 
@@ -300,7 +304,7 @@ namespace UCS_CRM.Areas.Teller.Controllers
 
                     mappedTicket.TicketNumber = ticketNumber;
 
-                    
+
 
                     //assign the ticket to the Customer Service and Member Engagement department
 
@@ -315,7 +319,7 @@ namespace UCS_CRM.Areas.Teller.Controllers
                         if (creditAndEvaluationsDept != null)
                         {
                             mappedTicket.DepartmentId = creditAndEvaluationsDept.Id;
-                            
+
                             // Find and assign to a user in the Credit and Evaluations department
                             var creditDeptUsers = await _userRepository.GetUsersByDepartment(creditAndEvaluationsDept.Id);
                             var firstAvailableUser = creditDeptUsers.FirstOrDefault();
@@ -358,18 +362,18 @@ namespace UCS_CRM.Areas.Teller.Controllers
 
                         await this._unitOfWork.SaveToDataStore();
 
-                        
 
-                       
+
+
                     }
 
-                        //get user record by created by id
+                    //get user record by created by id
 
-                        var memberRecord = await this._memberRepository.GetMemberAsync(createTicketDTO.MemberId);
+                    var memberRecord = await this._memberRepository.GetMemberAsync(createTicketDTO.MemberId);
 
 
-                      if(!string.IsNullOrEmpty(memberRecord.Email))
-                      {
+                    if (!string.IsNullOrEmpty(memberRecord.Email))
+                    {
                         //generate email body for the member 
 
                         string emailBody = $@"
@@ -413,7 +417,7 @@ namespace UCS_CRM.Areas.Teller.Controllers
                         // Email to send to support
                         var emailAddress = await _addressRepository.GetEmailAddressByOwner(Lambda.Support);
 
-                        if(emailAddress != null)
+                        if (emailAddress != null)
                         {
                             string supportEmailBody = $@"
                             <html>
@@ -456,7 +460,7 @@ namespace UCS_CRM.Areas.Teller.Controllers
                     }
 
                     // Send an email to the user who is assigned to the ticket if different from the creator
-                    if(assignedToUser != null)
+                    if (assignedToUser != null)
                     {
                         string emailBody = $@"
                         <html>
@@ -572,7 +576,7 @@ namespace UCS_CRM.Areas.Teller.Controllers
                 var mappedDTO = this._mapper.Map<Ticket>(editTicketDTO);
                 return PartialView("_EditTicketPartial", mappedDTO);
             }
-            
+
             // Fetch current state and assigned user details
             string currentState = ticketDB.State.Name;
             string currentAssignedUserId = ticketDB.AssignedToId;
@@ -657,21 +661,21 @@ namespace UCS_CRM.Areas.Teller.Controllers
                 var mappedAttachments = await Task.WhenAll(attachmentTasks);
                 mappedTicket.TicketAttachments.AddRange(mappedAttachments);
                 await this._unitOfWork.SaveToDataStore();
-                }
+            }
 
-                if (currentAssignedUserId != editTicketDTO.AssignedToId)
+            if (currentAssignedUserId != editTicketDTO.AssignedToId)
+            {
+                if (!string.IsNullOrEmpty(currentAssignedUserEmail) && !string.IsNullOrEmpty(newAssignedUserEmail))
                 {
-                    if (!string.IsNullOrEmpty(currentAssignedUserEmail) && !string.IsNullOrEmpty(newAssignedUserEmail))
-                    {
-                        
-                        await this._ticketRepository.SendTicketReassignmentEmail(currentAssignedUserEmail, newAssignedUserEmail, ticketDB);
-                    }
-                }
 
-                
-                if (user != null)
-                {
-                    string emailBody = $@"
+                    await this._ticketRepository.SendTicketReassignmentEmail(currentAssignedUserEmail, newAssignedUserEmail, ticketDB);
+                }
+            }
+
+
+            if (user != null)
+            {
+                string emailBody = $@"
                     <html>
                     <head>
                         <style>
@@ -705,8 +709,8 @@ namespace UCS_CRM.Areas.Teller.Controllers
                         </div>
                     </body>
                     </html>";
-                    this._jobEnqueuer.EnqueueEmailJob(user.Email, $"Ticket {ticketDB.TicketNumber} Modification", emailBody);
-                }
+                this._jobEnqueuer.EnqueueEmailJob(user.Email, $"Ticket {ticketDB.TicketNumber} Modification", emailBody);
+            }
 
 
             return Json(new { status = "success", message = "User ticket updated successfully" });
@@ -796,13 +800,13 @@ namespace UCS_CRM.Areas.Teller.Controllers
             int resultTotal = 0;
 
             //create a cursor params based on the data coming from the datatable
-            CursorParams CursorParameters = new CursorParams() 
-            { 
-                SearchTerm = searchValue, 
-                Skip = skip, 
+            CursorParams CursorParameters = new CursorParams()
+            {
+                SearchTerm = searchValue,
+                Skip = skip,
                 SortColum = string.IsNullOrEmpty(sortColumn) ? "CreatedDate" : sortColumn,  // Default sort by CreatedDate
                 SortDirection = string.IsNullOrEmpty(sortColumnAscDesc) ? "DESC" : sortColumnAscDesc,  // Default sort direction DESC
-                Take = pageSize 
+                Take = pageSize
             };
 
             var userClaims = (ClaimsIdentity)User.Identity;
@@ -860,7 +864,7 @@ namespace UCS_CRM.Areas.Teller.Controllers
 
             await this._unitOfWork.SaveToDataStore();
 
-             // Send emails to all stakeholders
+            // Send emails to all stakeholders
             var ticket = await this._ticketRepository.GetTicket(ticketDbRecord.Id);
             var stakeholders = new List<ApplicationUser> { ticket.CreatedBy, ticket.AssignedTo };
             if (ticket.Member?.User != null)
@@ -881,7 +885,7 @@ namespace UCS_CRM.Areas.Teller.Controllers
                     }
                 }
             }
-            
+
             foreach (var stakeholder in stakeholders)
             {
                 string systemUrl = $"{_configuration["HostingSettings:Protocol"]}://{_configuration["HostingSettings:Host"]}";
@@ -931,9 +935,9 @@ namespace UCS_CRM.Areas.Teller.Controllers
                 {
                     try
                     {
-                        EmailHelper.SendEmail(this._jobEnqueuer, primaryEmail, 
-                            $"New Comment on Ticket #{ticketDbRecord.Id}", 
-                            emailBody, 
+                        EmailHelper.SendEmail(this._jobEnqueuer, primaryEmail,
+                            $"New Comment on Ticket #{ticketDbRecord.Id}",
+                            emailBody,
                             secondaryEmail);
                     }
                     catch (Exception ex)
@@ -985,22 +989,22 @@ namespace UCS_CRM.Areas.Teller.Controllers
 
         }
 
-         [HttpGet]
+        [HttpGet]
         [Route("officer/tickets/PickTicket/{id}")]
         public async Task<ActionResult> PickTicket(int id)
         {
             //check if the ticket exists
-            
+
             var ticket = await this._ticketRepository.GetTicketWithTracking(id);
 
-            if(ticket == null)
+            if (ticket == null)
             {
                 return Json(new { status = "error", message = "Could not find a ticket with the identifier sent" });
-            }   
+            }
 
             //check if ticket is already assigned to a user
 
-            if(!string.IsNullOrEmpty(ticket.AssignedToId))
+            if (!string.IsNullOrEmpty(ticket.AssignedToId))
             {
                 return Json(new { status = "error", message = "Ticket is already assigned to a user" });
             }
@@ -1010,7 +1014,7 @@ namespace UCS_CRM.Areas.Teller.Controllers
             var currentUser = await CurrentUser.GetCurrentUserAsync(this._httpContextAccessor, this._userRepository);
 
 
-            if(currentUser == null)
+            if (currentUser == null)
             {
                 return Json(new { status = "error", message = "Could not find the current user" });
             }
@@ -1020,7 +1024,7 @@ namespace UCS_CRM.Areas.Teller.Controllers
 
             int recordsAffected = await this._unitOfWork.SaveToDataStoreSync();
 
-            if(recordsAffected > 0)
+            if (recordsAffected > 0)
             {
                 //send an email to the new assignee
                 this._ticketRepository.SendTicketPickedEmail(currentUser.Email, ticket);
@@ -1077,13 +1081,13 @@ namespace UCS_CRM.Areas.Teller.Controllers
 
                         await this._unitOfWork.SaveToDataStore();
 
-                        UCS_CRM.Core.Models.TicketStateTracker ticketStateTracker = new TicketStateTracker() 
-                        { 
-                            CreatedById = currentUserId, 
-                            TicketId = ticket.Id, 
-                            NewState = ticket.State.Name, 
-                            PreviousState = currentState, 
-                            Reason = closeTicketDTO.Reason 
+                        UCS_CRM.Core.Models.TicketStateTracker ticketStateTracker = new TicketStateTracker()
+                        {
+                            CreatedById = currentUserId,
+                            TicketId = ticket.Id,
+                            NewState = ticket.State.Name,
+                            PreviousState = currentState,
+                            Reason = closeTicketDTO.Reason
                         };
 
                         this._ticketStateTrackerRepository.Add(ticketStateTracker);
@@ -1227,8 +1231,9 @@ namespace UCS_CRM.Areas.Teller.Controllers
             {
                 foreach (var item in members)
                 {
-                     dynamicSelect.Add(new DynamicSelect { 
-                        Id = item.Id.ToString(), 
+                    dynamicSelect.Add(new DynamicSelect
+                    {
+                        Id = item.Id.ToString(),
                         Name = $"{item.FullName} ({item.AccountNumber}) -- {item.Branch} -- Employee #{item.EmployeeNumber}"
                     });
                 }
@@ -1316,6 +1321,77 @@ namespace UCS_CRM.Areas.Teller.Controllers
 
         }
 
+        [HttpGet]
+        public async Task<IActionResult> GetInitiators(string type, string search, int page = 1)
+        {
+            int pageSize = 10;
+            CursorParams cursorParams = new CursorParams
+            {
+                Skip = (page - 1) * pageSize,
+                Take = pageSize,
+                SearchTerm = search
+            };
+
+            if (type == "User")
+            {
+                var users = await _userRepository.GetUsersWithRoles(cursorParams);
+                var totalCount = await _userRepository.TotalFilteredUsersCount(cursorParams);
+                var results = users.Select(u => new { id = u.Id, text = $"{u.FirstName} {u.LastName}" });
+                return Json(new
+                {
+                    results = results,
+                    pagination = new { more = (page * pageSize) < totalCount }
+                });
+            }
+            else if (type == "Member")
+            {
+                var members = await _memberRepository.GetMembers(cursorParams);
+                var totalCount = await _memberRepository.TotalFilteredMembersCount(cursorParams);
+                var results = members.Select(m => new { id = m.Id.ToString(), text = $"{m.FirstName} {m.LastName}" });
+                return Json(new
+                {
+                    results = results,
+                    pagination = new { more = (page * pageSize) < totalCount }
+                });
+            }
+            return Json(new { results = new List<object>(), pagination = new { more = false } });
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> FetchAssigneesByDepartment(int departmentId)
+        {
+            try
+            {
+                var currentUserEmail = User?.Identity?.Name;
+                if (string.IsNullOrEmpty(currentUserEmail))
+                {
+                    _logger.LogWarning("Current user email is null when fetching assignees");
+                    return BadRequest("User not authenticated");
+                }
+
+                var staff = await _userRepository.GetUsersByDepartment(departmentId);
+
+                var assignees = staff
+                    .Where(u => !string.IsNullOrEmpty(u.Email) &&
+                               !string.IsNullOrEmpty(u.FullName) &&
+                               !u.Email.Equals(currentUserEmail, StringComparison.OrdinalIgnoreCase))
+                    .Select(user => new
+                    {
+                        value = user.Id.ToString(),
+                        text = user.FullName
+                    })
+                    .ToList();
+
+                return Json(assignees);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error fetching assignees for department {DepartmentId}", departmentId);
+                await _errorLogService.LogErrorAsync(ex);
+                return BadRequest("Failed to fetch assignees");
+            }
+        }
+
         private async Task<List<SelectListItem>> GetDepartments()
         {
             var departmentsList = new List<SelectListItem>();
@@ -1336,7 +1412,7 @@ namespace UCS_CRM.Areas.Teller.Controllers
             }
 
             //filter the department list from the database to remove the current user department
-           var filteredDepartmentList = dbDepartments.ToList();
+            var filteredDepartmentList = dbDepartments.ToList();
 
             filteredDepartmentList.ForEach(d =>
             {
@@ -1345,7 +1421,7 @@ namespace UCS_CRM.Areas.Teller.Controllers
 
             return departmentsList;
         }
-       
+
         [HttpPost]
         public async Task<ActionResult> GetTicketAuditData(int ticketId)
         {
@@ -1405,236 +1481,29 @@ namespace UCS_CRM.Areas.Teller.Controllers
 
                 var claimsIdentitifier = userClaims.FindFirst(ClaimTypes.NameIdentifier);
 
-                if(ticket != null)
+                if (ticket != null)
                 {
                     await this._ticketRepository.EscalateTicket(ticket, claimsIdentitifier.Value, createTicketEscalation.Reason);
-                    
-
-                    // if (result != null)
-                    // {
-                    //     if(result.Equals("Could not find a user to escalate the ticket to", StringComparison.OrdinalIgnoreCase))
-                    //     {
-                    //         createTicketEscalation.DataInvalid = "true";
-
-                    //         ModelState.AddModelError("", "Could not find a user to escalate the ticket to");
-
-                    //         return PartialView("_FirstTicketEscalationPartial", createTicketEscalation);
-                    //     }
-                    //     if(result.Equals("ticket escalated", StringComparison.OrdinalIgnoreCase))
-                    //     {
-                    //         createTicketEscalation.DataInvalid = "";
-
-
-                    //         return PartialView("_FirstTicketEscalationPartial", createTicketEscalation);
-                    //     }
-                    // }
-                    // else
-                    // {
-                    //     createTicketEscalation.DataInvalid = "true";
-
-                    //     ModelState.AddModelError("","An error occurred while trying to escalate the ticket");
-
-                    //     return PartialView("_FirstTicketEscalationPartial", createTicketEscalation);
-                    // }
                 }
-                }
-                else
-                {
+            }
+            else
+            {
 
-                    createTicketEscalation.DataInvalid = "true";
+                createTicketEscalation.DataInvalid = "true";
 
-                    ModelState.AddModelError("", "Could not find a ticket with the identifier sent");
+                ModelState.AddModelError("", "Could not find a ticket with the identifier sent");
 
-                    return PartialView("_FirstTicketEscalationPartial", createTicketEscalation);
-                }
-
-
-
-            //if(ticket != null)
-            //{
-            //    //get the user assigned to the ticket if available
-            //    currentAssignedUser = ticket.AssignedTo;
-
-            //    currentAssignedUserEmail = currentAssignedUser.Email;
-
-            //    if (currentAssignedUser != null)
-            //    {
-            //         currentAssignedUserRole = await this._userRepository.GetRoleAsync(currentAssignedUser.Id);
-
-            //        //check if the role of the user has been returned 
-
-            //        if(currentAssignedUserRole  != null)
-            //        {
-
-            //            //get the department of the current assigned user
-            //            currentAssignedUserDepartment = await this._departmentRepository.GetDepartment(currentAssignedUser.Department.Id);
-
-            //            //get roles that are associated with this department
-            //            rolesOfCurrentUserDepartment = currentAssignedUserDepartment.Roles;
-
-            //            //order the roles according to rating
-
-            //            SortedrolesOfCurrentUserDepartment = rolesOfCurrentUserDepartment.OrderBy(d => d.Rating).ToList();
-
-
-            //            //loop through the list of roles in the current department
-
-            //            if(SortedrolesOfCurrentUserDepartment.Count > 0)
-            //            {
-            //                //remove roles that are less than the one that the current assigned user is already in
-            //                SortedrolesOfCurrentUserDepartment = SortedrolesOfCurrentUserDepartment.Where(r => r.Rating > currentAssignedUserRole.Rating).ToList();
-
-            //                if(SortedrolesOfCurrentUserDepartment.Count > 0)
-            //                {
-            //                    for (int i = 0; i < SortedrolesOfCurrentUserDepartment.Count; i++)
-            //                    {
-
-            //                        var listOfUsers = await this._userRepository.GetUsersInRole(SortedrolesOfCurrentUserDepartment[i].Name);
-
-            //                        //filter users to only those on the same branch
-            //                        listOfUsers = listOfUsers.Where(u => u.BranchId == currentAssignedUser.BranchId).ToList();
-
-            //                        //get the first user if available
-
-            //                        var newTicketHandler = listOfUsers.FirstOrDefault();
-
-            //                        if (newTicketHandler != null)
-            //                        {
-            //                            //assign the ticket this person and break out of the loop
-
-            //                            ticket.AssignedToId = newTicketHandler.Id;
-
-            //                            ticketAssignedToNewUser = true;
-
-            //                            //break out of the loop
-            //                            break;
-            //                        }
-
-            //                    }
-
-            //                }
-            //                else
-            //                {
-            //                    //assign the ticket to a manager with a role rating higher than the current user even if the manager is in a different department but same branch
-
-
-            //                    //check if the ticket is already in the the branch networks and satellites department
-
-            //                    if(currentAssignedUserDepartment.Name.Trim().ToLower() == "Branch Networks and satellites Department".Trim().ToLower())
-            //                    {
-            //                        ticket.AssignedToId = await this.AssignTicketToDepartment("Executive suite");
-
-            //                        if(!string.IsNullOrEmpty(ticket.AssignedToId))
-            //                        {
-            //                            ticketAssignedToNewUser = true;
-            //                        }
-
-            //                    }
-            //                    else
-            //                    {
-            //                        ticket.AssignedToId = await this.AssignTicketToDepartment("Branch Networks and satellites Department");
-
-            //                        if (!string.IsNullOrEmpty(ticket.AssignedToId))
-            //                        {
-            //                            ticketAssignedToNewUser = true;
-            //                        }
-
-            //                    }
-
-
-            //                }
-
-            //            }
-
-            //        }
-            //        else
-            //        {
-            //            //Do something if the current user has no role
-            //        }
-            //    }
-            //    else
-            //    {
-            //        //do something is the ticket is not assigned to anyone
-
-            //        string result = await this._ticketRepository.SendUnassignedTicketEmail(ticket);
-            //    }
-
-            //}
-
-            //if (ticketAssignedToNewUser != true)
-            //{
-
-
-            //    createTicketEscalation.DataInvalid = "true";
-
-            //    ModelState.AddModelError("", $"Could not find a user to escalate the ticket to'");
-
-            //    return PartialView("_FirstTicketEscalationPartial", createTicketEscalation);
-            //}
-            //else
-            //{
-            //    //map the create ticket escalation DTO to ticket escalation
-
-            //    var mappedTicketEscalation = this._mapper.Map<TicketEscalation>(createTicketEscalation);
-
-            //    //update the escalated to to reflect to new user assigned to the ticket
-
-            //    mappedTicketEscalation.EscalatedTo = ticket.AssignedTo;
-
-
-            //    //save to the database
-
-            //    try
-            //    {
-            //        var userClaims = (ClaimsIdentity)User.Identity;
-
-            //        var claimsIdentitifier = userClaims.FindFirst(ClaimTypes.NameIdentifier);
-
-            //        mappedTicketEscalation.CreatedById = claimsIdentitifier.Value;
-
-
-            //        this._ticketEscalationRepository.Add(mappedTicketEscalation);
-
-
-            //        await this._unitOfWork.SaveToDataStore();
-
-
-            //        //send emails to previous assignee and the new assignee
-
-            //        string emails_response = await this._ticketRepository.SendTicketEscalationEmail(ticket, mappedTicketEscalation, currentAssignedUserEmail);
-
-
-            //        return PartialView("_FirstTicketEscalationPartial", createTicketEscalation);
-            //    }
-            //    catch (DbUpdateException ex)
-            //    {
-            //        createTicketEscalation.DataInvalid = "true";
-
-            //        ModelState.AddModelError(string.Empty, ex.InnerException.Message);
-
-            //        return PartialView("_FirstTicketEscalationPartial", createTicketEscalation);
-            //    }
-
-            //    catch (Exception ex)
-            //    {
-
-            //        createTicketEscalation.DataInvalid = "true";
-
-            //        ModelState.AddModelError(string.Empty, ex.Message);
-
-            //        return PartialView("_FirstTicketEscalationPartial", createTicketEscalation);
-            //    }
-            //}
-
+                return PartialView("_FirstTicketEscalationPartial", createTicketEscalation);
+            }
             return PartialView("_FirstTicketEscalationPartial", createTicketEscalation);
 
         }
 
         private async Task<List<SelectListItem>> GetMembers()
         {
-            var members = await this._memberRepository.GetMembers(new CursorParams() { Take = 10, Skip = 0});
+            var members = await this._memberRepository.GetMembers(new CursorParams() { Take = 10, Skip = 0 });
 
-            
+
 
             var membersList = new List<SelectListItem>();
 
@@ -1642,8 +1511,12 @@ namespace UCS_CRM.Areas.Teller.Controllers
 
             members.ForEach(member =>
             {
-                membersList.Add(new SelectListItem() { Text = member.FullName +" (" + member.AccountNumber +
-                    ")" +" -- "+ member.Branch, Value = member.Id.ToString() });
+                membersList.Add(new SelectListItem()
+                {
+                    Text = member.FullName + " (" + member.AccountNumber +
+                    ")" + " -- " + member.Branch,
+                    Value = member.Id.ToString()
+                });
             });
 
             return membersList;
@@ -1655,7 +1528,7 @@ namespace UCS_CRM.Areas.Teller.Controllers
             ViewBag.priorities = await GetTicketPriorities();
             ViewBag.categories = await GetTicketCategories();
             ViewBag.states = await GetTicketStates();
-            //ViewBag.members = await GetMembers();
+            ViewBag.members = await GetMembers();
             ViewBag.assignees = await GetAssignees();
             ViewBag.departments = await GetDepartments();
         }
@@ -1672,7 +1545,7 @@ namespace UCS_CRM.Areas.Teller.Controllers
 
             newDepartment = this._departmentRepository.Exists(departmentName);
 
-            if(newDepartment == null)
+            if (newDepartment == null)
             {
                 return assignedToId;
             }

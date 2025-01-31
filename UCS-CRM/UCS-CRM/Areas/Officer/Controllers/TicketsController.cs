@@ -1471,7 +1471,6 @@ namespace UCS_CRM.Areas.Clerk.Controllers
         }
 
         [HttpGet]
-        [Area("Officer")]
         public async Task<IActionResult> FetchAssigneesByDepartment(int departmentId)
         {
             try 

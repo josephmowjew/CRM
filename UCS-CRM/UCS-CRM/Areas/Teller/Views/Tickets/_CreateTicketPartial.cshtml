@@ -1,4 +1,5 @@
 ﻿@model UCS_CRM.Core.DTOs.Ticket.CreateTicketDTO
+
 <!-- Modal -->
 <style>
     .select2-results__option {
@@ -44,14 +45,14 @@
 <div class="modal-dialog" role="document">
     <div class="modal-content">
         <div class="modal-header">
-            <h5 class="modal-title" id="createModalLabel">Create Ticket</h5>
+            <h5 class="modal-title" id="exampleModalLabel">Create Ticket</h5>
             <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close">
                 <span aria-hidden="true">&times;</span>
             </button>
         </div>
         <div class="modal-body">
             <input asp-for="DataInvalid" type="hidden"/>
-            <form asp-action="Create" enctype="multipart/form-data" id="createTicketForm">
+            <form asp-action="Create" enctype="multipart/form-data">
                 <div asp-validation-summary="ModelOnly" class="text-danger"></div>
                
                 <div class="form-group">
@@ -66,41 +67,55 @@
                 </div>
                 <div class="form-group">
                     <label asp-for="TicketPriorityId"></label>
-                    <select asp-for="TicketPriorityId" asp-items="@ViewBag.priorities" class="form-select"></select>
+                    <select asp-for="TicketPriorityId" asp-items="@ViewBag.priorities" class="form-control"></select>
                     <span asp-validation-for="TicketPriorityId" class="text-danger"></span>
                 </div>
                 <div class="form-group">
                     <label asp-for="TicketCategoryId"></label>
-                    <select asp-for="TicketCategoryId" asp-items="@ViewBag.categories" class="form-select"></select>
+                    <select asp-for="TicketCategoryId" asp-items="@ViewBag.categories" class="form-control"></select>
                     <span asp-validation-for="TicketCategoryId" class="text-danger"></span>
                 </div>
+         @*       <div class="form-group">
+                    <label asp-for="StateId"></label>
+                    <select asp-for="StateId" asp-items="@ViewBag.states" class="form-control"></select>
+                    <span asp-validation-for="StateId" class="text-danger"></span>
+                </div>*@
                 <div class="form-group">
                     <label asp-for="MemberId"></label>
-                    <select asp-for="MemberId" id="createMemberSelect" class="form-select" style="width: 100%;">
-                        <option value="">Choose a member...</option>
-                    </select>
+                   @* <select asp-for="MemberId"  class="selectpicker1" style="width: 100%"/> *@
+
+                   <div class="select3-container">
+                        <div class="select3-selection">Select an option</div>
+                        <div class="select3-dropdown" style="display: none;">
+                            <div class="select3-search">
+                                <input type="text" class="form-control" id="select-search" placeholder="Search...">
+                            </div>
+                            <ul class="list-unstyled select3-options" style="max-height: 150px; overflow-y: auto;"></ul>
+                        </div>
+                    </div>
+                    <input type="hidden" id="MemberId" name="MemberId">
+
                     <span asp-validation-for="MemberId" class="text-danger"></span>
                 </div>
-
                 <div class="form-group">
                     <label>Department</label>
-                    <select id="DepartmentId" name="DepartmentId" asp-items="@ViewBag.departments" class="form-select">
+                    <select id="DepartmentId" name="DepartmentId" asp-items="@ViewBag.departments" class="form-control">
                         <option value="">---- Select Department -------</option>
                     </select>
                 </div>
-
                 <div class="form-group">
                     <label asp-for="AssignedToId"></label>
-                    <select asp-for="AssignedToId" class="form-select">
+                    <select asp-for="AssignedToId" class="form-control">
                         <option value="">---- Select Assignee -------</option>
                     </select>
                     <span asp-validation-for="AssignedToId" class="text-danger"></span>
                 </div>
                 <div class="form-group">
-                    <label for="Attachments" class="form-label">Upload Ticket Attachments (PDF)</label>
-                    <input class="form-control" type="file" id="Attachments" name="Attachments" multiple accept="application/pdf">
+                  <label for="Attachments" class="form-label">Upload Ticket Attachments (PDF)</label>
+                  <input class="form-control" type="file" id="Attachments" name="Attachments" multiple accept="application/pdf">
                 </div>
-                 <div class="form-group mt-4">
+                
+               <div class="form-group mt-4">
                     <label class="form-label">Initiator Information</label>
                     <div class="card">
                         <div class="card-body">
@@ -125,19 +140,20 @@
                         </div>
                     </div>
                 </div>
-
             </form>
         </div>
         <div class="modal-footer">
             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-            <button type="button" class="btn btn-primary" id="create_ticket_btn">Create Ticket</button>
+            <button type="button" class="btn btn-primary" id="create_ticket_btn" name="create_ticket_btn">Create Ticket</button>
             
         </div>
     </div>
 </div>
 
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script>
-    function loadCreateSelect2() {
+    function loadSelect2() {
         if (typeof $.fn.select2 === 'undefined') {
             $.getScript('https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js', function() {
                 $('<link>').appendTo('head').attr({
@@ -150,42 +166,14 @@
                     rel: 'stylesheet',
                     href: 'https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css'
                 });
-                initializeCreateSelect2();
+                initializeSelect2();
             });
         } else {
-            initializeCreateSelect2();
+            initializeSelect2();
         }
     }
 
-    function initializeCreateSelect2() {
-        $('#createMemberSelect').select2({
-            theme: 'bootstrap-5',
-            placeholder: 'Search for a member...',
-            allowClear: true,
-            ajax: {
-                url: '@Url.Action("GetMembers", "Tickets")',
-                dataType: 'json',
-                delay: 250,
-                data: function (params) {
-                    return {
-                        search: params.term,
-                        page: params.page || 1
-                    };
-                },
-                processResults: function (data, params) {
-                    params.page = params.page || 1;
-                    return {
-                        results: data.results,
-                        pagination: {
-                            more: data.pagination.more
-                        }
-                    };
-                },
-                cache: true
-            },
-            minimumInputLength: 1
-        });
-
+    function initializeSelect2() {
         $('#initiatorSelect').select2({
             theme: 'bootstrap-5',
             placeholder: 'Choose an initiator...',
@@ -212,28 +200,40 @@
                 },
                 cache: true
             },
-            minimumInputLength: 0
+            minimumInputLength: 0,
+            templateResult: formatResult,
+            templateSelection: formatSelection
         });
     }
 
+    function formatResult(result) {
+        if (result.loading) {
+            return result.text;
+        }
+        return $('<span>').text(result.text);
+    }
+
+    function formatSelection(result) {
+        return result.text || 'Choose an initiator...';
+    }
+
     $(document).ready(function() {
-        console.log("Create script loaded");
+        console.log("Script loaded");
 
         // Load Select2 immediately
-        loadCreateSelect2();
+        loadSelect2();
 
-        // Handle initiator type change
         $('input[name="InitiatorType"]').change(function() {
             var initiatorType = $('input[name="InitiatorType"]:checked').val();
             console.log("Changed to: " + initiatorType);
             $('#initiatorSelect').val(null).trigger('change');
         });
 
-        // Handle department change
         $('#DepartmentId').change(function() {
             var departmentId = $(this).val();
             var assigneeSelect = $('#AssignedToId');
             
+            // Clear current options
             assigneeSelect.empty().append('<option value="">---- Select Assignee -------</option>');
             
             if (departmentId) {
@@ -245,9 +245,6 @@
                                 text: item.text
                             }));
                         });
-                    })
-                    .fail(function(jqXHR, textStatus, errorThrown) {
-                        console.error('Failed to fetch assignees:', textStatus, errorThrown);
                     });
             }
         });
