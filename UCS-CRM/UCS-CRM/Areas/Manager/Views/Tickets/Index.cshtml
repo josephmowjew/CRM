@@ -276,7 +276,16 @@
         });
     </script>
 
-  
+    <script>
+       
+        // Initialize Select2 with desired options
+        initSelect2({
+            url: "/manager/Tickets/GetAllMembersJson",
+            hiddenFieldId: "MemberId",
+            pageSize: 20,
+            initialSearchValue: "",
+        }, "create_ticket_modal");
+    </script>
 
  
 
