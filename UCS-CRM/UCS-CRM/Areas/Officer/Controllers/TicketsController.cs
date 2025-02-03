@@ -145,17 +145,17 @@ namespace UCS_CRM.Areas.Clerk.Controllers
 
                 createTicketDTO.StateId = defaultState.Id;
                 var mappedTicket = this._mapper.Map<Ticket>(createTicketDTO);
-                
+
                 try
                 {
                     var userClaims = (ClaimsIdentity)User.Identity;
                     var claimsIdentitifier = userClaims.FindFirst(ClaimTypes.NameIdentifier);
-                    
+
                     // Set effective creation date considering holidays
                     mappedTicket.CreatedDate = await DateTimeHelper.GetNextWorkingDay(_context, DateTime.Now);
                     mappedTicket.CreatedById = claimsIdentitifier.Value;
 
-                   
+
                     // Get the last ticket and generate number
                     Ticket lastTicket = await this._ticketRepository.LastTicket();
                     var lastTicketId = lastTicket == null ? 0 : lastTicket.Id;
@@ -179,6 +179,15 @@ namespace UCS_CRM.Areas.Clerk.Controllers
                     if (customerServiceMemberEngagementDept != null)
                     {
                         mappedTicket.DepartmentId = customerServiceMemberEngagementDept.Id;
+                    }
+                    
+                    var exixtingTicket = this._ticketRepository.GetTicketByTicketNumber(mappedTicket.TicketNumber);
+                    if (exixtingTicket != null)
+                    {
+                        lastTicket = await this._ticketRepository.LastTicket();
+                        lastTicketId = lastTicket == null ? 0 : lastTicket.Id;
+                        ticketNumber = Lambda.IssuePrefix + (lastTicketId + 1);
+                        mappedTicket.TicketNumber = ticketNumber;
                     }
 
                     this._ticketRepository.Add(mappedTicket);
@@ -353,85 +362,85 @@ namespace UCS_CRM.Areas.Clerk.Controllers
                         EmailHelper.SendEmail(this._jobEnqueuer, assignedToUser.Email, "New Ticket Assignment", assignmentEmailBody, assignedToUser.SecondaryEmail);
                     }
 
-                
 
-                //  // Add automatic out-of-hours response if needed
-                //     bool isWithinBusinessHours = await DateTimeHelper.IsWithinBusinessHours(_context, DateTime.Now);
-                //     if (!isWithinBusinessHours)
-                //     {
-                //         var workingHours = await _context.WorkingHours.FirstOrDefaultAsync(w => !w.DeletedDate.HasValue);
-                //         var startTime = workingHours?.StartTime ?? new TimeSpan(8, 0, 0);
-                //         var endTime = workingHours?.EndTime ?? new TimeSpan(17, 0, 0);
-                        
-                //         var outOfHoursComment = new TicketComment
-                //         {
-                //             Comment = $@"This ticket was received outside of our business hours. 
-                //                         It will be processed on {mappedTicket.CreatedDate:dddd, MMMM dd, yyyy} at {startTime:hh\\:mm tt}.
-                //                         Our business hours are Monday to Friday, {startTime:hh\\:mm tt} to {endTime:hh\\:mm tt} EAT, 
-                //                         excluding public holidays and lunch break.",
-                //             TicketId = mappedTicket?.Id ?? 0,
-                //             CreatedById = claimsIdentitifier.Value,
-                //             CreatedDate = DateTime.Now
-                //         };
-                        
-                //         _ticketCommentRepository.Add(outOfHoursComment);
 
-                //         // Send out-of-hours notification email
-                //         var notificationRecipient = await this._memberRepository.GetMemberAsync(createTicketDTO.MemberId);
-                        
-                //         if (notificationRecipient != null && !string.IsNullOrEmpty(notificationRecipient.Email))
-                //         {
-                //             string outOfHoursEmailBody = $@"
-                //             <html>
-                //             <head>
-                //                 <style>
-                //                     @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Montserrat:wght@300;400;700&display=swap');
-                //                     body {{ font-family: 'Montserrat', sans-serif; line-height: 1.8; color: #333; background-color: #f4f4f4; }}
-                //                     .container {{ max-width: 600px; margin: 20px auto; padding: 30px; background-color: #ffffff; border-radius: 8px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); }}
-                //                     .logo {{ text-align: center; margin-bottom: 20px; }}
-                //                     .logo img {{ max-width: 150px; }}
-                //                     h2 {{ color: #0056b3; text-align: center; font-weight: 700; font-family: 'Playfair Display', serif; }}
-                //                     .ticket-info {{ background-color: #f0f7ff; border-left: 4px solid #0056b3; padding: 15px; margin: 20px 0; }}
-                //                     .processing-info {{ background-color: #fff3cd; border-left: 4px solid #ffc107; padding: 15px; margin: 20px 0; }}
-                //                     .footer {{ margin-top: 30px; text-align: center; font-style: italic; color: #666; }}
-                //                 </style>
-                //             </head>
-                //             <body>
-                //                 <div class='container'>
-                //                     <div class='logo'>
-                //                         <img src='https://crm.ucssacco.com/images/LOGO(1).png' alt='UCS SACCO Logo'>
-                //                     </div>
-                //                     <h2>Ticket Received Outside Business Hours</h2>
-                //                     <p>Hello {notificationRecipient.FullName},</p>
-                //                     <div class='ticket-info'>
-                //                         <p><strong>Ticket Number:</strong> {mappedTicket.TicketNumber}</p>
-                //                         <p><strong>Title:</strong> {mappedTicket.Title}</p>
-                //                     </div>
-                //                     <div class='processing-info'>
-                //                         <p>Your ticket was received outside our business hours and will be processed on:</p>
-                //                         <p><strong>Date:</strong> {mappedTicket.CreatedDate:dddd, MMMM dd, yyyy}</p>
-                //                         <p><strong>Time:</strong> {startTime:hh\\:mm tt}</p>
-                //                         <p><strong>Our Business Hours:</strong></p>
-                //                         <p>Monday to Friday, {startTime:hh\\:mm tt} to {endTime:hh\\:mm tt} EAT</p>
-                //                         <p>(Excluding public holidays and lunch break)</p>
-                //                     </div>
-                //                     <p style='text-align: center;'>
-                //                         <a href='{Lambda.systemLinkClean}' class='cta-button' style='color: #ffffff;'>View Ticket Details</a>
-                //                     </p>
-                //                     <p class='footer'>Thank you for your patience. We will process your request during our next business hours.</p>
-                //                 </div>
-                //             </body>
-                //             </html>";
+                    //  // Add automatic out-of-hours response if needed
+                    //     bool isWithinBusinessHours = await DateTimeHelper.IsWithinBusinessHours(_context, DateTime.Now);
+                    //     if (!isWithinBusinessHours)
+                    //     {
+                    //         var workingHours = await _context.WorkingHours.FirstOrDefaultAsync(w => !w.DeletedDate.HasValue);
+                    //         var startTime = workingHours?.StartTime ?? new TimeSpan(8, 0, 0);
+                    //         var endTime = workingHours?.EndTime ?? new TimeSpan(17, 0, 0);
 
-                //             EmailHelper.SendEmail(
-                //                 this._jobEnqueuer, 
-                //                 notificationRecipient.Email, 
-                //                 $"Ticket {mappedTicket.TicketNumber} - Out of Hours Notification", 
-                //                 outOfHoursEmailBody, 
-                //                 notificationRecipient?.User?.SecondaryEmail
-                //             );
-                //         }
-                //     }
+                    //         var outOfHoursComment = new TicketComment
+                    //         {
+                    //             Comment = $@"This ticket was received outside of our business hours. 
+                    //                         It will be processed on {mappedTicket.CreatedDate:dddd, MMMM dd, yyyy} at {startTime:hh\\:mm tt}.
+                    //                         Our business hours are Monday to Friday, {startTime:hh\\:mm tt} to {endTime:hh\\:mm tt} EAT, 
+                    //                         excluding public holidays and lunch break.",
+                    //             TicketId = mappedTicket?.Id ?? 0,
+                    //             CreatedById = claimsIdentitifier.Value,
+                    //             CreatedDate = DateTime.Now
+                    //         };
+
+                    //         _ticketCommentRepository.Add(outOfHoursComment);
+
+                    //         // Send out-of-hours notification email
+                    //         var notificationRecipient = await this._memberRepository.GetMemberAsync(createTicketDTO.MemberId);
+
+                    //         if (notificationRecipient != null && !string.IsNullOrEmpty(notificationRecipient.Email))
+                    //         {
+                    //             string outOfHoursEmailBody = $@"
+                    //             <html>
+                    //             <head>
+                    //                 <style>
+                    //                     @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Montserrat:wght@300;400;700&display=swap');
+                    //                     body {{ font-family: 'Montserrat', sans-serif; line-height: 1.8; color: #333; background-color: #f4f4f4; }}
+                    //                     .container {{ max-width: 600px; margin: 20px auto; padding: 30px; background-color: #ffffff; border-radius: 8px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); }}
+                    //                     .logo {{ text-align: center; margin-bottom: 20px; }}
+                    //                     .logo img {{ max-width: 150px; }}
+                    //                     h2 {{ color: #0056b3; text-align: center; font-weight: 700; font-family: 'Playfair Display', serif; }}
+                    //                     .ticket-info {{ background-color: #f0f7ff; border-left: 4px solid #0056b3; padding: 15px; margin: 20px 0; }}
+                    //                     .processing-info {{ background-color: #fff3cd; border-left: 4px solid #ffc107; padding: 15px; margin: 20px 0; }}
+                    //                     .footer {{ margin-top: 30px; text-align: center; font-style: italic; color: #666; }}
+                    //                 </style>
+                    //             </head>
+                    //             <body>
+                    //                 <div class='container'>
+                    //                     <div class='logo'>
+                    //                         <img src='https://crm.ucssacco.com/images/LOGO(1).png' alt='UCS SACCO Logo'>
+                    //                     </div>
+                    //                     <h2>Ticket Received Outside Business Hours</h2>
+                    //                     <p>Hello {notificationRecipient.FullName},</p>
+                    //                     <div class='ticket-info'>
+                    //                         <p><strong>Ticket Number:</strong> {mappedTicket.TicketNumber}</p>
+                    //                         <p><strong>Title:</strong> {mappedTicket.Title}</p>
+                    //                     </div>
+                    //                     <div class='processing-info'>
+                    //                         <p>Your ticket was received outside our business hours and will be processed on:</p>
+                    //                         <p><strong>Date:</strong> {mappedTicket.CreatedDate:dddd, MMMM dd, yyyy}</p>
+                    //                         <p><strong>Time:</strong> {startTime:hh\\:mm tt}</p>
+                    //                         <p><strong>Our Business Hours:</strong></p>
+                    //                         <p>Monday to Friday, {startTime:hh\\:mm tt} to {endTime:hh\\:mm tt} EAT</p>
+                    //                         <p>(Excluding public holidays and lunch break)</p>
+                    //                     </div>
+                    //                     <p style='text-align: center;'>
+                    //                         <a href='{Lambda.systemLinkClean}' class='cta-button' style='color: #ffffff;'>View Ticket Details</a>
+                    //                     </p>
+                    //                     <p class='footer'>Thank you for your patience. We will process your request during our next business hours.</p>
+                    //                 </div>
+                    //             </body>
+                    //             </html>";
+
+                    //             EmailHelper.SendEmail(
+                    //                 this._jobEnqueuer, 
+                    //                 notificationRecipient.Email, 
+                    //                 $"Ticket {mappedTicket.TicketNumber} - Out of Hours Notification", 
+                    //                 outOfHoursEmailBody, 
+                    //                 notificationRecipient?.User?.SecondaryEmail
+                    //             );
+                    //         }
+                    //     }
 
 
 
@@ -1050,17 +1059,17 @@ namespace UCS_CRM.Areas.Clerk.Controllers
         public async Task<ActionResult> PickTicket(int id)
         {
             //check if the ticket exists
-            
+
             var ticket = await this._ticketRepository.GetTicketWithTracking(id);
 
-            if(ticket == null)
+            if (ticket == null)
             {
                 return Json(new { status = "error", message = "Could not find a ticket with the identifier sent" });
-            }   
+            }
 
             //check if ticket is already assigned to a user
 
-            if(!string.IsNullOrEmpty(ticket.AssignedToId))
+            if (!string.IsNullOrEmpty(ticket.AssignedToId))
             {
                 return Json(new { status = "error", message = "Ticket is already assigned to a user" });
             }
@@ -1070,7 +1079,7 @@ namespace UCS_CRM.Areas.Clerk.Controllers
             var currentUser = await CurrentUser.GetCurrentUserAsync(this._httpContextAccessor, this._userRepository);
 
 
-            if(currentUser == null)
+            if (currentUser == null)
             {
                 return Json(new { status = "error", message = "Could not find the current user" });
             }
@@ -1080,7 +1089,7 @@ namespace UCS_CRM.Areas.Clerk.Controllers
 
             int recordsAffected = await this._unitOfWork.SaveToDataStoreSync();
 
-            if(recordsAffected > 0)
+            if (recordsAffected > 0)
             {
                 //send an email to the new assignee
                 this._ticketRepository.SendTicketPickedEmail(currentUser.Email, ticket);
@@ -1115,11 +1124,11 @@ namespace UCS_CRM.Areas.Clerk.Controllers
                 }
 
                 var staff = department.Users
-                    .Where(u => !string.IsNullOrEmpty(u.Email) && 
+                    .Where(u => !string.IsNullOrEmpty(u.Email) &&
                                !string.IsNullOrEmpty(u.FullName) &&
                                !u.Email.Equals(currentUserEmail, StringComparison.OrdinalIgnoreCase))
-                    .Select(user => new SelectListItem 
-                    { 
+                    .Select(user => new SelectListItem
+                    {
                         Text = user.FullName,
                         Value = user.Id.ToString()
                     })
@@ -1150,8 +1159,9 @@ namespace UCS_CRM.Areas.Clerk.Controllers
             {
                 foreach (var item in members)
                 {
-                    dynamicSelect.Add(new DynamicSelect { 
-                        Id = item.Id.ToString(), 
+                    dynamicSelect.Add(new DynamicSelect
+                    {
+                        Id = item.Id.ToString(),
                         Name = $"{item.FullName} ({item.AccountNumber}) -- {item.Branch} -- Employee #{item.EmployeeNumber}"
                     });
                 }
@@ -1259,7 +1269,7 @@ namespace UCS_CRM.Areas.Clerk.Controllers
             }
 
             //filter the department list from the database to remove the current user department
-           var filteredDepartmentList = dbDepartments.ToList();
+            var filteredDepartmentList = dbDepartments.ToList();
 
             filteredDepartmentList.ForEach(d =>
             {
@@ -1268,7 +1278,7 @@ namespace UCS_CRM.Areas.Clerk.Controllers
 
             return departmentsList;
         }
-       
+
         [HttpPost]
         public async Task<ActionResult> GetTicketAuditData(int ticketId)
         {
@@ -1328,36 +1338,36 @@ namespace UCS_CRM.Areas.Clerk.Controllers
 
                 var claimsIdentitifier = userClaims.FindFirst(ClaimTypes.NameIdentifier);
 
-                if(ticket != null)
+                if (ticket != null)
                 {
                     await this._ticketRepository.EscalateTicket(ticket, claimsIdentitifier.Value, createTicketEscalation.Reason);
-                    
 
-                    
+
+
                 }
-                }
-                else
-                {
+            }
+            else
+            {
 
-                    createTicketEscalation.DataInvalid = "true";
+                createTicketEscalation.DataInvalid = "true";
 
-                    ModelState.AddModelError("", "Could not find a ticket with the identifier sent");
+                ModelState.AddModelError("", "Could not find a ticket with the identifier sent");
 
-                    return PartialView("_FirstTicketEscalationPartial", createTicketEscalation);
-                }
+                return PartialView("_FirstTicketEscalationPartial", createTicketEscalation);
+            }
 
 
 
-         
+
             return PartialView("_FirstTicketEscalationPartial", createTicketEscalation);
 
         }
 
         private async Task<List<SelectListItem>> GetMembers()
         {
-            var members = await this._memberRepository.GetMembers(new CursorParams() { Take = 10, Skip = 0});
+            var members = await this._memberRepository.GetMembers(new CursorParams() { Take = 10, Skip = 0 });
 
-            
+
 
             var membersList = new List<SelectListItem>();
 
@@ -1365,8 +1375,12 @@ namespace UCS_CRM.Areas.Clerk.Controllers
 
             members.ForEach(member =>
             {
-                membersList.Add(new SelectListItem() { Text = member.FullName +" (" + member.AccountNumber +
-                    ")" +" -- "+ member.Branch, Value = member.Id.ToString() });
+                membersList.Add(new SelectListItem()
+                {
+                    Text = member.FullName + " (" + member.AccountNumber +
+                    ")" + " -- " + member.Branch,
+                    Value = member.Id.ToString()
+                });
             });
 
             return membersList;
@@ -1395,7 +1409,7 @@ namespace UCS_CRM.Areas.Clerk.Controllers
 
             newDepartment = this._departmentRepository.Exists(departmentName);
 
-            if(newDepartment == null)
+            if (newDepartment == null)
             {
                 return assignedToId;
             }
@@ -1435,7 +1449,7 @@ namespace UCS_CRM.Areas.Clerk.Controllers
         }
 
 
-        
+
         [HttpGet]
         public async Task<IActionResult> GetInitiators(string type, string search, int page = 1)
         {
@@ -1452,7 +1466,8 @@ namespace UCS_CRM.Areas.Clerk.Controllers
                 var users = await _userRepository.GetUsersWithRoles(cursorParams);
                 var totalCount = await _userRepository.TotalFilteredUsersCount(cursorParams);
                 var results = users.Select(u => new { id = u.Id, text = $"{u.FirstName} {u.LastName}" });
-                return Json(new { 
+                return Json(new
+                {
                     results = results,
                     pagination = new { more = (page * pageSize) < totalCount }
                 });
@@ -1462,7 +1477,8 @@ namespace UCS_CRM.Areas.Clerk.Controllers
                 var members = await _memberRepository.GetMembers(cursorParams);
                 var totalCount = await _memberRepository.TotalFilteredMembersCount(cursorParams);
                 var results = members.Select(m => new { id = m.Id.ToString(), text = $"{m.FirstName} {m.LastName}" });
-                return Json(new { 
+                return Json(new
+                {
                     results = results,
                     pagination = new { more = (page * pageSize) < totalCount }
                 });
@@ -1473,7 +1489,7 @@ namespace UCS_CRM.Areas.Clerk.Controllers
         [HttpGet]
         public async Task<IActionResult> FetchAssigneesByDepartment(int departmentId)
         {
-            try 
+            try
             {
                 var currentUserEmail = User?.Identity?.Name;
                 if (string.IsNullOrEmpty(currentUserEmail))
@@ -1483,13 +1499,13 @@ namespace UCS_CRM.Areas.Clerk.Controllers
                 }
 
                 var staff = await _userRepository.GetUsersByDepartment(departmentId);
-                
+
                 var assignees = staff
-                    .Where(u => !string.IsNullOrEmpty(u.Email) && 
+                    .Where(u => !string.IsNullOrEmpty(u.Email) &&
                                !string.IsNullOrEmpty(u.FullName) &&
                                !u.Email.Equals(currentUserEmail, StringComparison.OrdinalIgnoreCase))
-                    .Select(user => new 
-                    { 
+                    .Select(user => new
+                    {
                         value = user.Id.ToString(),
                         text = user.FullName
                     })
@@ -1505,7 +1521,7 @@ namespace UCS_CRM.Areas.Clerk.Controllers
             }
         }
 
-        
+
 
     }
 }

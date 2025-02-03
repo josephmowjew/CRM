@@ -504,6 +504,33 @@ namespace UCS_CRM.Persistence.SQLRepositories
 
         }
 
+          public async Task<Ticket?> GetTicketByTicketNumber(string ticketNumber)
+        {
+            // Retrieve the ticket using AsNoTracking for performance
+            var ticket = await this._context.Tickets
+                .Include(t => t.TicketCategory)
+                .Include(t => t.State)
+                .Include(t => t.TicketComments)
+                .Include(t => t.TicketAttachments)
+                .Include(t => t.TicketPriority)
+                .Include(t => t.Department)
+                .Include(t => t.CreatedBy)
+                .Include(t => t.AssignedTo).ThenInclude(a => a.Department)
+                .Include(t => t.Member).ThenInclude(t => t.User)
+                .Include(t => t.InitiatorMember)
+                .Include(t => t.InitiatorUser)
+                .ThenInclude(t => t!.Department)
+                .AsNoTracking()
+                .FirstOrDefaultAsync(t => t.TicketNumber == ticketNumber);
+
+
+
+            return ticket;
+
+
+        }
+      
+
         public async Task<Ticket?> GetTicketWithTracking(int id)
         {
             // Retrieve the ticket using AsNoTracking for performance

@@ -1101,6 +1101,15 @@ namespace UCS_CRM.Areas.Manager.Controllers
                         mappedTicket.DepartmentId = assignedToUser.DepartmentId;
                     }
 
+                    var exixtingTicket = this._ticketRepository.GetTicketByTicketNumber(mappedTicket.TicketNumber);
+                    if (exixtingTicket != null)
+                    {
+                        lastTicket = await this._ticketRepository.LastTicket();
+                        lastTicketId = lastTicket == null ? 0 : lastTicket.Id;
+                        ticketNumber = Lambda.IssuePrefix + (lastTicketId + 1);
+                        mappedTicket.TicketNumber = ticketNumber;
+                    }
+
                     this._ticketRepository.Add(mappedTicket);
                     await this._unitOfWork.SaveToDataStore();
 

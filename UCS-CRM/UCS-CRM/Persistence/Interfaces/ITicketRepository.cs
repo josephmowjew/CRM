@@ -54,5 +54,6 @@ namespace UCS_CRM.Persistence.Interfaces
          Task<Ticket?> GetTicketWithTracking(int id);
 
          void SendTicketPickedEmail(string pickerEmail, Ticket ticket);
+         Task<Ticket?> GetTicketByTicketNumber(string ticketNumber);
     }
 }

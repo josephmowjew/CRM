@@ -259,10 +259,16 @@ namespace UCS_CRM.Areas.CallCenterOfficer.Controllers
                         mappedTicket.DepartmentId = customerServiceMemberEngagementDept.Id;
                     }
 
+                    var exixtingTicket = this._ticketRepository.GetTicketByTicketNumber(mappedTicket.TicketNumber);
+                    if (exixtingTicket != null)
+                    {
+                        lastTicket = await this._ticketRepository.LastTicket();
+                        lastTicketId = lastTicket == null ? 0 : lastTicket.Id;
+                        ticketNumber = Lambda.IssuePrefix + (lastTicketId + 1);
+                        mappedTicket.TicketNumber = ticketNumber;
+                    }
+
                     this._ticketRepository.Add(mappedTicket);
-
-
-
 
                     //save ticket to the data store
 
